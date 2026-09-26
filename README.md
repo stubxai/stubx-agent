@@ -1,6 +1,6 @@
 # stubx-agent
 
-Esqueleto público del agente de **STUBX** (`@stubx/agents`, v0.1.0).
+Esqueleto público del agente de **STUBX** (`@stubx/agents`, v0.1.0; nombre interno del paquete; no tiene relación con la cuenta @stubx de X).
 
 > Prototipo. Memecoin experimental · puedes perderlo todo · no es consejo de inversión. El agente no tiene claves, no firma, no custodia y no envía transacciones.
 
@@ -10,7 +10,7 @@ Estado del último simulacro del kill-switch. Un simulacro en verde solo demuest
 
 El mint público del token (Pump.fun) es `TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump`. Este programa no lo mueve.
 
-El único repositorio oficial es [github.com/stubxai/stubx-agent](https://github.com/stubxai/stubx-agent). Compruébalo: tiene que estar enlazado desde la web oficial y desde [@stubxai](https://x.com/stubxai). La cuenta `github.com/stubx` es ajena y no representa a STUBX.
+El único repositorio oficial es [github.com/stubxai/stubx-agent](https://github.com/stubxai/stubx-agent). Compruébalo: tiene que estar enlazado desde la web oficial y desde [@stubxai](https://x.com/stubxai). Cualquier otra cuenta u organización de GitHub (también `github.com/stubx`, sin «ai») no tiene relación con STUBX.
 
 Canales oficiales: X [@stubxai](https://x.com/stubxai) · web https://superb-horse-9036f5.netlify.app/ · **stubxai.hq@gmail.com**.
 
@@ -118,6 +118,6 @@ Public skeleton of the STUBX agent. Prototype. Experimental memecoin · you can 
 
 Official channels: [x.com/stubxai](https://x.com/stubxai), https://superb-horse-9036f5.netlify.app/, stubxai.hq@gmail.com.
 
-Verify with Node.js 22 or newer (`npm ci`, `npm run typecheck`, `npm test`, and `npm run ppm:print`). CI runs on Node 22.14.0, on push, on pull request, and on a weekly schedule (cron `11 7 * * 1`, Mondays 07:11 UTC; GitHub may delay or skip scheduled runs). Results are on the Actions tab of `github.com/stubxai/stubx-agent`. `github.com/stubx` is an unrelated account.
+Verify with Node.js 22 or newer (`npm ci`, `npm run typecheck`, `npm test`, and `npm run ppm:print`). CI runs on Node 22.14.0, on push, on pull request, and on a weekly schedule (cron `11 7 * * 1`, Mondays 07:11 UTC; GitHub may delay or skip scheduled runs). Results are on the Actions tab of `github.com/stubxai/stubx-agent`. Any other GitHub account or organization (including `github.com/stubx`, without “ai”) has no relation to STUBX.
 
 `ppm:print` keeps wallet and logs at `pending`. Limits and the kill-switch have tests in this repository, and a weekly kill-switch drill is scheduled on the Actions tab (see its history). No public PPM box is marked. The GitHub account `stubxai` has 2FA enabled, as confirmed by its owner on 2026-09-26 (not publicly verifiable). The kill-switch cannot pause holder transfers or freeze accounts. A public append-only, hash-chained log is written by the `daily-log` workflow (scheduled daily; GitHub may delay or skip runs). Its anchors are submitted to OpenTimestamps and each proof stays pending until it is confirmed in Bitcoin; a proof only shows that an anchor existed by then, not that the log is true or complete. The logs box stays `pending` (see LOGS.md).
