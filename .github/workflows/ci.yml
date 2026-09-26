@@ -4,7 +4,7 @@ on:
   push:
   pull_request:
   schedule:
-    - cron: "0 7 * * 1"
+    - cron: "11 7 * * 1"
   workflow_dispatch:
 
 permissions:
@@ -25,6 +25,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
 
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -40,6 +43,26 @@ jobs:
 
       - name: Test
         run: npm test
+
+      - name: Public log verifies
+        run: npm run logs:verify
+
+      - name: Public log is append-only
+        env:
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          set -euo pipefail
+          if [ -z "${BASE_SHA:-}" ] || ! git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
+            echo "Sin commit base con el que comparar. Se omite."
+            exit 0
+          fi
+          base_dir="$RUNNER_TEMP/base"
+          mkdir -p "$base_dir"
+          if git cat-file -e "${BASE_SHA}:logs" 2>/dev/null; then
+            git archive "$BASE_SHA" logs | tar -x -C "$base_dir"
+          fi
+          mkdir -p "$base_dir/logs"
+          node dist/src/cli.js logs:check-update "$base_dir/logs" logs --any
 
       - name: Forbidden API scan
         run: npm run scan:forbidden

@@ -1,0 +1,122 @@
+name: daily-log
+
+on:
+  schedule:
+    - cron: "23 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: daily-log
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: build entry and timestamp
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22.14.0"
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Append daily entry
+        run: npm run logs:daily
+
+      - name: Install OpenTimestamps client
+        run: |
+          set -euo pipefail
+          python3 -m venv "$RUNNER_TEMP/ots"
+          "$RUNNER_TEMP/ots/bin/pip" install --require-hashes --no-deps -r .github/ots-requirements.txt
+
+      - name: Timestamp anchors
+        run: |
+          set -uo pipefail
+          ots="$RUNNER_TEMP/ots/bin/ots"
+          for anchor in logs/anchors/*.txt; do
+            [ -e "$anchor" ] || continue
+            if [ ! -f "$anchor.ots" ]; then
+              "$ots" stamp "$anchor" || echo "::warning::No se pudo sellar $anchor. Se reintentará en la próxima ejecución."
+            fi
+          done
+          for stamp in logs/anchors/*.ots; do
+            [ -e "$stamp" ] || continue
+            "$ots" upgrade "$stamp" || echo "$stamp sigue pendiente de confirmación en Bitcoin."
+          done
+          rm -f logs/anchors/*.bak
+
+      - name: Verify
+        run: npm run logs:verify
+
+      - name: Upload logs
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: daily-log
+          path: logs/
+          if-no-files-found: error
+          retention-days: 14
+
+  commit:
+    name: commit log
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22.14.0"
+          cache: npm
+
+      - name: Install
+        run: npm ci --ignore-scripts
+
+      - name: Download logs
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: daily-log
+          path: ${{ runner.temp }}/incoming
+
+      - name: Check update is append-only
+        run: |
+          set -euo pipefail
+          npx tsc
+          node dist/src/cli.js logs:check-update logs "$RUNNER_TEMP/incoming"
+          mkdir -p logs
+          cp -R "$RUNNER_TEMP/incoming/." logs/
+          node dist/src/cli.js logs:verify
+          changed="$(git status --porcelain --untracked-files=all | awk '{print $2}' | grep -v '^logs/' || true)"
+          if [ -n "$changed" ]; then echo "Cambios fuera de logs/: $changed"; exit 1; fi
+
+      - name: Commit and push
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git add logs
+          if git diff --cached --quiet; then echo "Sin cambios."; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "log: entrada diaria $(date -u +%Y-%m-%d)"
+          auth="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          git -c http.extraheader="AUTHORIZATION: basic $auth" push origin HEAD:main
