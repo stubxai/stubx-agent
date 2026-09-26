@@ -1,0 +1,121 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "0 7 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: typecheck, test, audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Forbidden API scan
+        run: npm run scan:forbidden
+
+      - name: PPM status
+        run: npm run ppm:print --silent > ppm-status.json
+
+      - name: PPM stays unmarked
+        run: |
+          jq -e '
+            .approved == false and
+            .ppmMarkedCount == 0 and
+            .boxes.wallet.status == "pending" and
+            .boxes.logs.status == "pending" and
+            .boxes.wallet.ppmMarked == false and
+            .boxes.logs.ppmMarked == false and
+            .boxes.limits.ppmMarked == false and
+            .boxes.killSwitch.ppmMarked == false
+          ' ppm-status.json
+
+      - name: Audit
+        run: npm audit --audit-level=high
+
+      - name: Checksums
+        run: sha256sum test-report.json ppm-status.json policy/limits.json package-lock.json > SHA256SUMS
+
+      - name: Upload report
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: test-report
+          path: |
+            test-report.json
+            ppm-status.json
+            SHA256SUMS
+          if-no-files-found: error
+          retention-days: 14
+
+  secrets:
+    name: gitleaks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Gitleaks full history
+        run: |
+          set -euo pipefail
+          version="8.30.1"
+          archive="gitleaks_${version}_linux_x64.tar.gz"
+          checksum="551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
+          curl -fsSL -o "${archive}" "https://github.com/gitleaks/gitleaks/releases/download/v${version}/${archive}"
+          echo "${checksum}  ${archive}" | sha256sum -c -
+          tar -xzf "${archive}" gitleaks
+          ./gitleaks detect --source . --redact --no-banner --exit-code 1
+
+  attest:
+    name: attest test report
+    needs: verify
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - name: Download report
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: test-report
+          path: report
+
+      - name: Attest
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: |
+            report/test-report.json
+            report/ppm-status.json
+            report/SHA256SUMS
