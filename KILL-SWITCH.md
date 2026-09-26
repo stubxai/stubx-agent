@@ -4,7 +4,7 @@
 
 Un interruptor de nuestros procesos en este repositorio. El estado vive en [`state/killswitch.json`](state/killswitch.json).
 
-Hoy el archivo comprometido está desactivado (`engaged: false`). Cambiarlo es un commit. El simulacro público automático es la fase P3 y **no** está hecho.
+Hoy el archivo guardado en el repositorio está desactivado (`engaged: false`). Cambiarlo es un commit. El simulacro público automático es la fase P3 y **no** está hecho.
 
 ## Qué para
 

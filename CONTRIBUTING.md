@@ -1,6 +1,6 @@
 # Contribuir
 
-El correo público es stubxai.hq@gmail.com. La cuenta prevista en GitHub es @stubxai.
+El correo público es stubxai.hq@gmail.com. La cuenta de GitHub es [github.com/stubxai](https://github.com/stubxai). El canal en X es [x.com/stubxai](https://x.com/stubxai). La web oficial es https://superb-horse-9036f5.netlify.app/.
 
 1. No añadas wallets, claves, firmas, custodia ni escritura en la red.
 2. No añadas dependencias de ejecución. Si hace falta una herramienta de desarrollo, dilo en el PR y actualiza el test que fija la lista.

@@ -2,13 +2,13 @@
 
 Esqueleto público del agente de **STUBX** (`@stubx/agents`, v0.1.0).
 
-> Prototipo. Sin valor. No es asesoramiento financiero. El agente no tiene claves, no firma, no custodia y no envía transacciones.
+> Prototipo. Memecoin experimental · puedes perderlo todo · no es consejo de inversión. El agente no tiene claves, no firma, no custodia y no envía transacciones.
 
 El mint público del token (Pump.fun) es `TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump`. Este programa no lo mueve.
 
-Cuando se publique, el único repositorio oficial previsto es [github.com/stubxai/stubx-agent](https://github.com/stubxai/stubx-agent). Tiene que estar enlazado desde la web oficial y desde @stubxai. La cuenta `github.com/stubx` es ajena y no representa a STUBX.
+El único repositorio oficial es [github.com/stubxai/stubx-agent](https://github.com/stubxai/stubx-agent). Compruébalo: tiene que estar enlazado desde la web oficial y desde [@stubxai](https://x.com/stubxai). La cuenta `github.com/stubx` es ajena y no representa a STUBX.
 
-Identidad de contacto: **@stubxai** / **stubxai.hq@gmail.com**.
+Canales oficiales: X [@stubxai](https://x.com/stubxai) · web https://superb-horse-9036f5.netlify.app/ · **stubxai.hq@gmail.com**.
 
 ## Qué puede hacer
 
@@ -50,7 +50,7 @@ Un test en verde demuestra este código, en esta versión. No sustituye un enlac
 
 ## Cómo comprobarlo
 
-Hace falta Node.js 20 o superior (`.nvmrc` fija 22.14.0).
+Hace falta Node.js 22 o superior (`.nvmrc` fija 22.14.0).
 
 ```bash
 npm ci
@@ -69,7 +69,7 @@ En la pestaña **Actions** del repositorio, workflow `ci`:
 
 `https://github.com/stubxai/stubx-agent/actions/workflows/ci.yml`
 
-Se ejecuta en cada push, en cada pull request y los lunes a las 07:00 UTC. Hace `npm ci`, typecheck, tests, `ppm:print`, `npm audit --audit-level=high` y un escaneo de secretos con el binario libre de gitleaks (historia completa). El artefacto `test-report` incluye el informe, la salida de `ppm:print` y `SHA256SUMS`.
+Se ejecuta en cada push, en cada pull request y los lunes a las 07:00 UTC, con Node 22.14.0 (la matriz del workflow y `.nvmrc`). Hace `npm ci`, typecheck, tests, `ppm:print`, `npm audit --audit-level=high` y un escaneo de secretos con el binario libre de gitleaks (historia completa). El artefacto `test-report` incluye el informe, la salida de `ppm:print` y `SHA256SUMS`.
 
 En `main`, un job aparte genera la atestación de procedencia de ese informe (`id-token: write` y `attestations: write` solo en ese job). El resto del workflow usa `contents: read`.
 
@@ -79,7 +79,7 @@ El escáner de secretos es el binario de gitleaks publicado en GitHub, fijado po
 
 ## Ajustes de GitHub que no van en el código
 
-Quien publique el repo todavía tiene que activar, en la cuenta y en el repositorio:
+Pendiente de confirmar en la cuenta y en el repositorio:
 
 - 2FA.
 - Secret scanning y push protection (gratis en repos públicos).
@@ -102,8 +102,10 @@ Informes de seguridad: [SECURITY.md](SECURITY.md). No hay recompensa económica.
 
 ## English
 
-Public skeleton of the STUBX agent. Prototype. No value. Not financial advice. The agent holds no keys: it does not sign, custody, exchange, or send transactions.
+Public skeleton of the STUBX agent. Prototype. Experimental memecoin · you can lose everything · not investment advice. The agent holds no keys: it does not sign, custody, exchange, or send transactions.
 
-Verify with `npm ci`, `npm run typecheck`, `npm test`, and `npm run ppm:print`. CI runs on push, pull request, and every Monday 07:00 UTC. Results will show on the Actions tab of `github.com/stubxai/stubx-agent` once that repository exists. `github.com/stubx` is an unrelated account.
+Official channels: [x.com/stubxai](https://x.com/stubxai), https://superb-horse-9036f5.netlify.app/, stubxai.hq@gmail.com.
+
+Verify with Node.js 22 or newer (`npm ci`, `npm run typecheck`, `npm test`, and `npm run ppm:print`). CI runs on Node 22.14.0, on push, pull request, and every Monday 07:00 UTC. Results are on the Actions tab of `github.com/stubxai/stubx-agent`. `github.com/stubx` is an unrelated account.
 
 `ppm:print` keeps wallet and logs at `pending`. Limits and the kill-switch have tests in this repository. No public PPM box is marked. The kill-switch cannot pause holder transfers or freeze accounts. Public append-only logs are a later phase.
