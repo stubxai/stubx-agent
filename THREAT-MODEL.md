@@ -15,10 +15,10 @@ Fuera de alcance: el token en sí, Pump.fun, el comportamiento de terceros.
 | T7 | Log incompleto | Limitación declarada. No hay log público que pueda estar incompleto. |
 | T8 | Malinterpretar el kill-switch | Texto fijo: no pausa transferencias ni congela cuentas. El módulo no tiene capacidad on-chain. |
 | T9 | El agente gana capacidad de firma | Lista cerrada, rechazo aunque el nombre peligroso se añada a la lista, y test que falla si `src/` referencia APIs de firma o envío. |
-| T10 | Toma de la cuenta de GitHub | 2FA de la cuenta oficial es un control obligatorio, pendiente de confirmar por quien administra la cuenta. No se resuelve con código de este repo. |
+| T10 | Toma de la cuenta de GitHub | 2FA de la cuenta oficial `stubxai`: activada, según confirmó el propietario el 26-09-2026 (no verificable desde fuera). No se resuelve con código de este repo. |
 
 Los rulesets de `main` (PR, checks, sin force-push) son un ajuste de GitHub. Este árbol no puede activarlos.
 
 ## English
 
-This repository is the public skeleton of an agent that cannot sign or hold keys. Do not treat a green local test as a marked PPM box. Append-only public logs and the public kill-switch drill are later phases.
+This repository is the public skeleton of an agent that cannot sign or hold keys. Do not treat a green local test as a marked PPM box. Append-only public logs are a later phase. The weekly kill-switch drill is scheduled on the Actions tab (see its history); the PPM box stays unmarked until at least two consecutive green public drills have been reviewed.
