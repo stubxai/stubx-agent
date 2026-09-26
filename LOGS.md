@@ -1,33 +1,83 @@
 # Logs
 
-## Qué hay hoy
+## Qué es
 
-No hay registro público. La casilla de logs del PPM sigue `pending`.
+Un registro público de solo añadir: [`logs/agent-log.jsonl`](logs/agent-log.jsonl). Tiene una línea por entrada. Cada línea lleva la huella sha256 de su contenido y el hash de la línea anterior, así que forman una cadena. Si alguien cambia o borra una línea antigua, la cadena deja de cuadrar y la verificación falla.
 
-Sí hay un tipo de entrada, `LogEntry`, con:
+Lo escribe el workflow `daily-log`, programado cada día a las 06:23 UTC y que también se puede lanzar a mano con «Run workflow». GitHub puede retrasar o saltarse ejecuciones programadas, y las desactiva si el repositorio pasa 60 días sin actividad. El historial de Actions muestra las que se han hecho de verdad:
 
-- fecha UTC
-- actor fijo `stubx-agent`
-- acción y detalle
-- `contentSha256` (sha256 del contenido)
-- `prevHash` (enlace con la entrada anterior, solo en memoria)
-- `hash` de esos campos
-- `chain: "stub-until-p4"`
+`https://github.com/stubxai/stubx-agent/actions/workflows/daily-log.yml`
 
-`fingerprint()` usa SHA-256 de Node. Los tests comprueban el digest conocido de `abc`.
+## Qué se anota
 
-Las entradas viven en memoria y se pierden al salir. `log:append` no publica en ningún sitio (`published: false`, `persisted: false`, `network: false`).
+El agente es un prototipo y hoy no hace acciones con efecto fuera de este repositorio: no publica en redes sociales, no firma y no mueve fondos. Por eso cada entrada solo anota datos que genera el propio repositorio en esa ejecución:
 
-`verifyChain()` responde siempre `ok: false` y `phase: "P4"`. No afirma que la cadena sea válida ni completa.
+- fecha y hora (UTC) y número de entrada
+- modo: `prototipo`
+- commit del repositorio con el que se ha generado
+- estado del kill-switch leído de `state/killswitch.json`: legible o no, activado o no
+- resultado del simulacro del kill-switch hecho en esa misma ejecución: cuántos pasos y cuántos pasan
+- enlace a la ejecución de Actions que la ha escrito
+- huella sha256 del contenido, hash de la línea anterior y hash de la línea
 
-## Qué será P4
+Si el kill-switch está activado o no se puede leer, el simulacro no se ejecuta y la entrada lo dice. El registro sigue escribiéndose, como excepción declarada en [KILL-SWITCH.md](KILL-SWITCH.md): solo anota el estado, no ejecuta ninguna acción del agente y no tiene efecto on-chain. Así se ve en público que el interruptor está activado.
 
-- `logs/agent-log.jsonl` de solo-añadir.
-- `npm run logs:verify` en CI.
-- Rechazo de cualquier edición que no sea añadir al final.
-- Ancla gratuita (OpenTimestamps) y atestación.
-- `LOGS.md` dirá qué se anota y qué no. Una cadena demuestra que lo publicado no se ha cambiado; no demuestra que se haya anotado todo.
+No se anotan datos personales, secretos, direcciones de wallet ni datos de la cadena de bloques. No hay métricas.
+
+El campo `actor` vale `stubx-agent` porque identifica el paquete que escribe el log. No es una acción del agente.
+
+## Qué no demuestra
+
+- La cadena demuestra que lo publicado **no se ha cambiado** después. No demuestra que se haya anotado **todo**.
+- Una entrada con el simulacro en verde solo demuestra lo que ese simulacro comprueba, en esa versión del código.
+- El agente sigue sin hacer acciones con efecto fuera de este repositorio. Si algún día las hace, se explicará antes en este archivo y se anotarán aquí.
+- El modo `prototipo` y la nota de cada entrada están fijados en el código. Si algún día el agente hace acciones con efecto fuera de este repositorio, se cambiarán antes, en un commit público.
+
+## Sello de tiempo (OpenTimestamps)
+
+Con cada entrada, el workflow escribe un «ancla» en `logs/anchors/`: un archivo de texto pequeño con el número de entradas, el hash de la última y el sha256 del log hasta esa línea. Después la sella con [OpenTimestamps](https://opentimestamps.org/) y guarda el sello al lado (`.txt.ots`).
+
+- OpenTimestamps es gratuito y no usa wallet. Cuando el sello se confirma en un bloque de Bitcoin, permite comprobar que el ancla ya existía, como tarde, en la fecha de ese bloque. No demuestra que lo anotado sea verdad, ni que esté completo, ni que no se haya dejado nada fuera.
+- Bitcoin y OpenTimestamps solo se usan como registro público de tiempo. No tienen relación con STUBX ni con el token y no le dan respaldo, seguridad ni valor.
+- La confirmación en Bitcoin tarda horas. Hasta entonces el sello está pendiente y no prueba nada por sí solo. El workflow intenta completarlo en las ejecuciones siguientes.
+- El sellado depende de los servidores de calendario públicos de OpenTimestamps, que STUBX no controla. Si fallan, la entrada se escribe igual sin sello y se vuelve a intentar en la ejecución siguiente. Si esos calendarios desaparecen antes de confirmar un sello, ese sello puede quedarse sin completar.
+
+## Cómo comprobarlo
+
+1. **La cadena.** Con Node.js 22 o superior:
+
+   ```bash
+   npm ci
+   npm run logs:verify
+   ```
+
+   Recalcula todos los hashes, comprueba que cada línea enlaza con la anterior y que cada ancla coincide con el log. La CI lo hace en cada push y pull request de personas y en su ejecución semanal. Los commits del propio workflow `daily-log` no lanzan la CI (GitHub no lo hace con su token), pero ese workflow hace la misma verificación antes de cada commit.
+
+   `logs:verify` solo comprueba que cada ancla tiene su archivo `.ots`, no que el sello esté confirmado en Bitcoin. Eso se comprueba en el paso 3.
+
+2. **Que solo se añade.** La CI compara el log con el commit anterior y falla si una línea existente cambia o desaparece. En el historial de Git de `logs/agent-log.jsonl` también se ve que cada commit solo añade líneas al final.
+
+3. **El sello.** Antes de marcar la casilla «Logs» del PPM hay que comprobar a mano, con `ots verify` o en opentimestamps.org, que al menos un sello está confirmado. Descarga un ancla (`logs/anchors/AAAA-MM-DD-NNNNNN.txt`) y su `.ots`. Súbelos juntos en https://opentimestamps.org/ o usa el cliente `ots verify` (para la comprobación completa necesita un nodo de Bitcoin propio).
+
+4. **Cada entrada.** El campo `evidence` enlaza con la ejecución de Actions que la escribió. Ahí se ven el resumen y el resultado del simulacro.
+
+## Qué commit hace el workflow
+
+El workflow tiene dos jobs:
+
+- `build` (solo lectura) escribe la entrada, hace el simulacro, instala el cliente de OpenTimestamps fijado por versión y hash, sella el ancla y comprueba el resultado.
+- `commit` (con permiso `contents: write`, solo en `main`) no instala nada de Python. Instala las dependencias de desarrollo de npm fijadas por `package-lock.json`, sin scripts (`npm ci --ignore-scripts`). Comprueba que el cambio solo añade líneas y anclas dentro de `logs/`, y hace el commit como `github-actions[bot]`.
+
+## Casilla del PPM
+
+La casilla «Logs» del PPM sigue `pending`. No se marcará hasta tener entradas escritas por el workflow `daily-log` en `main` en al menos 7 días distintos (UTC), al menos un sello de OpenTimestamps confirmado (comprobado a mano con `ots verify` o en opentimestamps.org) y la revisión, incluido el OK legal.
+
+Aunque se marque, solo querrá decir que existe un log público diario y verificable del estado del kill-switch y del simulacro. No querrá decir que registre todo lo que hace el agente ni que lo anotado sea cierto.
+
+## Log en memoria (`log:append`)
+
+La acción `log:append` del agente sigue siendo otra cosa: deja una nota en memoria, no la publica y se pierde al salir (`published: false`, `persisted: false`). `verifyChain()` de `src/log.ts` sigue respondiendo `ok: false` para ese log en memoria. El log público lo verifica `npm run logs:verify`.
 
 ## English
 
-Public append-only logs are phase P4 and are not claimed. This version only defines a sha256 log entry and keeps it in memory. `verifyChain()` does not report success.
+`logs/agent-log.jsonl` is a public, append-only, hash-chained log written by the `daily-log` workflow (scheduled daily at 06:23 UTC, also runnable by hand; GitHub may delay or skip scheduled runs). The agent is a prototype and takes no actions with effects outside this repository (it posts nothing to social media, signs nothing and moves no funds), so each entry only records data produced by the repository in that run: the kill-switch state, the result of the kill-switch drill, the commit and the Actions run link. Anchors in `logs/anchors/` are submitted to OpenTimestamps (free, no wallet, relies on public calendar servers). A proof stays pending for hours until it is confirmed in a Bitcoin block; once confirmed, it only shows that the anchor existed no later than that block's time, not that the log is true or complete. Bitcoin and OpenTimestamps are used only as a public time record; they have no link to STUBX or the token and give it no backing, security or value. The daily entry is still written when the kill-switch is engaged or unreadable (see KILL-SWITCH.md); it only records that state and has no on-chain effect. `npm run logs:verify` recomputes the chain and checks the anchors (it only checks that each `.ots` file exists, not that it is confirmed). CI rejects any change that edits or removes existing lines; commits made by the `daily-log` workflow itself do not trigger CI, but that workflow runs the same checks before each commit. The chain shows that published entries were not changed later; it does not show that everything was logged. The PPM box stays `pending` until there are entries written by the `daily-log` workflow on `main` on at least 7 distinct days (UTC), at least one OpenTimestamps proof confirmed by hand (`ots verify` or opentimestamps.org), and review including legal sign-off.

@@ -22,7 +22,9 @@
     "test": "tsc && node --test --test-reporter=spec --test-reporter=./scripts/test-report.js --test-reporter-destination=stdout --test-reporter-destination=test-reporter-out.txt \"dist/test/**/*.test.js\"",
     "ppm:print": "tsc && node dist/src/cli.js ppm:print",
     "scan:forbidden": "tsc && node dist/src/cli.js scan:forbidden",
-    "drill:killswitch": "tsc && node scripts/killswitch-drill.mjs"
+    "drill:killswitch": "tsc && node scripts/killswitch-drill.mjs",
+    "logs:verify": "tsc && node dist/src/cli.js logs:verify",
+    "logs:daily": "tsc && node dist/src/cli.js logs:daily"
   },
   "devDependencies": {
     "@types/node": "^22.19.0",

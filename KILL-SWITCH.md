@@ -4,6 +4,8 @@
 
 Un interruptor para el código del agente de este repositorio: si está activado, el agente no ejecuta ninguna acción. No tiene efecto on-chain. El estado vive en [`state/killswitch.json`](state/killswitch.json).
 
+Excepción: el registro diario del log público (workflow `daily-log`, ver [LOGS.md](LOGS.md)) sigue escribiéndose aunque el interruptor esté activado o no se pueda leer. Solo anota ese estado en `logs/` (con la fecha, el commit y el enlace a la ejecución), y el workflow sella el ancla con OpenTimestamps. No ejecuta el simulacro ni ninguna acción del agente, no publica en redes sociales, no firma, no mueve fondos y no tiene efecto on-chain.
+
 Hoy el archivo guardado en el repositorio está desactivado (`engaged: false`). Cambiarlo es un commit. El simulacro semanal automático se explica más abajo.
 
 ## Qué para
@@ -21,7 +23,7 @@ No hay efecto on-chain. El alcance es `ops-social`. Cualquier otro `scope` en el
 
 ## Fail-closed
 
-Si el archivo no se puede leer, es un enlace simbólico, no es JSON o no tiene la forma exacta, **no se ejecuta ninguna acción**.
+Si el archivo no se puede leer, es un enlace simbólico, no es JSON o no tiene la forma exacta, **no se ejecuta ninguna acción** del agente. El log diario solo anota que el archivo no se puede leer (ver la excepción de arriba).
 
 ## Cómo se comprueba
 
@@ -56,4 +58,4 @@ La casilla «Kill-switch» del PPM **no** se marca por tener este workflow. Solo
 
 ## English
 
-The kill-switch is a switch for the agent code in this repository: when engaged, the agent runs no actions. It only stops this package and has no on-chain effect; it does not affect the token, whose mint and freeze authorities are already revoked. It reads `state/killswitch.json` and fails closed when that file cannot be read or parsed. It cannot pause holder transfers, freeze accounts, seize balances, or stop Solana. A drill (`killswitch-drill` workflow, scheduled for Mondays 08:17 UTC and also runnable by hand; GitHub may delay or skip scheduled runs, so the Actions history shows the real ones) engages the switch in a temporary copy, checks that every allowed action is refused, checks fail-closed on a missing or corrupt file, and checks that disengaging restores service. The drill itself makes no network calls; the workflow only downloads the code and dev dependencies and uploads the report. A green drill only proves what that drill checks, in that version of the code. Results are on the Actions tab. The PPM box stays unmarked until at least two consecutive green public drills have been reviewed.
+The kill-switch is a switch for the agent code in this repository: when engaged, the agent runs no actions. Exception: the daily public-log entry (`daily-log` workflow, see LOGS.md) is still written when the switch is engaged or unreadable. It only records that state in `logs/` (with the date, commit and run link), and the workflow submits the anchor to OpenTimestamps; it runs no drill and no agent action, posts nothing to social media, signs nothing, moves no funds and has no on-chain effect. The switch itself only stops this package and has no on-chain effect; it does not affect the token, whose mint and freeze authorities are already revoked. The switch reads `state/killswitch.json` and fails closed when that file cannot be read or parsed. It cannot pause holder transfers, freeze accounts, seize balances, or stop Solana. A drill (`killswitch-drill` workflow, scheduled for Mondays 08:17 UTC and also runnable by hand; GitHub may delay or skip scheduled runs, so the Actions history shows the real ones) engages the switch in a temporary copy, checks that every allowed action is refused, checks fail-closed on a missing or corrupt file, and checks that disengaging restores service. The drill itself makes no network calls; the workflow only downloads the code and dev dependencies and uploads the report. A green drill only proves what that drill checks, in that version of the code. Results are on the Actions tab. The PPM box stays unmarked until at least two consecutive green public drills have been reviewed.

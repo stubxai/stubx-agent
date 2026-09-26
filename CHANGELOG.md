@@ -2,6 +2,17 @@
 
 ## Sin publicar
 
+Fase P4: log público de solo añadir.
+
+- `logs/agent-log.jsonl`: una entrada diaria encadenada por hash (estado del kill-switch, resultado del simulacro, commit y enlace a la ejecución). Modo `prototipo`: el agente no hace acciones con efecto fuera de este repositorio.
+- Workflow `daily-log` (programado cada día a las 06:23 UTC y manual). `contents: write` solo en el job que hace el commit, solo en `main` y solo dentro de `logs/`.
+- Anclas en `logs/anchors/` selladas con OpenTimestamps (gratis, sin wallet). Cliente fijado por versión y sha256 en `.github/ots-requirements.txt`.
+- `npm run logs:verify` y `logs:check-update` (solo añadir). La CI verifica el log y falla si un cambio edita o borra líneas existentes.
+- Tests en `test/public-log.test.ts`.
+- CI: la ejecución programada semanal pasa de las 07:00 a las 07:11 UTC (cron `11 7 * * 1`). El README lo describe así.
+- KILL-SWITCH.md declara la excepción: el registro diario sigue escribiéndose con el interruptor activado o ilegible, solo para anotar ese estado.
+- La casilla «Logs» del PPM sigue `pending`.
+
 Fase P3: simulacro del kill-switch.
 
 - Workflow `killswitch-drill` (programado los lunes a las 08:17 UTC y manual), con permiso `contents: read` y acciones fijadas por SHA.

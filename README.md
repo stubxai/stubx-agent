@@ -46,7 +46,7 @@ El detalle está en [LIMITS.md](LIMITS.md) y en [KILL-SWITCH.md](KILL-SWITCH.md)
 | Casilla | Estado en este repo | ¿Casilla pública marcada? |
 | --- | --- | --- |
 | Wallet | `pending` | No |
-| Logs | `pending` | No |
+| Logs | `pending` (log público diario en `logs/`, ver [LOGS.md](LOGS.md)) | No. Hacen falta entradas escritas por el workflow `daily-log` en `main` en al menos 7 días distintos (UTC), un sello confirmado y revisión, incluido el OK legal |
 | Límites | Tests de este repositorio (`repo-tested`) | No |
 | Kill-switch | Fail-closed cubierto por tests de este repositorio y simulacro semanal programado en Actions (ver historial) | No. Hacen falta al menos 2 simulacros públicos seguidos en verde y revisión |
 
@@ -62,6 +62,7 @@ npm run typecheck
 npm test
 npm run ppm:print
 npm run drill:killswitch
+npm run logs:verify
 ```
 
 No hace falta red para los tests. No hace falta una clave.
@@ -74,11 +75,13 @@ En la pestaña **Actions** del repositorio, workflow `ci`:
 
 `https://github.com/stubxai/stubx-agent/actions/workflows/ci.yml`
 
-Se ejecuta en cada push, en cada pull request y los lunes a las 07:00 UTC, con Node 22.14.0 (la matriz del workflow y `.nvmrc`). Hace `npm ci`, typecheck, tests, `ppm:print`, `npm audit --audit-level=high` y un escaneo de secretos con el binario libre de gitleaks (historia completa). El artefacto `test-report` incluye el informe, la salida de `ppm:print` y `SHA256SUMS`.
+Se ejecuta en cada push, en cada pull request y en una ejecución programada semanal (cron `11 7 * * 1`: los lunes a las 07:11 UTC; GitHub puede retrasarla o saltársela), con Node 22.14.0 (la matriz del workflow y `.nvmrc`). Hace `npm ci`, typecheck, tests, la verificación del log público (`logs:verify` y que solo se añadan líneas), `ppm:print`, `npm audit --audit-level=high` y un escaneo de secretos con el binario libre de gitleaks (historia completa). El artefacto `test-report` incluye el informe, la salida de `ppm:print` y `SHA256SUMS`.
 
 En `main`, un job aparte genera la atestación de procedencia de ese informe (`id-token: write` y `attestations: write` solo en ese job). El resto del workflow usa `contents: read`.
 
 El simulacro del kill-switch va en su propio workflow, `killswitch-drill`, programado los lunes a las 08:17 UTC y también manual con «Run workflow». Solo tiene permiso `contents: read`. Qué comprueba y dónde ver el informe: [KILL-SWITCH.md](KILL-SWITCH.md#simulacro-semanal).
+
+El log público va en su propio workflow, `daily-log`, programado cada día a las 06:23 UTC y también manual con «Run workflow». Es el único workflow que puede escribir en el repositorio (`contents: write`, solo en el job que hace el commit y solo dentro de `logs/`). Qué anota, qué no demuestra y cómo comprobarlo: [LOGS.md](LOGS.md).
 
 CodeQL y OpenSSF Scorecard van en workflows distintos. No prometemos una nota de Scorecard.
 
@@ -101,6 +104,7 @@ Pendiente de confirmar en el repositorio:
 | `policy/limits.json` | Límites v1, versión máquina. |
 | `state/killswitch.json` | Interruptor. Fail-closed si no se puede leer. |
 | `state/public-mint.json` | Mint público, solo lectura local. |
+| `logs/` | Log público de solo añadir y sus sellos de OpenTimestamps. Lo escribe el workflow `daily-log`. |
 | `test/` | Tests. El fixture `test/fixtures/` no es parte del agente. |
 | `LIMITS.md`, `KILL-SWITCH.md`, `LOGS.md`, `SECURITY.md`, `THREAT-MODEL.md` | Política y alcance. |
 
@@ -114,6 +118,6 @@ Public skeleton of the STUBX agent. Prototype. Experimental memecoin · you can 
 
 Official channels: [x.com/stubxai](https://x.com/stubxai), https://superb-horse-9036f5.netlify.app/, stubxai.hq@gmail.com.
 
-Verify with Node.js 22 or newer (`npm ci`, `npm run typecheck`, `npm test`, and `npm run ppm:print`). CI runs on Node 22.14.0, on push, pull request, and every Monday 07:00 UTC. Results are on the Actions tab of `github.com/stubxai/stubx-agent`. `github.com/stubx` is an unrelated account.
+Verify with Node.js 22 or newer (`npm ci`, `npm run typecheck`, `npm test`, and `npm run ppm:print`). CI runs on Node 22.14.0, on push, on pull request, and on a weekly schedule (cron `11 7 * * 1`, Mondays 07:11 UTC; GitHub may delay or skip scheduled runs). Results are on the Actions tab of `github.com/stubxai/stubx-agent`. `github.com/stubx` is an unrelated account.
 
-`ppm:print` keeps wallet and logs at `pending`. Limits and the kill-switch have tests in this repository, and a weekly kill-switch drill is scheduled on the Actions tab (see its history). No public PPM box is marked. The GitHub account `stubxai` has 2FA enabled, as confirmed by its owner on 2026-09-26 (not publicly verifiable). The kill-switch cannot pause holder transfers or freeze accounts. Public append-only logs are a later phase.
+`ppm:print` keeps wallet and logs at `pending`. Limits and the kill-switch have tests in this repository, and a weekly kill-switch drill is scheduled on the Actions tab (see its history). No public PPM box is marked. The GitHub account `stubxai` has 2FA enabled, as confirmed by its owner on 2026-09-26 (not publicly verifiable). The kill-switch cannot pause holder transfers or freeze accounts. A public append-only, hash-chained log is written by the `daily-log` workflow (scheduled daily; GitHub may delay or skip runs). Its anchors are submitted to OpenTimestamps and each proof stays pending until it is confirmed in Bitcoin; a proof only shows that an anchor existed by then, not that the log is true or complete. The logs box stays `pending` (see LOGS.md).
