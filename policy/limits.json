@@ -1,0 +1,94 @@
+{
+  "id": "stubx-agent-limits",
+  "version": "1.0.0",
+  "limits": [
+    {
+      "id": "no-sign",
+      "title": "No firma",
+      "statement": "El agente no firma mensajes ni transacciones.",
+      "enforcedBy": ["src/allowlist.ts", "src/orchestrator.ts", "src/forbidden-scan.ts"],
+      "test": "test/limits.test.ts"
+    },
+    {
+      "id": "no-custody",
+      "title": "No custodia",
+      "statement": "El agente no custodia activos ni claves.",
+      "enforcedBy": ["src/allowlist.ts", "src/orchestrator.ts"],
+      "test": "test/limits.test.ts"
+    },
+    {
+      "id": "no-trade",
+      "title": "No intercambia",
+      "statement": "El agente no intercambia tokens ni opera en un mercado.",
+      "enforcedBy": ["src/allowlist.ts", "src/orchestrator.ts"],
+      "test": "test/limits.test.ts"
+    },
+    {
+      "id": "no-send",
+      "title": "No envía transacciones",
+      "statement": "El agente no envía transacciones.",
+      "enforcedBy": ["src/allowlist.ts", "src/orchestrator.ts", "src/forbidden-scan.ts"],
+      "test": "test/limits.test.ts"
+    },
+    {
+      "id": "no-mainnet",
+      "title": "No usa la red principal",
+      "statement": "El agente no contacta la red principal ni escribe en ella.",
+      "enforcedBy": ["src/guard.ts", "src/orchestrator.ts"],
+      "test": "test/limits.test.ts"
+    },
+    {
+      "id": "no-solicit-funds",
+      "title": "No pide activos",
+      "statement": "El agente no pide SOL ni otros activos a nadie.",
+      "enforcedBy": ["src/draft.ts", "src/orchestrator.ts"],
+      "test": "test/limits.test.ts"
+    },
+    {
+      "id": "no-invented-addresses",
+      "title": "No inventa direcciones ni huellas",
+      "statement": "El agente no inventa direcciones ni huellas: solo puede citar el mint público de este repositorio.",
+      "enforcedBy": ["src/draft.ts", "src/public-mint.ts", "src/orchestrator.ts"],
+      "test": "test/limits.test.ts"
+    },
+    {
+      "id": "no-outcome-promises",
+      "title": "No promete resultados",
+      "statement": "El agente no promete resultados, ganancias ni ausencia de riesgo.",
+      "enforcedBy": ["src/draft.ts", "src/orchestrator.ts"],
+      "test": "test/limits.test.ts"
+    },
+    {
+      "id": "no-publish-while-killed",
+      "title": "No publica con el kill-switch activado",
+      "statement": "El agente no prepara un borrador social si el kill-switch está activado.",
+      "enforcedBy": ["src/orchestrator.ts", "src/kill-switch.ts"],
+      "test": "test/limits.test.ts"
+    },
+    {
+      "id": "no-store-secrets",
+      "title": "No guarda secretos",
+      "statement": "El agente no almacena secretos ni material de clave.",
+      "enforcedBy": ["src/draft.ts", "src/forbidden-scan.ts", "src/orchestrator.ts"],
+      "test": "test/limits.test.ts"
+    }
+  ],
+  "killSwitchCannot": [
+    {
+      "id": "pause-holder-transfers",
+      "statement": "No puede pausar transferencias de holders."
+    },
+    {
+      "id": "freeze-accounts",
+      "statement": "No puede congelar cuentas."
+    },
+    {
+      "id": "seize-balances",
+      "statement": "No puede confiscar saldos."
+    },
+    {
+      "id": "stop-solana",
+      "statement": "No puede apagar Solana."
+    }
+  ]
+}
