@@ -24,9 +24,10 @@ export const MAX_OTS_BYTES = 65536;
  * Fixed text written into every entry, forever. The mode ("prototipo") and this
  * note are fixed in code: if the agent ever takes actions with effects outside
  * this repository, both must change first, in a public commit (see LOGS.md).
+ * Changed on 2026-09-28 (P5) to name the @stubxai posts; earlier entries keep the earlier note (append-only).
  */
 export const DAILY_NOTE =
-  "Prototipo. El agente no publica en redes sociales, no firma y no mueve fondos. Esta entrada la escribe el workflow daily-log y solo anota el estado del kill-switch y el resultado del simulacro en este repositorio.";
+  "Prototipo. El agente de este repositorio no publica en redes sociales, no firma y no mueve fondos. Los posts de @stubxai los prepara y publica otro agente de IA, fuera de este repositorio, a partir de textos aprobados antes de publicarse. Esta entrada la escribe el workflow daily-log y solo anota el estado del kill-switch y el resultado del simulacro en este repositorio.";
 
 const ISO_UTC = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
 const HEX64 = /^[0-9a-f]{64}$/;
