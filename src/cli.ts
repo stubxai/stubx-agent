@@ -3,6 +3,7 @@ import path from "node:path";
 import { scanTree } from "./forbidden-scan.js";
 import { createOrchestrator } from "./orchestrator.js";
 import { repoRoot } from "./paths.js";
+import { logsStatus } from "./logs-status.js";
 import { checkLogsUpdate, runUrl } from "./public-log.js";
 import { appendDailyEntry, defaultLogsDir, readLogsTree, verifyLogsTree } from "./public-log-files.js";
 
@@ -36,6 +37,13 @@ if (command === "scan:forbidden") {
   const ok = problems.length === 0 && result.ok;
   console.log(JSON.stringify({ ...result, ok, problems: [...problems, ...result.problems] }, null, 2));
   process.exit(ok ? 0 : 1);
+} else if (command === "logs:status") {
+  const dir = process.argv[3] ? path.resolve(process.argv[3]) : defaultLogsDir(repoRoot());
+  const { tree, problems } = readLogsTree(dir);
+  const status = logsStatus(tree);
+  const ok = problems.length === 0 && status.ok;
+  console.log(JSON.stringify({ ...status, ok, problems: [...problems, ...status.problems] }, null, 2));
+  process.exit(ok ? 0 : 1);
 } else if (command === "logs:daily") {
   const root = repoRoot();
   const result = appendDailyEntry({
@@ -56,7 +64,7 @@ if (command === "scan:forbidden") {
         `- Simulacro: ${e.detail.drill.ran ? (e.detail.drill.ok ? "verde" : "rojo") : "no ejecutado"} (${e.detail.drill.passed}/${e.detail.drill.steps} pasos)`,
         `- Hash: \`${e.hash}\``,
         `- Ancla: \`logs/${result.anchor}\``,
-        "- Modo: prototipo. El agente no publica en redes sociales, no firma y no mueve fondos.",
+        "- Modo: prototipo. El agente de este repositorio no publica en redes sociales, no firma y no mueve fondos. Los posts de @stubxai los publica otro agente de IA, fuera de este repositorio.",
         "",
       ].join("\n"),
     );
@@ -76,6 +84,6 @@ if (command === "scan:forbidden") {
   console.log(JSON.stringify({ ...result, ok: problems.length === 0, problems }, null, 2));
   process.exit(problems.length === 0 ? 0 : 1);
 } else {
-  console.error("Commands: ppm:print, ppm:check, scan:forbidden, logs:verify, logs:daily, logs:check-update");
+  console.error("Commands: ppm:print, ppm:check, scan:forbidden, logs:verify, logs:status, logs:daily, logs:check-update");
   process.exit(1);
 }

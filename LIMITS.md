@@ -2,7 +2,7 @@
 
 Política en lenguaje llano. La copia máquina es [`policy/limits.json`](policy/limits.json) (`id`: `stubx-agent-limits`, `version`: `1.0.0`). Un test falla si el markdown, el JSON y el código no coinciden.
 
-Esto es un prototipo. No tiene valor. No es asesoramiento financiero. El agente no tiene claves.
+Esto es un prototipo. STUBX no tiene valor intrínseco ni da derechos, y su precio puede llegar a cero. Memecoin experimental · puedes perderlo todo · no es consejo de inversión. El agente no tiene claves.
 
 Estos límites están aplicados en este repositorio y cubiertos por tests. Eso no marca la casilla pública del PPM: hace falta un enlace a una ejecución pública de CI y el OK legal.
 
@@ -129,5 +129,7 @@ El mismo test apunta el escáner a `test/fixtures/forbidden-sample.js`. Ese arch
 No hay dependencias de ejecución. El test también falla si `package.json` declara una librería de wallet.
 
 ## English
+
+This is a prototype. STUBX has no intrinsic value, gives no rights, and its price can go to zero. Experimental memecoin · you can lose everything · not investment advice. The agent holds no keys.
 
 Limits v1 are deny-by-default. The agent does not sign, custody, exchange, send transactions, contact mainnet, ask anyone for assets, invent addresses or hashes, promise outcomes, draft a social note while the kill-switch is engaged, or store secrets. The kill-switch cannot pause holder transfers, freeze accounts, seize balances, or stop Solana. `npm test` is the check. It does not mark the public PPM boxes.

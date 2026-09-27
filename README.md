@@ -87,9 +87,11 @@ CodeQL y OpenSSF Scorecard van en workflows distintos. No prometemos una nota de
 
 El escáner de secretos es el binario de gitleaks publicado en GitHub, fijado por versión y checksum. No usamos el wrapper `gitleaks-action`: en repositorios de organización pide una licencia guardada como secreto, y esta CI no guarda secretos.
 
-## Ajustes de GitHub que no van en el código
+## Ajustes de cuentas que no van en el código
 
 Según confirmó su propietario el 26-09-2026, la cuenta de GitHub `stubxai` tiene activada la verificación en dos pasos (2FA). Es un ajuste de la cuenta y no se puede comprobar desde fuera.
+
+Según confirmó su propietario el 28-09-2026, la cuenta de X [@stubxai](https://x.com/stubxai) tiene activada la verificación en dos pasos (2FA) con app de autenticación. También es un ajuste de la cuenta y no se puede comprobar desde fuera.
 
 Pendiente de confirmar en el repositorio:
 
@@ -120,4 +122,4 @@ Official channels: [x.com/stubxai](https://x.com/stubxai), https://superb-horse-
 
 Verify with Node.js 22 or newer (`npm ci`, `npm run typecheck`, `npm test`, and `npm run ppm:print`). CI runs on Node 22.14.0, on push, on pull request, and on a weekly schedule (cron `11 7 * * 1`, Mondays 07:11 UTC; GitHub may delay or skip scheduled runs). Results are on the Actions tab of `github.com/stubxai/stubx-agent`. Any other GitHub account or organization (including `github.com/stubx`, without “ai”) has no relation to STUBX.
 
-`ppm:print` keeps wallet and logs at `pending`. Limits and the kill-switch have tests in this repository, and a weekly kill-switch drill is scheduled on the Actions tab (see its history). No public PPM box is marked. The GitHub account `stubxai` has 2FA enabled, as confirmed by its owner on 2026-09-26 (not publicly verifiable). The kill-switch cannot pause holder transfers or freeze accounts. A public append-only, hash-chained log is written by the `daily-log` workflow (scheduled daily; GitHub may delay or skip runs). Its anchors are submitted to OpenTimestamps and each proof stays pending until it is confirmed in Bitcoin; a proof only shows that an anchor existed by then, not that the log is true or complete. The logs box stays `pending` (see LOGS.md).
+`ppm:print` keeps wallet and logs at `pending`. Limits and the kill-switch have tests in this repository, and a weekly kill-switch drill is scheduled on the Actions tab (see its history). No public PPM box is marked. The GitHub account `stubxai` has 2FA enabled, as confirmed by its owner on 2026-09-26, and the X account @stubxai has 2FA enabled with an authenticator app, as confirmed by its owner on 2026-09-28 (neither is publicly verifiable). The kill-switch cannot pause holder transfers or freeze accounts. A public append-only, hash-chained log is written by the `daily-log` workflow (scheduled daily; GitHub may delay or skip runs). Its anchors are submitted to OpenTimestamps and each proof stays pending until it is confirmed in Bitcoin; a proof only shows that an anchor existed by then, not that the log is true or complete. The logs box stays `pending` (see LOGS.md).

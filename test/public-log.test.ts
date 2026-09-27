@@ -270,7 +270,8 @@ describe("public append-only log", () => {
 
   test("the fixed note names the workflow and keeps the social-media wording", () => {
     assert.ok(DAILY_NOTE.length <= 400);
-    assert.match(DAILY_NOTE, /^Prototipo\. El agente no publica en redes sociales, no firma y no mueve fondos\./);
+    assert.match(DAILY_NOTE, /^Prototipo\. El agente de este repositorio no publica en redes sociales, no firma y no mueve fondos\./);
+    assert.match(DAILY_NOTE, /@stubxai/);
     assert.match(DAILY_NOTE, /workflow daily-log/);
   });
 
