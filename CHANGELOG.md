@@ -2,6 +2,12 @@
 
 ## Sin publicar
 
+P5 (28-09-2026): documentación y `logs:status`.
+
+- README y THREAT-MODEL: según confirmó su propietario el 28-09-2026, la cuenta de X @stubxai tiene activada la 2FA con app de autenticación (no verificable desde fuera). El apartado del README pasa a llamarse «Ajustes de cuentas que no van en el código».
+- `npm run logs:status` (28-09-2026): resumen de solo lectura que cuenta los días UTC distintos con entradas del workflow y dice si ya llegan a 7. No marca la casilla (siempre `box: "pending"`). Tests en `test/logs-status.test.ts`.
+- Nota fija del log (`DAILY_NOTE`), resumen de Actions y LOGS.md: distinguen el agente de este repositorio (no publica en redes sociales) de los posts de @stubxai, que prepara y publica otro agente de IA fuera de este repositorio a partir de textos aprobados. Las entradas anteriores no se reescriben.
+
 Fase P4: log público de solo añadir.
 
 - `logs/agent-log.jsonl`: una entrada diaria encadenada por hash (estado del kill-switch, resultado del simulacro, commit y enlace a la ejecución). Modo `prototipo`: el agente no hace acciones con efecto fuera de este repositorio.
