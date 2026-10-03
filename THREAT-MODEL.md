@@ -23,4 +23,4 @@ Los rulesets de `main` (PR, checks, sin force-push) son un ajuste de GitHub. Est
 
 ## English
 
-This repository is the public skeleton of an agent that cannot sign or hold keys. Do not treat a green local test as a marked PPM box. The public append-only log (`daily-log` workflow) is the only workflow with `contents: write`, limited to its commit job on `main`, which checks that only `logs/` is appended to. The weekly kill-switch drill is scheduled on the Actions tab (see its history); the PPM box stays unmarked until at least two consecutive green public drills have been reviewed.
+This repository is the public skeleton of an agent that cannot sign or hold keys. Do not treat a green local test as a marked PPM box. The public append-only log (`daily-log` workflow) is the only workflow with `contents: write`, limited to its commit job on `main`, which checks that only `logs/` is appended to. The weekly kill-switch drill is scheduled on the Actions tab (see its history); the PPM box was marked on 2026-10-05 after reviewing consecutive green public drills; a failing drill unmarks it.

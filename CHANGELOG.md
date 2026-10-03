@@ -2,6 +2,13 @@
 
 ## Sin publicar
 
+Casillas del PPM «Límites» y «Kill-switch» (05-10-2026).
+
+- `ppm:print` marca `limits` y `killSwitch` (`ppmMarked: true`, `markedOn: 2026-10-05`) con sus enlaces públicos: la CI del 05-10 y los simulacros del 26-09, 28-09 y 05-10. `wallet` y `logs` siguen `pending` y sin marcar. `approved` sigue en `false`.
+- `ppm:check` (y la CI) solo aceptan esas dos casillas marcadas, cada una con un enlace a una ejecución de Actions de este repositorio, y `ppmMarkedCount` igual al número de casillas marcadas.
+- El paso de la CI «PPM stays unmarked» pasa a «PPM marks only limits and kill-switch, with public runs».
+- KILL-SWITCH.md, LIMITS.md, README y THREAT-MODEL: textos al día. Marcada no significa auditada; una ejecución en rojo la desmarca.
+
 P5 (28-09-2026): documentación y `logs:status`.
 
 - README y THREAT-MODEL: según confirmó su propietario el 28-09-2026, la cuenta de X @stubxai tiene activada la 2FA con app de autenticación (no verificable desde fuera). El apartado del README pasa a llamarse «Ajustes de cuentas que no van en el código».
