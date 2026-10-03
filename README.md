@@ -12,7 +12,7 @@ El mint público del token (Pump.fun) es `TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycN
 
 El único repositorio oficial es [github.com/stubxai/stubx-agent](https://github.com/stubxai/stubx-agent). Compruébalo: tiene que estar enlazado desde la web oficial y desde [@stubxai](https://x.com/stubxai). Cualquier otra cuenta u organización de GitHub (también `github.com/stubx`, sin «ai») no tiene relación con STUBX.
 
-Canales oficiales: X [@stubxai](https://x.com/stubxai) · web https://superb-horse-9036f5.netlify.app/ · **stubxai.hq@gmail.com**.
+Canales oficiales: X [@stubxai](https://x.com/stubxai) · web https://stubxai.com/ (la dirección antigua, superb-horse-9036f5.netlify.app, está grabada en el token y redirige con 301) · **stubxai.hq@gmail.com**.
 
 ## Qué puede hacer
 
@@ -93,10 +93,11 @@ Según confirmó su propietario el 26-09-2026, la cuenta de GitHub `stubxai` tie
 
 Según confirmó su propietario el 28-09-2026, la cuenta de X [@stubxai](https://x.com/stubxai) tiene activada la verificación en dos pasos (2FA) con app de autenticación. También es un ajuste de la cuenta y no se puede comprobar desde fuera.
 
-Pendiente de confirmar en el repositorio:
+Activado en el repositorio (comprobado con la API de GitHub el 03-10-2026): secret scanning, push protection y actualizaciones de seguridad de Dependabot.
 
-- Secret scanning y push protection (gratis en repos públicos).
-- Ruleset en `main`: pull request, checks obligatorios, sin force-push y sin borrado.
+Pendiente en el repositorio:
+
+- Ruleset en `main`: sin force-push y sin borrado; pull request y checks obligatorios para cambios de personas, sin bloquear el commit diario del workflow `daily-log` (ver LOGS.md).
 
 ## Mapa
 
@@ -118,7 +119,7 @@ Informes de seguridad: [SECURITY.md](SECURITY.md). No hay recompensa económica.
 
 Public skeleton of the STUBX agent. Prototype. Experimental memecoin · you can lose everything · not investment advice. The agent holds no keys: it does not sign, custody, exchange, or send transactions.
 
-Official channels: [x.com/stubxai](https://x.com/stubxai), https://superb-horse-9036f5.netlify.app/, stubxai.hq@gmail.com.
+Official channels: [x.com/stubxai](https://x.com/stubxai), https://stubxai.com/ (the old address, superb-horse-9036f5.netlify.app, is recorded in the token metadata and redirects with a 301), stubxai.hq@gmail.com.
 
 Verify with Node.js 22 or newer (`npm ci`, `npm run typecheck`, `npm test`, and `npm run ppm:print`). CI runs on Node 22.14.0, on push, on pull request, and on a weekly schedule (cron `11 7 * * 1`, Mondays 07:11 UTC; GitHub may delay or skip scheduled runs). Results are on the Actions tab of `github.com/stubxai/stubx-agent`. Any other GitHub account or organization (including `github.com/stubx`, without “ai”) has no relation to STUBX.
 

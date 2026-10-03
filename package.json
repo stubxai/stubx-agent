@@ -5,6 +5,7 @@
   "description": "Public skeleton of the STUBX agent. No wallet, no signing, no custody, no network writes.",
   "license": "MIT",
   "author": "STUBX <stubxai.hq@gmail.com>",
+  "homepage": "https://stubxai.com",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/stubxai/stubx-agent.git"
