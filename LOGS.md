@@ -64,6 +64,39 @@ Con cada entrada, el workflow escribe un «ancla» en `logs/anchors/`: un archiv
 
 4. **Cada entrada.** El campo `evidence` enlaza con la ejecución de Actions que la escribió. Ahí se ven el resumen y el resultado del simulacro.
 
+## Comprobación manual de los sellos (03-10-2026)
+
+Hecha a mano el 03-10-2026 a las 12:17 (Madrid) sobre el commit `5187264` de `main`, con el cliente `ots` 0.7.2 fijado en `.github/ots-requirements.txt`. Sin nodo de Bitcoin propio: el merkle root de cada bloque se ha comparado con el de un explorador público (blockstream.info).
+
+| Ancla | Bloque de Bitcoin | ¿Coincide el merkle root? | Existía, como tarde (Madrid) |
+| --- | --- | --- | --- |
+| `2026-09-26-000001` | 968752 | Sí | 2026-09-27 01:27 |
+| `2026-09-27-000002` | 968801 | Sí | 2026-09-27 09:39 |
+| `2026-09-28-000003` | 968959 | Sí | 2026-09-28 08:51 |
+| `2026-09-29-000004` | 969116 | Sí | 2026-09-29 09:01 |
+| `2026-09-30-000005` | 969277 | Sí | 2026-09-30 09:34 |
+| `2026-10-01-000006` | 969409 | Sí | 2026-10-01 08:55 |
+| `2026-10-02-000007` | 969552 | Sí | 2026-10-02 09:04 |
+| `2026-10-03-000008` | — | Pendiente en el repo (el workflow lo completa en la ejecución siguiente) | — |
+
+Pasos para repetirlo (Linux o macOS, con Python 3 y curl):
+
+```bash
+git clone https://github.com/stubxai/stubx-agent && cd stubx-agent
+python3 -m venv /tmp/ots && /tmp/ots/bin/pip install --require-hashes --no-deps -r .github/ots-requirements.txt
+A=logs/anchors/2026-09-26-000001.txt
+sha256sum "$A"                      # debe coincidir con «File sha256 hash» de la línea siguiente
+/tmp/ots/bin/ots info "$A.ots" | grep -E "File sha256 hash|BitcoinBlockHeaderAttestation|merkle root"
+H=968752                            # el número de bloque que sale arriba
+curl -s https://blockstream.info/api/block/$(curl -s https://blockstream.info/api/block-height/$H) | grep -o '"merkle_root":"[^"]*"'
+```
+
+Si el merkle root del sello y el del bloque coinciden, el ancla existía como tarde a la hora de ese bloque. Sin terminal: sube el `.txt` y su `.ots` a https://opentimestamps.org/.
+
+- Bitcoin y OpenTimestamps solo se usan como registro público de tiempo. No tienen relación con STUBX ni con el token y no le dan respaldo, seguridad ni valor.
+- Comparar con un explorador público es más débil que `ots verify` con un nodo propio: confía en ese explorador.
+- Esta comprobación **no marca la casilla «Logs»**: falta la revisión, incluido el OK legal.
+
 ## Qué commit hace el workflow
 
 El workflow tiene dos jobs:
