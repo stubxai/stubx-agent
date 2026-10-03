@@ -29,7 +29,7 @@
     "logs:daily": "tsc && node dist/src/cli.js logs:daily"
   },
   "devDependencies": {
-    "@types/node": "^22.19.0",
+    "@types/node": "^26.6.3",
     "typescript": "^5.9.2"
   }
 }
