@@ -77,7 +77,9 @@ Hecha a mano el 03-10-2026 a las 12:17 (Madrid) y repetida el mismo día a las 1
 | `2026-09-30-000005` | 969277 | Sí | 2026-09-30 09:34 |
 | `2026-10-01-000006` | 969409 | Sí | 2026-10-01 08:55 |
 | `2026-10-02-000007` | 969552 | Sí | 2026-10-02 09:04 |
-| `2026-10-03-000008` | — | Pendiente en el repo (el workflow lo completa en la ejecución siguiente) | — |
+| `2026-10-03-000008` | 969690 | Sí (completado a mano el 03-10 a las 23:35, ver abajo) | 2026-10-03 08:54 |
+
+El sello `2026-10-03-000008` seguía pendiente en el repo a las 13:59. El 03-10 a las 23:35 (Madrid) se completó a mano con `ots upgrade` (mismo cliente 0.7.2), que es lo mismo que hace el workflow `daily-log` en cada ejecución. Tiene 3 atestaciones de Bitcoin (bloques 969690, 969693 y 969694) y las 3 coinciden con el merkle root de blockstream.info y de mempool.space. El commit solo cambia ese `.ots` y esta tabla; no toca `agent-log.jsonl` ni las anclas.
 
 Pasos para repetirlo (Linux o macOS, con Python 3 y curl):
 
