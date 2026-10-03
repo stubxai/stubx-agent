@@ -66,7 +66,7 @@ Con cada entrada, el workflow escribe un «ancla» en `logs/anchors/`: un archiv
 
 ## Comprobación manual de los sellos (03-10-2026)
 
-Hecha a mano el 03-10-2026 a las 12:17 (Madrid) sobre el commit `5187264` de `main`, con el cliente `ots` 0.7.2 fijado en `.github/ots-requirements.txt`. Sin nodo de Bitcoin propio: el merkle root de cada bloque se ha comparado con el de un explorador público (blockstream.info).
+Hecha a mano el 03-10-2026 a las 12:17 (Madrid) y repetida el mismo día a las 13:59 sobre un clon nuevo del commit `5187264` de `main`, con el cliente `ots` 0.7.2 fijado en `.github/ots-requirements.txt`. Sin nodo de Bitcoin propio: el merkle root de cada bloque se ha comparado con el de dos exploradores públicos independientes (blockstream.info y blockcypher.com). Coinciden todas las atestaciones de Bitcoin de los 7 sellos (24 en total); la tabla da el bloque más antiguo de cada uno.
 
 | Ancla | Bloque de Bitcoin | ¿Coincide el merkle root? | Existía, como tarde (Madrid) |
 | --- | --- | --- | --- |
