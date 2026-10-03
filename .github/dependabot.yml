@@ -5,6 +5,11 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    ignore:
+      # El proyecto fija Node.js 22 (.nvmrc y engines). Los tipos de otra versión mayor
+      # permitirían usar APIs que Node 22 no tiene. Se actualizan a mano al cambiar de Node.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
