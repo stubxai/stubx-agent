@@ -5,6 +5,7 @@
   "description": "Public skeleton of the STUBX agent. No wallet, no signing, no custody, no network writes.",
   "license": "MIT",
   "author": "STUBX <stubxai.hq@gmail.com>",
+  "homepage": "https://stubxai.com",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/stubxai/stubx-agent.git"
@@ -25,10 +26,11 @@
     "drill:killswitch": "tsc && node scripts/killswitch-drill.mjs",
     "logs:verify": "tsc && node dist/src/cli.js logs:verify",
     "logs:status": "tsc && node dist/src/cli.js logs:status",
-    "logs:daily": "tsc && node dist/src/cli.js logs:daily"
+    "logs:daily": "tsc && node dist/src/cli.js logs:daily",
+    "verify:all": "tsc && node scripts/verify-all.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.19.0",
-    "typescript": "^5.9.2"
+    "typescript": "^7.0.2"
   }
 }

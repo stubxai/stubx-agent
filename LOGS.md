@@ -64,6 +64,41 @@ Con cada entrada, el workflow escribe un «ancla» en `logs/anchors/`: un archiv
 
 4. **Cada entrada.** El campo `evidence` enlaza con la ejecución de Actions que la escribió. Ahí se ven el resumen y el resultado del simulacro.
 
+## Comprobación manual de los sellos (03-10-2026)
+
+Hecha a mano el 03-10-2026 a las 12:17 (Madrid) y repetida el mismo día a las 13:59 sobre un clon nuevo del commit `5187264` de `main`, con el cliente `ots` 0.7.2 fijado en `.github/ots-requirements.txt`. Sin nodo de Bitcoin propio: el merkle root de cada bloque se ha comparado con el de dos exploradores públicos independientes (blockstream.info y blockcypher.com). Coinciden todas las atestaciones de Bitcoin de los 7 sellos (24 en total); la tabla da el bloque más antiguo de cada uno.
+
+| Ancla | Bloque de Bitcoin | ¿Coincide el merkle root? | Existía, como tarde (Madrid) |
+| --- | --- | --- | --- |
+| `2026-09-26-000001` | 968752 | Sí | 2026-09-27 01:27 |
+| `2026-09-27-000002` | 968801 | Sí | 2026-09-27 09:39 |
+| `2026-09-28-000003` | 968959 | Sí | 2026-09-28 08:51 |
+| `2026-09-29-000004` | 969116 | Sí | 2026-09-29 09:01 |
+| `2026-09-30-000005` | 969277 | Sí | 2026-09-30 09:34 |
+| `2026-10-01-000006` | 969409 | Sí | 2026-10-01 08:55 |
+| `2026-10-02-000007` | 969552 | Sí | 2026-10-02 09:04 |
+| `2026-10-03-000008` | 969690 | Sí (completado a mano el 03-10 a las 23:35, ver abajo) | 2026-10-03 08:54 |
+
+El sello `2026-10-03-000008` seguía pendiente en el repo a las 13:59. El 03-10 a las 23:35 (Madrid) se completó a mano con `ots upgrade` (mismo cliente 0.7.2), que es lo mismo que hace el workflow `daily-log` en cada ejecución. Tiene 3 atestaciones de Bitcoin (bloques 969690, 969693 y 969694) y las 3 coinciden con el merkle root de blockstream.info y de mempool.space. El commit solo cambia ese `.ots` y esta tabla; no toca `agent-log.jsonl` ni las anclas.
+
+Pasos para repetirlo (Linux o macOS, con Python 3 y curl):
+
+```bash
+git clone https://github.com/stubxai/stubx-agent && cd stubx-agent
+python3 -m venv /tmp/ots && /tmp/ots/bin/pip install --require-hashes --no-deps -r .github/ots-requirements.txt
+A=logs/anchors/2026-09-26-000001.txt
+sha256sum "$A"                      # debe coincidir con «File sha256 hash» de la línea siguiente
+/tmp/ots/bin/ots info "$A.ots" | grep -E "File sha256 hash|BitcoinBlockHeaderAttestation|merkle root"
+H=968752                            # el número de bloque que sale arriba
+curl -s https://blockstream.info/api/block/$(curl -s https://blockstream.info/api/block-height/$H) | grep -o '"merkle_root":"[^"]*"'
+```
+
+Si el merkle root del sello y el del bloque coinciden, el ancla existía como tarde a la hora de ese bloque. Sin terminal: sube el `.txt` y su `.ots` a https://opentimestamps.org/.
+
+- Bitcoin y OpenTimestamps solo se usan como registro público de tiempo. No tienen relación con STUBX ni con el token y no le dan respaldo, seguridad ni valor.
+- Comparar con un explorador público es más débil que `ots verify` con un nodo propio: confía en ese explorador.
+- Esta comprobación **no marca la casilla «Logs»**: falta la revisión, incluido el OK legal.
+
 ## Qué commit hace el workflow
 
 El workflow tiene dos jobs:
