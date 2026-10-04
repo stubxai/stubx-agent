@@ -86,6 +86,23 @@ jobs:
       - name: Audit
         run: npm audit --audit-level=high
 
+      - name: verify:all (H8)
+        env:
+          VERIFY_OUT_DIR: verify-out
+        run: |
+          mkdir -p verify-out
+          npm run verify:all
+
+      - name: Upload verify:all report
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: verify-report
+          path: |
+            verify-out/verify-report.json
+            verify-out/verify-report.md
+          if-no-files-found: error
+          retention-days: 14
+
       - name: Checksums
         run: sha256sum test-report.json ppm-status.json policy/limits.json package-lock.json > SHA256SUMS
 
