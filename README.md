@@ -65,6 +65,15 @@ npm run drill:killswitch
 npm run logs:verify
 ```
 
+O todo de una vez, con un informe fechado (`verify-report.md` y `verify-report.json`, con la fecha UTC, el commit y el resultado de cada paso):
+
+```bash
+npm ci
+npm run verify:all
+```
+
+`verify:all` ejecuta en orden `test`, `scan:forbidden`, `drill:killswitch`, `logs:verify` y `logs:status`. No usa red ni secretos y no añade capacidades al agente: solo junta comprobaciones que ya existen.
+
 No hace falta red para los tests. No hace falta una clave.
 
 `npm test` escribe `test-report.json` (no se versiona). `npm run scan:forbidden` recorre `src/`, `scripts/`, `policy/` y `state/` y sale con error si encuentra APIs de firma o de envío.
@@ -75,7 +84,7 @@ En la pestaña **Actions** del repositorio, workflow `ci`:
 
 `https://github.com/stubxai/stubx-agent/actions/workflows/ci.yml`
 
-Se ejecuta en cada push, en cada pull request y en una ejecución programada semanal (cron `11 7 * * 1`: los lunes a las 07:11 UTC; GitHub puede retrasarla o saltársela), con Node 22.14.0 (la matriz del workflow y `.nvmrc`). Hace `npm ci`, typecheck, tests, la verificación del log público (`logs:verify` y que solo se añadan líneas), `ppm:print`, `npm audit --audit-level=high` y un escaneo de secretos con el binario libre de gitleaks (historia completa). El artefacto `test-report` incluye el informe, la salida de `ppm:print` y `SHA256SUMS`.
+Se ejecuta en cada push, en cada pull request y en una ejecución programada semanal (cron `11 7 * * 1`: los lunes a las 07:11 UTC; GitHub puede retrasarla o saltársela), con Node 22.14.0 (la matriz del workflow y `.nvmrc`). Hace `npm ci`, typecheck, tests, la verificación del log público (`logs:verify` y que solo se añadan líneas), `ppm:print`, `npm audit --audit-level=high` y un escaneo de secretos con el binario libre de gitleaks (historia completa). El artefacto `test-report` incluye el informe, la salida de `ppm:print` y `SHA256SUMS`. El artefacto `verify-report` guarda el informe de `npm run verify:all` de esa ejecución.
 
 En `main`, un job aparte genera la atestación de procedencia de ese informe (`id-token: write` y `attestations: write` solo en ese job). El resto del workflow usa `contents: read`.
 
