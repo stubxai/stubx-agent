@@ -73,7 +73,7 @@ jobs:
       - name: PPM marks logs, limits and kill-switch, with public runs
         run: |
           jq -e '
-            def run: test("^https://github\.com/stubxai/stubx-agent/actions/runs/[0-9]+$");
+            def run: test("^https://github\\.com/stubxai/stubx-agent/actions/runs/[0-9]+$");
             .approved == false and
             .ppmMarkedCount == 3 and
             .boxes.wallet.status == "pending" and
