@@ -70,15 +70,18 @@ jobs:
       - name: PPM status
         run: npm run ppm:print --silent > ppm-status.json
 
-      - name: PPM marks logs, limits and kill-switch, with public runs
+      - name: PPM marks logs, limits and kill-switch; wallet not-applicable
         run: |
           jq -e '
             def run: test("^https://github\\.com/stubxai/stubx-agent/actions/runs/[0-9]+$");
             .approved == false and
             .ppmMarkedCount == 3 and
-            .boxes.wallet.status == "pending" and
+            .ppmTotal == 4 and
+            .ppmNotApplicableCount == 1 and
+            .boxes.wallet.status == "not-applicable" and
             .boxes.wallet.ppmMarked == false and
             .boxes.wallet.publicEvidence == null and
+            .boxes.wallet.notApplicableOn == "2026-10-05" and
             .boxes.logs.ppmMarked == true and
             (.boxes.logs.publicEvidence | run) and
             .boxes.limits.ppmMarked == true and

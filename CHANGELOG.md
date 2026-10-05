@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-05 · PPM: casilla Wallet → no aplica
+
+- `ppm:print` pasa `wallet` a `status: "not-applicable"` (`notApplicableOn: 2026-10-05`, `ppmMarked: false`). Motivo: el agente no tiene wallet ni claves por diseño (decisión del creador). La wallet pública del proyecto (SOL) no cuenta para marcar esta casilla.
+- Contadores: `ppmMarkedCount: 3`, `ppmTotal: 4`, `ppmNotApplicableCount: 1`. No es un PPM «cerrado» ni un 3/3.
+- `ppm:check`, tests y el paso de CI comprueban `not-applicable` (nunca `badge`/estado de marcada).
+- Docs: README tabla de casillas y párrafo EN.
+
 ## 2026-10-05 · PPM: casilla Logs marcada
 
 - `ppm:print` marca también `logs` (`ppmMarked: true`, `markedOn: 2026-10-05`) con la ejecución pública del workflow `daily-log` del 05-10 (https://github.com/stubxai/stubx-agent/actions/runs/37274282121). `wallet` sigue `pending`. `approved` sigue en `false`. `ppmMarkedCount: 3`.

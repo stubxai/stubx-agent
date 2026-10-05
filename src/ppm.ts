@@ -3,10 +3,11 @@ import { isRecord, readStrictJson } from "./json-file.js";
 import type { LoadedPolicy } from "./limits.js";
 
 export type PpmBox = {
-  status: "pending" | "repo-tested";
+  status: "pending" | "repo-tested" | "not-applicable";
   provenByTests: boolean;
   ppmMarked: boolean;
   markedOn: string | null;
+  notApplicableOn: string | null;
   publicEvidence: string | null;
   summary: string;
   summaryEn: string;
@@ -14,13 +15,17 @@ export type PpmBox = {
 
 /**
  * Public evidence behind the three marked boxes (logs, limits and kill-switch),
- * reviewed on 2026-10-05 with legal sign-off. Wallet stays unmarked.
+ * reviewed on 2026-10-05 with legal sign-off. Wallet is not-applicable from
+ * 2026-10-05 (by design: the agent has no wallet or keys). The public count
+ * stays "3 of 4 marked · 1 not applicable", never a silent 3/3.
  * Placeholders `__URL_…__` must be replaced by real Actions run URLs before
  * merging: evaluatePpmHonesty rejects anything that is not a run URL of this
  * repository, so CI stays red while a placeholder is left.
  */
 export const RUN_URL = /^https:\/\/github\.com\/stubxai\/stubx-agent\/actions\/runs\/[0-9]+$/;
 export const PPM_MARKED_ON = "2026-10-05";
+export const PPM_WALLET_NOT_APPLICABLE_ON = "2026-10-05";
+export const PPM_TOTAL = 4;
 export const LOGS_DAILY_RUN = "https://github.com/stubxai/stubx-agent/actions/runs/37274282121";
 export const LIMITS_CI_RUN = "https://github.com/stubxai/stubx-agent/actions/runs/37278171372";
 export const KILL_SWITCH_DRILL_RUNS: readonly string[] = [
@@ -39,6 +44,8 @@ export type PpmReport = {
   tokenMint: string;
   approved: boolean;
   ppmMarkedCount: number;
+  ppmTotal: number;
+  ppmNotApplicableCount: number;
   network: false;
   signing: false;
   scope: string;
@@ -76,25 +83,31 @@ export function buildPpmReport(input: {
     tokenMint: input.mint,
     approved: false,
     ppmMarkedCount: 3,
+    ppmTotal: PPM_TOTAL,
+    ppmNotApplicableCount: 1,
     network: false,
     signing: false,
     scope:
-      "Three public PPM boxes are marked (logs, limits and kill-switch, 2026-10-05) after review with legal sign-off. Wallet stays unmarked. A marked box is not an audit: a green run only proves what it checks, in that version of the code.",
+      "Three public PPM boxes are marked (logs, limits and kill-switch, 2026-10-05) after review with legal sign-off. Wallet is not-applicable from 2026-10-05 by design (no agent wallet or keys). Public count: 3 of 4 marked · 1 not applicable. A marked box is not an audit: a green run only proves what it checks, in that version of the code.",
     boxes: {
       wallet: {
-        status: "pending",
+        status: "not-applicable",
         provenByTests: false,
         ppmMarked: false,
         markedOn: null,
+        notApplicableOn: PPM_WALLET_NOT_APPLICABLE_ON,
         publicEvidence: null,
-        summary: "No hay wallet del agente y este paquete no crea ninguna. La casilla sigue pendiente.",
-        summaryEn: "The agent has no wallet and this package does not create one. The box stays pending.",
+        summary:
+          "No aplica desde el 05-10-2026: el agente no tiene wallet ni claves por diseño (decisión del creador). La wallet pública del proyecto (SOL) no cuenta para marcar esta casilla. No es una casilla marcada.",
+        summaryEn:
+          "Not applicable since 2026-10-05: the agent has no wallet or keys by design (creator decision). The project's public SOL wallet does not count toward marking this box. This is not a marked box.",
       },
       logs: {
         status: "repo-tested",
         provenByTests: true,
         ppmMarked: true,
         markedOn: PPM_MARKED_ON,
+        notApplicableOn: null,
         publicEvidence: LOGS_DAILY_RUN,
         summary:
           "Log público diario de solo añadir en logs/, escrito por el workflow daily-log, con anclas selladas por OpenTimestamps. Casilla marcada el 05-10-2026: entradas en main en ≥7 días UTC distintos, sello confirmado en Bitcoin (bloque 968752) comprobado a mano (pasos en LOGS.md) y OK legal. Solo demuestra un registro verificable del kill-switch y del simulacro, no que esté completo ni que lo anotado sea cierto. Si la cadena o un sello dejan de cuadrar, se desmarca.",
@@ -106,6 +119,7 @@ export function buildPpmReport(input: {
         provenByTests: true,
         ppmMarked: true,
         markedOn: PPM_MARKED_ON,
+        notApplicableOn: null,
         publicEvidence: LIMITS_CI_RUN,
         summary:
           "Límites v1 escritos en LIMITS.md y aplicados en el código, cada uno con su test. Casilla marcada el 05-10-2026 con una ejecución pública de la CI en verde y el OK legal. Marcada no significa auditada. Si una CI posterior falla en estos tests, se desmarca.",
@@ -117,6 +131,7 @@ export function buildPpmReport(input: {
         provenByTests: true,
         ppmMarked: true,
         markedOn: PPM_MARKED_ON,
+        notApplicableOn: null,
         publicEvidence: KILL_SWITCH_DRILL_RUNS[KILL_SWITCH_DRILL_RUNS.length - 1] ?? null,
         publicDrill: true,
         publicDrills: KILL_SWITCH_DRILL_RUNS,
@@ -148,6 +163,7 @@ export function evaluatePpmHonesty(report: PpmReport): { ok: boolean; problems: 
     ["killSwitch", report.boxes.killSwitch],
   ] as const;
   let marked = 0;
+  let notApplicable = 0;
   for (const [name, box] of named) {
     if (box.ppmMarked === true) {
       marked += 1;
@@ -157,18 +173,39 @@ export function evaluatePpmHonesty(report: PpmReport): { ok: boolean; problems: 
       if (typeof box.markedOn !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(box.markedOn)) {
         problems.push(`${name}.markedOn`);
       }
-    } else if (box.ppmMarked !== false || box.publicEvidence !== null || box.markedOn !== null) {
+      if (box.notApplicableOn !== null || box.status === "not-applicable") {
+        problems.push(`${name}.notApplicable`);
+      }
+    } else if (box.status === "not-applicable") {
+      notApplicable += 1;
+      if (
+        box.ppmMarked !== false ||
+        box.publicEvidence !== null ||
+        box.markedOn !== null ||
+        typeof box.notApplicableOn !== "string" ||
+        !/^\d{4}-\d{2}-\d{2}$/.test(box.notApplicableOn)
+      ) {
+        problems.push(`${name}.notApplicable`);
+      }
+    } else if (box.ppmMarked !== false || box.publicEvidence !== null || box.markedOn !== null || box.notApplicableOn !== null) {
       problems.push(`${name}.ppmMarked`);
     }
   }
   if (report.ppmMarkedCount !== marked) {
     problems.push("ppmMarkedCount");
   }
-  // Only wallet stays pending and unmarked. Logs, limits and kill-switch may be marked.
+  if (report.ppmTotal !== PPM_TOTAL) {
+    problems.push("ppmTotal");
+  }
+  if (report.ppmNotApplicableCount !== notApplicable) {
+    problems.push("ppmNotApplicableCount");
+  }
+  // Wallet is not-applicable (by design), never marked. Logs, limits and kill-switch may be marked.
   if (
-    report.boxes.wallet.status !== "pending" ||
+    report.boxes.wallet.status !== "not-applicable" ||
     report.boxes.wallet.provenByTests !== false ||
-    report.boxes.wallet.ppmMarked !== false
+    report.boxes.wallet.ppmMarked !== false ||
+    report.boxes.wallet.notApplicableOn !== PPM_WALLET_NOT_APPLICABLE_ON
   ) {
     problems.push("wallet");
   }
