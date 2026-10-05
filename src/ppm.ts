@@ -13,14 +13,15 @@ export type PpmBox = {
 };
 
 /**
- * Public evidence behind the two marked boxes (limits and kill-switch), reviewed
- * on 2026-10-05 with legal sign-off. Wallet and logs stay unmarked.
+ * Public evidence behind the three marked boxes (logs, limits and kill-switch),
+ * reviewed on 2026-10-05 with legal sign-off. Wallet stays unmarked.
  * Placeholders `__URL_…__` must be replaced by real Actions run URLs before
  * merging: evaluatePpmHonesty rejects anything that is not a run URL of this
  * repository, so CI stays red while a placeholder is left.
  */
 export const RUN_URL = /^https:\/\/github\.com\/stubxai\/stubx-agent\/actions\/runs\/[0-9]+$/;
 export const PPM_MARKED_ON = "2026-10-05";
+export const LOGS_DAILY_RUN = "https://github.com/stubxai/stubx-agent/actions/runs/37274282121";
 export const LIMITS_CI_RUN = "https://github.com/stubxai/stubx-agent/actions/runs/37278171372";
 export const KILL_SWITCH_DRILL_RUNS: readonly string[] = [
   "https://github.com/stubxai/stubx-agent/actions/runs/36264436020",
@@ -74,11 +75,11 @@ export function buildPpmReport(input: {
     policySha256: input.policy.sha256,
     tokenMint: input.mint,
     approved: false,
-    ppmMarkedCount: 2,
+    ppmMarkedCount: 3,
     network: false,
     signing: false,
     scope:
-      "Two public PPM boxes are marked (limits and kill-switch, 2026-10-05) after review with legal sign-off. Wallet and logs stay unmarked. A marked box is not an audit: a green run only proves what it checks, in that version of the code.",
+      "Three public PPM boxes are marked (logs, limits and kill-switch, 2026-10-05) after review with legal sign-off. Wallet stays unmarked. A marked box is not an audit: a green run only proves what it checks, in that version of the code.",
     boxes: {
       wallet: {
         status: "pending",
@@ -90,15 +91,15 @@ export function buildPpmReport(input: {
         summaryEn: "The agent has no wallet and this package does not create one. The box stays pending.",
       },
       logs: {
-        status: "pending",
-        provenByTests: false,
-        ppmMarked: false,
-        markedOn: null,
-        publicEvidence: null,
+        status: "repo-tested",
+        provenByTests: true,
+        ppmMarked: true,
+        markedOn: PPM_MARKED_ON,
+        publicEvidence: LOGS_DAILY_RUN,
         summary:
-          "Hay un formato de entrada con huella sha256, solo en memoria. El registro público de solo-añadir es la fase P4. La casilla sigue pendiente.",
+          "Log público diario de solo añadir en logs/, escrito por el workflow daily-log, con anclas selladas por OpenTimestamps. Casilla marcada el 05-10-2026: entradas en main en ≥7 días UTC distintos, sello confirmado en Bitcoin (bloque 968752) comprobado a mano (pasos en LOGS.md) y OK legal. Solo demuestra un registro verificable del kill-switch y del simulacro, no que esté completo ni que lo anotado sea cierto. Si la cadena o un sello dejan de cuadrar, se desmarca.",
         summaryEn:
-          "A sha256 log entry type exists in memory only. The public append-only log is phase P4. The box stays pending.",
+          "Public daily append-only log in logs/, written by the daily-log workflow, with anchors stamped by OpenTimestamps. Box marked on 2026-10-05: entries on main on ≥7 distinct UTC days, a Bitcoin-confirmed stamp (block 968752) checked by hand (steps in LOGS.md) and legal sign-off. It only shows a verifiable record of the kill-switch and drill, not that the log is complete or true. If the chain or a stamp stops checking out, the box is unmarked.",
       },
       limits: {
         status: "repo-tested",
@@ -163,7 +164,7 @@ export function evaluatePpmHonesty(report: PpmReport): { ok: boolean; problems: 
   if (report.ppmMarkedCount !== marked) {
     problems.push("ppmMarkedCount");
   }
-  // Only limits and kill-switch may be marked. Wallet and logs stay pending and unmarked.
+  // Only wallet stays pending and unmarked. Logs, limits and kill-switch may be marked.
   if (
     report.boxes.wallet.status !== "pending" ||
     report.boxes.wallet.provenByTests !== false ||
@@ -171,11 +172,7 @@ export function evaluatePpmHonesty(report: PpmReport): { ok: boolean; problems: 
   ) {
     problems.push("wallet");
   }
-  if (
-    report.boxes.logs.status !== "pending" ||
-    report.boxes.logs.provenByTests !== false ||
-    report.boxes.logs.ppmMarked !== false
-  ) {
+  if (report.boxes.logs.status !== "repo-tested" || report.boxes.logs.provenByTests !== true) {
     problems.push("logs");
   }
   if (report.boxes.limits.status !== "repo-tested" || report.boxes.limits.provenByTests !== true) {

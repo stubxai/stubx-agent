@@ -64,7 +64,7 @@ Marcada el 05-10-2026, después de revisar estos simulacros públicos seguidos e
 - 28-09-2026 (programado): https://github.com/stubxai/stubx-agent/actions/runs/36397668286
 - 05-10-2026 (programado): https://github.com/stubxai/stubx-agent/actions/runs/37284177840
 
-En los tres, con el interruptor activado o su archivo roto de 5 formas, se rechazan todas las acciones del agente. Marcada no significa auditada: un simulacro en verde solo demuestra lo que ese simulacro comprueba, en esa versión del código. Solo para el agente: no pausa transferencias ni congela tokens o cuentas. Si un simulacro sale en rojo, la casilla se desmarca y se explica en la web y aquí. `npm run ppm:print` lo refleja (`killSwitch.ppmMarked: true` con los enlaces) y la CI comprueba que solo están marcadas esta casilla y la de límites.
+En los tres, con el interruptor activado o su archivo roto de 5 formas, se rechazan todas las acciones del agente. Marcada no significa auditada: un simulacro en verde solo demuestra lo que ese simulacro comprueba, en esa versión del código. Solo para el agente: no pausa transferencias ni congela tokens o cuentas. Si un simulacro sale en rojo, la casilla se desmarca y se explica en la web y aquí. `npm run ppm:print` lo refleja (`killSwitch.ppmMarked: true` con los enlaces) y la CI comprueba que están marcadas esta casilla, la de límites y la de logs (wallet sigue sin marcar).
 
 ## English
 

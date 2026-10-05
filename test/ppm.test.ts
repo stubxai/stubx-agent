@@ -3,7 +3,7 @@ import { spawnSync } from "node:child_process";
 import { describe, test } from "node:test";
 import { fingerprint } from "../src/fingerprint.js";
 import { StubAgent } from "../src/stub-agent.js";
-import { evaluatePpmHonesty, KILL_SWITCH_DRILL_RUNS, LIMITS_CI_RUN, RUN_URL } from "../src/ppm.js";
+import { evaluatePpmHonesty, KILL_SWITCH_DRILL_RUNS, LIMITS_CI_RUN, LOGS_DAILY_RUN, RUN_URL } from "../src/ppm.js";
 import type { PpmReport } from "../src/ppm.js";
 import { repoRoot } from "../src/paths.js";
 import { STUBX_MINT } from "../src/public-mint.js";
@@ -19,22 +19,23 @@ function reportFrom(orch = agent()): PpmReport {
 }
 
 describe("ppm", () => {
-  test("wallet and logs stay pending", () => {
+  test("wallet stays pending", () => {
     const report = reportFrom();
     assert.equal(report.boxes.wallet.status, "pending");
-    assert.equal(report.boxes.logs.status, "pending");
     assert.equal(report.boxes.wallet.provenByTests, false);
-    assert.equal(report.boxes.logs.provenByTests, false);
+    assert.equal(report.boxes.wallet.ppmMarked, false);
+    assert.equal(report.boxes.wallet.publicEvidence, null);
+    assert.equal(report.boxes.wallet.markedOn, null);
   });
 
-  test("only limits and kill-switch are marked, each with a public run", () => {
+  test("logs, limits and kill-switch are marked, each with a public run", () => {
     const report = reportFrom();
-    assert.equal(report.boxes.wallet.ppmMarked, false);
-    assert.equal(report.boxes.logs.ppmMarked, false);
-    assert.equal(report.boxes.wallet.publicEvidence, null);
-    assert.equal(report.boxes.logs.publicEvidence, null);
-    assert.equal(report.boxes.wallet.markedOn, null);
-    assert.equal(report.boxes.logs.markedOn, null);
+    assert.equal(report.boxes.logs.status, "repo-tested");
+    assert.equal(report.boxes.logs.provenByTests, true);
+    assert.equal(report.boxes.logs.ppmMarked, true);
+    assert.equal(report.boxes.logs.markedOn, "2026-10-05");
+    assert.equal(report.boxes.logs.publicEvidence, LOGS_DAILY_RUN);
+    assert.match(LOGS_DAILY_RUN, RUN_URL);
     assert.equal(report.boxes.limits.status, "repo-tested");
     assert.equal(report.boxes.limits.provenByTests, true);
     assert.equal(report.boxes.limits.ppmMarked, true);
@@ -58,7 +59,7 @@ describe("ppm", () => {
   test("the report is not an approval", () => {
     const report = reportFrom();
     assert.equal(report.approved, false);
-    assert.equal(report.ppmMarkedCount, 2);
+    assert.equal(report.ppmMarkedCount, 3);
     assert.equal(report.signing, false);
     assert.equal(report.network, false);
     assert.equal(report.package, "@stubx/agents");
@@ -68,7 +69,7 @@ describe("ppm", () => {
     assert.match(report.policySha256, /^[0-9a-f]{64}$/);
   });
 
-  test("honesty check passes the real report and rejects a marked wallet, marked logs, missing run links and a wrong count", () => {
+  test("honesty check passes the real report and rejects a marked wallet, missing run links and a wrong count", () => {
     const report = reportFrom();
     assert.equal(evaluatePpmHonesty(report).ok, true);
     const marked: PpmReport = {
@@ -81,28 +82,13 @@ describe("ppm", () => {
     const honesty = evaluatePpmHonesty(marked);
     assert.equal(honesty.ok, false);
     assert.ok(honesty.problems.includes("wallet"));
-    // Logs cannot be marked, a marked box needs a run link of this repository and the count must match.
-    const logs = evaluatePpmHonesty({
-      ...report,
-      ppmMarkedCount: 3,
-      boxes: {
-        ...report.boxes,
-        logs: {
-          ...report.boxes.logs,
-          ppmMarked: true,
-          markedOn: "2026-10-05",
-          publicEvidence: "https://github.com/stubxai/stubx-agent/actions/runs/1",
-        },
-      },
-    });
-    assert.equal(logs.ok, false);
-    assert.ok(logs.problems.includes("logs"));
+    // A marked box needs a run link of this repository and the count must match.
     const noLink = evaluatePpmHonesty({
       ...report,
-      boxes: { ...report.boxes, limits: { ...report.boxes.limits, publicEvidence: "pending-link" } },
+      boxes: { ...report.boxes, logs: { ...report.boxes.logs, publicEvidence: "pending-link" } },
     });
     assert.equal(noLink.ok, false);
-    assert.ok(noLink.problems.includes("limits.publicEvidence"));
+    assert.ok(noLink.problems.includes("logs.publicEvidence"));
     const otherRepo = evaluatePpmHonesty({
       ...report,
       boxes: {
@@ -146,7 +132,7 @@ describe("ppm", () => {
     assert.notEqual(stub.hashLogs(), before);
   });
 
-  test("cli ppm:print exits 0 with pending wallet and logs", () => {
+  test("cli ppm:print exits 0 with pending wallet and marked logs", () => {
     const result = spawnSync(process.execPath, ["dist/src/cli.js", "ppm:print"], {
       cwd: repoRoot(),
       encoding: "utf8",
@@ -155,7 +141,8 @@ describe("ppm", () => {
     const report = JSON.parse(result.stdout) as PpmReport;
     assert.equal(report.approved, false);
     assert.equal(report.boxes.wallet.status, "pending");
-    assert.equal(report.boxes.logs.status, "pending");
+    assert.equal(report.boxes.logs.status, "repo-tested");
+    assert.equal(report.boxes.logs.ppmMarked, true);
     assert.equal(report.boxes.limits.provenByTests, true);
     assert.equal(report.boxes.killSwitch.provenByTests, true);
   });

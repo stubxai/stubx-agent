@@ -1,12 +1,20 @@
 # Changelog
 
+## 2026-10-05 · PPM: casilla Logs marcada
+
+- `ppm:print` marca también `logs` (`ppmMarked: true`, `markedOn: 2026-10-05`) con la ejecución pública del workflow `daily-log` del 05-10 (https://github.com/stubxai/stubx-agent/actions/runs/37274282121). `wallet` sigue `pending`. `approved` sigue en `false`. `ppmMarkedCount: 3`.
+- Condiciones cumplidas: ≥7 días UTC distintos en `main` (10 a 05-10), sello OpenTimestamps confirmado en Bitcoin (ancla `2026-09-26-000001`, bloque 968752) comprobado a mano con los pasos de [LOGS.md](LOGS.md) (PR #5 / H5), y OK legal.
+- Marcada no significa que el log registre todo ni que lo anotado sea cierto. Bitcoin/OpenTimestamps solo son registro de tiempo; no respaldan STUBX.
+- `ppm:check` y la CI aceptan las tres casillas marcadas (logs, límites y kill-switch), cada una con un enlace a una ejecución de Actions de este repositorio.
+- El paso de la CI pasa a «PPM marks logs, limits and kill-switch, with public runs».
+
 ## Sin publicar
 
 Casillas del PPM «Límites» y «Kill-switch» (05-10-2026).
 
-- `ppm:print` marca `limits` y `killSwitch` (`ppmMarked: true`, `markedOn: 2026-10-05`) con sus enlaces públicos: la CI del 05-10 y los simulacros del 26-09, 28-09 y 05-10. `wallet` y `logs` siguen `pending` y sin marcar. `approved` sigue en `false`.
-- `ppm:check` (y la CI) solo aceptan esas dos casillas marcadas, cada una con un enlace a una ejecución de Actions de este repositorio, y `ppmMarkedCount` igual al número de casillas marcadas.
-- El paso de la CI «PPM stays unmarked» pasa a «PPM marks only limits and kill-switch, with public runs».
+- `ppm:print` marca `limits` y `killSwitch` (`ppmMarked: true`, `markedOn: 2026-10-05`) con sus enlaces públicos: la CI del 05-10 y los simulacros del 26-09, 28-09 y 05-10. `wallet` y `logs` seguían `pending` en ese commit. `approved` sigue en `false`.
+- `ppm:check` (y la CI) solo aceptaban esas dos casillas marcadas, cada una con un enlace a una ejecución de Actions de este repositorio, y `ppmMarkedCount` igual al número de casillas marcadas.
+- El paso de la CI «PPM stays unmarked» pasa a «PPM marks only limits and kill-switch, with public runs» (luego ampliado a logs; ver entrada de arriba).
 - KILL-SWITCH.md, LIMITS.md, README y THREAT-MODEL: textos al día. Marcada no significa auditada; una ejecución en rojo la desmarca.
 
 P5 (28-09-2026): documentación y `logs:status`.
