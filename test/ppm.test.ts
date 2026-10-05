@@ -19,13 +19,14 @@ function reportFrom(orch = agent()): PpmReport {
 }
 
 describe("ppm", () => {
-  test("wallet stays pending", () => {
+  test("wallet is not-applicable by design", () => {
     const report = reportFrom();
-    assert.equal(report.boxes.wallet.status, "pending");
+    assert.equal(report.boxes.wallet.status, "not-applicable");
     assert.equal(report.boxes.wallet.provenByTests, false);
     assert.equal(report.boxes.wallet.ppmMarked, false);
     assert.equal(report.boxes.wallet.publicEvidence, null);
     assert.equal(report.boxes.wallet.markedOn, null);
+    assert.equal(report.boxes.wallet.notApplicableOn, "2026-10-05");
   });
 
   test("logs, limits and kill-switch are marked, each with a public run", () => {
@@ -60,6 +61,8 @@ describe("ppm", () => {
     const report = reportFrom();
     assert.equal(report.approved, false);
     assert.equal(report.ppmMarkedCount, 3);
+    assert.equal(report.ppmTotal, 4);
+    assert.equal(report.ppmNotApplicableCount, 1);
     assert.equal(report.signing, false);
     assert.equal(report.network, false);
     assert.equal(report.package, "@stubx/agents");
@@ -82,6 +85,20 @@ describe("ppm", () => {
     const honesty = evaluatePpmHonesty(marked);
     assert.equal(honesty.ok, false);
     assert.ok(honesty.problems.includes("wallet"));
+    const pendingWallet = evaluatePpmHonesty({
+      ...report,
+      boxes: {
+        ...report.boxes,
+        wallet: {
+          ...report.boxes.wallet,
+          status: "pending",
+          notApplicableOn: null,
+        },
+      },
+      ppmNotApplicableCount: 0,
+    });
+    assert.equal(pendingWallet.ok, false);
+    assert.ok(pendingWallet.problems.includes("wallet"));
     // A marked box needs a run link of this repository and the count must match.
     const noLink = evaluatePpmHonesty({
       ...report,
@@ -132,7 +149,7 @@ describe("ppm", () => {
     assert.notEqual(stub.hashLogs(), before);
   });
 
-  test("cli ppm:print exits 0 with pending wallet and marked logs", () => {
+  test("cli ppm:print exits 0 with not-applicable wallet and marked logs", () => {
     const result = spawnSync(process.execPath, ["dist/src/cli.js", "ppm:print"], {
       cwd: repoRoot(),
       encoding: "utf8",
@@ -140,7 +157,8 @@ describe("ppm", () => {
     assert.equal(result.status, 0, result.stderr);
     const report = JSON.parse(result.stdout) as PpmReport;
     assert.equal(report.approved, false);
-    assert.equal(report.boxes.wallet.status, "pending");
+    assert.equal(report.boxes.wallet.status, "not-applicable");
+    assert.equal(report.boxes.wallet.notApplicableOn, "2026-10-05");
     assert.equal(report.boxes.logs.status, "repo-tested");
     assert.equal(report.boxes.logs.ppmMarked, true);
     assert.equal(report.boxes.limits.provenByTests, true);
