@@ -21,11 +21,11 @@ export type PpmBox = {
  */
 export const RUN_URL = /^https:\/\/github\.com\/stubxai\/stubx-agent\/actions\/runs\/[0-9]+$/;
 export const PPM_MARKED_ON = "2026-10-05";
-export const LIMITS_CI_RUN = "__URL_CI_05_10__";
+export const LIMITS_CI_RUN = "https://github.com/stubxai/stubx-agent/actions/runs/37278171372";
 export const KILL_SWITCH_DRILL_RUNS: readonly string[] = [
   "https://github.com/stubxai/stubx-agent/actions/runs/36264436020",
   "https://github.com/stubxai/stubx-agent/actions/runs/36397668286",
-  "__URL_SIMULACRO_05_10__",
+  "https://github.com/stubxai/stubx-agent/actions/runs/37284177840",
 ];
 
 export type PpmReport = {

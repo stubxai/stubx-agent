@@ -47,7 +47,7 @@ El detalle está en [LIMITS.md](LIMITS.md) y en [KILL-SWITCH.md](KILL-SWITCH.md)
 | --- | --- | --- |
 | Wallet | `pending` | No |
 | Logs | `pending` (log público diario en `logs/`, ver [LOGS.md](LOGS.md)) | No. Hacen falta entradas escritas por el workflow `daily-log` en `main` en al menos 7 días distintos (UTC), un sello confirmado y revisión, incluido el OK legal |
-| Límites | Tests de este repositorio (`repo-tested`) | Sí, desde el 05-10-2026: CI pública en verde ([ejecución](__URL_CI_05_10__)) y OK legal. Ver [LIMITS.md](LIMITS.md) |
+| Límites | Tests de este repositorio (`repo-tested`) | Sí, desde el 05-10-2026: CI pública en verde ([ejecución](https://github.com/stubxai/stubx-agent/actions/runs/37278171372)) y OK legal. Ver [LIMITS.md](LIMITS.md) |
 | Kill-switch | Fail-closed cubierto por tests de este repositorio y simulacro semanal programado en Actions (ver historial) | Sí, desde el 05-10-2026: simulacros públicos seguidos en verde (26-09, 28-09 y 05-10) y OK legal. Ver [KILL-SWITCH.md](KILL-SWITCH.md) |
 
 Un test en verde solo demuestra lo que ese test comprueba, en esa versión del código. Lo mismo vale para el simulacro. Marcada no significa auditada. Si una CI o un simulacro posterior sale en rojo, la casilla se desmarca y se explica.
