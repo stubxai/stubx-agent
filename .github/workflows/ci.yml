@@ -70,18 +70,17 @@ jobs:
       - name: PPM status
         run: npm run ppm:print --silent > ppm-status.json
 
-      - name: PPM marks only limits and kill-switch, with public runs
+      - name: PPM marks logs, limits and kill-switch, with public runs
         run: |
           jq -e '
             def run: test("^https://github\\.com/stubxai/stubx-agent/actions/runs/[0-9]+$");
             .approved == false and
-            .ppmMarkedCount == 2 and
+            .ppmMarkedCount == 3 and
             .boxes.wallet.status == "pending" and
-            .boxes.logs.status == "pending" and
             .boxes.wallet.ppmMarked == false and
-            .boxes.logs.ppmMarked == false and
             .boxes.wallet.publicEvidence == null and
-            .boxes.logs.publicEvidence == null and
+            .boxes.logs.ppmMarked == true and
+            (.boxes.logs.publicEvidence | run) and
             .boxes.limits.ppmMarked == true and
             (.boxes.limits.publicEvidence | run) and
             .boxes.killSwitch.ppmMarked == true and
