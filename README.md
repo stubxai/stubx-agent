@@ -6,7 +6,7 @@ Esqueleto público del agente de **STUBX** (`@stubx/agents`, v0.1.0; nombre inte
 
 [![killswitch-drill](https://github.com/stubxai/stubx-agent/actions/workflows/killswitch-drill.yml/badge.svg)](https://github.com/stubxai/stubx-agent/actions/workflows/killswitch-drill.yml)
 
-Estado del último simulacro del kill-switch. Un simulacro en verde solo demuestra lo que ese simulacro comprueba, en esa versión del código. No marca ninguna casilla del PPM.
+Estado del último simulacro del kill-switch. Un simulacro en verde solo demuestra lo que ese simulacro comprueba, en esa versión del código. Por sí solo no marca ninguna casilla del PPM.
 
 El mint público del token (Pump.fun) es `TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump`. Este programa no lo mueve.
 
@@ -47,10 +47,10 @@ El detalle está en [LIMITS.md](LIMITS.md) y en [KILL-SWITCH.md](KILL-SWITCH.md)
 | --- | --- | --- |
 | Wallet | `pending` | No |
 | Logs | `pending` (log público diario en `logs/`, ver [LOGS.md](LOGS.md)) | No. Hacen falta entradas escritas por el workflow `daily-log` en `main` en al menos 7 días distintos (UTC), un sello confirmado y revisión, incluido el OK legal |
-| Límites | Tests de este repositorio (`repo-tested`) | No |
-| Kill-switch | Fail-closed cubierto por tests de este repositorio y simulacro semanal programado en Actions (ver historial) | No. Hacen falta al menos 2 simulacros públicos seguidos en verde y revisión |
+| Límites | Tests de este repositorio (`repo-tested`) | Sí, desde el 05-10-2026: CI pública en verde ([ejecución](https://github.com/stubxai/stubx-agent/actions/runs/37278171372)) y OK legal. Ver [LIMITS.md](LIMITS.md) |
+| Kill-switch | Fail-closed cubierto por tests de este repositorio y simulacro semanal programado en Actions (ver historial) | Sí, desde el 05-10-2026: simulacros públicos seguidos en verde (26-09, 28-09 y 05-10) y OK legal. Ver [KILL-SWITCH.md](KILL-SWITCH.md) |
 
-Un test en verde solo demuestra lo que ese test comprueba, en esa versión del código. Lo mismo vale para el simulacro. No sustituye un enlace público de CI ni el OK legal. Nada aquí marca el PPM de la web.
+Un test en verde solo demuestra lo que ese test comprueba, en esa versión del código. Lo mismo vale para el simulacro. Marcada no significa auditada. Si una CI o un simulacro posterior sale en rojo, la casilla se desmarca y se explica.
 
 ## Cómo comprobarlo
 
@@ -132,4 +132,4 @@ Official channels: [x.com/stubxai](https://x.com/stubxai), https://stubxai.com/ 
 
 Verify with Node.js 22 or newer (`npm ci`, `npm run typecheck`, `npm test`, and `npm run ppm:print`). CI runs on Node 22.14.0, on push, on pull request, and on a weekly schedule (cron `11 7 * * 1`, Mondays 07:11 UTC; GitHub may delay or skip scheduled runs). Results are on the Actions tab of `github.com/stubxai/stubx-agent`. Any other GitHub account or organization (including `github.com/stubx`, without “ai”) has no relation to STUBX.
 
-`ppm:print` keeps wallet and logs at `pending`. Limits and the kill-switch have tests in this repository, and a weekly kill-switch drill is scheduled on the Actions tab (see its history). No public PPM box is marked. The GitHub account `stubxai` has 2FA enabled, as confirmed by its owner on 2026-09-26, and the X account @stubxai has 2FA enabled with an authenticator app, as confirmed by its owner on 2026-09-28 (neither is publicly verifiable). The kill-switch cannot pause holder transfers or freeze accounts. A public append-only, hash-chained log is written by the `daily-log` workflow (scheduled daily; GitHub may delay or skip runs). Its anchors are submitted to OpenTimestamps and each proof stays pending until it is confirmed in Bitcoin; a proof only shows that an anchor existed by then, not that the log is true or complete. The logs box stays `pending` (see LOGS.md).
+`ppm:print` keeps wallet and logs at `pending`. Limits and the kill-switch have tests in this repository, and a weekly kill-switch drill is scheduled on the Actions tab (see its history). Two public PPM boxes, limits and kill-switch, were marked on 2026-10-05 with public CI and drill runs and legal sign-off; marked does not mean audited. The GitHub account `stubxai` has 2FA enabled, as confirmed by its owner on 2026-09-26, and the X account @stubxai has 2FA enabled with an authenticator app, as confirmed by its owner on 2026-09-28 (neither is publicly verifiable). The kill-switch cannot pause holder transfers or freeze accounts. A public append-only, hash-chained log is written by the `daily-log` workflow (scheduled daily; GitHub may delay or skip runs). Its anchors are submitted to OpenTimestamps and each proof stays pending until it is confirmed in Bitcoin; a proof only shows that an anchor existed by then, not that the log is true or complete. The logs box stays `pending` (see LOGS.md).

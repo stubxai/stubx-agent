@@ -4,7 +4,7 @@ Política en lenguaje llano. La copia máquina es [`policy/limits.json`](policy/
 
 Esto es un prototipo. STUBX no tiene valor intrínseco ni da derechos, y su precio puede llegar a cero. Memecoin experimental · puedes perderlo todo · no es consejo de inversión. El agente no tiene claves.
 
-Estos límites están aplicados en este repositorio y cubiertos por tests. Eso no marca la casilla pública del PPM: hace falta un enlace a una ejecución pública de CI y el OK legal.
+Estos límites están aplicados en este repositorio y cubiertos por tests. La casilla pública del PPM se marcó el 05-10-2026 con una ejecución pública de la CI en verde (https://github.com/stubxai/stubx-agent/actions/runs/37278171372, commit a960380), incluidos los 20 tests de límites, y el OK legal. Marcada no significa auditada: un test en verde demuestra lo que ese test comprueba, en esa versión del código. Si una CI posterior falla en estos tests, se desmarca y se explica.
 
 ## Límites
 
@@ -132,4 +132,4 @@ No hay dependencias de ejecución. El test también falla si `package.json` decl
 
 This is a prototype. STUBX has no intrinsic value, gives no rights, and its price can go to zero. Experimental memecoin · you can lose everything · not investment advice. The agent holds no keys.
 
-Limits v1 are deny-by-default. The agent does not sign, custody, exchange, send transactions, contact mainnet, ask anyone for assets, invent addresses or hashes, promise outcomes, draft a social note while the kill-switch is engaged, or store secrets. The kill-switch cannot pause holder transfers, freeze accounts, seize balances, or stop Solana. `npm test` is the check. It does not mark the public PPM boxes.
+Limits v1 are deny-by-default. The agent does not sign, custody, exchange, send transactions, contact mainnet, ask anyone for assets, invent addresses or hashes, promise outcomes, draft a social note while the kill-switch is engaged, or store secrets. The kill-switch cannot pause holder transfers, freeze accounts, seize balances, or stop Solana. `npm test` is the check. The public PPM box for limits was marked on 2026-10-05 with a green public CI run and legal sign-off; marked does not mean audited, and a later failing run unmarks it.

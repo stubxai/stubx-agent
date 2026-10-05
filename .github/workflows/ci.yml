@@ -70,17 +70,24 @@ jobs:
       - name: PPM status
         run: npm run ppm:print --silent > ppm-status.json
 
-      - name: PPM stays unmarked
+      - name: PPM marks only limits and kill-switch, with public runs
         run: |
           jq -e '
+            def run: test("^https://github\\.com/stubxai/stubx-agent/actions/runs/[0-9]+$");
             .approved == false and
-            .ppmMarkedCount == 0 and
+            .ppmMarkedCount == 2 and
             .boxes.wallet.status == "pending" and
             .boxes.logs.status == "pending" and
             .boxes.wallet.ppmMarked == false and
             .boxes.logs.ppmMarked == false and
-            .boxes.limits.ppmMarked == false and
-            .boxes.killSwitch.ppmMarked == false
+            .boxes.wallet.publicEvidence == null and
+            .boxes.logs.publicEvidence == null and
+            .boxes.limits.ppmMarked == true and
+            (.boxes.limits.publicEvidence | run) and
+            .boxes.killSwitch.ppmMarked == true and
+            .boxes.killSwitch.publicDrill == true and
+            (.boxes.killSwitch.publicDrills | length >= 2) and
+            (.boxes.killSwitch.publicDrills | all(run))
           ' ppm-status.json
 
       - name: Audit
