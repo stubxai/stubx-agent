@@ -13,7 +13,7 @@ import { PUMP_DISCRIMINATOR, PUMP_PROGRAM, metadataPda } from "../programs.js";
 import { decodeBondingCurve } from "../pump.js";
 import { readVerifyPolicy, repoRootFrom } from "../root.js";
 import { buildReport } from "../report.js";
-import { reportHtml, reportMarkdown } from "../render.js";
+import { escapeHtml, reportHtml, reportMarkdown } from "../render.js";
 import { RpcClient, isAllowedMethod, type RpcTransport } from "../rpc.js";
 import { SIGN_SEND_MARKERS, scanText, scanVerifyTree } from "../scan.js";
 import { DISCLAIMER, type CanonicalToken, type Finding } from "../types.js";
@@ -195,8 +195,8 @@ describe("STUBX Verify offline", () => {
     const markdown = reportMarkdown(report);
     assert.equal(html.includes("<script>"), false);
     assert.equal(markdown.includes("<script>"), false);
-    assert.match(html, /&lt;script&gt;/);
-    assert.match(html, new RegExp(DISCLAIMER.replace(/[.]/g, "\\.")));
+    assert.equal(html.includes("&lt;script&gt;"), true);
+    assert.equal(html.includes(escapeHtml(DISCLAIMER)), true);
     assert.equal(markdown.startsWith("# Ficha STUBX Verify"), true);
   });
 
@@ -386,8 +386,9 @@ describe("STUBX Verify offline", () => {
       sleep: async () => {},
       random: () => 0,
       fetchImpl: async (url) => {
-        seen.push(String(url));
-        if (String(url).includes("pinata")) {
+        const href = String(url);
+        seen.push(href);
+        if (hostnameOf(href) === "gateway.pinata.cloud") {
           return new Response(JSON.stringify({ name: "STUBX" }), { status: 200 });
         }
         return new Response("limited", { status: 429 });
@@ -395,9 +396,9 @@ describe("STUBX Verify offline", () => {
     });
     assert.equal(result.ok, true);
     if (result.ok) {
-      assert.match(result.url, /pinata/);
+      assert.equal(hostnameOf(result.url), "gateway.pinata.cloud");
     }
-    assert.ok(seen.some((url) => url.includes("ipfs.io")));
+    assert.ok(seen.some((url) => hostnameOf(url) === "ipfs.io"));
   });
 
   test("findings do not use price or trade language", async () => {
@@ -412,6 +413,14 @@ describe("STUBX Verify offline", () => {
     }
   });
 });
+
+function hostnameOf(value: string): string | null {
+  try {
+    return new URL(value).hostname;
+  } catch {
+    return null;
+  }
+}
 
 function writeU64(data: Uint8Array, offset: number, value: bigint): void {
   let rest = value;
