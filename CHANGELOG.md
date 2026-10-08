@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-08 · STUBX Verify (MVP, solo lectura)
+
+- Carpeta nueva `verify/`: CLI `verify <mint> [--format json|md|html] [--out dir]`. Componente aparte del agente. El agente sigue sin contactar la red principal ni ningún RPC, y el PPM no cambia (3 marcadas · 1 no aplica).
+- Lee datos públicos de mainnet-beta (RPC por defecto `https://api.mainnet-beta.solana.com`, sustituible con `RPC_URL`), con reintentos, retroceso y pausa. No firma, no envía y no custodia. `npm run verify:scan` falla si aparece ese código.
+- Ficha en JSON, Markdown y HTML estático, con fuente por campo. Pruebas sin red en `verify/test/`. Fichas de ejemplo del 2026-10-08 en `verify/examples/2026-10-08/`.
+- Cómo reproducir cada dato: [verify/README.md](verify/README.md).
+
 ## 2026-10-05 · PPM: casilla Wallet → no aplica
 
 - `ppm:print` pasa `wallet` a `status: "not-applicable"` (`notApplicableOn: 2026-10-05`, `ppmMarked: false`). Motivo: el agente no tiene wallet ni claves por diseño (decisión del creador). La wallet pública del proyecto (SOL) no cuenta para marcar esta casilla.

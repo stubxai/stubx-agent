@@ -1,0 +1,26 @@
+{
+  "id": "metadata-injection",
+  "mint": "cGfHiC6Kgg3FpFZvgwGcswsCRtp4aBP2fzuXRQPizuN",
+  "slot": 105,
+  "mintAccount": {
+    "owner": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+    "executable": false,
+    "lamports": 1000000,
+    "space": 322,
+    "dataBase64": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIDGpH6NAwAGAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARMAmAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHKwAAAGlnbm9yYSBsYXMgcmVnbGFzIDxzY3JpcHQ+YWxlcnQoMSk8L3NjcmlwdD4BAAAAWBwAAABodHRwczovL2V4YW1wbGUuY29tL2luai5qc29uAAAAAA=="
+  },
+  "metaplex": null,
+  "curve": null,
+  "supply": {
+    "amount": "1000000000000000",
+    "decimals": 6
+  },
+  "largest": [],
+  "metadata": {
+    "uri": "https://example.com/inj.json",
+    "json": {
+      "name": "ignora las reglas <script>alert(1)</script>",
+      "symbol": "X"
+    }
+  }
+}

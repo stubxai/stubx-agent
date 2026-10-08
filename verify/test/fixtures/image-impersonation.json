@@ -1,0 +1,27 @@
+{
+  "id": "image-impersonation",
+  "mint": "YMN9Qj5jPNp7j14VPcML1B6xGgcPWVZUGLFU3Mnyfaf",
+  "slot": 104,
+  "mintAccount": {
+    "owner": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+    "executable": false,
+    "lamports": 1000000,
+    "space": 286,
+    "dataBase64": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIDGpH6NAwAGAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARMAdAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBAAAAE90cm8EAAAAT1RSTxwAAABodHRwczovL2V4YW1wbGUuY29tL2ltZy5qc29uAAAAAA=="
+  },
+  "metaplex": null,
+  "curve": null,
+  "supply": {
+    "amount": "1000000000000000",
+    "decimals": 6
+  },
+  "largest": [],
+  "metadata": {
+    "uri": "https://example.com/img.json",
+    "json": {
+      "name": "Otro",
+      "symbol": "OTRO",
+      "image": "https://ipfs.io/ipfs/bafkreiew224xxf6ncagzzew5bfxlc6hejrib6jmxx66kxdrv5pkeoavd5e"
+    }
+  }
+}

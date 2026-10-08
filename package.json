@@ -14,13 +14,18 @@
     "email": "stubxai.hq@gmail.com"
   },
   "type": "module",
+  "bin": {
+    "verify": "./verify/bin/verify.mjs"
+  },
   "engines": {
     "node": ">=22"
   },
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "test": "tsc && node --test --test-reporter=spec --test-reporter=./scripts/test-report.js --test-reporter-destination=stdout --test-reporter-destination=test-reporter-out.txt \"dist/test/**/*.test.js\"",
+    "test": "tsc && node --test --test-reporter=spec --test-reporter=./scripts/test-report.js --test-reporter-destination=stdout --test-reporter-destination=test-reporter-out.txt \"dist/test/**/*.test.js\" \"dist/verify/**/*.test.js\"",
+    "verify": "tsc && node dist/verify/cli.js",
+    "verify:scan": "tsc && node dist/verify/scan-cli.js",
     "ppm:print": "tsc && node dist/src/cli.js ppm:print",
     "scan:forbidden": "tsc && node dist/src/cli.js scan:forbidden",
     "drill:killswitch": "tsc && node scripts/killswitch-drill.mjs",

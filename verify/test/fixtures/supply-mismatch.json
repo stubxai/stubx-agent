@@ -1,0 +1,26 @@
+{
+  "id": "supply-mismatch",
+  "mint": "k7FaK87WHGVXzkaoHb7CdVPgkKDQhZ29VLDeBVbDfYn",
+  "slot": 107,
+  "mintAccount": {
+    "owner": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+    "executable": false,
+    "lamports": 1000000,
+    "space": 82,
+    "dataBase64": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIDGpH6NAwAGAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+  },
+  "metaplex": null,
+  "curve": null,
+  "supply": {
+    "amount": "1",
+    "decimals": 6
+  },
+  "largest": [
+    {
+      "address": "32ZsJ2yJjwuoBiWE5xnZjG9tKmK3CubbmEzgkQLyQzgD",
+      "amount": "1",
+      "decimals": 6
+    }
+  ],
+  "metadata": null
+}

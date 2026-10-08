@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "note": "Lista curada. Que un mint no esté aquí no significa que sea falso. Que el nombre o un enlace coincidan tampoco atribuye intención: es una señal para comparar con el mint oficial.",
+  "tokens": [
+    {
+      "id": "stubx",
+      "mint": "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump",
+      "name": "STUBX",
+      "symbol": "STUBX",
+      "imageUris": [
+        "https://ipfs.io/ipfs/bafkreiew224xxf6ncagzzew5bfxlc6hejrib6jmxx66kxdrv5pkeoavd5e"
+      ],
+      "imageCids": [
+        "bafkreiew224xxf6ncagzzew5bfxlc6hejrib6jmxx66kxdrv5pkeoavd5e"
+      ],
+      "links": [
+        "https://x.com/stubxai",
+        "https://stubxai.com/",
+        "https://superb-horse-9036f5.netlify.app/"
+      ],
+      "webHosts": [
+        "stubxai.com",
+        "superb-horse-9036f5.netlify.app"
+      ]
+    }
+  ]
+}

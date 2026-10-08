@@ -1,0 +1,33 @@
+{
+  "id": "mutable-metadata",
+  "mint": "LbUiWL3xVV8hTFYBVdbTNrpDo41NKS6o3LHHuDzjfcY",
+  "slot": 102,
+  "mintAccount": {
+    "owner": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+    "executable": false,
+    "lamports": 1000000,
+    "space": 82,
+    "dataBase64": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIDGpH6NAwAGAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+  },
+  "metaplex": {
+    "owner": "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s",
+    "executable": false,
+    "lamports": 1000000,
+    "space": 120,
+    "dataBase64": "BAkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUHAAAARWplbXBsbwIAAABFSh0AAABodHRwczovL2V4YW1wbGUuY29tL21ldGEuanNvbgAAAAAB"
+  },
+  "curve": null,
+  "supply": {
+    "amount": "1000000000000000",
+    "decimals": 6
+  },
+  "largest": [],
+  "metadata": {
+    "uri": "https://example.com/meta.json",
+    "json": {
+      "name": "Ejemplo",
+      "symbol": "EJ",
+      "image": "https://example.com/a.png"
+    }
+  }
+}
