@@ -101,14 +101,14 @@ HOSTING_EN = (
     "redirects with a 301 to https://stubxai.com/ and keeps the path. It still belongs to STUBX."
 )
 ORIGIN = "https://stubxai.com"
-OG_IMAGE = f"{ORIGIN}/assets/og-stubx-2026-10-1200x630.jpg"
+OG_IMAGE = f"{ORIGIN}/assets/og-stubx-2026-10b-1200x630.jpg"
 OG_ALT = (
     "STUBX: Agente Talón, mascota rosa con forma de ticket, sostiene un recibo junto a un globo terráqueo. "
     "Texto: «Un meme que pide pruebas. Qué es, qué funciona hoy y qué falta. CA oficial y pruebas en stubxai.com». "
-    "Pie: «Criptoactivo de alto riesgo · puedes perderlo todo · no es consejo de inversión · Imagen generada con IA»"
+    "Pie: «Cripto de alto riesgo · Puedes perderlo todo · No es consejo de inversión.» · Ilustración con elementos generados con IA."
     " / STUBX: Agente Talón, a pink ticket-shaped mascot, holds a receipt next to a globe. "
     "Text: “A meme that asks for proof. What it is, what works today, and what is missing. Official CA and proofs at stubxai.com”. "
-    "Footer: “High-risk crypto-asset · you can lose everything · not investment advice · AI-generated image”"
+    "Footer: “High-risk crypto · You could lose everything · Not investment advice.” · Illustration with AI-generated elements."
 )
 DRAFT_ES = "Borrador del repositorio. No publicado en stubxai.com."
 DRAFT_EN = "Repository draft. Not published on stubxai.com."

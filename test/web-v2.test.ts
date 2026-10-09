@@ -595,6 +595,54 @@ test("el pie es el mismo en español y en inglés", () => {
   }
 });
 
+const OG_FILE = "og-stubx-2026-10b-1200x630.jpg";
+const OG_AI_ES = "Ilustración con elementos generados con IA.";
+const OG_AI_EN = "Illustration with AI-generated elements.";
+const OLD_OG_FOOTER = [
+  "you can lose everything",
+  "memecoin experimental",
+  "criptoactivo de alto riesgo",
+  "imagen generada con ia",
+  "ai-generated image",
+];
+
+test("el pie antiguo no sale en el alt de la imagen OG", () => {
+  const root = repoRoot();
+  const pages = [...ROUTES, "archivo.html"];
+  for (const rel of pages) {
+    const html = readFileSync(path.join(root, "web/v2", rel), "utf8");
+    for (const attr of ["og:image:alt", "twitter:image:alt"]) {
+      const match = html.match(new RegExp(`(?:property|name)="${attr}" content="([^"]*)"`));
+      const alt = match?.[1];
+      assert.ok(alt, `${rel} ${attr}`);
+      const lower = alt.toLowerCase();
+      for (const phrase of OLD_OG_FOOTER) assert.equal(lower.includes(phrase), false, `${rel} ${attr} ${phrase}`);
+      assert.ok(alt.includes(FOOTER_ES), rel);
+      assert.ok(alt.includes(FOOTER_EN), rel);
+      assert.ok(alt.includes(OG_AI_ES), rel);
+      assert.ok(alt.includes(OG_AI_EN), rel);
+    }
+    for (const attr of ["og:image", "twitter:image"]) {
+      const match = html.match(new RegExp(`(?:property|name)="${attr}" content="([^"]*)"`));
+      assert.equal(match?.[1], `https://stubxai.com/assets/${OG_FILE}`, `${rel} ${attr}`);
+    }
+  }
+  const generator = readFileSync(path.join(root, "web/v2/tools/build_site.py"), "utf8");
+  const og = generator.slice(generator.indexOf("OG_IMAGE"), generator.indexOf("DRAFT_ES"));
+  const ogLower = og.toLowerCase();
+  for (const phrase of OLD_OG_FOOTER) assert.equal(ogLower.includes(phrase), false, phrase);
+  assert.ok(og.includes(OG_FILE));
+  assert.ok(og.includes(FOOTER_ES) && og.includes(FOOTER_EN));
+  assert.ok(og.includes(OG_AI_ES) && og.includes(OG_AI_EN));
+  for (const file of walkFiles(path.join(root, "web/v2"))) {
+    const rel = path.relative(path.join(root, "web/v2"), file);
+    if (rel === "archivo.html" || rel === "token.json" || rel.startsWith("tools/__pycache__")) continue;
+    if (!/\.(html|py|js|mjs|json|md|css|txt|xml)$/.test(rel)) continue;
+    const text = readFileSync(file, "utf8").toLowerCase();
+    for (const phrase of OLD_OG_FOOTER) assert.equal(text.includes(phrase), false, `${rel} ${phrase}`);
+  }
+});
+
 test("las palabras prohibidas no salen en el texto visible, y token.json queda fuera", () => {
   const root = path.join(repoRoot(), "web/v2");
   const token = readFileSync(path.join(root, "token.json"), "utf8");
