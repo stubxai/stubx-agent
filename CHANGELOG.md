@@ -7,6 +7,7 @@
 - El detector pliega mayúsculas, NFKC y homoglifos, y marca variantes del nombre y dominios parecidos, incluida la URL de Netlify.
 - Si la muestra de holders recibe 429, se leen las cuentas de la curva y de la creadora sin llamarlas censo. La CLI no descarga URIs de creadores fuera de pasarelas IPFS o Arweave. `redactEndpoint` no escribe claves de la ruta. Hay `_headers` solo para las rutas nuevas.
 - El modo sin «No publicado» ni `noindex` exige `STUBX_PUBLISH=1` y `--publish`. No está activado.
+- `.gitleaks.toml` deja pasar las cuentas públicas de token de las fichas de ejemplo. Gitleaks las tomaba por claves porque el campo se llama `tokenAccount`. El resto de reglas sigue activo.
 
 ## 2026-10-09 · STUBX Lab, misión 1 (borrador, sin publicar)
 
