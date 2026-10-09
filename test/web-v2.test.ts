@@ -33,6 +33,7 @@ const ROUTES = [
   "build/index.html",
   "aprender/index.html",
   "studio/index.html",
+  "studio/reglas/index.html",
   "cuaderno/index.html",
   "contribuir/index.html",
   "404.html",
@@ -252,7 +253,7 @@ describe("web v2", () => {
   });
 
   test("unbuilt modules stay explanatory", () => {
-    for (const rel of ["studio/index.html", "cuaderno/index.html", "contribuir/index.html"]) {
+    for (const rel of ["cuaderno/index.html", "contribuir/index.html"]) {
       const html = read(rel);
       assert.match(html, /No construido/);
       assert.match(html, /Not built/);
@@ -407,6 +408,14 @@ describe("web v2", () => {
     }
     assert.match(read("sitemap.xml"), /https:\/\/stubxai.com\/verify\//);
     assert.match(read("sitemap.xml"), /https:\/\/stubxai.com\/archivo</);
+    assert.match(read("sitemap.xml"), /https:\/\/stubxai.com\/studio\/</);
+    assert.match(read("sitemap.xml"), /https:\/\/stubxai.com\/studio\/reglas\//);
+    assert.equal((read("_headers").match(/^\/studio\/\*$/gm) ?? []).length, 1);
+    const studioHeaders = read("_headers").split(/^\/studio\/\*$/m)[1]?.split(/\n\/assets\/\*/)[0] ?? "";
+    assert.equal(studioHeaders.includes("X-Robots-Tag"), false);
+    assert.match(studioHeaders, /connect-src 'self'/);
+    assert.equal(read("studio/index.html").includes("noindex"), false);
+    assert.equal(read("studio/reglas/index.html").includes("noindex"), false);
     assert.equal(read("sitemap.xml").includes("archivo.html"), false);
     assert.match(read("_headers"), /\/assets\/\*[\s\S]*max-age=0, must-revalidate/);
     assert.equal(redirects.includes("/archivo.html"), false);
@@ -589,6 +598,7 @@ test("las palabras prohibidas no salen en el texto visible, y token.json queda f
   for (const file of walkFiles(root)) {
     const rel = path.relative(root, file);
     if (rel === "token.json" || rel === "archivo.html" || rel.startsWith("tools/")) continue;
+    if (rel === "studio/blocklist.json") continue;
     if (!/\.(html|json|md|js|mjs)$/.test(rel)) continue;
     const text = readFileSync(file, "utf8");
     const stripped = text

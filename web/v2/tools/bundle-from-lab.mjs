@@ -18,9 +18,9 @@ function git(args) {
   return run.stdout.trim();
 }
 
-function isAncestor(commit) {
+function isAncestor(commit, descendant = "HEAD") {
   if (!commit) return false;
-  return spawnSync("git", ["merge-base", "--is-ancestor", commit, "HEAD"], { cwd: root }).status === 0;
+  return spawnSync("git", ["merge-base", "--is-ancestor", commit, descendant], { cwd: root }).status === 0;
 }
 
 function labCommit() {
@@ -28,13 +28,16 @@ function labCommit() {
   if (isAncestor(origin)) return origin;
   const headBlob = git(["rev-parse", "HEAD:lab/verify/lookup.ts"]);
   const merges = git(["log", "--merges", "--pretty=%H", "HEAD"]).split("\n").filter(Boolean);
+  const candidates = [];
   for (const merge of merges) {
     const second = git(["rev-parse", `${merge}^2`]);
     if (!isAncestor(second)) continue;
     if (git(["rev-parse", `${second}:lab/verify/lookup.ts`]) !== headBlob) continue;
-    return second;
+    const subject = git(["log", "-1", "--format=%s", merge]);
+    if (subject.includes("feat/lab-mision-1")) return second;
+    candidates.push(second);
   }
-  return "";
+  return candidates[0] ?? "";
 }
 
 function ensureCompiled() {

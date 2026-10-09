@@ -137,6 +137,7 @@ PRIMARY = [
     ("verify", "verify/index.html", "Verificar", "Verify"),
     ("lab", "lab/index.html", "Lab", "Lab"),
     ("tablero", "tablero/index.html", "Tablero", "Board"),
+    ("studio", "studio/index.html", "Studio", "Studio"),
 ]
 MORE = [
     ("methodology", "methodology/index.html", "Metodología", "Methodology"),
@@ -205,7 +206,7 @@ def nav(frm: str, current: str, absolute: bool = False) -> str:
     )
 
 
-NOINDEX_PAGES = {"404.html", "studio/index.html"}
+NOINDEX_PAGES = {"404.html"}
 
 
 def shell(frm: str, current: str, title_es: str, title_en: str, desc_es: str, desc_en: str, body: str, scripts: list[str], narrow: bool, worker: bool = False, absolute: bool = False) -> str:
@@ -986,6 +987,14 @@ def headers() -> str:
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
   Cross-Origin-Opener-Policy: same-origin
 
+# Un solo bloque /studio/*. connect-src sigue en 'self': el editor descarga los PNG
+# de avatar. Incrustarlos no deja la política en 'none' y duplicaría el peso.
+/studio/*
+  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; manifest-src 'self'; media-src 'none'; frame-src 'none'; worker-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+
 /assets/*
   Cache-Control: public, max-age=0, must-revalidate
 /fonts/*
@@ -1015,8 +1024,6 @@ def headers() -> str:
 /site.webmanifest
   X-Robots-Tag: noindex, nofollow
 /404.html
-  X-Robots-Tag: noindex, nofollow
-/studio/*
   X-Robots-Tag: noindex, nofollow
 """
 
@@ -1094,6 +1101,8 @@ def sitemap() -> str:
         ("https://stubxai.com/verify/", "2026-10-09"),
         ("https://stubxai.com/lab/", "2026-10-09"),
         ("https://stubxai.com/tablero/", "2026-10-09"),
+        ("https://stubxai.com/studio/", "2026-10-09"),
+        ("https://stubxai.com/studio/reglas/", "2026-10-09"),
         ("https://stubxai.com/methodology/", "2026-10-09"),
         ("https://stubxai.com/security/", "2026-10-09"),
         ("https://stubxai.com/risks/", "2026-10-09"),
@@ -1151,15 +1160,8 @@ def main() -> None:
     write_page("build/index.html", "build", "STUBX · Versiones", "STUBX · Versions", "Lo hecho y lo que sigue siendo un objetivo.", "What is done and what is still a target.", build_page())
     write_page("avances/index.html", "avances", "STUBX · Avances", "STUBX · Progress", "El tablero vive en /tablero.", "The board lives at /tablero.", avances())
     write_page("aprender/index.html", "aprender", "STUBX · Aprender", "STUBX · Learn", "Glosario y guías de la misión, 2026-10-09.", "Mission glossary and guides, 2026-10-09.", aprender())
-    write_page(
-        "studio/index.html",
-        "studio",
-        "STUBX · Studio",
-        "STUBX · Studio",
-        "Studio no está construido.",
-        "Studio is not built.",
-        slot("Studio", "Studio", "No hay editor, catálogo activo ni exportación de imágenes. U02 es una propuesta del 2026-10-09.", "There is no editor, no active catalog, and no image export. U02 is a proposal from 2026-10-09.", "tarea-U02"),
-    )
+    # U02 vive en web/v2/studio/ y no se regenera desde aquí: el editor, el catálogo y las reglas
+    # se mantienen a mano. Un rebuild no debe borrar esa carpeta.
     write_page(
         "cuaderno/index.html",
         "cuaderno",
