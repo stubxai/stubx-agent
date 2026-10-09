@@ -137,7 +137,26 @@ function paeth(a, b, c) {
   return c;
 }
 
+export const PNG_MAX_EDGE = 2048;
+
+/** Ancho y alto del IHDR, sin recorrer ni descomprimir el IDAT. */
+export function pngDimensions(png) {
+  if (!(png instanceof Uint8Array) || png.byteLength < 24) throw new Error("PNG no válido");
+  for (let i = 0; i < SIG.length; i += 1) {
+    if (png[i] !== SIG[i]) throw new Error("PNG no válido");
+  }
+  const view = new DataView(png.buffer, png.byteOffset, png.byteLength);
+  const length = view.getUint32(8);
+  const type = new TextDecoder().decode(png.subarray(12, 16));
+  if (type !== "IHDR" || length < 8) throw new Error("PNG sin cabecera");
+  return { width: view.getUint32(16), height: view.getUint32(20) };
+}
+
 export async function decodePng(png) {
+  const declared = pngDimensions(png);
+  if (declared.width > PNG_MAX_EDGE || declared.height > PNG_MAX_EDGE || declared.width < 1 || declared.height < 1) {
+    throw new Error("PNG demasiado grande");
+  }
   const chunks = parseChunks(png);
   const ihdr = chunks.find((item) => item.type === "IHDR");
   if (!ihdr) throw new Error("PNG sin cabecera");

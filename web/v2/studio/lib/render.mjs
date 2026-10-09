@@ -1,4 +1,5 @@
-import { BRAND, FOOTER, PNG_COMMENT, RISK, WATERMARK, aiLabel } from "./copy.mjs";
+import { FOOTER, PNG_COMMENT, RISK, WATERMARK, aiLabel, brandFor } from "./copy.mjs";
+import { clipToken } from "./logo.mjs";
 import { FONT_H, bitAt, glyphOf, measureText, wrapText } from "./font.mjs";
 import { encodePng } from "./png.mjs";
 
@@ -234,7 +235,8 @@ export async function renderCard(options) {
   const size = brandFontSize(height);
   const pad = Math.round(width * 0.05);
   const inner = Math.max(8, width - pad * 2);
-  const brandText = BRAND[lang];
+  const tokenText = clipToken(options.token ?? "");
+  const brandText = brandFor(lang, tokenText);
   const riskText = RISK[lang];
   const footerText = FOOTER[lang];
   const label = aiLabel(options.origins ?? [], lang);
@@ -261,7 +263,6 @@ export async function renderCard(options) {
   const titleZone = zoneOf(zones.title, width, height, contentBottom, topBand);
   const bodyZone = zoneOf(zones.body, width, height, contentBottom, topBand);
   const avatarZone = zoneOf(zones.avatar, width, height, contentBottom, topBand);
-  const tokenText = String(options.token ?? "").trim();
   const tokenBand = tokenText ? Math.ceil(size * 2.6) : 0;
   const imageZone = tokenBand > 0 && avatarZone.h > tokenBand + 4
     ? { x: avatarZone.x, y: avatarZone.y, w: avatarZone.w, h: avatarZone.h - tokenBand }

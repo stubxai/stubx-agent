@@ -1,6 +1,6 @@
 /** Logo elegido en el navegador. No sale del dispositivo. */
 
-import { decodePng } from "./png.mjs";
+import { decodePng, pngDimensions } from "./png.mjs";
 
 export const DEFAULT_TOKEN = "STUBX";
 export const TOKEN_MAX = 20;
@@ -8,8 +8,14 @@ export const LOGO_MAX_BYTES = 1_500_000;
 export const LOGO_MAX_EDGE = 2048;
 export const LOGO_DRAW_EDGE = 512;
 
+const HIDDEN_NAME = /[\u00AD\u034F\u061C\u180E\u200B-\u200F\u202A-\u202E\u2060-\u2064\u2066-\u2069\uFEFF]/g;
+
 export function clipToken(value) {
-  return String(value ?? "").replace(/[\u0000-\u001f]/g, "").trim().slice(0, TOKEN_MAX);
+  return String(value ?? "").replace(HIDDEN_NAME, "").replace(/[\u0000-\u001f]/g, "").trim().slice(0, TOKEN_MAX);
+}
+
+export function isStubxToken(value) {
+  return clipToken(value).toLowerCase() === "stubx";
 }
 
 export function fitLogo(image, edge) {
@@ -38,9 +44,18 @@ export async function readLogoPng(bytes) {
   if (!(bytes instanceof Uint8Array) || bytes.length === 0 || bytes.length > LOGO_MAX_BYTES) {
     throw new Error("logo");
   }
-  const image = await decodePng(bytes);
-  if (image.width > LOGO_MAX_EDGE || image.height > LOGO_MAX_EDGE || image.width < 1 || image.height < 1) {
+  let width = 0;
+  let height = 0;
+  try {
+    const declared = pngDimensions(bytes);
+    width = declared.width;
+    height = declared.height;
+  } catch {
     throw new Error("logo");
   }
+  if (width > LOGO_MAX_EDGE || height > LOGO_MAX_EDGE || width < 1 || height < 1) {
+    throw new Error("logo-size");
+  }
+  const image = await decodePng(bytes);
   return fitLogo(image, LOGO_DRAW_EDGE);
 }

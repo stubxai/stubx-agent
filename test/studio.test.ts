@@ -251,6 +251,39 @@ function walkFiles(dir: string, out: string[] = []): string[] {
 
 const BINARY_EXT = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".ico", ".woff", ".woff2", ".ttf", ".otf", ".pyc", ".pyo"]);
 
+function pngChunk(type: string, data: Uint8Array): Uint8Array {
+  const typeBytes = new TextEncoder().encode(type);
+  const out = new Uint8Array(12 + data.length);
+  const view = new DataView(out.buffer);
+  view.setUint32(0, data.length);
+  out.set(typeBytes, 4);
+  out.set(data, 8);
+  view.setUint32(8 + data.length, 0);
+  return out;
+}
+
+function pngDeclaring(width: number, height: number): Uint8Array {
+  const ihdr = new Uint8Array(13);
+  const view = new DataView(ihdr.buffer);
+  view.setUint32(0, width);
+  view.setUint32(4, height);
+  ihdr[8] = 8;
+  ihdr[9] = 6;
+  const parts = [
+    Uint8Array.from([137, 80, 78, 71, 13, 10, 26, 10]),
+    pngChunk("IHDR", ihdr),
+    pngChunk("IDAT", Uint8Array.from([0, 1, 2, 3])),
+    pngChunk("IEND", new Uint8Array()),
+  ];
+  const out = new Uint8Array(parts.reduce((sum, part) => sum + part.length, 0));
+  let offset = 0;
+  for (const part of parts) {
+    out.set(part, offset);
+    offset += part.length;
+  }
+  return out;
+}
+
 function joined(card: Card, role: string): string {
   return card.glyphs
     .filter((glyph) => glyph.role === role)
@@ -455,6 +488,10 @@ describe("studio", () => {
       "ganar 100 sol",
       "Send 0.5 SOL, get 1 SOL back",
       "enívia y te devolvemos el doble",
+      "a mí envíamela",
+      "hola; a mí envíamela",
+      "no es estafa, pásamela",
+      "ganar muchísimo dinero",
       "ganar dinero",
       "el precio sube",
       "x 50",
@@ -656,6 +693,16 @@ describe("studio", () => {
     assert.match(reglas, /The token name goes through the same filter/);
     assert.match(reglas, /Los recursos de STUBX siguen como opción por defecto/);
     assert.match(reglas, /STUBX assets stay the default option/);
+    assert.match(reglas, /No oficial de \{nombre\} ni de STUBX/);
+    assert.match(reglas, /Not official for \{name\} or for STUBX/);
+    assert.match(editor, /id="aviso-logo-medida"/);
+    assert.match(editor, /Ese PNG declara más de 2048 px de ancho o de alto y no se abre/);
+    assert.match(editor, /That PNG declares more than 2048 px in width or height and will not be opened/);
+    assert.match(editor, /Con otro nombre no se usa la mascota de STUBX/);
+    assert.match(editor, /With another name the STUBX mascot is not used/);
+    assert.match(script, /error\?\.message === "logo-size"/);
+    assert.match(script, /const stubxName = isStubxToken\(name\)/);
+    assert.match(script, /const avatar = stubxName \? avatarItem\(\) : null/);
     assert.equal(/type="file"|<form\b|gallery|galería|FormData/.test(script), false);
     assert.match(script, /readLogoPng/);
     assert.match(script, /arrayBuffer/);
@@ -736,8 +783,9 @@ describe("studio", () => {
   test("el nombre del token se dibuja y el logo se queda en un PNG local", async () => {
     const { renderCard } = await load<{ renderCard: (options: Record<string, unknown>) => Promise<Card> }>("lib/render.mjs");
     const { encodePng } = await load<{ encodePng: (rgba: Uint8ClampedArray, width: number, height: number) => Promise<Uint8Array> }>("lib/png.mjs");
-    const { clipToken, fitLogo, readLogoPng, DEFAULT_TOKEN, TOKEN_MAX, LOGO_MAX_BYTES, LOGO_DRAW_EDGE } = await load<{
+    const { clipToken, fitLogo, readLogoPng, isStubxToken, DEFAULT_TOKEN, TOKEN_MAX, LOGO_MAX_BYTES, LOGO_DRAW_EDGE } = await load<{
       clipToken: (value: string) => string;
+      isStubxToken: (value: string) => boolean;
       fitLogo: (image: { width: number; height: number; rgba: Uint8ClampedArray }, edge: number) => { width: number; height: number };
       readLogoPng: (bytes: Uint8Array) => Promise<{ width: number; height: number; rgba: Uint8ClampedArray }>;
       DEFAULT_TOKEN: string;
@@ -745,10 +793,30 @@ describe("studio", () => {
       LOGO_MAX_BYTES: number;
       LOGO_DRAW_EDGE: number;
     }>("lib/logo.mjs");
+    const { decodePng, pngDimensions } = await load<{
+      decodePng: (bytes: Uint8Array) => Promise<unknown>;
+      pngDimensions: (bytes: Uint8Array) => { width: number; height: number };
+    }>("lib/png.mjs");
+    const { brandFor, BRAND } = await load<{
+      brandFor: (lang: string, token: string) => string;
+      BRAND: { es: string; en: string };
+    }>("lib/copy.mjs");
     assert.equal(DEFAULT_TOKEN, "STUBX");
     assert.equal(TOKEN_MAX, 20);
     assert.equal(clipToken("  LUNA  "), "LUNA");
     assert.equal(clipToken("ABCDEFGHIJKLMNOPQRSTUVWXYZ"), "ABCDEFGHIJKLMNOPQRST");
+    assert.equal(clipToken("STUB\u200BX"), "STUBX");
+    assert.equal(clipToken("LUNA\u202E"), "LUNA");
+    assert.equal(clipToken("\u202E\u200BLUNA\u200F"), "LUNA");
+    assert.equal(isStubxToken("STUB\u200BX"), true);
+    assert.equal(isStubxToken("stubx"), true);
+    assert.equal(isStubxToken("LUNA"), false);
+    assert.equal(brandFor("es", "LUNA"), "No oficial de LUNA ni de STUBX");
+    assert.equal(brandFor("en", "LUNA"), "Not official for LUNA or for STUBX");
+    assert.equal(brandFor("es", "STUBX"), BRAND.es);
+    assert.equal(brandFor("en", "stubx"), BRAND.en);
+    assert.equal(brandFor("es", "LUNA\u202E"), "No oficial de LUNA ni de STUBX");
+    assert.equal(brandFor("en", ""), BRAND.en);
     const named = await renderCard({
       width: 1080,
       height: 1080,
@@ -762,6 +830,21 @@ describe("studio", () => {
     assert.equal(named.fits, true);
     assert.equal(joined(named, "token"), "LUNA");
     assert.ok(named.texts.includes("LUNA"));
+    assert.equal(joined(named, "brand"), "NOOFICIALDELUNANIDESTUBX");
+    assert.equal(joined(named, "brandTop"), "NOOFICIALDELUNANIDESTUBX");
+    const englishToken = await renderCard({
+      width: 1080,
+      height: 1080,
+      lang: "en",
+      title: "Hello",
+      body: "Clean text.",
+      token: "LUNA",
+      watermark: false,
+      origins: [],
+    });
+    assert.equal(englishToken.fits, true);
+    assert.equal(joined(englishToken, "brand"), "NOTOFFICIALFORLUNAORFORSTUBX");
+    assert.equal(englishToken.label, "");
     const plain = await renderCard({
       width: 1080,
       height: 1080,
@@ -813,6 +896,21 @@ describe("studio", () => {
     await assert.rejects(() => readLogoPng(new Uint8Array([1, 2, 3, 4])));
     await assert.rejects(() => readLogoPng(new Uint8Array(LOGO_MAX_BYTES + 1)));
     assert.equal(LOGO_DRAW_EDGE, 512);
+    const bomb = pngDeclaring(12000, 12000);
+    assert.equal(pngDimensions(bomb).width, 12000);
+    assert.equal(pngDimensions(bomb).height, 12000);
+    await assert.rejects(() => readLogoPng(bomb), (error: Error) => {
+      assert.equal(error.message, "logo-size");
+      return true;
+    });
+    await assert.rejects(() => decodePng(bomb), (error: Error) => {
+      assert.equal(error.message, "PNG demasiado grande");
+      return true;
+    });
+    await assert.rejects(() => readLogoPng(pngDeclaring(2048, 8)), (error: Error) => {
+      assert.notEqual(error.message, "logo-size");
+      return true;
+    });
   });
 
   test("el borrador se guarda y se borra en local", async () => {

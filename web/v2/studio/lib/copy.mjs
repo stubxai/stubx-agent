@@ -1,5 +1,7 @@
 /** Textos fijos del PNG. El filtro no los evalúa: la marca y el pie se dibujan siempre. */
 
+import { clipToken, isStubxToken } from "./logo.mjs";
+
 export const BRAND = {
   es: "Contenido comunitario · no oficial",
   en: "Community content · unofficial",
@@ -29,6 +31,14 @@ export const AI_LABEL = {
     en: "Illustration with AI-generated elements.",
   },
 };
+
+export function brandFor(lang, token) {
+  const name = clipToken(token);
+  const code = lang === "en" ? "en" : "es";
+  if (!name || isStubxToken(name)) return BRAND[code];
+  if (code === "en") return `Not official for ${name} or for STUBX`;
+  return `No oficial de ${name} ni de STUBX`;
+}
 
 export function aiLabel(origins, lang) {
   const set = new Set(origins);

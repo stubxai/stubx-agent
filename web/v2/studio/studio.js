@@ -1,9 +1,9 @@
 import catalog from "./catalog.json" with { type: "json" };
 import templates from "./templates.json" with { type: "json" };
-import { BRAND, FOOTER, PNG_COMMENT } from "./lib/copy.mjs";
+import { FOOTER, PNG_COMMENT, brandFor } from "./lib/copy.mjs";
 import { clearDraft, clipDraftText, loadDraft, saveDraft } from "./lib/draft.mjs";
 import { analyze, exportAllowed } from "./lib/filter.mjs";
-import { DEFAULT_TOKEN, TOKEN_MAX, clipToken, readLogoPng } from "./lib/logo.mjs";
+import { DEFAULT_TOKEN, TOKEN_MAX, clipToken, isStubxToken, readLogoPng } from "./lib/logo.mjs";
 import { decodePng, injectComment } from "./lib/png.mjs";
 import { renderCard } from "./lib/render.mjs";
 
@@ -24,6 +24,8 @@ const tokenCount = document.getElementById("contador-token");
 const logoInput = document.getElementById("logo");
 const logoClear = document.getElementById("quitar-logo");
 const logoNotice = document.getElementById("aviso-logo");
+const logoSizeNotice = document.getElementById("aviso-logo-medida");
+const mascotNotice = document.getElementById("aviso-mascota");
 const logoState = document.getElementById("logo-estado");
 const userLive = document.getElementById("vista-usuario");
 const bgBox = document.getElementById("opcion-fondo");
@@ -97,6 +99,8 @@ function paintChoices() {
     bgBox.append(button);
   }
   avatarBox.replaceChildren();
+  const stubxName = isStubxToken(tokenName());
+  mascotNotice.hidden = stubxName;
   if (customLogo) {
     const own = document.createElement("button");
     own.type = "button";
@@ -104,31 +108,33 @@ function paintChoices() {
     own.setAttribute("aria-pressed", "true");
     avatarBox.append(own);
   }
-  const none = document.createElement("button");
-  none.type = "button";
-  none.textContent = code === "en" ? "No character" : "Sin personaje";
-  none.setAttribute("aria-pressed", !customLogo && !avatarId ? "true" : "false");
-  none.addEventListener("click", () => {
-    avatarId = "";
-    customLogo = null;
-    logoInput.value = "";
-    paintChoices();
-    schedule();
-  });
-  avatarBox.append(none);
-  for (const item of avatars) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.textContent = item.nombre[code];
-    button.setAttribute("aria-pressed", !customLogo && item.id === avatarId ? "true" : "false");
-    button.addEventListener("click", () => {
-      avatarId = item.id;
+  if (stubxName) {
+    const none = document.createElement("button");
+    none.type = "button";
+    none.textContent = code === "en" ? "No character" : "Sin personaje";
+    none.setAttribute("aria-pressed", !customLogo && !avatarId ? "true" : "false");
+    none.addEventListener("click", () => {
+      avatarId = "";
       customLogo = null;
       logoInput.value = "";
       paintChoices();
       schedule();
     });
-    avatarBox.append(button);
+    avatarBox.append(none);
+    for (const item of avatars) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = item.nombre[code];
+      button.setAttribute("aria-pressed", !customLogo && item.id === avatarId ? "true" : "false");
+      button.addEventListener("click", () => {
+        avatarId = item.id;
+        customLogo = null;
+        logoInput.value = "";
+        paintChoices();
+        schedule();
+      });
+      avatarBox.append(button);
+    }
   }
   logoState.textContent = customLogo ? (code === "en" ? "Logo ready in this browser." : "Logo listo en este navegador.") : "";
 }
@@ -164,9 +170,10 @@ async function draw() {
   bodyCount.textContent = `${bodyInput.value.length} / ${max.body}`;
   tokenCount.textContent = `${tokenName().length} / ${TOKEN_MAX}`;
   const bg = background();
-  const avatar = avatarItem();
-  const origins = customLogo ? [bg?.aiOrigin].filter(Boolean) : [bg?.aiOrigin, avatar?.aiOrigin].filter(Boolean);
   const name = tokenName();
+  const stubxName = isStubxToken(name);
+  const avatar = stubxName ? avatarItem() : null;
+  const origins = customLogo || !avatar ? [bg?.aiOrigin].filter(Boolean) : [bg?.aiOrigin, avatar?.aiOrigin].filter(Boolean);
   const card = await renderCard({
     width: format().width,
     height: format().height,
@@ -191,7 +198,7 @@ async function draw() {
   detail.textContent = hits.slice(0, 5).map((hit) => hitLabel(hit, code)).join(", ");
   download.disabled = !allowed || !card.fits;
   share.disabled = download.disabled;
-  userLive.textContent = [name, titleInput.value, bodyInput.value, BRAND[code], FOOTER[code], card.label].filter(Boolean).join(". ");
+  userLive.textContent = [name, titleInput.value, bodyInput.value, brandFor(code, name), FOOTER[code], card.label].filter(Boolean).join(". ");
   persist();
 }
 
@@ -258,6 +265,7 @@ bodyInput.addEventListener("input", () => {
 });
 tokenInput.maxLength = TOKEN_MAX;
 tokenInput.addEventListener("input", () => {
+  paintChoices();
   schedule();
 });
 logoInput.addEventListener("change", () => {
@@ -266,12 +274,15 @@ logoInput.addEventListener("change", () => {
   file.arrayBuffer().then((buffer) => readLogoPng(new Uint8Array(buffer))).then((image) => {
     customLogo = image;
     logoNotice.hidden = true;
+    logoSizeNotice.hidden = true;
     paintChoices();
     schedule();
-  }).catch(() => {
+  }).catch((error) => {
     customLogo = null;
     logoInput.value = "";
-    logoNotice.hidden = false;
+    const size = error?.message === "logo-size";
+    logoNotice.hidden = size;
+    logoSizeNotice.hidden = !size;
     paintChoices();
     schedule();
   });
@@ -280,6 +291,7 @@ logoClear.addEventListener("click", () => {
   customLogo = null;
   logoInput.value = "";
   logoNotice.hidden = true;
+  logoSizeNotice.hidden = true;
   paintChoices();
   schedule();
 });
@@ -307,6 +319,7 @@ clearButton.addEventListener("click", () => {
   customLogo = null;
   logoInput.value = "";
   logoNotice.hidden = true;
+  logoSizeNotice.hidden = true;
   tokenInput.value = DEFAULT_TOKEN;
   applyTemplate(templateId, lang(), false);
   paintChoices();

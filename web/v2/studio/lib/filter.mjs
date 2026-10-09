@@ -137,12 +137,17 @@ const ADVICE_VERB = new Set([
   "share", "give", "connect", "sign", "send", "approve",
 ]);
 const REQUEST = new Set([
-  "envia", "enviad", "envialo", "enviala", "enviasela", "enviaselo",
-  "manda", "mandame", "mandad", "pasa", "pasame", "dame", "damela", "damelo", "damelas", "damelos",
+  "envia", "enviad", "envialo", "enviala", "enviamela", "enviamelo", "enviamelas", "enviamelos", "enviasela", "enviaselo",
+  "manda", "mandame", "mandad", "pasa", "pasame", "pasamela", "pasamelo", "pasamelas", "pasamelos",
+  "dame", "damela", "damelo", "damelas", "damelos",
   "conecta", "conectad", "firma", "firmad", "comparte", "compartid", "aprueba",
   "send", "share", "give", "connect", "sign", "approve", "dm",
 ]);
-const DELIVERY = new Set(["dame", "damela", "damelo", "damelas", "damelos"]);
+const DELIVERY = new Set([
+  "dame", "damela", "damelo", "damelas", "damelos",
+  "enviamela", "enviamelo", "enviamelas", "enviamelos",
+  "pasamela", "pasamelo", "pasamelas", "pasamelos",
+]);
 const SENSITIVE = [
   "frase de recuperacion",
   "recovery phrase",
@@ -173,7 +178,10 @@ const MONEY = new Set([
   "usdc", "usdt", "btc", "eth", "profit", "profits", "beneficio", "beneficios", "ganancia", "ganancias",
   "usd", "eur", "euro", "euros", "dolar", "dolares", "dollar", "dollars",
 ]);
-const QUANTITY = new Set(["mucho", "mucha", "muchos", "muchas", "bastante", "mas", "tanto", "tanta", "tantos", "tantas"]);
+const QUANTITY = new Set([
+  "mucho", "mucha", "muchos", "muchas", "muchisimo", "muchisima", "muchisimos", "muchisimas",
+  "bastante", "mas", "tanto", "tanta", "tantos", "tantas",
+]);
 const PRICE = new Set([
   "precio", "price", "valor", "cotizacion", "mercado", "sol", "sols", "token", "tokens", "chart",
   "grafico", "mcap", "capitalizacion",
