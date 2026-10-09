@@ -1,4 +1,4 @@
-var CACHE = "stubx-lab-draft-2026-10-09";
+var CACHE = "stubx-lab-draft-2026-10-09-2";
 var FILES = [
   "./",
   "./index.html",
@@ -12,6 +12,7 @@ var FILES = [
 ];
 
 self.addEventListener("install", function (event) {
+  self.skipWaiting();
   event.waitUntil(caches.open(CACHE).then(function (cache) {
     return cache.addAll(FILES);
   }));

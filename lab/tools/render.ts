@@ -139,17 +139,19 @@ function fieldValue(card: CardSummary, key: string): { value: Localized; note: s
 }
 
 export function renderCard(card: CardSummary, fields: readonly string[]): string {
+  return `<article class="ficha">${cardInner(card, fields)}</article>`;
+}
+
+function cardInner(card: CardSummary, fields: readonly string[]): string {
   const rows = fields
     .map((key) => {
       const label = FIELD_LABEL[key] ?? { es: key, en: key };
       const item = fieldValue(card, key);
-      const note = item.note
-        ? `<p class="muted">${escapeHtml(item.note)}</p>`
-        : "";
+      const note = item.note ? `<p class="muted">${escapeHtml(item.note)}</p>` : "";
       return `<dt>${both(label)}</dt><dd>${both(item.value)}${note}</dd>`;
     })
     .join("");
-  return `<article class="ficha"><h3>${escapeHtml(card.name ?? card.mint)}</h3><p class="rol">${both(card.roleNote)}</p><p><code class="mint">${escapeHtml(card.mint)}</code></p><dl>${rows}</dl></article>`;
+  return `<h3>${escapeHtml(card.name ?? card.mint)}</h3><p class="rol">${both(card.roleNote)}</p><p><code class="mint">${escapeHtml(card.mint)}</code></p><dl>${rows}</dl>`;
 }
 
 function asset(prefix: string, file: string): string {
@@ -288,7 +290,7 @@ function renderVerify(cards: readonly CardSummary[], glossaryEntries: readonly G
   const articles = cards
     .map((card) => {
       const meta = `<p class="muted">${escapeHtml(card.createdAt ?? "")} · id ${escapeHtml(card.id ?? "")} · ${card.partial ? "parcial: sí" : "parcial: no"}</p>`;
-      return `<article class="ficha" data-mint="${escapeHtml(card.mint)}">${meta}${renderCard(card, fields)}</article>`;
+      return `<article class="ficha" data-mint="${escapeHtml(card.mint)}">${meta}${cardInner(card, fields)}</article>`;
     })
     .join("");
   const help = glossaryEntries

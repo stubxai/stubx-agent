@@ -108,6 +108,11 @@
       },
       "evidence": [
         {
+          "label": { "es": "PR 14 en borrador", "en": "Draft PR 14" },
+          "href": "https://github.com/stubxai/stubx-agent/pull/14",
+          "note": { "es": "Contra main. No está fusionada y no publica la web.", "en": "Against main. It is not merged and it does not publish the website." }
+        },
+        {
           "label": { "es": "Guion", "en": "Script" },
           "path": "lab/mission/mision-01.json",
           "note": { "es": "Fuente de los pasos y de las explicaciones.", "en": "Source of the steps and the explanations." }
@@ -130,6 +135,13 @@
             "es": "Primera misión preparada sobre las fichas del 2026-10-08. Estado: en revisión, no publicada.",
             "en": "First mission prepared on the 2026-10-08 cards. State: in review, not published."
           }
+        },
+        {
+          "on": "2026-10-09",
+          "change": {
+            "es": "PR 14 abierta en borrador contra main. Sigue sin publicar.",
+            "en": "PR 14 opened as a draft against main. Still not published."
+          }
         }
       ]
     },
@@ -151,6 +163,11 @@
         "en": "Authorization to publish it is missing. This copy does not update itself."
       },
       "evidence": [
+        {
+          "label": { "es": "PR 14 en borrador", "en": "Draft PR 14" },
+          "href": "https://github.com/stubxai/stubx-agent/pull/14",
+          "note": { "es": "La página viaja en la PR. No está en la web.", "en": "The page travels in the PR. It is not on the website." }
+        },
         {
           "label": { "es": "Registros", "en": "Records" },
           "path": "lab/tablero/registros.json",
@@ -191,6 +208,11 @@
       },
       "evidence": [
         {
+          "label": { "es": "PR 14 en borrador", "en": "Draft PR 14" },
+          "href": "https://github.com/stubxai/stubx-agent/pull/14",
+          "note": { "es": "El inglés sigue pendiente de revisión humana.", "en": "English is still waiting for human review." }
+        },
+        {
           "label": { "es": "Glosario", "en": "Glossary" },
           "path": "lab/library/glossary.json",
           "note": { "es": "Términos de la misión.", "en": "Terms used by the mission." }
@@ -229,6 +251,11 @@
         "en": "It only covers these drafts. The existing website has not been changed."
       },
       "evidence": [
+        {
+          "label": { "es": "PR 14 en borrador", "en": "Draft PR 14" },
+          "href": "https://github.com/stubxai/stubx-agent/pull/14",
+          "note": { "es": "La pasada de accesibilidad cubre solo estos borradores.", "en": "The accessibility pass covers only these drafts." }
+        },
         {
           "label": { "es": "Pruebas de las páginas", "en": "Page tests" },
           "path": "lab/test/pages.test.ts",
