@@ -236,7 +236,7 @@
           "en": "The calculation was made. An unread fact is not filled in with zero, and the card does not assert anyone’s intent."
         },
         "virtual-retirable": {
-          "es": "La cantidad virtual de la curva no es el fondo que se puede retirar.",
+          "es": "La cantidad virtual de la curva no es la cantidad que se puede retirar.",
           "en": "The virtual curve amount is not the balance that can be withdrawn."
         }
       }
