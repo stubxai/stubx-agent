@@ -398,8 +398,8 @@ describe("web v2", () => {
     assert.match(robots, /Sitemap: https:\/\/stubxai\.com\/sitemap\.xml/);
     const globalHeaders = read("_headers").split(/\n\/assets\/\*/)[0] ?? "";
     assert.equal(globalHeaders.includes("X-Robots-Tag"), false);
-    for (const rule of ["/lab/sw.js", "/modules/*", "/token.json"]) {
-      assert.match(read("_headers"), new RegExp(`${rule.replace(/[.*/]/g, "\\$&")}\n(?:  .*\n)*  X-Robots-Tag: noindex, nofollow`));
+    for (const rule of [/\/lab\/sw\.js\n(?:  .*\n)*  X-Robots-Tag: noindex, nofollow/, /\/modules\/\*\n(?:  .*\n)*  X-Robots-Tag: noindex, nofollow/, /\/token\.json\n(?:  .*\n)*  X-Robots-Tag: noindex, nofollow/]) {
+      assert.match(read("_headers"), rule);
     }
     for (const rel of ["index.html", "verify/index.html", "lab/index.html", "archivo.html", "proofs/index.html"]) {
       assert.equal(read(rel).includes("noindex"), false, rel);
