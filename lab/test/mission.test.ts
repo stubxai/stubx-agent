@@ -41,7 +41,9 @@ describe("misión 1", () => {
 
   test("los clones son señal de suplantación y USDC no", () => {
     const clones = cards.filter((card) => card.role === "clon");
-    assert.equal(clones.length, 3);
+    assert.equal(clones.length, 5);
+    assert.ok(clones.some((card) => card.mint === "ERYyyaE2Y2GuKB28YbC2w1nCuQ5ENQ89LR44kicvpump"));
+    assert.ok(clones.some((card) => card.mint === "FMNb4CR8ksibmgY7Ztei6BWcZXi3WHcVeJhYb9TNpump"));
     for (const card of clones) {
       assert.equal(card.inRegistry, false);
       assert.equal(card.impersonation, true);
@@ -63,9 +65,21 @@ describe("misión 1", () => {
   });
 
   test("lo no disponible no se muestra como cero ni como revocada", () => {
+    const batch2026 = new Set([
+      "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump",
+      "Hhq4ffySVX3UQqSowjhP1Lwa8YuJDf7iH2hYWvVHTuEf",
+      "DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ",
+      "3Zi6p6wzYZYKyuHdBhsDfb2pRR7XTfTfLKkXL7rwpump",
+      "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+    ]);
     for (const card of cards) {
-      assert.equal(card.holdersStatus, "no_disponible");
-      assert.equal(shownFact(card.holdersStatus, "0"), "no_disponible");
+      if (batch2026.has(card.mint) && card.mint !== "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v") {
+        assert.equal(card.holdersStatus, "no_disponible");
+        assert.equal(shownFact(card.holdersStatus, "0"), "no_disponible");
+      }
+      if (card.holdersStatus === "no_disponible") {
+        assert.equal(shownFact(card.holdersStatus, "0"), "no_disponible");
+      }
     }
     const missing = summarizeReport(
       {

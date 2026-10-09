@@ -19,16 +19,21 @@ export const DRAFT_LINE = {
   en: "Repository draft. Not published on stubxai.com.",
 } as const;
 
+export const READONLY_LINE = {
+  es: "Solo lectura: no conecta carteras ni firma nada. Las fichas no son una auditoría ni una garantía.",
+  en: "Read only: it does not connect accounts or sign anything. The cards are not an audit or a guarantee.",
+} as const;
+
 export const HOW_VERIFY = {
   es: [
     "Pega la dirección y pulsa Comprobar.",
     "El texto grande es la lectura. Los datos técnicos están plegados.",
-    "Si no hay ficha del 2026-10-08, no se pudo comprobar: esta página no llama a la red.",
+    "Si no hay ficha de ejemplo, no se pudo comprobar: esta página no llama a la red.",
   ],
   en: [
     "Paste the address and press Check.",
     "The large text is the reading. Technical details stay folded.",
-    "If there is no 2026-10-08 card, it could not be checked: this page does not call the network.",
+    "If there is no example card, it could not be checked: this page does not call the network.",
   ],
 } as const;
 

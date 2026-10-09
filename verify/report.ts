@@ -167,10 +167,29 @@ export async function buildReport(input: BuildInput): Promise<Report> {
     };
   });
 
+  const known = !largestInfo?.ok && supportedMint && decoded && account && curve
+    ? await readKnownHolderAccounts({
+        rpc: input.rpc,
+        mint: input.mint,
+        program: account.owner,
+        curvePda,
+        creator: curve?.creator ?? null,
+        denominator,
+        slots,
+        fetchedAt: createdAt,
+      })
+    : null;
+  if (known?.failure) {
+    failures.push(known.failure);
+  }
+  const knownRows = known?.rows ?? [];
+  const usingKnown = Boolean(!largestInfo?.ok && knownRows.length > 0 && known?.source);
+  const ranked = largestInfo?.ok ? rows : [];
+
   let largestNonTech: bigint | null = null;
-  if (denominator !== null && largestInfo?.ok) {
+  if (denominator !== null && ranked.length > 0) {
     largestNonTech = 0n;
-    for (const row of rows) {
+    for (const row of ranked) {
       if (row.label) {
         continue;
       }
@@ -218,6 +237,7 @@ export async function buildReport(input: BuildInput): Promise<Report> {
   const imageResult = imageUrl ? await loadImage(imageUrl, { now, random: () => 0, maxBytes: 2_000_000 }) : null;
   const imageHash = imageResult?.ok ? sha256Hex(imageResult.bytes) : null;
 
+  const pointerOff = Boolean(decoded?.metadataPointer && decoded.metadataPointer.address !== input.mint);
   const names = [onChain?.name, metaplex?.name, jsonMeta?.name].filter((item): item is string => Boolean(item));
   const symbols = [onChain?.symbol, metaplex?.symbol, jsonMeta?.symbol].filter((item): item is string => Boolean(item));
   const links = [jsonMeta?.website, jsonMeta?.twitter, jsonMeta?.telegram].filter((item): item is string => Boolean(item));
@@ -292,8 +312,22 @@ export async function buildReport(input: BuildInput): Promise<Report> {
       supplyUi: supplyRaw !== null && decimals !== null && supplyFieldSource
         ? field({ value: formatUnits(supplyRaw, decimals), status: "verificado", unit: "tokens", source: supplyFieldSource, note: "Calculado con enteros a partir de las unidades mínimas. No se usa uiAmount." })
         : unavailable<string>("getTokenSupply", input.mint, supplyInfo ?? mintInfo, NO_RESPONSE),
-      onChainName: textField(onChain?.name ?? metaplex?.name ?? null, onChain ? mintSource : metaSource, !shouldReadChain),
-      onChainSymbol: textField(onChain?.symbol ?? metaplex?.symbol ?? null, onChain ? mintSource : metaSource, !shouldReadChain),
+      onChainName: pointerOff
+        ? field({
+            value: onChain?.name ?? metaplex?.name ?? null,
+            status: "no_disponible",
+            source: onChain ? mintSource : metaSource,
+            note: "El MetadataPointer no apunta a este mint. El nombre no se da como verificado.",
+          })
+        : textField(onChain?.name ?? metaplex?.name ?? null, onChain ? mintSource : metaSource, !shouldReadChain),
+      onChainSymbol: pointerOff
+        ? field({
+            value: onChain?.symbol ?? metaplex?.symbol ?? null,
+            status: "no_disponible",
+            source: onChain ? mintSource : metaSource,
+            note: "El MetadataPointer no apunta a este mint. El símbolo no se da como verificado.",
+          })
+        : textField(onChain?.symbol ?? metaplex?.symbol ?? null, onChain ? mintSource : metaSource, !shouldReadChain),
       uri: textField(uri, uriSource, !shouldReadChain),
       jsonName: jsonField(jsonMeta?.name ?? null, jsonSource, uri),
       jsonSymbol: jsonField(jsonMeta?.symbol ?? null, jsonSource, uri),
@@ -374,29 +408,43 @@ export async function buildReport(input: BuildInput): Promise<Report> {
             },
             note: "Como máximo 20 cuentas. Los porcentajes usan el suministro verificado y se truncan a 4 decimales hacia cero.",
           })
-        : unavailable<HolderRow[]>(
-            "getTokenLargestAccounts",
-            input.mint,
-            largestInfo ?? { ok: false, method: "getTokenLargestAccounts", error: NO_RESPONSE, httpStatus: null, fetchedAt: createdAt },
-            NO_RESPONSE,
-          ),
+        : usingKnown && known?.source
+          ? field({
+              value: knownRows,
+              status: "verificado",
+              source: known.source,
+              note: known.note,
+            })
+          : unavailable<HolderRow[]>(
+              "getTokenLargestAccounts",
+              input.mint,
+              largestInfo ?? { ok: false, method: "getTokenLargestAccounts", error: NO_RESPONSE, httpStatus: null, fetchedAt: createdAt },
+              NO_RESPONSE,
+            ),
       largestNonTechnicalPercent: largestNonTech !== null && denominator !== null && denominator > 0n
         ? field({
             value: percentTruncated(largestNonTech, denominator, 4),
             status: "verificado",
             unit: "porcentaje",
-            source: {
-              method: "getTokenLargestAccounts",
-              account: input.mint,
-              slot: largestInfo?.ok ? largestInfo.slot : null,
-              fetchedAt: largestInfo?.ok ? largestInfo.fetchedAt : createdAt,
-              detail: "Máximo entre las cuentas de la muestra sin etiqueta técnica.",
-            },
+            source: usingKnown && known?.source
+              ? known.source
+              : {
+                  method: "getTokenLargestAccounts",
+                  account: input.mint,
+                  slot: largestInfo?.ok ? largestInfo.slot : null,
+                  fetchedAt: largestInfo?.ok ? largestInfo.fetchedAt : createdAt,
+                  detail: "Máximo entre las cuentas de la muestra sin etiqueta técnica.",
+                },
+            note: usingKnown ? "Solo entre las cuentas concretas leídas, no un censo." : null,
           })
         : field({
-            value: largestInfo?.ok && rows.every((row) => row.label) ? null : null,
+            value: null,
             status: largestInfo?.ok ? "verificado" : "no_disponible",
-            note: largestInfo?.ok ? "En la muestra no hay cuentas sin etiqueta técnica, o no hay denominador." : NO_RESPONSE,
+            note: largestInfo?.ok
+              ? "En la muestra no hay cuentas sin etiqueta técnica, o no hay denominador."
+              : usingKnown
+                ? "No se calcula un máximo fuera de la muestra: solo hay saldos de la curva y de la creadora, no un censo."
+                : NO_RESPONSE,
           }),
     },
     market: marketBlock(curveInfo, curve, curvePda, curveAccountSource, createdAt),
@@ -408,15 +456,23 @@ export async function buildReport(input: BuildInput): Promise<Report> {
     },
   };
 
-  report.findings = buildFindings(report, attentionBps, mismatch, curve?.complete === true);
+  report.findings = buildFindings(report, attentionBps, mismatch, curve?.complete === true, pointerOff);
   const { id: ignored, ...body } = report;
   void ignored;
   report.id = createHash("sha256").update(canonicalJson(body)).digest("hex");
   return report;
 }
 
-function buildFindings(report: Report, attentionBps: number, mismatch: boolean, curveComplete: boolean): Finding[] {
+function buildFindings(report: Report, attentionBps: number, mismatch: boolean, curveComplete: boolean, pointerOff: boolean): Finding[] {
   const findings: Finding[] = [];
+  if (pointerOff && report.supportedMint) {
+    findings.push({
+      id: "metadata-pointer",
+      level: "atención",
+      title: "El puntero de metadatos no apunta a este mint",
+      reason: "metadataPointer.metadataAddress no es la dirección del mint. El nombre incrustado no se da como verificado.",
+    });
+  }
   if (!report.supportedMint && report.identity.ownerProgram.status === "verificado" && report.identity.ownerProgram.value === null) {
     return findings;
   }
@@ -819,14 +875,90 @@ function remember(result: RpcResult<unknown>, slots: Set<number>): void {
   }
 }
 
+const PUBLIC_RPC_HOSTS = new Set(["api.mainnet-beta.solana.com"]);
+
 export function redactEndpoint(value: string): string {
   try {
     const url = new URL(value);
-    if (url.username || url.password || url.search || url.hash) {
-      return `${url.origin}/…`;
+    const host = url.hostname.toLowerCase();
+    const bare = !url.username && !url.password && !url.search && !url.hash && (url.pathname === "/" || url.pathname === "");
+    if (PUBLIC_RPC_HOSTS.has(host) && bare) {
+      return url.origin;
     }
-    return `${url.origin}${url.pathname.replace(/\/$/, "")}`;
+    return "rpc-configurada";
   } catch {
     return "rpc-configurada";
   }
+}
+
+async function readKnownHolderAccounts(input: {
+  rpc: RpcClient;
+  mint: string;
+  program: string;
+  curvePda: string;
+  creator: string | null;
+  denominator: bigint | null;
+  slots: Set<number>;
+  fetchedAt: string;
+}): Promise<{ rows: HolderRow[]; source: Source | null; note: string; failure: string | null }> {
+  const targets: Array<{ address: string; label: string }> = [];
+  const curveAta = associatedTokenAddress(input.curvePda, input.mint, input.program);
+  if (curveAta) {
+    targets.push({ address: curveAta, label: "cuenta de la curva, saldo leído; no es un censo" });
+  }
+  const creatorAta = input.creator ? associatedTokenAddress(input.creator, input.mint, input.program) : null;
+  if (creatorAta) {
+    targets.push({ address: creatorAta, label: "cuenta de la creadora, saldo leído; no es un censo" });
+  }
+  if (targets.length === 0) {
+    return { rows: [], source: null, note: "", failure: null };
+  }
+  const packed = await input.rpc.getMultipleAccounts(targets.map((item) => item.address));
+  remember(packed, input.slots);
+  if (!packed.ok) {
+    return { rows: [], source: null, note: "", failure: `getMultipleAccounts de curva y creadora: ${packed.error}` };
+  }
+  const rows: HolderRow[] = [];
+  let covered = 0n;
+  for (let index = 0; index < targets.length; index += 1) {
+    const target = targets[index];
+    if (!target) {
+      continue;
+    }
+    const info = packed.value[index] ?? null;
+    const token = info ? readTokenAccount(info.data) : null;
+    if (!token) {
+      continue;
+    }
+    covered += token.amount;
+    rows.push({
+      tokenAccount: target.address,
+      owner: token.owner,
+      amountRaw: token.amount.toString(),
+      percent: input.denominator === null ? null : percentTruncated(token.amount, input.denominator, 4),
+      label: target.label,
+    });
+  }
+  if (rows.length === 0) {
+    return { rows: [], source: null, note: "", failure: null };
+  }
+  const rest = input.denominator === null ? null : input.denominator - covered;
+  const restPercent = rest !== null && input.denominator !== null && input.denominator > 0n
+    ? percentTruncated(rest < 0n ? 0n : rest, input.denominator, 4)
+    : null;
+  const note = restPercent
+    ? `Saldos leídos de la curva y de la creadora. El resto respecto al suministro es ${restPercent} %. No es un censo de holders.`
+    : "Saldos leídos de la curva y de la creadora. No es un censo de holders.";
+  return {
+    rows,
+    source: {
+      method: "getMultipleAccounts",
+      account: input.mint,
+      slot: packed.slot,
+      fetchedAt: packed.fetchedAt || input.fetchedAt,
+      detail: "ATA de la curva y, si la curva trae creadora, ATA de la creadora. No sustituye a getTokenLargestAccounts ni es un censo.",
+    },
+    note,
+    failure: null,
+  };
 }

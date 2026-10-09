@@ -83,8 +83,8 @@ const COPY = {
     lightLabel: { es: "Sin ficha", en: "No card" },
     title: { es: "No se pudo comprobar", en: "Could not be checked" },
     support: {
-      es: "No está entre las fichas del 2026-10-08. Esta página no consulta la red, así que no rellena el hueco.",
-      en: "It is not among the 2026-10-08 cards. This page does not query the network, so it does not fill the gap.",
+      es: "No está entre las fichas de ejemplo. La lista no es completa y esta página no consulta la red, así que no rellena el hueco.",
+      en: "It is not among the example cards. The list is not complete and this page does not query the network, so it does not fill the gap.",
     },
   },
   lectura_caida: {

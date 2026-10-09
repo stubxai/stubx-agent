@@ -68,10 +68,16 @@ function fieldText(card, key, lang) {
   if (key === "holders") return { value: factText(card.holdersStatus, null, lang), note: card.holdersNote };
   if (key === "impersonation") {
     if (card.impersonation === null) return { value: statusLabel("desconocido", lang), note: null };
-    var label = card.impersonation
-      ? (lang === "en" ? "Possible impersonation" : "Posible suplantación")
-      : (lang === "en" ? "No such signal" : "Sin esa señal");
-    return { value: label + (card.authenticityLevel ? " · " + card.authenticityLevel : ""), note: null };
+    var level = levelWord(card.authenticityLevel, lang);
+    if (card.impersonation) {
+      var copyLabel = lang === "en" ? "Possible impersonation" : "Posible suplantación";
+      return { value: copyLabel + (level ? " · " + level : ""), note: null };
+    }
+    if (card.inRegistry === true) {
+      var registryLabel = lang === "en" ? "In the registry" : "En el registro";
+      return { value: registryLabel + (level ? " · " + level : ""), note: null };
+    }
+    return { value: lang === "en" ? "No such signal" : "Sin esa señal", note: null };
   }
   if (key === "curvePresent") {
     var present = card.curvePresent === null ? null : yesNo(card.curvePresent, lang);
@@ -82,6 +88,13 @@ function fieldText(card, key, lang) {
     return { value: factText(card.curveProgressStatus, progress, lang), note: card.curveProgressNote };
   }
   return { value: statusLabel("desconocido", lang), note: null };
+}
+
+function levelWord(level, lang) {
+  if (level === "atención") return lang === "en" ? "attention" : "atención";
+  if (level === "riesgo") return lang === "en" ? "risk" : "riesgo";
+  if (level === "ok") return "ok";
+  return level || "";
 }
 
 function el(tag, attrs) {

@@ -128,6 +128,7 @@ export function reportHtml(report: Report): string {
   .ok { color: #166534; }
   .atencion { color: #9a3412; }
   .riesgo { color: #991b1b; }
+  .neutro { color: #44403c; }
   dt { font-weight: 700; margin-top: 0.8rem; }
   dd { margin: 0.2rem 0 0.6rem; }
   code { font-family: ui-monospace, monospace; }
@@ -209,8 +210,10 @@ ${report.limitations.map((item) => `<li>${escapeHtml(item)}</li>`).join("\n")}
 }
 
 function findingHtml(item: Finding): string {
-  const cls = item.level === "atención" ? "atencion" : item.level;
-  return `<article><p><span class="level ${cls}">${escapeHtml(levelLabel(item.level))}</span> · ${escapeHtml(item.title)}</p><p>${escapeHtml(item.reason)}</p></article>`;
+  const neutral = item.id === "authenticity" && item.level === "ok" && item.title.startsWith("Sin señales");
+  const cls = neutral ? "neutro" : item.level === "atención" ? "atencion" : item.level;
+  const label = neutral ? "sin señal" : levelLabel(item.level);
+  return `<article><p><span class="level ${cls}">${escapeHtml(label)}</span> · ${escapeHtml(item.title)}</p><p>${escapeHtml(item.reason)}</p></article>`;
 }
 
 function levelLabel(level: Finding["level"]): string {

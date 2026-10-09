@@ -27,13 +27,15 @@
     note.hidden = navigator.onLine !== false;
   }
 
+  function onLab() {
+    var path = location.pathname;
+    return /\/lab\/(?:index\.html)?$/.test(path) || /\/lab$/.test(path);
+  }
+
   function register() {
     if (!("serviceWorker" in navigator) || location.protocol === "file:") return;
-    var script = document.querySelector("script[src*='site.js']");
-    if (!script) return;
-    var src = script.getAttribute("src") || "";
-    var swUrl = src.replace("assets/site.js", "sw.js");
-    navigator.serviceWorker.register(swUrl).then(function (registration) {
+    if (!onLab()) return;
+    navigator.serviceWorker.register("./sw.js", { scope: "./" }).then(function (registration) {
       registration.addEventListener("updatefound", function () {
         var worker = registration.installing;
         if (!worker) return;

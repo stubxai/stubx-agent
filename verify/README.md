@@ -79,7 +79,9 @@ TokenMetadata (tipo 19): autoridad de actualización (32 bytes; todos a cero = n
 
 Metaplex, solo si la cuenta existe. PDA con semillas `metadata`, el programa `metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s` y el mint. El byte 0 tiene que ser `4`. Siguen la autoridad de actualización, el mint, y las cadenas Borsh de nombre, símbolo y URI. `is_mutable` se lee después de la comisión y de los creadores. `false` no demuestra que el proyecto sea legítimo.
 
-El JSON de la URI se pide por HTTPS. Si es `ipfs://` o un enlace de IPFS, se prueban en orden `gateway.pinata.cloud`, `dweb.link`, `w3s.link` e `ipfs.io`. Un 429 pasa al siguiente. El sha256 de la imagen es del cuerpo descargado, con tope de bytes en la política.
+El JSON de la URI no se pide en el host que elija el creador. Solo se descarga un CID por las pasarelas `gateway.pinata.cloud`, `dweb.link`, `w3s.link` e `ipfs.io`, o un id de Arweave por `arweave.net`. Si la URI ya es una de esas pasarelas, se prueba esa primero. Un 429 pasa a la siguiente. Las redirecciones se siguen a mano, con tope, y se rechazan si el destino no es https o cae en una IP privada (también `100.64.0.0/10`, `fc00::/7` y `fe80::/10`). El sha256 de la imagen es del cuerpo descargado, con tope de bytes y de tiempo en la política.
+
+Si `getTokenLargestAccounts` responde 429, la ficha lee el saldo de la ATA de la curva y, si la curva trae creadora, el de su ATA. Eso no es un censo. El endpoint público `api.mainnet-beta.solana.com` se anota solo como origen; cualquier otra RPC queda como `rpc-configurada`, para no escribir una clave que vaya en la ruta.
 
 Curva de Pump.fun. PDA con semillas `bonding-curve` y el mint, programa `6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P`. Si no hay cuenta, el módulo de otros mercados no está disponible y no se rellena ninguna reserva con cero. Si la hay, el discriminador público es `17b7f83760d8ac60` y el orden del IDL público es:
 

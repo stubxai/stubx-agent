@@ -145,6 +145,7 @@ export type FuenteCard = {
   mint: string;
   role: CardRole;
   roleNote: Localized;
+  file?: string;
 };
 
 export type Fuentes = {
@@ -174,10 +175,12 @@ export function loadFuentes(repoRoot: string): Fuentes {
     if (!text(note?.es) || !text(note?.en)) {
       throw new Error("Falta el rótulo bilingüe de una ficha.");
     }
+    const file = text(row.file);
     cards.push({
       mint: text(row.mint) ?? "",
       role,
       roleNote: { es: text(note?.es) ?? "", en: text(note?.en) ?? "" },
+      ...(file ? { file } : {}),
     });
   }
   return {
@@ -190,7 +193,9 @@ export function loadFuentes(repoRoot: string): Fuentes {
 
 export function loadCards(repoRoot: string, fuentes: Fuentes): CardSummary[] {
   return fuentes.cards.map((card) => {
-    const file = path.join(repoRoot, fuentes.directory, `${card.mint}.json`);
+    const file = card.file
+      ? path.join(repoRoot, card.file)
+      : path.join(repoRoot, fuentes.directory, `${card.mint}.json`);
     const summary = summarizeReport(loadJson(file), card.role, card.roleNote);
     if (summary.mint !== card.mint) {
       throw new Error(`La ficha ${file} no corresponde al mint esperado.`);

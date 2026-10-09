@@ -183,7 +183,7 @@ export class RpcClient {
         lastStatus = response.status;
         if (isRetryableStatus(response.status) && attempt < this.maxRetries) {
           lastError = `HTTP ${response.status}`;
-          await this.sleep(this.backoff(attempt));
+          await this.sleep(this.backoff(attempt, method));
           continue;
         }
         if (response.status < 200 || response.status >= 300) {
@@ -194,7 +194,7 @@ export class RpcClient {
           const message = parsed.error.message ?? "error JSON-RPC";
           if (isRetryableMessage(parsed.error.code, message) && attempt < this.maxRetries) {
             lastError = message;
-            await this.sleep(this.backoff(attempt));
+            await this.sleep(this.backoff(attempt, method));
             continue;
           }
           return { ok: false, method, error: message, httpStatus: response.status, fetchedAt };
@@ -204,7 +204,7 @@ export class RpcClient {
       } catch (error) {
         lastError = error instanceof Error ? error.message : "error de red";
         if (attempt < this.maxRetries) {
-          await this.sleep(this.backoff(attempt));
+          await this.sleep(this.backoff(attempt, method));
           continue;
         }
         return { ok: false, method, error: lastError, httpStatus: lastStatus, fetchedAt };
@@ -219,9 +219,10 @@ export class RpcClient {
     };
   }
 
-  private backoff(attempt: number): number {
+  private backoff(attempt: number, method: string): number {
+    const base = method === "getTokenLargestAccounts" ? Math.max(this.backoffBaseMs, 1000) : this.backoffBaseMs;
     const jitter = Math.floor(this.random() * 100);
-    return this.backoffBaseMs * 2 ** attempt + jitter;
+    return base * 2 ** attempt + jitter;
   }
 
   private async pace(): Promise<void> {

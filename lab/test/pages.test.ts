@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, test } from "node:test";
 import { DISCLAIMER, UNKNOWN_LINE } from "../copy.js";
@@ -7,6 +7,8 @@ import { repoRootFromMeta } from "../paths.js";
 import { PALETTE, contrast } from "../theme.js";
 import { bannedHits } from "../text.js";
 import { buildOutputs, pagesDiffer } from "../tools/build-pages.js";
+import { renderPages } from "../tools/render.js";
+import { loadCards, loadFuentes } from "../mission/load.js";
 
 const root = repoRootFromMeta(import.meta.url);
 
@@ -64,7 +66,7 @@ describe("páginas estáticas", () => {
   const htmlPages = pages.filter((item) => item.rel.endsWith(".html"));
   const css = page(pages, "assets/site.css");
   const missionJs = page(pages, "assets/mission.js");
-  const sw = readFileSync(path.join(root, "site-drafts/sw.js"), "utf8");
+  const sw = page(pages, "lab/sw.js");
 
   test("los HTML generados coinciden con los archivos del repositorio", () => {
     assert.deepEqual(pagesDiffer(root, pages), []);
@@ -150,7 +152,27 @@ describe("páginas estáticas", () => {
     assert.match(board, /https:\/\/github.com\/stubxai\/stubx-agent\/pull\/13/);
     assert.match(board, /lab\/test\/mission\.test\.ts/);
     assert.match(board, /\.github\/workflows\/ci\.yml/);
-    assert.match(page(pages, "index.html"), /href="\.\/lab\/index\.html"/);
+    assert.match(page(pages, "indice-borrador.html"), /href="\.\/lab\/index\.html"/);
+    assert.match(verify, /no una lista completa de clones/);
+    assert.match(verify, /Solo lectura: no conecta carteras ni firma nada/);
+    assert.equal(verify.includes("Sin esa señal · ok"), false);
+    assert.equal(verify.includes("No such signal · ok"), false);
+    assert.match(verify, /class="sin-senal"/);
+    assert.match(verify, /partial: yes|partial: no/);
+    const headers = page(pages, "_headers");
+    assert.match(headers, /Content-Security-Policy: default-src 'none'/);
+    assert.equal(headers.includes("\n/*\n") || headers.startsWith("/*"), false);
+    assert.equal(existsSync(path.join(root, "site-drafts/sw.js")), false);
+    assert.equal(existsSync(path.join(root, "site-drafts/index.html")), false);
+    const siteJs = readFileSync(path.join(root, "site-drafts/assets/site.js"), "utf8");
+    assert.match(siteJs, /function onLab/);
+    assert.match(siteJs, /register\("\.\/sw\.js"/);
+    assert.match(sw, /fetch\(event\.request\)/);
+    assert.ok(sw.indexOf("fetch(event.request)") < sw.indexOf("caches.match(event.request)"));
+    assert.match(sw, /path === "\/"/);
+    assert.match(sw, /aviso/);
+    assert.equal(sw.includes("../index.html"), false);
+    assert.equal(sw.includes("./verify/"), false);
     const verifyJs = page(pages, "assets/verify.js");
     assert.match(verifyJs, /function classifyAddress/);
     assert.match(verifyJs, /function pendingView/);
@@ -163,6 +185,17 @@ describe("páginas estáticas", () => {
       const block = html.slice(start, end);
       assert.equal([...block.matchAll(/<li>/g)].length, 3, html.slice(0, 40));
     }
+  });
+
+  test("el modo publicación no es el borrador por defecto", () => {
+    const cards = loadCards(root, loadFuentes(root));
+    const published = renderPages(root, cards, { publish: true });
+    const home = published.find((item) => item.rel.endsWith("indice-borrador.html"));
+    assert.ok(home);
+    assert.equal(home.body.includes('content="noindex"'), false);
+    assert.equal(home.body.includes("No publicado"), false);
+    assert.match(page(pages, "indice-borrador.html"), /content="noindex"/);
+    assert.match(page(pages, "indice-borrador.html"), /No publicado/);
   });
 
   test("los svg decorativos no se anuncian como imagen sin texto", () => {

@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { DISCLAIMER, DISCLAIMER_EN, DRAFT_LINE, HOW_LAB, HOW_VERIFY, OFFLINE_LINE, UNKNOWN_LINE } from "../copy.js";
+import { DISCLAIMER, DISCLAIMER_EN, DRAFT_LINE, HOW_LAB, HOW_VERIFY, OFFLINE_LINE, READONLY_LINE, UNKNOWN_LINE } from "../copy.js";
 import { loadGlossary, loadMission } from "../mission/load.js";
 import type { CardSummary, GlossaryEntry, Localized, Mission, MissionStep } from "../mission/types.js";
 import { changelogHeadings, listTestFiles, loadBoard } from "../tablero/collect.js";
@@ -80,7 +80,13 @@ export function safeHref(value: string | undefined): string | null {
   return null;
 }
 
-function fieldValue(card: CardSummary, key: string): { value: Localized; note: string | null } {
+const LEVEL_LABEL: Record<string, Localized> = {
+  ok: { es: "ok", en: "ok" },
+  "atención": { es: "atención", en: "attention" },
+  riesgo: { es: "riesgo", en: "risk" },
+};
+
+function fieldValue(card: CardSummary, key: string): { value: Localized; note: string | Localized | null; neutral?: boolean } {
   switch (key) {
     case "name":
       return { value: fact(card.nameStatus, card.name ? { es: card.name, en: card.name } : null), note: null };
@@ -112,13 +118,32 @@ function fieldValue(card: CardSummary, key: string): { value: Localized; note: s
       return { value: fact(card.holdersStatus, null), note: card.holdersNote };
     case "impersonation": {
       if (card.impersonation === null) {
-        return { value: statusText("desconocido"), note: null };
+        return { value: statusText("desconocido"), note: null, neutral: true };
       }
-      const label = card.impersonation
-        ? { es: "Posible suplantación", en: "Possible impersonation" }
-        : { es: "Sin esa señal", en: "No such signal" };
-      const level = card.authenticityLevel ? ` · ${card.authenticityLevel}` : "";
-      return { value: { es: `${label.es}${level}`, en: `${label.en}${level}` }, note: null };
+      const level = LEVEL_LABEL[card.authenticityLevel ?? ""] ?? {
+        es: card.authenticityLevel ?? "",
+        en: card.authenticityLevel ?? "",
+      };
+      if (card.impersonation) {
+        return {
+          value: { es: `Posible suplantación · ${level.es}`, en: `Possible impersonation · ${level.en}` },
+          note: null,
+        };
+      }
+      if (card.inRegistry === true) {
+        return {
+          value: { es: `En el registro · ${level.es}`, en: `In the registry · ${level.en}` },
+          note: null,
+        };
+      }
+      return {
+        value: { es: "Sin esa señal", en: "No such signal" },
+        note: {
+          es: "Que no aparezca la señal no comprueba el mint.",
+          en: "The lack of that signal does not check the mint.",
+        },
+        neutral: true,
+      };
     }
     case "curvePresent":
       return {
@@ -147,8 +172,11 @@ function cardInner(card: CardSummary, fields: readonly string[]): string {
     .map((key) => {
       const label = FIELD_LABEL[key] ?? { es: key, en: key };
       const item = fieldValue(card, key);
-      const note = item.note ? `<p class="muted">${escapeHtml(item.note)}</p>` : "";
-      return `<dt>${both(label)}</dt><dd>${both(item.value)}${note}</dd>`;
+      const note = item.note
+        ? `<p class="muted">${typeof item.note === "string" ? escapeHtml(item.note) : both(item.note)}</p>`
+        : "";
+      const tone = item.neutral ? ` class="sin-senal"` : "";
+      return `<dt>${both(label)}</dt><dd${tone}>${both(item.value)}${note}</dd>`;
     })
     .join("");
   return `<h3>${escapeHtml(card.name ?? card.mint)}</h3><p class="rol">${both(card.roleNote)}</p><p><code class="mint">${escapeHtml(card.mint)}</code></p><dl>${rows}</dl>`;
@@ -160,7 +188,7 @@ function asset(prefix: string, file: string): string {
 
 function pageHref(prefix: string, page: Exclude<PageName, never>): string {
   if (page === "index") {
-    return prefix === "" ? "./index.html" : "../index.html";
+    return prefix === "" ? "./indice-borrador.html" : "../indice-borrador.html";
   }
   return prefix === "" ? `${page}/index.html` : `../${page}/index.html`;
 }
@@ -175,7 +203,7 @@ function howDetails(copy: { es: readonly string[]; en: readonly string[] }): str
   return `<details class="como"><summary>${both({ es: "¿Cómo funciona?", en: "How does it work?" })}</summary><ol>${items}</ol></details>`;
 }
 
-function shell(input: { title: string; description: string; prefix: string; current: PageName; main: string; mission?: boolean; verify?: boolean; narrow?: boolean }): string {
+function shell(input: { title: string; description: string; prefix: string; current: PageName; main: string; mission?: boolean; verify?: boolean; narrow?: boolean; publish?: boolean }): string {
   const nav: Array<{ id: Exclude<PageName, "index">; es: string; en: string }> = [
     { id: "verify", es: "Verify", en: "Verify" },
     { id: "lab", es: "Lab", en: "Lab" },
@@ -196,8 +224,7 @@ function shell(input: { title: string; description: string; prefix: string; curr
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
-<meta name="robots" content="noindex">
-<title>${escapeHtml(input.title)}</title>
+${input.publish ? "" : `<meta name="robots" content="noindex">\n`}<title>${escapeHtml(input.title)}</title>
 <meta name="description" content="${escapeHtml(input.description)}">
 <link rel="stylesheet" href="${asset(input.prefix, "site.css")}">
 <script src="${asset(input.prefix, "site.js")}"></script>
@@ -207,7 +234,7 @@ function shell(input: { title: string; description: string; prefix: string; curr
 <a class="skip lang en" href="#contenido">Skip to content</a>
 <header class="site"><div class="${frame}">
 <p class="brand"><strong>STUBX</strong></p>
-<p class="draft">${both(DRAFT_LINE)}</p>
+${input.publish ? "" : `<p class="draft">${both(DRAFT_LINE)}</p>\n`}
 <nav class="site" aria-label="Secciones / Sections"><ul>${links}</ul></nav>
 <div class="langs" role="group" aria-label="Idioma / Language">
 <button type="button" data-set-lang="es" lang="es">Español</button>
@@ -218,8 +245,9 @@ function shell(input: { title: string; description: string; prefix: string; curr
 <div class="aviso" data-disclaimer="si">
 <p>${escapeHtml(DISCLAIMER)}</p>
 <p lang="en">${escapeHtml(DISCLAIMER_EN)}</p>
+<p>${both(READONLY_LINE)}</p>
 <p>${both(UNKNOWN_LINE)}</p>
-<p>${both({ es: "Fichas fechadas el 2026-10-08 (UTC). No se actualizan solas.", en: "Cards dated 2026-10-08 (UTC). They do not update themselves." })}</p>
+<p>${both({ es: "Fichas del 2026-10-08 y, si las hay, ejemplos posteriores. No se actualizan solas. La hora de cada ficha va en Europe/Madrid.", en: "Cards from 2026-10-08 and, where present, later examples. They do not update themselves. Each card time is shown in Europe/Madrid." })}</p>
 </div>
 <p id="aviso-red" class="nota" hidden>${both(OFFLINE_LINE)}</p>
 <p id="aviso-version" class="nota" hidden>${both({ es: "Hay otra copia de estas páginas. Recargar no borra el progreso local.", en: "Another copy of these pages is available. Reloading does not delete local progress." })} <button type="button" id="recargar">${both({ es: "Recargar", en: "Reload" })}</button></p>
@@ -227,7 +255,7 @@ ${input.main}
 </main>
 <footer class="site"><div class="${frame}">
 <p>${both(OFFLINE_LINE)}</p>
-<p>${both({ es: "Borrador 2026-10-09. Sin cuentas, sin firma y sin analítica.", en: "Draft 2026-10-09. No accounts, no signing, and no analytics." })}</p>
+<p>${both(input.publish ? { es: "Sin cuentas, sin firma y sin analítica.", en: "No accounts, no signing, and no analytics." } : { es: "Borrador 2026-10-09. Sin cuentas, sin firma y sin analítica.", en: "Draft 2026-10-09. No accounts, no signing, and no analytics." })}</p>
 </div></footer>${mission}${verify}
 </body>
 </html>
@@ -279,7 +307,7 @@ function guideSection(repoRoot: string): string {
     .join("");
 }
 
-function renderLab(repoRoot: string, cards: readonly CardSummary[], mission: Mission): string {
+function renderLab(repoRoot: string, cards: readonly CardSummary[], mission: Mission, options: RenderOptions): string {
   const byMint = new Map(cards.map((card) => [card.mint, card]));
   const glossary = loadGlossary(repoRoot);
   const glossaryById = new Map(glossary.entries.map((entry) => [entry.id, entry]));
@@ -301,14 +329,15 @@ ${howDetails(HOW_LAB)}
     main,
     mission: true,
     narrow: true,
+    publish: options.publish,
   });
 }
 
-function renderVerify(cards: readonly CardSummary[], glossaryEntries: readonly GlossaryEntry[]): string {
+function renderVerify(cards: readonly CardSummary[], glossaryEntries: readonly GlossaryEntry[], options: RenderOptions): string {
   const fields = ["name", "mint", "inRegistry", "mintAuthority", "freezeAuthority", "metadata", "holders", "impersonation", "statement", "curvePresent", "curveProgress"];
   const articles = cards
     .map((card) => {
-      const meta = `<p class="muted">${escapeHtml(card.createdAt ?? "")} · id ${escapeHtml(card.id ?? "")} · ${card.partial ? "parcial: sí" : "parcial: no"}</p>`;
+      const meta = `<p class="muted">${escapeHtml(madridStamp(card.createdAt))} · id ${escapeHtml(card.id ?? "")} · ${both(card.partial ? { es: "parcial: sí", en: "partial: yes" } : { es: "parcial: no", en: "partial: no" })}</p>`;
       return `<article class="ficha" data-mint="${escapeHtml(card.mint)}">${meta}${cardInner(card, fields)}</article>`;
     })
     .join("");
@@ -319,7 +348,7 @@ function renderVerify(cards: readonly CardSummary[], glossaryEntries: readonly G
     .map((entry) => glossaryArticle(entry))
     .join("");
   const main = `<h1>${both({ es: "Comprueba una dirección", en: "Check an address" })}</h1>
-<p class="lede">${both({ es: "Solo con las fichas del 2026-10-08. Esta página no consulta la red.", en: "Only with the 2026-10-08 cards. This page does not query the network." })}</p>
+<p class="lede">${both({ es: "Ejemplos fechados, no una lista completa de clones. Esta página no consulta la red.", en: "Dated examples, not a complete list of clones. This page does not query the network." })}</p>
 ${howDetails(HOW_VERIFY)}
 <div class="herramienta">
 <form id="consulta" class="consulta" action="#">
@@ -333,8 +362,8 @@ ${howDetails(HOW_VERIFY)}
 <ul class="leyenda"><li data-luz="ok">${both({ es: "Parece el STUBX oficial", en: "Looks like the official STUBX" })}</li><li data-luz="riesgo">${both({ es: "Cuidado: posible copia", en: "Careful: possible copy" })}</li><li data-luz="neutro">${both({ es: "No se pudo comprobar", en: "Could not be checked" })}</li></ul>
 </section>
 </div>
-<details class="tecnico archivo"><summary>${both({ es: "Fichas del 2026-10-08", en: "Cards from 2026-10-08" })}</summary>
-<p>${both({ es: "Las cinco fichas son parciales: la muestra de holders quedó en no disponible. Eso no rellena el dato ni anula los campos verificados.", en: "All five cards are partial: the holder sample stayed unavailable. That does not fill the fact in and does not cancel the verified fields." })}</p>
+<details class="tecnico archivo"><summary>${both({ es: "Fichas de ejemplo", en: "Example cards" })}</summary>
+<p>${both({ es: "Son ejemplos, no una lista completa de clones. Si una ficha es parcial, el dato que falta no se rellena ni anula lo verificado.", en: "These are examples, not a complete list of clones. If a card is partial, the missing fact is not filled in and does not cancel what was verified." })}</p>
 <div class="fichas">${articles}</div>
 <div class="fichas">${help}</div>
 </details>`;
@@ -346,6 +375,7 @@ ${howDetails(HOW_VERIFY)}
     main,
     verify: true,
     narrow: true,
+    publish: options.publish,
   });
 }
 
@@ -366,7 +396,7 @@ function taskArticle(task: TaskRecord): string {
   return `<article class="tarea" id="tarea-${escapeHtml(task.id)}" data-status="${escapeHtml(task.status)}" data-web="${task.webPublished ? "si" : "no"}"><h3>${escapeHtml(task.id)} · ${both(task.title)}</h3><p class="estado">${both(status)} · ${both(task.webPublished ? { es: "En stubxai.com: sí", en: "On stubxai.com: yes" } : { es: "En stubxai.com: no", en: "On stubxai.com: no" })}</p><p>${both(task.scope)}</p><dl><dt>${both({ es: "Responsable", en: "Owner" })}</dt><dd>${escapeHtml(task.owner)}</dd><dt>${both({ es: "Revisión", en: "Review" })}</dt><dd>${escapeHtml(task.reviewer)}</dd><dt>${both({ es: "Fecha de revisión del registro", en: "Record review date" })}</dt><dd>${escapeHtml(reviewed)}</dd></dl>${block}<h4>${both({ es: "Evidencia", en: "Evidence" })}</h4>${evidence ? `<ul>${evidence}</ul>` : `<p>${both({ es: "Todavía no hay evidencia de implementación.", en: "There is no implementation evidence yet." })}</p>`}<h4>${both({ es: "Historial", en: "History" })}</h4><ul>${history}</ul></article>`;
 }
 
-function renderBoard(repoRoot: string, board: BoardFile): string {
+function renderBoard(repoRoot: string, board: BoardFile, options: RenderOptions): string {
   const changelog = changelogHeadings(readFileSync(path.join(repoRoot, "CHANGELOG.md"), "utf8"));
   const tests = listTestFiles(repoRoot);
   const rows = board.tasks
@@ -398,14 +428,15 @@ function renderBoard(repoRoot: string, board: BoardFile): string {
     prefix: "../",
     current: "tablero",
     main,
+    publish: options.publish,
   });
 }
 
-function renderIndex(): string {
+function renderIndex(options: RenderOptions): string {
   const main = `<h1>${both({ es: "Borradores para la web", en: "Drafts for the website" })}</h1>
-<p>${both({ es: "Tres páginas estáticas listas para copiar a stubxai.com cuando haya autorización. No sustituyen las páginas que ya existen.", en: "Three static pages ready to copy onto stubxai.com when there is authorization. They do not replace the pages that already exist." })}</p>
+<p>${both({ es: "Tres páginas estáticas listas para copiar a stubxai.com cuando haya autorización. Este índice no se llama index.html: no sustituye la portada.", en: "Three static pages ready to copy onto stubxai.com when there is authorization. This index is not named index.html: it does not replace the homepage." })}</p>
 <ul>
-<li><a href="./verify/index.html">/verify</a> — ${both({ es: "fichas del 2026-10-08", en: "cards from 2026-10-08" })}</li>
+<li><a href="./verify/index.html">/verify</a> — ${both({ es: "fichas de ejemplo", en: "example cards" })}</li>
 <li><a href="./lab/index.html">/lab</a> — ${both({ es: "misión 1", en: "mission 1" })}</li>
 <li><a href="./tablero/index.html">/tablero</a> — ${both({ es: "tablero de construcción", en: "construction board" })}</li>
 </ul>`;
@@ -415,19 +446,114 @@ function renderIndex(): string {
     prefix: "",
     current: "index",
     main,
+    publish: options.publish,
   });
 }
 
 export type BuiltPage = { rel: string; body: string };
 
-export function renderPages(repoRoot: string, cards: readonly CardSummary[]): BuiltPage[] {
+export type RenderOptions = { publish?: boolean };
+
+export function renderPages(repoRoot: string, cards: readonly CardSummary[], options: RenderOptions = {}): BuiltPage[] {
   const mission = loadMission(repoRoot);
   const glossary = loadGlossary(repoRoot);
   const board = loadBoard(repoRoot);
   return [
-    { rel: "site-drafts/index.html", body: renderIndex() },
-    { rel: "site-drafts/verify/index.html", body: renderVerify(cards, glossary.entries) },
-    { rel: "site-drafts/lab/index.html", body: renderLab(repoRoot, cards, mission) },
-    { rel: "site-drafts/tablero/index.html", body: renderBoard(repoRoot, board) },
+    { rel: "site-drafts/indice-borrador.html", body: renderIndex(options) },
+    { rel: "site-drafts/verify/index.html", body: renderVerify(cards, glossary.entries, options) },
+    { rel: "site-drafts/lab/index.html", body: renderLab(repoRoot, cards, mission, options) },
+    { rel: "site-drafts/tablero/index.html", body: renderBoard(repoRoot, board, options) },
+    { rel: "site-drafts/lab/sw.js", body: renderLabWorker() },
+    { rel: "site-drafts/_headers", body: renderHeaders() },
   ];
+}
+
+export function renderLabWorker(): string {
+  return `var CACHE = "stubx-lab-2026-10-09-4";
+var FILES = ["./index.html", "./sw.js"];
+
+function blocked(url) {
+  var path = url.pathname;
+  if (path === "/" || path === "/index.html") return true;
+  if (/\\/(?:aviso|avisos|notice|notices)(?:\\/|$)/i.test(path)) return true;
+  if (path.indexOf("/lab/") === -1 && !/\\/lab$/.test(path)) return true;
+  return false;
+}
+
+self.addEventListener("install", function (event) {
+  self.skipWaiting();
+  event.waitUntil(caches.open(CACHE).then(function (cache) {
+    return cache.addAll(FILES);
+  }));
+});
+
+self.addEventListener("activate", function (event) {
+  event.waitUntil(caches.keys().then(function (keys) {
+    return Promise.all(keys.filter(function (key) {
+      return key !== CACHE;
+    }).map(function (key) {
+      return caches.delete(key);
+    }));
+  }).then(function () {
+    return self.clients.claim();
+  }));
+});
+
+self.addEventListener("fetch", function (event) {
+  var url = new URL(event.request.url);
+  if (url.origin !== self.location.origin || event.request.method !== "GET") return;
+  if (blocked(url)) return;
+  event.respondWith(fetch(event.request).then(function (response) {
+    if (response && response.ok) {
+      var copy = response.clone();
+      caches.open(CACHE).then(function (cache) {
+        return cache.put(event.request, copy);
+      });
+    }
+    return response;
+  }).catch(function () {
+    return caches.match(event.request);
+  }));
+});
+`;
+}
+
+export function renderHeaders(): string {
+  const lines = [
+    "Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+    "X-Content-Type-Options: nosniff",
+    "Referrer-Policy: no-referrer",
+    "Permissions-Policy:",
+  ];
+  const paths = [
+    "/verify/*",
+    "/verify/index.html",
+    "/lab/*",
+    "/lab/index.html",
+    "/lab/sw.js",
+    "/tablero/*",
+    "/tablero/index.html",
+    "/indice-borrador.html",
+  ];
+  return `${paths.map((item) => `${item}\n  ${lines.join("\n  ")}`).join("\n\n")}\n`;
+}
+
+function madridStamp(iso: string | null): string {
+  if (!iso) {
+    return "";
+  }
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) {
+    return iso;
+  }
+  const formatted = new Intl.DateTimeFormat("sv-SE", {
+    timeZone: "Europe/Madrid",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(date);
+  return `${formatted} Europe/Madrid`;
 }

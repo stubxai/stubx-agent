@@ -9,7 +9,7 @@ import { bundleMission, bundleVerify } from "./bundle.js";
 import { renderPages } from "./render.js";
 import type { BuiltPage } from "./render.js";
 
-export function buildOutputs(repoRoot: string): BuiltPage[] {
+export function buildOutputs(repoRoot: string, options: { publish?: boolean } = {}): BuiltPage[] {
   const fuentes = loadFuentes(repoRoot);
   const cards = loadCards(repoRoot, fuentes);
   const mission = loadMission(repoRoot);
@@ -40,7 +40,7 @@ export function buildOutputs(repoRoot: string): BuiltPage[] {
     { rel: "site-drafts/assets/site.css", body: renderCss() },
     { rel: "site-drafts/assets/mission.js", body: missionJs },
     { rel: "site-drafts/assets/verify.js", body: verifyJs },
-    ...renderPages(repoRoot, cards),
+    ...renderPages(repoRoot, cards, options),
   ];
 }
 
@@ -72,7 +72,14 @@ function writePages(repoRoot: string, pages: readonly BuiltPage[]): void {
 
 function main(): void {
   const repoRoot = repoRootFromMeta(import.meta.url);
-  const pages = buildOutputs(repoRoot);
+  const publishRequested = process.argv.includes("--publish");
+  const publishConfirmed = process.env.STUBX_PUBLISH === "1";
+  if (publishRequested !== publishConfirmed) {
+    process.stderr.write("El modo publicación solo se activa con STUBX_PUBLISH=1 y --publish, y solo cuando Cristian lo decida. El borrador no cambia.\n");
+    process.exitCode = 1;
+    return;
+  }
+  const pages = buildOutputs(repoRoot, { publish: publishRequested && publishConfirmed });
   const check = process.argv.includes("--check");
   if (check) {
     const diffs = pagesDiffer(repoRoot, pages);

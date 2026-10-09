@@ -209,6 +209,7 @@ details.tecnico > summary { width: 100%; }
   padding: 0.95rem 1rem;
 }
 .rol, .muted, footer { color: var(--muted); }
+.sin-senal { color: var(--text); }
 dl { margin: 0.35rem 0 0; }
 dt { font-weight: 650; margin-top: 0.7rem; }
 dd { margin: 0.15rem 0 0; }

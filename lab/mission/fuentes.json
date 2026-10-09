@@ -36,11 +36,30 @@
       }
     },
     {
+      "mint": "ERYyyaE2Y2GuKB28YbC2w1nCuQ5ENQ89LR44kicvpump",
+      "role": "clon",
+      "file": "verify/examples/2026-10-09/ERYyyaE2Y2GuKB28YbC2w1nCuQ5ENQ89LR44kicvpump.json",
+      "roleNote": {
+        "es": "Ejemplo añadido el 2026-10-09. Se llama STUBX y no es el mint del registro. No es una lista completa.",
+        "en": "Example added on 2026-10-09. It is named STUBX and it is not the registry mint. This is not a complete list."
+      }
+    },
+    {
+      "mint": "FMNb4CR8ksibmgY7Ztei6BWcZXi3WHcVeJhYb9TNpump",
+      "role": "clon",
+      "file": "verify/examples/2026-10-09/FMNb4CR8ksibmgY7Ztei6BWcZXi3WHcVeJhYb9TNpump.json",
+      "roleNote": {
+        "es": "Ejemplo añadido el 2026-10-09. Se llama STUBX y no es el mint del registro. No es una lista completa.",
+        "en": "Example added on 2026-10-09. It is named STUBX and it is not the registry mint. This is not a complete list."
+      }
+    },
+    {
       "mint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
       "role": "contraste",
+      "file": "verify/examples/2026-10-09/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v.json",
       "roleNote": {
-        "es": "USDC, usado en los ejemplos como contraste: autoridades activas. No es STUBX y no está presentado como clon.",
-        "en": "USDC, used in the examples as a contrast: active authorities. It is not STUBX and is not presented as a clone."
+        "es": "USDC, contraste. Suministro leído el 2026-10-09: 7.504.171.067,354175. No es STUBX y no está presentado como clon. La ficha del 2026-10-08 conserva la cifra de aquel día.",
+        "en": "USDC, a contrast. Supply read on 2026-10-09: 7,504,171,067.354175. It is not STUBX and is not presented as a clone. The 2026-10-08 card keeps that day's figure."
       }
     }
   ]

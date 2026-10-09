@@ -19,6 +19,10 @@ export type DecodedMint = {
     uri: string;
     additional: Array<{ key: string; value: string }>;
   } | null;
+  metadataPointer: {
+    authority: string | null;
+    address: string | null;
+  } | null;
 };
 
 const EXTENSION_NAMES: Record<number, string> = {
@@ -80,6 +84,7 @@ export function decodeMint(owner: string, data: Uint8Array): DecodedMint | null 
     extensions: [],
     extensionsParsed: standard === "spl-token",
     tokenMetadata: null,
+    metadataPointer: null,
   };
   if (standard === "spl-token") {
     base.extensionsParsed = data.length === MINT_BASE_LEN;
@@ -103,6 +108,7 @@ export function decodeMint(owner: string, data: Uint8Array): DecodedMint | null 
   base.extensionsParsed = tlv.ok;
   base.extensions = tlv.extensions;
   base.tokenMetadata = tlv.tokenMetadata;
+  base.metadataPointer = tlv.metadataPointer;
   return base;
 }
 
@@ -125,27 +131,30 @@ function parseTlv(tlv: Uint8Array): {
   ok: boolean;
   extensions: ExtensionReport[];
   tokenMetadata: DecodedMint["tokenMetadata"];
+  metadataPointer: DecodedMint["metadataPointer"];
 } {
   const extensions: ExtensionReport[] = [];
   let tokenMetadata: DecodedMint["tokenMetadata"] = null;
+  let metadataPointer: DecodedMint["metadataPointer"] = null;
   let offset = 0;
+  const done = (ok: boolean) => ({ ok, extensions, tokenMetadata, metadataPointer });
   while (offset < tlv.length) {
     if (offset + 2 > tlv.length) {
-      return { ok: true, extensions, tokenMetadata };
+      return done(true);
     }
     const type = readU16(tlv, offset);
     if (type === null) {
-      return { ok: false, extensions, tokenMetadata };
+      return done(false);
     }
     if (type === 0) {
-      return { ok: true, extensions, tokenMetadata };
+      return done(true);
     }
     if (offset + 4 > tlv.length) {
-      return { ok: false, extensions, tokenMetadata };
+      return done(false);
     }
     const length = readU16(tlv, offset + 2);
     if (length === null || offset + 4 + length > tlv.length) {
-      return { ok: false, extensions, tokenMetadata };
+      return done(false);
     }
     const value = tlv.subarray(offset + 4, offset + 4 + length);
     const name = EXTENSION_NAMES[type] ?? `tipo ${type}`;
@@ -153,6 +162,9 @@ function parseTlv(tlv: Uint8Array): {
     const decoded = decodeExtension(type, value);
     if (type === 19 && decoded.metadata) {
       tokenMetadata = decoded.metadata;
+    }
+    if (type === 18 && decoded.pointer) {
+      metadataPointer = decoded.pointer;
     }
     extensions.push({
       type,
@@ -163,13 +175,14 @@ function parseTlv(tlv: Uint8Array): {
     });
     offset += 4 + length;
   }
-  return { ok: true, extensions, tokenMetadata };
+  return done(true);
 }
 
 function decodeExtension(type: number, value: Uint8Array): {
   ok: boolean;
   summary: string | null;
   metadata: DecodedMint["tokenMetadata"];
+  pointer: DecodedMint["metadataPointer"];
 } {
   if (type === 18 && value.length === 64) {
     const authority = optionalPubkey(value.subarray(0, 32));
@@ -178,38 +191,41 @@ function decodeExtension(type: number, value: Uint8Array): {
       ok: true,
       summary: `autoridad ${authority ?? "ausente"}; metadatos en ${address ?? "ausente"}`,
       metadata: null,
+      pointer: { authority, address },
     };
   }
   if (type === 19) {
     const metadata = readTokenMetadata(value);
     if (!metadata) {
-      return { ok: false, summary: "TokenMetadata presente, longitud no decodificada", metadata: null };
+      return { ok: false, summary: "TokenMetadata presente, longitud no decodificada", metadata: null, pointer: null };
     }
     return {
       ok: true,
       summary: `nombre ${metadata.name}; símbolo ${metadata.symbol}; autoridad ${metadata.updateAuthority ?? "ausente"}`,
       metadata,
+      pointer: null,
     };
   }
   if (type === 3 && value.length === 32) {
-    return { ok: true, summary: `autoridad de cierre ${optionalPubkey(value) ?? "ausente"}`, metadata: null };
+    return { ok: true, summary: `autoridad de cierre ${optionalPubkey(value) ?? "ausente"}`, metadata: null, pointer: null };
   }
   if (type === 12 && value.length === 32) {
-    return { ok: true, summary: `delegado permanente ${optionalPubkey(value) ?? "ausente"}`, metadata: null };
+    return { ok: true, summary: `delegado permanente ${optionalPubkey(value) ?? "ausente"}`, metadata: null, pointer: null };
   }
   if (type === 9 && value.length === 0) {
-    return { ok: true, summary: "el mint está marcado como no transferible", metadata: null };
+    return { ok: true, summary: "el mint está marcado como no transferible", metadata: null, pointer: null };
   }
   if (type === 6 && value.length === 1) {
     const state = value[0];
     const label = state === 0 ? "uninitialized" : state === 1 ? "initialized" : state === 2 ? "frozen" : `desconocido (${state})`;
-    return { ok: true, summary: `estado por defecto ${label}`, metadata: null };
+    return { ok: true, summary: `estado por defecto ${label}`, metadata: null, pointer: null };
   }
   if (type === 14 && value.length === 64) {
     return {
       ok: true,
       summary: `autoridad ${optionalPubkey(value.subarray(0, 32)) ?? "ausente"}; programa ${optionalPubkey(value.subarray(32, 64)) ?? "ausente"}`,
       metadata: null,
+      pointer: null,
     };
   }
   if (type === 1 && value.length === 108) {
@@ -219,12 +235,13 @@ function decodeExtension(type: number, value: Uint8Array): {
       ok: true,
       summary: `comisión de transferencia (puntos básicos) anterior ${olderBps ?? "?"} y nueva ${newerBps ?? "?"}`,
       metadata: null,
+      pointer: null,
     };
   }
   if (SUPPORTED.has(type)) {
-    return { ok: false, summary: `${EXTENSION_NAMES[type] ?? type}: longitud ${value.length} no esperada`, metadata: null };
+    return { ok: false, summary: `${EXTENSION_NAMES[type] ?? type}: longitud ${value.length} no esperada`, metadata: null, pointer: null };
   }
-  return { ok: false, summary: null, metadata: null };
+  return { ok: false, summary: null, metadata: null, pointer: null };
 }
 
 function optionalPubkey(bytes: Uint8Array): string | null {
@@ -295,7 +312,7 @@ export function readBorshString(data: Uint8Array, offset: number): { text: strin
 }
 
 export function cleanText(value: string): string {
-  return value.replace(/\0/g, "").trim();
+  return value.replace(/[\0\p{Cc}\p{Cf}]/gu, "\uFFFD").replace(/\uFFFD+/g, "\uFFFD").trim();
 }
 
 export function readTokenAccount(data: Uint8Array): { mint: string; owner: string; amount: bigint } | null {

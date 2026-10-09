@@ -88,53 +88,148 @@ export function compareCanonical(input: ImpersonationInput, registry: readonly C
   };
 }
 
-function normalizeToken(value: string): string {
-  return value.normalize("NFKC").replace(/[\u200B-\u200D\uFEFF]/g, "").replace(/\s+/g, " ").trim().toLowerCase();
+const HOMOGLYPHS: Record<string, string> = {
+  "\u0391": "A",
+  "\u0392": "B",
+  "\u0395": "E",
+  "\u0396": "Z",
+  "\u0397": "H",
+  "\u0399": "I",
+  "\u039A": "K",
+  "\u039C": "M",
+  "\u039D": "N",
+  "\u039F": "O",
+  "\u03A1": "P",
+  "\u03A4": "T",
+  "\u03A5": "Y",
+  "\u03A7": "X",
+  "\u03B1": "a",
+  "\u03BF": "o",
+  "\u03C4": "t",
+  "\u0410": "A",
+  "\u0412": "B",
+  "\u0415": "E",
+  "\u041A": "K",
+  "\u041C": "M",
+  "\u041D": "H",
+  "\u041E": "O",
+  "\u0420": "P",
+  "\u0421": "S",
+  "\u0422": "T",
+  "\u0425": "X",
+  "\u0430": "a",
+  "\u0435": "e",
+  "\u043E": "o",
+  "\u0440": "p",
+  "\u0441": "s",
+  "\u0442": "t",
+  "\u0445": "x",
+  "\u0405": "S",
+  "\u0455": "s",
+  "\u0406": "I",
+  "\u0456": "i",
+};
+
+export function normalizeToken(value: string): string {
+  const folded = value.normalize("NFKC").replace(/[\p{Cc}\p{Cf}]/gu, "");
+  let mapped = "";
+  for (const char of folded) {
+    mapped += HOMOGLYPHS[char] ?? char;
+  }
+  return mapped.toLowerCase().replace(/\s+/g, "");
 }
 
 function containsWord(value: string, words: readonly string[]): boolean {
   const text = normalizeToken(value);
   return words.some((word) => {
-    if (text === word) {
-      return true;
+    const folded = normalizeToken(word);
+    if (folded.length === 0) {
+      return false;
     }
-    const pattern = new RegExp(`(^|[^a-z0-9])${escapeRegExp(word)}([^a-z0-9]|$)`, "i");
-    return pattern.test(text);
+    return text.includes(folded);
   });
 }
 
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+export function normalizeHost(hostname: string): string {
+  let host = hostname.toLowerCase().replace(/^\[|\]$/g, "");
+  host = host.replace(/^\.+|\.+$/g, "");
+  if (host.startsWith("www.")) {
+    host = host.slice(4);
+  }
+  return host;
+}
+
+function hostnameOf(value: string): string | null {
+  try {
+    return new URL(value).hostname;
+  } catch {
+    const match = /^https?:\/\/([^/?#]+)/i.exec(value.trim());
+    return match?.[1] ?? null;
+  }
 }
 
 export function normalizeUrl(value: string): string {
   try {
     const url = new URL(value);
-    let host = url.hostname.toLowerCase();
-    if (host === "twitter.com") {
+    let host = normalizeHost(url.hostname);
+    if (host === "twitter.com" || host.endsWith(".twitter.com") || host === "x.com" || host.endsWith(".x.com")) {
       host = "x.com";
     }
-    if (host.startsWith("www.")) {
-      host = host.slice(4);
-    }
-    const path = url.pathname.replace(/\/+$/, "") || "/";
+    const path = url.pathname.replace(/\/+$/, "").toLowerCase() || "/";
     return `${host}${path}`;
   } catch {
-    return value.trim().toLowerCase();
+    const host = hostnameOf(value);
+    if (!host) {
+      return value.trim().toLowerCase();
+    }
+    return normalizeHost(host);
   }
 }
 
-function hostMatches(value: string, hosts: ReadonlySet<string>): boolean {
-  try {
-    const url = new URL(value);
-    let host = url.hostname.toLowerCase();
-    if (host.startsWith("www.")) {
-      host = host.slice(4);
+function editDistance(left: string, right: string): number {
+  if (Math.abs(left.length - right.length) > 2) {
+    return 3;
+  }
+  const rows = left.length + 1;
+  const cols = right.length + 1;
+  const score: number[] = new Array(cols);
+  for (let col = 0; col < cols; col += 1) {
+    score[col] = col;
+  }
+  for (let row = 1; row < rows; row += 1) {
+    let previous = score[0] ?? 0;
+    score[0] = row;
+    for (let col = 1; col < cols; col += 1) {
+      const current = score[col] ?? 0;
+      const cost = left[row - 1] === right[col - 1] ? 0 : 1;
+      const next = Math.min((score[col] ?? 0) + 1, (score[col - 1] ?? 0) + 1, previous + cost);
+      previous = current;
+      score[col] = next;
     }
-    return hosts.has(host);
-  } catch {
+  }
+  return score[cols - 1] ?? 3;
+}
+
+function hostClose(host: string, expected: string): boolean {
+  if (host === expected || host.endsWith(`.${expected}`)) {
+    return true;
+  }
+  const limit = Math.max(host.length, expected.length) >= 16 ? 2 : 1;
+  return editDistance(host, expected) <= limit;
+}
+
+function hostMatches(value: string, hosts: ReadonlySet<string>): boolean {
+  const raw = hostnameOf(value);
+  if (!raw) {
     return false;
   }
+  const host = normalizeHost(raw);
+  for (const expected of hosts) {
+    if (hostClose(host, normalizeHost(expected))) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function socialMatches(value: string, canonicalLinks: readonly string[]): boolean {

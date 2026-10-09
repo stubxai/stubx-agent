@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-10-09 · Revisión de seguridad de Verify y Lab (borrador, sin publicar)
+
+- El service worker queda en `/lab/sw.js`, con red primero, y no guarda la portada ni páginas de avisos. El índice de borrador pasa a `indice-borrador.html`.
+- El registro de ejemplos de clones añade ERYyy y FMNb. No es una lista completa. La revisión del 09-10 no trae direcciones EVM, así que no se inventan.
+- El detector pliega mayúsculas, NFKC y homoglifos, y marca variantes del nombre y dominios parecidos, incluida la URL de Netlify.
+- Si la muestra de holders recibe 429, se leen las cuentas de la curva y de la creadora sin llamarlas censo. La CLI no descarga URIs de creadores fuera de pasarelas IPFS o Arweave. `redactEndpoint` no escribe claves de la ruta. Hay `_headers` solo para las rutas nuevas.
+- El modo sin «No publicado» ni `noindex` exige `STUBX_PUBLISH=1` y `--publish`. No está activado.
+
 ## 2026-10-09 · STUBX Lab, misión 1 (borrador, sin publicar)
 
 - `lab/`: misión estática «Cómo detectar un token clon en 5 comprobaciones», sobre las fichas de Verify del 2026-10-08. Progreso solo en el navegador. Glosario y tres guías en español, con inglés pendiente de revisión humana.
