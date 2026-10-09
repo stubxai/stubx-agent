@@ -330,6 +330,7 @@ html.js .estatica { display: none; }
 }
 body {
   font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell, "Noto Sans", sans-serif;
+  overflow-wrap: anywhere;
 }
 code, .mint, .ca-value, .hash {
   font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -342,10 +343,10 @@ header.site {
 .topbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem 1.25rem;
   align-items: center;
-  justify-content: space-between;
+  gap: 0.45rem 0.75rem;
 }
+a.brand { margin-right: auto; }
 a.brand {
   display: inline-flex;
   align-items: center;
@@ -361,7 +362,17 @@ a.brand img {
   border-radius: 8px;
 }
 a.brand strong { font-size: 1.05rem; letter-spacing: 0.12em; }
-.draft { max-width: 36rem; }
+.draft {
+  margin: 0 0 0 auto;
+  max-width: none;
+  padding: 0.15rem 0.6rem;
+  border: 1px solid var(--attention);
+  border-radius: 999px;
+  color: var(--attention);
+  font-size: 0.8rem;
+  line-height: 1.3;
+  white-space: nowrap;
+}
 .langs { margin-top: 0; }
 .preview {
   display: flex;
@@ -389,6 +400,7 @@ nav.site a, a.brand, .hero-actions a { text-decoration: none; }
   margin-bottom: 0.85rem;
 }
 .hero figure { margin: 0; }
+img { max-width: 100%; height: auto; }
 .hero img, .pair img {
   width: 100%;
   height: auto;
@@ -396,6 +408,7 @@ nav.site a, a.brand, .hero-actions a { text-decoration: none; }
   border: 1px solid var(--line);
   background: var(--bg-elev);
 }
+.pair > *, .grid-2 > *, .grid-3 > *, .hero > *, .card, .slot { min-width: 0; }
 .hero figcaption, .pair figcaption { margin-top: 0.45rem; color: var(--muted); font-size: 0.92rem; }
 .hero-actions, .btn-row { display: flex; flex-wrap: wrap; gap: 0.6rem; margin: 1rem 0 0; }
 .hero-actions a, .btn-row a, button.primary {
@@ -499,7 +512,7 @@ ul.clean li, ol.clean li { margin: 0.35rem 0; }
 footer.site a { color: var(--text); }
 footer.site ul { padding-left: 1.1rem; }
 details.mapa { margin-top: 0.75rem; }
-details.mapa summary { width: auto; border-radius: 999px; }
+details.mapa summary { width: auto; display: inline-flex; border-radius: 999px; }
 details.mapa nav ul { padding-top: 0.75rem; }
 #resultado:focus { outline: 3px solid var(--accent); outline-offset: 3px; }
 @media (min-width: 800px) {
@@ -510,9 +523,9 @@ details.mapa nav ul { padding-top: 0.75rem; }
   .hero { grid-template-columns: 1.2fr 0.8fr; }
 }
 @media (max-width: 48rem) {
-  nav.site ul { display: grid; grid-template-columns: 1fr 1fr; }
   .hero-actions, .ca-actions, .btn-row { display: grid; }
   .hero-actions a, .ca-actions a, .ca-actions button, .btn-row a { width: 100%; }
-  .topbar { align-items: flex-start; }
+  .langs { order: 2; }
+  .draft { order: 3; flex: 1 0 100%; margin-left: 0; }
   a.brand img { width: 36px; height: 36px; }
 }

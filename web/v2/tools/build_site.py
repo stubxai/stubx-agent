@@ -154,7 +154,7 @@ def shell(frm: str, current: str, title_es: str, title_en: str, desc_es: str, de
 <img src="{prefix}assets/talon-avatar-96.webp" width="40" height="40" alt="">
 <strong>STUBX</strong>
 </a>
-<p class="draft">{t("Vista previa del 2026-10-09. No publicada en stubxai.com.", "Preview from 2026-10-09. Not published on stubxai.com.")}</p>
+<p class="draft">{t("Borrador · 2026-10-09", "Draft · 2026-10-09")}</p>
 <div class="langs" role="group" aria-label="Idioma / Language">
 <button type="button" data-set-lang="es" lang="es" aria-pressed="true">Español</button>
 <button type="button" data-set-lang="en" lang="en" aria-pressed="false">English</button>
@@ -410,6 +410,11 @@ def proofs() -> str:
     blocks = []
 
     def proof(title_es, title_en, body):
+        if body.startswith("<span"):
+            cut = 0
+            for _ in range(2):
+                cut = body.find("</span>", cut) + len("</span>")
+            body = f"<p>{body[:cut]}</p>{body[cut:]}"
         blocks.append(f"<article class=\"card\"><h2>{t(title_es, title_en)}</h2>{body}</article>")
 
     proof(
