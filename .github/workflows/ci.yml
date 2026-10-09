@@ -158,9 +158,10 @@ jobs:
             seed="$(python3 -c 'import random; alphabet="123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"; rng=random.SystemRandom(); print("".join(rng.choice(alphabet) for _ in range(44)))')"
             printf '{"tokenAccount":"%s"}\n' "$seed" > "${probe}/config.json"
             set +e
-            ./gitleaks detect --no-git --source "$probe" --redact --no-banner --exit-code 1 > /tmp/gitleaks-probe.txt
+            ./gitleaks detect --no-git --source "$probe" --redact --no-banner --exit-code 1 > /tmp/gitleaks-probe.txt 2>&1
+            code=$?
             set -e
-            if grep -q "leaks found: [1-9]" /tmp/gitleaks-probe.txt; then
+            if [ "$code" -eq 1 ]; then
               detected=1
               break
             fi
@@ -168,6 +169,7 @@ jobs:
           rm -rf "$probe"
           if [ "$detected" -ne 1 ]; then
             echo "una semilla falsa bajo tokenAccount en otro archivo no se detectó"
+            cat /tmp/gitleaks-probe.txt || true
             exit 1
           fi
 
