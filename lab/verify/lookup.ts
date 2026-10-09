@@ -54,8 +54,6 @@ const BASE58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
 export const OFFICIAL_MINT = "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump";
 
-const SIMILAR_MAX = 4;
-
 const COPY = {
   vacio: {
     light: "neutro" as const,
@@ -185,13 +183,11 @@ function viewOf(kind: keyof typeof COPY, mint: string | null, rows: LookupRow[],
 }
 
 export function looksLikeOfficial(mint: string, official: string): boolean {
-  if (mint === official || mint.length === 0 || mint.length !== official.length) return false;
-  let diff = 0;
+  if (mint.length === 0 || mint.length !== official.length || mint === official) return false;
   for (let i = 0; i < mint.length; i += 1) {
-    if (mint[i] !== official[i]) diff += 1;
-    if (diff > SIMILAR_MAX) return false;
+    if (mint[i] !== official[i]) return true;
   }
-  return diff > 0;
+  return false;
 }
 
 export function addressMarks(mint: string, official: string): AddressMark[] {
@@ -207,23 +203,33 @@ function officialMintOf(cards: readonly CardSummary[]): string {
   return cards.find((card) => card.role === "registro")?.mint ?? OFFICIAL_MINT;
 }
 
+const NOT_OFFICIAL_GAP = {
+  es: "No hay ficha de ejemplo. La lista no es completa y esta página no consulta la red, así que no rellena el hueco.",
+  en: "There is no example card. The list is not complete and this page does not query the network, so it does not fill the gap.",
+};
+
 function notOfficialView(mint: string, official: string): LookupView {
+  const caseOnly = mint !== official && mint.toLowerCase() === official.toLowerCase();
+  const caseNote = {
+    es: "Las direcciones distinguen mayúsculas. Esta coincide con la oficial salvo por las mayúsculas.",
+    en: "Addresses are case-sensitive. This one matches the official address except for the letter case.",
+  };
   return {
     kind: "sin_ficha",
     light: "atencion",
     lightLabel: pair("No es la oficial", "Not the official one"),
     title: pair("No es la dirección oficial", "Not the official address"),
     support: pair(
-      `No es la dirección oficial de STUBX. La oficial es ${official}.`,
-      `This is not the official STUBX address. The official one is ${official}.`,
+      `No es la dirección oficial de STUBX. La oficial es ${official}. Esto no dice quién creó esta dirección ni con qué intención.`,
+      `This is not the official STUBX address. The official one is ${official}. This does not say who created this address or why.`,
     ),
     mint,
     rows: [],
     partialNote: pair(
-      "No hay ficha de ejemplo. La lista no es completa y esta página no consulta la red, así que no rellena el hueco.",
-      "There is no example card. The list is not complete and this page does not query the network, so it does not fill the gap.",
+      caseOnly ? `${caseNote.es} ${NOT_OFFICIAL_GAP.es}` : NOT_OFFICIAL_GAP.es,
+      caseOnly ? `${caseNote.en} ${NOT_OFFICIAL_GAP.en}` : NOT_OFFICIAL_GAP.en,
     ),
-    compare: { official, marks: addressMarks(mint, official) },
+    compare: looksLikeOfficial(mint, official) ? { official, marks: addressMarks(mint, official) } : null,
   };
 }
 
@@ -348,15 +354,19 @@ export function classifyAddress(
   if (/^0x/i.test(mint)) return evmView(mint, evm);
   if (!isAddress(mint)) return viewOf("invalida", null, [], null);
   const official = officialMintOf(source === "caida" ? [] : cards);
-  const similar = mint !== official && looksLikeOfficial(mint, official);
-  if (similar && (source === "caida" || !cards.some((item) => item.mint === mint))) {
-    return notOfficialView(mint, official);
+  if (mint === official) {
+    if (source === "caida") return viewOf("lectura_caida", mint, [], null);
+    const registry = cards.find((item) => item.mint === mint);
+    if (!registry) return viewOf("lectura_caida", mint, [], null);
+    const kind = registry.role === "registro" ? "oficial" : registry.role === "clon" ? "copia" : "otra";
+    return viewOf(kind, registry.mint, rowsFor(registry), partialNoteFor(registry));
   }
-  if (source === "caida") return viewOf("lectura_caida", mint, [], null);
-  const card = cards.find((item) => item.mint === mint);
-  if (!card) return viewOf("sin_ficha", mint, [], null);
-  const kind = card.role === "registro" ? "oficial" : card.role === "clon" ? "copia" : "otra";
-  const view = viewOf(kind, card.mint, rowsFor(card), partialNoteFor(card));
-  if (similar) view.compare = { official, marks: addressMarks(mint, official) };
-  return view;
+  if (source !== "caida") {
+    const card = cards.find((item) => item.mint === mint);
+    if (card) {
+      const kind = card.role === "registro" ? "oficial" : card.role === "clon" ? "copia" : "otra";
+      return viewOf(kind, card.mint, rowsFor(card), partialNoteFor(card));
+    }
+  }
+  return notOfficialView(mint, official);
 }

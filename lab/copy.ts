@@ -28,12 +28,12 @@ export const HOW_VERIFY = {
   es: [
     "Pega la dirección y pulsa Comprobar.",
     "El texto grande es la lectura. Los datos técnicos están plegados.",
-    "Si se parece a la oficial y no lo es, lo dice y marca los caracteres que cambian. Si no hay ficha y no se parece, no se pudo comprobar: esta página no llama a la red.",
+    "Una dirección válida que no es la oficial lo dice y muestra la oficial. Si mide lo mismo, marca los caracteres que cambian. Si ya hay ficha, muestra esa ficha. Esta página no llama a la red.",
   ],
   en: [
     "Paste the address and press Check.",
     "The large text is the reading. Technical details stay folded.",
-    "If it looks like the official one and it is not, the page says so and marks the characters that change. If there is no card and it does not look alike, it could not be checked: this page does not call the network.",
+    "A valid address that is not the official one is named as such, and the official address is shown. If the length matches, the characters that change are marked. If there is already a card, that card is shown. This page does not call the network.",
   ],
 } as const;
 

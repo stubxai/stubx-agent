@@ -3,7 +3,7 @@
 ## 2026-10-09 · Verify y Lab: lectura visible en el móvil
 
 - En menos de 600 px la cabecera deja de quedarse fija. Tras Comprobar, la página se desplaza al veredicto y el foco va al titular.
-- Una dirección válida que se parece a la oficial y no lo es dice «No es la dirección oficial» y marca los caracteres que cambian. El campo vacío avisa en línea. La dirección no válida incluye un ejemplo.
+- Una dirección válida que no es la oficial y no tiene ficha dice «No es la dirección oficial» y muestra la oficial. Si mide lo mismo, marca los caracteres que cambian. Las fichas conocidas siguen mostrando su ficha. El campo vacío avisa en línea. La dirección no válida incluye un ejemplo.
 - `frame-ancestors` queda solo en `_headers`. El beacon de Cloudflare Web Analytics no se toca aquí: hay que apagarlo en el panel de la zona.
 - Cada pregunta del Lab lleva una frase llana. El número largo de la curva sale en Detalles. El glosario del paso lista sus términos. El avance espera a «Siguiente paso». El pie tiene enlaces de 44 px, la biblioteca va plegada y la pantalla final tiene «Empezar de nuevo».
 

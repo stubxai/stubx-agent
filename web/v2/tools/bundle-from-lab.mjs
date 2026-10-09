@@ -18,27 +18,15 @@ function git(args) {
   return run.stdout.trim();
 }
 
-function isAncestor(commit) {
-  if (!commit) return false;
-  return spawnSync("git", ["merge-base", "--is-ancestor", commit, "HEAD"], { cwd: root }).status === 0;
-}
-
 function labCommit() {
   const headBlob = git(["rev-parse", "HEAD:lab/verify/lookup.ts"]);
-  const anchor = "0cb1633bffffe07383742e75a9ec9435764d1baf";
-  if (isAncestor(anchor) && git(["rev-parse", `${anchor}:lab/verify/lookup.ts`]) === headBlob) return anchor;
-  const origin = git(["rev-parse", "--verify", "origin/feat/lab-mision-1"]);
-  if (origin && isAncestor(origin) && git(["rev-parse", `${origin}:lab/verify/lookup.ts`]) === headBlob) return origin;
-  // lookup.ts ya no coincide con el ancla. El snapshot sigue citando ese
-  // commit: si no, un checkout de pull_request (merge de esta rama en main)
-  // toma el segundo padre, que es la propia rama, y reescribe snapshot.json.
-  if (isAncestor(anchor)) return anchor;
-  const merges = git(["log", "--merges", "--pretty=%H", "HEAD"]).split("\n").filter(Boolean);
-  for (const merge of merges) {
-    const second = git(["rev-parse", `${merge}^2`]);
-    if (!isAncestor(second)) continue;
-    if (git(["rev-parse", `${second}:lab/verify/lookup.ts`]) !== headBlob) continue;
-    return second;
+  if (!headBlob) return "";
+  // El commit real es el primero que tiene este lookup.ts. En el checkout
+  // de un pull request HEAD es un merge: su blob coincide, pero el origen
+  // del archivo es el commit de la rama, no el merge.
+  const commits = git(["rev-list", "--reverse", "HEAD"]).split("\n").filter(Boolean);
+  for (const commit of commits) {
+    if (git(["rev-parse", `${commit}:lab/verify/lookup.ts`]) === headBlob) return commit;
   }
   return "";
 }

@@ -43,6 +43,7 @@ type View = {
   light: string;
   mint: string | null;
   title: { es: string; en: string };
+  support: { es: string; en: string };
   partialNote: { es: string; en: string } | null;
   compare: { official: string; marks: { char: string; changed: boolean }[] } | null;
   rows: { label: { es: string; en: string }; value: { es: string; en: string } }[];
@@ -346,7 +347,8 @@ describe("web v2", () => {
     assert.match(otherEvm.title.es, /solo existe en Solana/);
     const missing = lookup.classifyAddress("11111111111111111111111111111111", data.cards, "lista", data.evm);
     assert.equal(missing.kind, "sin_ficha");
-    assert.equal(missing.title.es, "No se pudo comprobar");
+    assert.equal(missing.title.es, "No es la dirección oficial");
+    assert.match(missing.support.es, /Esto no dice quién creó esta dirección ni con qué intención/);
     const near = lookup.classifyAddress(`${CA.slice(0, -1)}q`, data.cards, "lista", data.evm);
     assert.equal(near.title.es, "No es la dirección oficial");
     assert.equal(near.compare?.marks.filter((mark) => mark.changed).length, 1);
@@ -478,6 +480,43 @@ describe("web v2", () => {
       { cwd: repoRoot(), encoding: "utf8" },
     );
     assert.equal(flag.status, 0, flag.stderr);
+  });
+
+  test("frame-ancestors 'none' cubre todas las rutas de _headers", () => {
+    const blocks: Array<{ path: string; headers: string[] }> = [];
+    let current: { path: string; headers: string[] } | null = null;
+    for (const line of read("_headers").split("\n")) {
+      if (line.startsWith("#")) continue;
+      if (line.trim() === "") {
+        current = null;
+        continue;
+      }
+      if (!/^\s/.test(line)) {
+        current = { path: line.trim(), headers: [] };
+        blocks.push(current);
+        continue;
+      }
+      assert.ok(current, line);
+      current.headers.push(line.trim());
+    }
+    const policies = blocks.flatMap((block) =>
+      block.headers
+        .filter((header) => header.startsWith("Content-Security-Policy:"))
+        .map((header) => ({ path: block.path, header })),
+    );
+    assert.equal(policies.length, 1);
+    assert.equal(policies[0]?.path, "/*");
+    assert.match(policies[0]?.header ?? "", /frame-ancestors 'none'/);
+    const star = blocks.find((block) => block.path === "/*");
+    assert.ok(star?.headers.some((header) => header === "X-Frame-Options: DENY"));
+    for (const file of htmlFiles(siteRoot())) {
+      const html = readFileSync(file, "utf8");
+      const rel = path.relative(siteRoot(), file);
+      assert.equal(html.includes("frame-ancestors"), false, rel);
+      if (!html.includes("<head>")) continue;
+      assert.match(html, /og-stubx-2026-10b-1200x630\.jpg/, rel);
+      assert.equal(html.includes("og-stubx-2026-10-1200x630.jpg"), false, rel);
+    }
   });
 
   test("the browser bundle matches lab/", async () => {
