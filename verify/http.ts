@@ -157,14 +157,31 @@ export function candidateUrls(uri: string): string[] {
   return urls;
 }
 
-/** Lookup de `https.request`: ignora el nombre y devuelve la primera IP pública ya comprobada. */
+/** IPv4 públicas primero y después el resto, sin direcciones privadas. */
+export function orderPublicAddresses(addresses: readonly string[]): string[] {
+  const v4: string[] = [];
+  const v6: string[] = [];
+  for (const item of addresses) {
+    if (item.length === 0 || isPrivateAddress(item)) {
+      continue;
+    }
+    if (item.includes(":")) {
+      v6.push(item);
+    } else {
+      v4.push(item);
+    }
+  }
+  return [...v4, ...v6];
+}
+
+/** Lookup de `https.request`: ignora el nombre y devuelve la primera IPv4 pública, o la siguiente IP pública. */
 export function pinnedLookup(addresses: readonly string[]) {
   return (
     _hostname: string,
     options: { all?: boolean },
     callback: (err: NodeJS.ErrnoException | null, address: string | Array<{ address: string; family: number }>, family?: number) => void,
   ): void => {
-    const chosen = addresses.find((item) => item.length > 0 && !isPrivateAddress(item));
+    const chosen = orderPublicAddresses(addresses)[0];
     if (!chosen) {
       const error = new Error("sin IP pública validada") as NodeJS.ErrnoException;
       error.code = "EINVAL";
@@ -178,6 +195,33 @@ export function pinnedLookup(addresses: readonly string[]) {
     }
     callback(null, chosen, family);
   };
+}
+
+/** Prueba cada IP validada. Un error de socket se captura y se sigue con la siguiente. */
+export async function connectPinned(
+  addresses: readonly string[],
+  dial: (address: string, signal: AbortSignal) => Promise<Response>,
+  signal: AbortSignal,
+): Promise<Response> {
+  const ordered = orderPublicAddresses(addresses);
+  if (ordered.length === 0) {
+    throw new Error("sin IP pública validada");
+  }
+  let last: Error = new Error("sin IP pública validada");
+  for (const address of ordered) {
+    if (signal.aborted) {
+      throw abortError(signal);
+    }
+    try {
+      return await dial(address, signal);
+    } catch (error) {
+      last = error instanceof Error ? error : new Error("error de red");
+      if (signal.aborted) {
+        throw abortError(signal);
+      }
+    }
+  }
+  throw last;
 }
 
 export async function resolvePublicHost(hostname: string, timeoutMs = 4000): Promise<string[]> {
@@ -209,6 +253,7 @@ export async function fetchBytes(url: string, options: HttpOptions = {}): Promis
   const pinConnection = options.fetchImpl === undefined;
   const resolveHost = options.resolveHost ?? (options.fetchImpl ? async (host: string) => [host] : resolvePublicHost);
   const timeoutMs = options.timeoutMs ?? 8000;
+  const deadline = AbortSignal.timeout(timeoutMs);
   const maxBytes = options.maxBytes ?? 1_000_000;
   const maxRetries = options.maxRetries ?? 2;
   const backoffBaseMs = options.backoffBaseMs ?? 500;
@@ -226,18 +271,24 @@ export async function fetchBytes(url: string, options: HttpOptions = {}): Promis
   for (const candidate of urls) {
     for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
       const fetchedAt = now().toISOString();
+      if (deadline.aborted) {
+        return { ok: false, url: candidate, status: null, error: "timeout", fetchedAt };
+      }
       try {
         const result = await fetchChecked(candidate, {
           fetchImpl,
           resolveHost,
           pinConnection,
-          timeoutMs,
+          signal: deadline,
           maxBytes,
           fetchedAt,
         });
+        if (deadline.aborted) {
+          return { ok: false, url: candidate, status: null, error: "timeout", fetchedAt };
+        }
         if (!result.ok && result.retry && attempt < maxRetries) {
           last = result.body;
-          await sleep(backoffBaseMs * 2 ** attempt + Math.floor(random() * 100));
+          await sleepUntil(deadline, sleep, backoffBaseMs * 2 ** attempt + Math.floor(random() * 100));
           continue;
         }
         if (result.ok) {
@@ -246,6 +297,9 @@ export async function fetchBytes(url: string, options: HttpOptions = {}): Promis
         last = result.body;
         break;
       } catch (error) {
+        if (deadline.aborted) {
+          return { ok: false, url: candidate, status: null, error: "timeout", fetchedAt };
+        }
         last = {
           ok: false,
           url: candidate,
@@ -254,7 +308,7 @@ export async function fetchBytes(url: string, options: HttpOptions = {}): Promis
           fetchedAt,
         };
         if (attempt < maxRetries) {
-          await sleep(backoffBaseMs * 2 ** attempt + Math.floor(random() * 100));
+          await sleepUntil(deadline, sleep, backoffBaseMs * 2 ** attempt + Math.floor(random() * 100));
           continue;
         }
       }
@@ -411,13 +465,20 @@ async function fetchChecked(start: string, input: {
   fetchImpl: typeof fetch;
   resolveHost: HostResolver;
   pinConnection: boolean;
-  timeoutMs: number;
+  signal: AbortSignal;
   maxBytes: number;
   fetchedAt: string;
 }): Promise<{ ok: true; body: BytesResult } | { ok: false; retry: boolean; body: BytesResult }> {
   let current = start;
   for (let hop = 0; hop <= MAX_REDIRECTS; hop += 1) {
-    const allowed = await destinationAllowed(current, input.resolveHost, hop === 0);
+    if (input.signal.aborted) {
+      return {
+        ok: false,
+        retry: false,
+        body: { ok: false, url: current, status: null, error: "timeout", fetchedAt: input.fetchedAt },
+      };
+    }
+    const allowed = await withDeadline(input.signal, destinationAllowed(current, input.resolveHost, hop === 0));
     if (!allowed.ok) {
       return {
         ok: false,
@@ -426,12 +487,12 @@ async function fetchChecked(start: string, input: {
       };
     }
     const response = input.pinConnection
-      ? await requestPinned(allowed.url, allowed.addresses, input.timeoutMs, input.maxBytes)
+      ? await requestPinned(allowed.url, allowed.addresses, input.maxBytes, input.signal)
       : await input.fetchImpl(allowed.url, {
           method: "GET",
           redirect: "manual",
           headers: { accept: "*/*", "user-agent": "stubx-verify/0.1" },
-          signal: AbortSignal.timeout(input.timeoutMs),
+          signal: input.signal,
         });
     if (response.status >= 300 && response.status < 400) {
       const location = response.headers.get("location");
@@ -469,8 +530,25 @@ async function fetchChecked(start: string, input: {
   };
 }
 
-function requestPinned(url: string, addresses: readonly string[], timeoutMs: number, maxBytes: number): Promise<Response> {
+function requestPinned(url: string, addresses: readonly string[], maxBytes: number, signal: AbortSignal): Promise<Response> {
+  return connectPinned(addresses, (address) => requestOne(url, address, maxBytes, signal), signal);
+}
+
+function requestOne(url: string, address: string, maxBytes: number, signal: AbortSignal): Promise<Response> {
   return new Promise((resolve, reject) => {
+    if (signal.aborted) {
+      reject(abortError(signal));
+      return;
+    }
+    let settled = false;
+    const finish = (fn: () => void) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      signal.removeEventListener("abort", onAbort);
+      fn();
+    };
     const target = new URL(url);
     const req = httpsRequest(
       {
@@ -484,28 +562,25 @@ function requestPinned(url: string, addresses: readonly string[], timeoutMs: num
           "user-agent": "stubx-verify/0.1",
           host: target.host,
         },
-        lookup: pinnedLookup(addresses),
-        timeout: timeoutMs,
+        lookup: pinnedLookup([address]),
       },
       (res) => {
         const chunks: Buffer[] = [];
         let total = 0;
-        let failed = false;
+        res.on("error", (error) => {
+          finish(() => reject(error));
+        });
         res.on("data", (chunk: Buffer) => {
           total += chunk.byteLength;
           if (total > maxBytes) {
-            failed = true;
             res.destroy();
             req.destroy();
-            reject(new Error("Respuesta mayor que el límite."));
+            finish(() => reject(new Error("Respuesta mayor que el límite.")));
             return;
           }
           chunks.push(chunk);
         });
         res.on("end", () => {
-          if (failed) {
-            return;
-          }
           const headers = new Headers();
           for (const [key, value] of Object.entries(res.headers)) {
             if (value === undefined) {
@@ -513,20 +588,86 @@ function requestPinned(url: string, addresses: readonly string[], timeoutMs: num
             }
             headers.set(key, Array.isArray(value) ? value.join(", ") : value);
           }
-          resolve(new Response(Buffer.concat(chunks), { status: res.statusCode ?? 0, headers }));
-        });
-        res.on("error", (error) => {
-          if (!failed) {
-            reject(error);
-          }
+          finish(() => resolve(new Response(Buffer.concat(chunks), { status: res.statusCode ?? 0, headers })));
         });
       },
     );
-    req.on("timeout", () => {
-      req.destroy(new Error("timeout"));
+    const onAbort = () => {
+      req.destroy();
+      finish(() => reject(abortError(signal)));
+    };
+    signal.addEventListener("abort", onAbort);
+    req.on("socket", (socket) => {
+      socket.on("error", () => {
+        // El 'error' de la petición ya rechaza la promesa. Este listener evita que el socket cierre el proceso.
+      });
     });
-    req.on("error", reject);
+    req.on("error", (error) => {
+      finish(() => reject(error));
+    });
     req.end();
+  });
+}
+
+function abortError(signal: AbortSignal): Error {
+  const reason = signal.reason;
+  if (reason instanceof Error) {
+    return reason;
+  }
+  return new Error("timeout");
+}
+
+function withDeadline<T>(signal: AbortSignal, work: Promise<T>): Promise<T> {
+  if (signal.aborted) {
+    return Promise.reject(abortError(signal));
+  }
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const onAbort = () => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      reject(abortError(signal));
+    };
+    signal.addEventListener("abort", onAbort, { once: true });
+    work.then(
+      (value) => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        signal.removeEventListener("abort", onAbort);
+        resolve(value);
+      },
+      (error: unknown) => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        signal.removeEventListener("abort", onAbort);
+        reject(error);
+      },
+    );
+  });
+}
+
+function sleepUntil(signal: AbortSignal, sleep: (ms: number) => Promise<void>, ms: number): Promise<void> {
+  if (signal.aborted || ms <= 0) {
+    return Promise.resolve();
+  }
+  return new Promise((resolve) => {
+    let settled = false;
+    const done = () => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      signal.removeEventListener("abort", done);
+      resolve();
+    };
+    signal.addEventListener("abort", done, { once: true });
+    sleep(ms).then(done, done);
   });
 }
 

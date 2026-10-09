@@ -21,7 +21,7 @@ Fuera de alcance: el token en sí, Pump.fun, el comportamiento de terceros.
 
 Los rulesets de `main` (PR, checks, sin force-push) son un ajuste de GitHub. Este árbol no puede activarlos.
 
-La CLI de Verify (`npm run verify`) descarga metadatos de pasarelas IPFS o Arweave y sigue hasta 3 redirecciones https. Comprueba el DNS y conecta a esa IP ya validada (`lookup` fijo en la petición HTTPS). No usa el paquete `undici`: Node 22.14 no lo exporta y este repo no añade dependencias de ejecución. Queda riesgo residual: la primera respuesta DNS puede ser una IP pública del atacante; TLS sigue comprobando el nombre del certificado; cada salto se fija a su propia IP comprobada; un `fetch` sustituido en pruebas no usa ese fijado; la CLI se ejecuta a mano, no en la web ni en la CI. No la ejecutes en un servidor con servicios internos https sin autenticar.
+La CLI de Verify (`npm run verify`) descarga metadatos de pasarelas IPFS o Arweave y sigue hasta 3 redirecciones https. Comprueba el DNS y conecta a esas IP ya validadas, IPv4 primero y el resto después (`lookup` fijo en la petición HTTPS). Un error de socket se captura y se prueba la siguiente. Toda la descarga tiene tope con `AbortSignal.timeout`. No usa el paquete `undici`: Node 22.14 no lo exporta y este repo no añade dependencias de ejecución. Queda riesgo residual: una de esas IP públicas puede ser la del atacante; TLS sigue comprobando el nombre del certificado; cada salto se fija a sus IP comprobadas; un `fetch` sustituido en pruebas no usa ese fijado; la CLI se ejecuta a mano, no en la web ni en la CI. No la ejecutes en un servidor con servicios internos https sin autenticar.
 
 ## English
 

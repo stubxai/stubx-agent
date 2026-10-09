@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, test } from "node:test";
 import { decodePubkey, encodeBase58 } from "../base58.js";
-import { candidateUrls, fetchBytes, isPrivateAddress, pinnedLookup } from "../http.js";
+import { candidateUrls, connectPinned, fetchBytes, isPrivateAddress, pinnedLookup } from "../http.js";
 import { compareCanonical, normalizeToken, normalizeUrl } from "../impersonation.js";
 import { validateMint } from "../input.js";
 import { cleanText, decodeMint } from "../mint.js";
@@ -124,11 +124,17 @@ describe("descarga y redacción", () => {
     assert.equal(isPrivateAddress("::ffff:808:808"), false);
   });
 
-  test("pinnedLookup conecta a la IP ya validada", () => {
+  test("pinnedLookup conecta a la IP ya validada y prefiere IPv4", () => {
     const lookup = pinnedLookup(["1.1.1.1", "127.0.0.1"]);
     lookup("ipfs.io", {}, (err, address, family) => {
       assert.equal(err, null);
       assert.equal(address, "1.1.1.1");
+      assert.equal(family, 4);
+    });
+    const v6First = pinnedLookup(["2001:db8::1", "203.0.113.10"]);
+    v6First("ipfs.io", {}, (err, address, family) => {
+      assert.equal(err, null);
+      assert.equal(address, "203.0.113.10");
       assert.equal(family, 4);
     });
     const onlyPrivate = pinnedLookup(["127.0.0.1"]);
@@ -136,6 +142,83 @@ describe("descarga y redacción", () => {
       assert.ok(err);
       assert.equal(address, "");
     });
+  });
+
+  test("un error de socket se captura y se prueba la IP siguiente", async () => {
+    const tried: string[] = [];
+    const signal = AbortSignal.timeout(1000);
+    const response = await connectPinned(
+      ["2001:db8::1", "203.0.113.10", "198.51.100.20"],
+      async (address) => {
+        tried.push(address);
+        if (address === "203.0.113.10") {
+          const error = new Error("connect ECONNREFUSED 203.0.113.10:443") as NodeJS.ErrnoException;
+          error.code = "ECONNREFUSED";
+          throw error;
+        }
+        return new Response("ok", { status: 200 });
+      },
+      signal,
+    );
+    assert.equal(response.status, 200);
+    assert.deepEqual(tried, ["203.0.113.10", "198.51.100.20"]);
+    await assert.rejects(
+      () => connectPinned(
+        ["203.0.113.10"],
+        async () => {
+          const error = new Error("connect ECONNREFUSED 203.0.113.10:443") as NodeJS.ErrnoException;
+          error.code = "ECONNREFUSED";
+          throw error;
+        },
+        AbortSignal.timeout(1000),
+      ),
+      /ECONNREFUSED/,
+    );
+  });
+
+  test("AbortSignal.timeout corta toda la descarga", async () => {
+    let calls = 0;
+    let signal: AbortSignal | undefined;
+    const started = Date.now();
+    const result = await fetchBytes(`https://ipfs.io/ipfs/${CID}`, {
+      timeoutMs: 40,
+      maxRetries: 4,
+      backoffBaseMs: 1000,
+      sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+      random: () => 0,
+      resolveHost: async () => ["1.1.1.1"],
+      fetchImpl: async (_url, init) => {
+        calls += 1;
+        signal = init?.signal ?? undefined;
+        await new Promise<void>((_resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("la descarga no se cortó")), 500);
+          const current = init?.signal;
+          if (!current) {
+            clearTimeout(timer);
+            reject(new Error("falta AbortSignal"));
+            return;
+          }
+          const stop = () => {
+            clearTimeout(timer);
+            reject(current.reason instanceof Error ? current.reason : new Error("timeout"));
+          };
+          if (current.aborted) {
+            stop();
+            return;
+          }
+          current.addEventListener("abort", stop, { once: true });
+        });
+        return new Response("tarde");
+      },
+    });
+    assert.equal(result.ok, false);
+    if (!result.ok) {
+      assert.equal(result.error, "timeout");
+    }
+    assert.ok(calls < 5);
+    assert.ok(Date.now() - started < 500);
+    assert.equal(signal?.aborted, true);
+    assert.equal(signal?.reason instanceof Error ? signal.reason.name : "", "TimeoutError");
   });
 
   test("un CID solo sale por las pasarelas y una redirección privada no se sigue", async () => {
