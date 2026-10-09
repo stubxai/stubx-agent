@@ -1,0 +1,521 @@
+"use strict";
+(() => {
+const STUBX_LAB = {"mission":{"id":"mision-01","version":"1.1.0","updated":"2026-10-09","cardDate":"2026-10-08","title":{"es":"Cómo detectar un token clon en 5 pasos","en":"How to spot a clone token in 5 steps"},"intro":{"es":"Cinco preguntas cortas con las fichas del 2026-10-08. Si no aciertas, puedes volver a intentar. El progreso se queda en este navegador.","en":"Five short questions using the 2026-10-08 cards. If you miss, you can try again. Progress stays in this browser."},"closing":{"es":"Has separado la dirección oficial, una copia y un dato que no se pudo leer. No es un certificado. No hace falta una cuenta ni tener STUBX para leerlo.","en":"You separated the official address, a copy, and a fact that could not be read. This is not a certificate. No account is required, and holding STUBX is not required to read it."},"steps":[{"id":"direccion","kind":"check","glossary":["direccion"],"cards":["TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump","DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ","Hhq4ffySVX3UQqSowjhP1Lwa8YuJDf7iH2hYWvVHTuEf"],"fields":["name","mint","inRegistry"],"prompt":{"es":"¿Cuál es la dirección del STUBX oficial?","en":"Which address is the official STUBX?"},"guide":{"es":"El nombre se puede repetir. La dirección, no.","en":"A name can be copied. The address cannot."},"options":[{"id":"oficial","label":{"es":"TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump","en":"TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump"},"mint":"TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump"},{"id":"clon-dj","label":{"es":"DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ","en":"DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ"},"mint":"DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ"},{"id":"clon-hh","label":{"es":"Hhq4ffySVX3UQqSowjhP1Lwa8YuJDf7iH2hYWvVHTuEf","en":"Hhq4ffySVX3UQqSowjhP1Lwa8YuJDf7iH2hYWvVHTuEf"},"mint":"Hhq4ffySVX3UQqSowjhP1Lwa8YuJDf7iH2hYWvVHTuEf"}],"correct":"oficial","whyRight":{"es":"Solo esta dirección está en el registro del 2026-10-08. Las otras se llaman parecido y la ficha lo marca como posible copia. Eso no dice quién lo hizo.","en":"Only this address is in the 2026-10-08 registry. The others have a similar name and the card marks a possible copy. That does not say who did it."},"whyWrong":{"clon-dj":{"es":"Se llama Comunidad STUBX, pero no está en el registro. El nombre no sustituye a la dirección.","en":"It is named Comunidad STUBX, but it is not in the registry. The name does not stand in for the address."},"clon-hh":{"es":"Se llama Comunidad STUBX · Creador. El nombre coincide y la dirección es otra.","en":"It is named Comunidad STUBX · Creador. The name matches and the address is different."}}},{"id":"emision","kind":"check","glossary":["autoridad-emision"],"cards":["DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ","TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump"],"fields":["name","mint","mintAuthority","freezeAuthority"],"prompt":{"es":"Un permiso cerrado no dice cuál es la oficial. ¿Qué es cierto?","en":"A closed permission does not say which one is official. What is true?"},"guide":{"es":"Cerrar el permiso de crear más tokens, o el de congelar, no cambia la dirección.","en":"Closing the permission to create more tokens, or the one to freeze, does not change the address."},"options":[{"id":"coincide","label":{"es":"Es la oficial, porque el permiso coincide.","en":"It is the official one, because the permission matches."}},{"id":"solo-permiso","label":{"es":"El permiso está cerrado. Eso no identifica la dirección.","en":"The permission is closed. That does not identify the address."}},{"id":"no-leido","label":{"es":"No se leyó, y por eso pone «cerrado».","en":"It was not read, so it says “closed”."}}],"correct":"solo-permiso","whyRight":{"es":"En la ficha del 2026-10-08, crear más tokens y congelar cuentas figuran cerrados en la oficial y en las copias. USDC los tiene abiertos. Cerrado no identifica la dirección.","en":"On the 2026-10-08 card, creating more tokens and freezing accounts are closed on the official one and on the copies. USDC has them open. Closed does not identify the address."},"whyWrong":{"coincide":{"es":"Dos direcciones distintas pueden tener el mismo permiso. Esta no es la del registro.","en":"Two different addresses can have the same permission. This one is not the registry address."},"no-leido":{"es":"En esta ficha el permiso sí se leyó. Si no se hubiera leído, no se rellenaría como cerrado.","en":"On this card the permission was read. If it had not been read, it would not be filled in as closed."}}},{"id":"desconocido","kind":"check","glossary":["desconocido"],"cards":["TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump"],"fields":["name","holders","metadata"],"prompt":{"es":"Si un dato dice «no disponible», ¿qué haces?","en":"If a fact says “unavailable”, what do you do?"},"guide":{"es":"Lo que no se leyó sigue sin leerse.","en":"What was not read stays unread."},"options":[{"id":"prueba-y-cero","label":{"es":"Lo cuento como cero.","en":"I count it as zero."}},{"id":"sigue-desconocido","label":{"es":"Sigue sin saberse. No es un cero.","en":"It stays unknown. It is not a zero."}},{"id":"anula-ficha","label":{"es":"Tiro la ficha entera.","en":"I throw out the whole card."}}],"correct":"sigue-desconocido","whyRight":{"es":"En todas las fichas del 2026-10-08 la muestra de holders está no disponible. Eso no es un cero ni anula lo que sí se leyó.","en":"On every 2026-10-08 card the holder sample is unavailable. That is not a zero and it does not erase what was read."},"whyWrong":{"prueba-y-cero":{"es":"Un hueco no es un dato leído. No se rellena con cero.","en":"A gap is not a fact that was read. It is not filled in with zero."},"anula-ficha":{"es":"Falta lo que la ficha nombra. El resto, si se leyó, sigue constando.","en":"What the card names is missing. The rest, if it was read, still stands."}}},{"id":"curva","kind":"check","glossary":["curva-pump"],"cards":["3Zi6p6wzYZYKyuHdBhsDfb2pRR7XTfTfLKkXL7rwpump","TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump"],"fields":["name","impersonation","curveProgress"],"prompt":{"es":"Una copia marca 0,00. ¿Eso prueba la intención de alguien?","en":"A copy shows 0.00. Does that prove someone’s intent?"},"guide":{"es":"El 0,00 es un cálculo de la ficha, no un dato ausente.","en":"0.00 is a calculation on the card, not a missing fact."},"options":[{"id":"no-leida","label":{"es":"No se leyó, y prueba la intención.","en":"It was not read, and it proves intent."}},{"id":"senal-sin-intencion","label":{"es":"Es una señal. No atribuye intención.","en":"It is a signal. It does not attribute intent."}},{"id":"virtual-retirable","label":{"es":"La reserva virtual se puede retirar.","en":"The virtual reserve can be withdrawn."}}],"correct":"senal-sin-intencion","whyRight":{"es":"En los tres clones, el 0,00 sale porque la reserva real coincide con 793100000000000. La señal de copia no atribuye intención.","en":"On the three clones, 0.00 appears because the real reserve matches 793100000000000. The copy signal does not attribute intent."},"whyWrong":{"no-leida":{"es":"El cálculo sí se hizo. Un dato no leído no se rellena con cero, y la ficha no afirma la intención de nadie.","en":"The calculation was made. An unread fact is not filled in with zero, and the card does not assert anyone’s intent."},"virtual-retirable":{"es":"La reserva virtual no es el fondo que se puede retirar.","en":"The virtual reserve is not the balance that can be withdrawn."}}},{"id":"caso-nuevo","kind":"comprehension","glossary":["direccion"],"cards":[],"fields":[],"prompt":{"es":"Nombre igual, otra dirección. ¿Qué miras primero?","en":"Same name, different address. What do you check first?"},"guide":{"es":"Caso imaginario. No es una ficha real.","en":"An imagined case. It is not a real card."},"options":[{"id":"fiarse-del-nombre","label":{"es":"El nombre.","en":"The name."}},{"id":"comparar-direccion","label":{"es":"La dirección.","en":"The address."}},{"id":"revocada-es-registro","label":{"es":"Si el permiso está cerrado, ya es la oficial.","en":"If the permission is closed, it is already the official one."}}],"correct":"comparar-direccion","whyRight":{"es":"Primero se compara la dirección. Un permiso cerrado no identifica el token, y un dato no leído no se convierte en un hecho.","en":"The address is compared first. A closed permission does not identify the token, and an unread fact does not become a fact."},"whyWrong":{"fiarse-del-nombre":{"es":"El nombre, aunque lleve «oficial», no es la dirección.","en":"The name, even if it says “official”, is not the address."},"revocada-es-registro":{"es":"Un permiso cerrado describe ese permiso. Si la dirección es otra, no es la oficial.","en":"A closed permission describes that permission. If the address is different, it is not the official one."}}}]},"cards":{"TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump":{"mint":"TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump","role":"registro","roleNote":{"es":"Mint del registro curado de STUBX en esta tanda.","en":"STUBX mint in the curated registry for this batch."},"id":"2504203e59fc6819f4541c650b35fa3c8a49527fc2349cd33b2ee5d12abd97bb","createdAt":"2026-10-08T07:41:29.694Z","partial":true,"referenceSlot":454480471,"name":"STUBX","nameStatus":"verificado","symbol":"STUBX","inRegistry":true,"inRegistryStatus":"verificado","mintAuthority":{"state":"revocada","status":"verificado"},"freezeAuthority":{"state":"revocada","status":"verificado"},"metadataReading":"no_mutables_en_fuentes","metadataLevel":"ok","holdersStatus":"no_disponible","holdersNote":"Sin respuesta utilizable. No se interpreta como autoridad revocada, como inmutabilidad ni como reserva cero.","impersonation":false,"authenticityLevel":"ok","signals":["mint en el registro"],"statement":"El mint coincide con el registro curado (stubx). Que esté en el registro no es una auditoría.","statementStatus":"verificado","curvePresent":true,"curvePresentStatus":"verificado","curveProgress":"1.74","curveProgressStatus":"inferido","curveProgressNote":"Porcentaje inferido con la reserva real inicial pública de la curva clásica (793100000000000). Truncado a 2 decimales hacia cero.","curveModuleNote":"Cuenta con el discriminador público de BondingCurve.","rulesVersion":"0.1.0"},"Hhq4ffySVX3UQqSowjhP1Lwa8YuJDf7iH2hYWvVHTuEf":{"mint":"Hhq4ffySVX3UQqSowjhP1Lwa8YuJDf7iH2hYWvVHTuEf","role":"clon","roleNote":{"es":"Clon conocido en los ejemplos del 2026-10-08. La ficha marca posible suplantación y no atribuye intención.","en":"Known clone in the 2026-10-08 examples. The card marks possible impersonation and does not attribute intent."},"id":"2c5de795c4aab2014c94dd6ed2fbda4564256b5e00c6fe929f1b7392639393b0","createdAt":"2026-10-08T07:41:49.581Z","partial":true,"referenceSlot":454480545,"name":"Comunidad STUBX · Creador","nameStatus":"verificado","symbol":"COMUNIDAD","inRegistry":false,"inRegistryStatus":"verificado","mintAuthority":{"state":"revocada","status":"verificado"},"freezeAuthority":{"state":"revocada","status":"verificado"},"metadataReading":"no_mutables_en_fuentes","metadataLevel":"ok","holdersStatus":"no_disponible","holdersNote":"Sin respuesta utilizable. No se interpreta como autoridad revocada, como inmutabilidad ni como reserva cero.","impersonation":true,"authenticityLevel":"riesgo","signals":["nombre «Comunidad STUBX · Creador» incluye STUBX/STUBX","enlace «https://stubxai.com/canales» coincide con un enlace u host del registro"],"statement":"Posible suplantación: el nombre, el símbolo, la imagen o un enlace coinciden con un token del registro curado, pero el mint es otro. La coincidencia no atribuye intención.","statementStatus":"inferido","curvePresent":true,"curvePresentStatus":"verificado","curveProgress":"0.00","curveProgressStatus":"inferido","curveProgressNote":"Porcentaje inferido con la reserva real inicial pública de la curva clásica (793100000000000). Truncado a 2 decimales hacia cero.","curveModuleNote":"Cuenta con el discriminador público de BondingCurve.","rulesVersion":"0.1.0"},"DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ":{"mint":"DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ","role":"clon","roleNote":{"es":"Clon conocido en los ejemplos del 2026-10-08. La ficha marca posible suplantación y no atribuye intención.","en":"Known clone in the 2026-10-08 examples. The card marks possible impersonation and does not attribute intent."},"id":"e19ccb6b9ab284a1349b1c0bd7472c1cbb1f3eb9808c37c752c85418b4239a32","createdAt":"2026-10-08T07:42:08.413Z","partial":true,"referenceSlot":454480614,"name":"Comunidad STUBX","nameStatus":"verificado","symbol":"COMUNIDAD","inRegistry":false,"inRegistryStatus":"verificado","mintAuthority":{"state":"revocada","status":"verificado"},"freezeAuthority":{"state":"revocada","status":"verificado"},"metadataReading":"no_mutables_en_fuentes","metadataLevel":"ok","holdersStatus":"no_disponible","holdersNote":"Sin respuesta utilizable. No se interpreta como autoridad revocada, como inmutabilidad ni como reserva cero.","impersonation":true,"authenticityLevel":"riesgo","signals":["nombre «Comunidad STUBX» incluye STUBX/STUBX","enlace «https://stubxai.com/canales» coincide con un enlace u host del registro"],"statement":"Posible suplantación: el nombre, el símbolo, la imagen o un enlace coinciden con un token del registro curado, pero el mint es otro. La coincidencia no atribuye intención.","statementStatus":"inferido","curvePresent":true,"curvePresentStatus":"verificado","curveProgress":"0.00","curveProgressStatus":"inferido","curveProgressNote":"Porcentaje inferido con la reserva real inicial pública de la curva clásica (793100000000000). Truncado a 2 decimales hacia cero.","curveModuleNote":"Cuenta con el discriminador público de BondingCurve.","rulesVersion":"0.1.0"},"3Zi6p6wzYZYKyuHdBhsDfb2pRR7XTfTfLKkXL7rwpump":{"mint":"3Zi6p6wzYZYKyuHdBhsDfb2pRR7XTfTfLKkXL7rwpump","role":"clon","roleNote":{"es":"Clon conocido en los ejemplos del 2026-10-08. La ficha marca posible suplantación y no atribuye intención.","en":"Known clone in the 2026-10-08 examples. The card marks possible impersonation and does not attribute intent."},"id":"6da15234e08bd8507731922297162664cf9c16690397d4fbe2777a8f6c32d44c","createdAt":"2026-10-08T07:42:27.686Z","partial":true,"referenceSlot":454480685,"name":"Comunidad STUBX","nameStatus":"verificado","symbol":"COMUNIDAD","inRegistry":false,"inRegistryStatus":"verificado","mintAuthority":{"state":"revocada","status":"verificado"},"freezeAuthority":{"state":"revocada","status":"verificado"},"metadataReading":"no_mutables_en_fuentes","metadataLevel":"ok","holdersStatus":"no_disponible","holdersNote":"Sin respuesta utilizable. No se interpreta como autoridad revocada, como inmutabilidad ni como reserva cero.","impersonation":true,"authenticityLevel":"riesgo","signals":["nombre «Comunidad STUBX» incluye STUBX/STUBX","enlace «https://stubxai.com/canales» coincide con un enlace u host del registro"],"statement":"Posible suplantación: el nombre, el símbolo, la imagen o un enlace coinciden con un token del registro curado, pero el mint es otro. La coincidencia no atribuye intención.","statementStatus":"inferido","curvePresent":true,"curvePresentStatus":"verificado","curveProgress":"0.00","curveProgressStatus":"inferido","curveProgressNote":"Porcentaje inferido con la reserva real inicial pública de la curva clásica (793100000000000). Truncado a 2 decimales hacia cero.","curveModuleNote":"Cuenta con el discriminador público de BondingCurve.","rulesVersion":"0.1.0"},"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v":{"mint":"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v","role":"contraste","roleNote":{"es":"USDC, usado en los ejemplos como contraste: autoridades activas. No es STUBX y no está presentado como clon.","en":"USDC, used in the examples as a contrast: active authorities. It is not STUBX and is not presented as a clone."},"id":"e79f2d70db92ceab639eccd2d30a32640fd8eb6baf2a0a764d4a7a587179ad60","createdAt":"2026-10-08T07:44:19.870Z","partial":true,"referenceSlot":454481103,"name":"USD Coin","nameStatus":"verificado","symbol":"USDC","inRegistry":false,"inRegistryStatus":"verificado","mintAuthority":{"state":"activa","status":"verificado"},"freezeAuthority":{"state":"activa","status":"verificado"},"metadataReading":"mutables","metadataLevel":"atención","holdersStatus":"no_disponible","holdersNote":"Sin respuesta utilizable. No se interpreta como autoridad revocada, como inmutabilidad ni como reserva cero.","impersonation":false,"authenticityLevel":"ok","signals":[],"statement":"Este mint no está en el registro curado. Que no esté no significa que sea falso ni que sea una copia.","statementStatus":"verificado","curvePresent":false,"curvePresentStatus":"verificado","curveProgress":null,"curveProgressStatus":"no_aplica","curveProgressNote":"No hay curva. No se rellena con cero.","curveModuleNote":"La dirección derivada tiene una cuenta cuyo propietario no es el programa de Pump.fun. No es una curva y no se rellenan reservas a cero.","rulesVersion":"0.1.0"}},"glossary":[{"id":"direccion","term":{"es":"Dirección del mint","en":"Mint address"},"means":{"es":"Es la dirección de la cuenta del token. Identifica ese mint en la red de la ficha. El nombre y el símbolo son textos aparte.","en":"It is the address of the token account. It identifies that mint on the network named in the card. The name and the symbol are separate text."},"example":{"es":"En las fichas del 2026-10-08, TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump y DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ son direcciones distintas aunque los nombres se parezcan.","en":"On the 2026-10-08 cards, TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump and DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ are different addresses even if the names look alike."},"doesNotConclude":{"es":"No dice quién es una persona, ni si conviene hacer nada con el token. Dos nombres iguales no son la misma dirección.","en":"It does not name a person, and it does not say that any action with the token is advisable. Two equal names are not the same address."}},{"id":"registro","term":{"es":"Registro curado","en":"Curated registry"},"means":{"es":"Lista local que Verify compara con el mint, el nombre, el símbolo, la imagen y algunos enlaces. Hoy incluye STUBX. Que un mint no esté no significa que sea falso.","en":"A local list Verify compares with the mint, name, symbol, image, and some links. Today it includes STUBX. A mint that is absent is not therefore false."},"example":{"es":"USDC, en la ficha del 2026-10-08, no está en el registro. La propia ficha dice que eso no significa que sea falso ni una copia.","en":"USDC, on the 2026-10-08 card, is not in the registry. The card itself says that does not mean it is false or a copy."},"doesNotConclude":{"es":"Estar en el registro no es una auditoría ni una garantía. No estar tampoco es una acusación.","en":"Being in the registry is not an audit or a guarantee. Being absent is not an accusation either."}},{"id":"autoridad-emision","term":{"es":"Autoridad de emisión","en":"Mint authority"},"means":{"es":"Permiso para aumentar el suministro de ese mint. Si la ficha dice revocada y el campo está verificado, la opción leída está en 0. Si dice activa, el permiso sigue asignado a una dirección.","en":"Permission to increase the supply of that mint. If the card says revoked and the field is verified, the option that was read is 0. If it says active, the permission is still assigned to an address."},"example":{"es":"En la tanda del 2026-10-08, el mint del registro y los clones la tienen revocada. USDC la tiene activa.","en":"In the 2026-10-08 batch, the registry mint and the clones have it revoked. USDC has it active."},"doesNotConclude":{"es":"Revocada no identifica el mint, no demuestra que el proyecto sea legítimo y no dice nada de la demanda ni de la liquidez. Un campo no disponible no se rellena como revocada.","en":"Revoked does not identify the mint, does not show that the project is legitimate, and says nothing about demand or liquidity. An unavailable field is not filled in as revoked."}},{"id":"autoridad-congelacion","term":{"es":"Autoridad de congelación","en":"Freeze authority"},"means":{"es":"Permiso para congelar cuentas de ese token. Revocada quita ese permiso concreto en la lectura. Activa significa que sigue asignado.","en":"Permission to freeze accounts of that token. Revoked removes that specific permission in the reading. Active means it is still assigned."},"example":{"es":"En la misma tanda, el mint del registro la tiene revocada y USDC la tiene activa, asignada a una dirección que la ficha muestra.","en":"In the same batch, the registry mint has it revoked and USDC has it active, assigned to an address the card shows."},"doesNotConclude":{"es":"No es una garantía ni una prueba de identidad. Que no haya este permiso no impide otras limitaciones del token.","en":"It is not a guarantee or proof of identity. The absence of this permission does not remove other limits of the token."}},{"id":"metadatos-mutables","term":{"es":"Metadatos mutables","en":"Mutable metadata"},"means":{"es":"Si hay una autoridad de actualización o is_mutable es verdadero, el nombre, el símbolo o la imagen pueden cambiar. «No mutables en las fuentes leídas» describe esas fuentes en esa fecha.","en":"If there is an update authority or is_mutable is true, the name, symbol, or image can change. “Not mutable in the sources read” describes those sources on that date."},"example":{"es":"El mint del registro, el 2026-10-08, queda como no mutable en las fuentes leídas. USDC tiene is_mutable verdadero en Metaplex.","en":"The registry mint, on 2026-10-08, is recorded as not mutable in the sources read. USDC has is_mutable true in Metaplex."},"doesNotConclude":{"es":"Que no se puedan cambiar en esa lectura no demuestra legitimidad. Que se puedan cambiar no es, por sí solo, una suplantación.","en":"That they cannot be changed in that reading does not show legitimacy. That they can be changed is not, by itself, impersonation."}},{"id":"desconocido","term":{"es":"Desconocido y no disponible","en":"Unknown and unavailable"},"means":{"es":"No disponible significa que esa llamada no dejó un dato utilizable. Desconocido es lo que no se leyó. Ninguno de los dos es un valor comprobado.","en":"Unavailable means that call did not leave a usable fact. Unknown is what was not read. Neither one is a verified value."},"example":{"es":"En las cinco fichas del 2026-10-08, getTokenLargestAccounts respondió HTTP 429. La muestra de holders queda en no disponible. No es concentración cero.","en":"On all five cards from 2026-10-08, getTokenLargestAccounts returned HTTP 429. The holder sample stays unavailable. It is not zero concentration."},"doesNotConclude":{"es":"No se convierte en cero, en autoridad revocada ni en metadatos inmutables. Una ficha parcial tampoco anula los campos que sí están verificados.","en":"It does not become zero, a revoked authority, or immutable metadata. A partial card also does not cancel the fields that are verified."}},{"id":"curva-pump","term":{"es":"Curva de Pump.fun","en":"Pump.fun curve"},"means":{"es":"Si la cuenta derivada es del programa de la curva, Verify lee sus campos públicos. El avance clásico es un cálculo inferido, no un campo de la cuenta. Si no hay curva, no se rellenan reservas con cero.","en":"If the derived account belongs to the curve program, Verify reads its public fields. Classic progress is an inferred calculation, not a field of the account. If there is no curve, reserves are not filled in with zero."},"example":{"es":"El 2026-10-08 el mint del registro tiene avance inferido 1,74. Los clones tienen 0,00 inferido porque la reserva real coincide con la inicial documentada. USDC no es una curva: el avance queda en no aplica.","en":"On 2026-10-08 the registry mint has inferred progress 1.74. The clones have inferred 0.00 because the real reserve matches the documented initial reserve. USDC is not a curve: progress stays not applicable."},"doesNotConclude":{"es":"El avance no dice qué hacer. 0,00 inferido no significa que faltara la cuenta. Esta misión no simula un intercambio.","en":"Progress does not say what to do. Inferred 0.00 does not mean the account was missing. This mission does not simulate a swap."}},{"id":"reserva-real","term":{"es":"Reserva real","en":"Real reserve"},"means":{"es":"Campo real_token_reserves o real_quote_reserves de la cuenta de la curva, en unidades mínimas. Es distinto de la reserva virtual.","en":"The real_token_reserves or real_quote_reserves field of the curve account, in base units. It is different from the virtual reserve."},"example":{"es":"En los clones del 2026-10-08, la reserva real de tokens coincide con 793100000000000, la inicial documentada de la curva clásica. Por eso el avance inferido es 0,00.","en":"On the 2026-10-08 clones, the real token reserve matches 793100000000000, the documented initial reserve of the classic curve. That is why inferred progress is 0.00."},"doesNotConclude":{"es":"No es una auditoría de fondos ni un saldo que esta página calcule como retirable. Si el campo no está, no se inventa un cero.","en":"It is not an audit of funds, and this page does not compute it as a withdrawable balance. If the field is absent, a zero is not invented."}},{"id":"reserva-virtual","term":{"es":"Reserva virtual","en":"Virtual reserve"},"means":{"es":"Campo virtual_token_reserves o virtual_quote_reserves. La ficha lo separa de la reserva real. En la curva clásica, y con la quote por defecto, la reserva quote va en lamports.","en":"The virtual_token_reserves or virtual_quote_reserves field. The card keeps it apart from the real reserve. On the classic curve, and with the default quote, the quote reserve is in lamports."},"example":{"es":"La ficha del mint del registro, el 2026-10-08, muestra reserva virtual de tokens y reserva real de tokens como números distintos, cada una con su estado.","en":"The registry mint card, on 2026-10-08, shows a virtual token reserve and a real token reserve as different numbers, each with its own status."},"doesNotConclude":{"es":"La reserva virtual no es el fondo retirable. Sumarla con la real no crea un único fondo disponible.","en":"The virtual reserve is not the withdrawable balance. Adding it to the real reserve does not create one available pool."}},{"id":"suplantacion","term":{"es":"Posible suplantación","en":"Possible impersonation"},"means":{"es":"Señal de Verify: el nombre, el símbolo, la imagen o un enlace coinciden con el registro curado y el mint es otro. La coincidencia no atribuye intención.","en":"A Verify signal: the name, symbol, image, or a link matches the curated registry and the mint is a different one. The match does not attribute intent."},"example":{"es":"Las fichas de Hhq4ffySVX3UQqSowjhP1Lwa8YuJDf7iH2hYWvVHTuEf, DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ y 3Zi6p6wzYZYKyuHdBhsDfb2pRR7XTfTfLKkXL7rwpump, del 2026-10-08, llevan esa señal. USDC no.","en":"The 2026-10-08 cards for Hhq4ffySVX3UQqSowjhP1Lwa8YuJDf7iH2hYWvVHTuEf, DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ, and 3Zi6p6wzYZYKyuHdBhsDfb2pRR7XTfTfLKkXL7rwpump carry that signal. USDC does not."},"doesNotConclude":{"es":"No es una sentencia ni una prueba de lo que alguien quiso hacer. Un nombre parecido, por sí solo, tampoco sustituye a leer la dirección.","en":"It is not a verdict or proof of what someone meant to do. A similar name, by itself, also does not replace reading the address."}},{"id":"titular","term":{"es":"Titular y persona","en":"Holder of a key and a person"},"means":{"es":"Una dirección guardada en una cuenta, como el creator de la curva, es un campo público. No identifica a una persona ni a un titular jurídico.","en":"An address stored on an account, such as the curve creator, is a public field. It does not identify a person or a legal holder."},"example":{"es":"La ficha del mint del registro anota el creator de la curva y dice que esa pubkey no identifica a una persona.","en":"The registry mint card records the curve creator and says that pubkey does not identify a person."},"doesNotConclude":{"es":"No se puede pasar de una dirección a un nombre de persona con esta misión. No pide datos personales.","en":"This mission cannot turn an address into a person's name. It does not ask for personal data."}},{"id":"comision","term":{"es":"Comisión","en":"Fee"},"means":{"es":"Regla de un conector sobre un intercambio. Esta misión no calcula comisiones ni intercambios.","en":"A connector rule about a swap. This mission does not calculate fees or swaps."},"example":{"es":"Las fichas usadas aquí leen campos públicos de la curva. No incluyen un cálculo de comisión, y esta página no lo añade.","en":"The cards used here read public curve fields. They do not include a fee calculation, and this page does not add one."},"doesNotConclude":{"es":"Una comisión no identifica el mint, no convierte la reserva virtual en fondos retirables y no es un resultado prometido.","en":"A fee does not identify the mint, does not turn the virtual reserve into withdrawable funds, and is not a promised result."}}],"cardDate":"2026-10-08"};
+const STORAGE_KEY = "stubx-lab-mision-01";
+const LANG_KEY = "stubx-lab-lang";
+const PROGRESS_ECONOMIC_VALUE = 0;
+const PROGRESS_IS_CERTIFICATE = false;
+function record(value) {
+    if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+        return value;
+    }
+    return null;
+}
+function initialProgress(mission, lang) {
+    return {
+        version: 1,
+        missionId: mission.id,
+        missionVersion: mission.version,
+        lang,
+        solved: [],
+        attempts: {},
+        completed: false,
+    };
+}
+function resetProgress(mission, lang) {
+    return initialProgress(mission, lang);
+}
+function withLang(progress, lang) {
+    return { ...progress, lang };
+}
+function currentStep(mission, progress) {
+    for (const step of mission.steps) {
+        if (!progress.solved.includes(step.id)) {
+            return step;
+        }
+    }
+    return null;
+}
+function checkCount(mission) {
+    return mission.steps.filter((step) => step.kind === "check").length;
+}
+function parseProgress(raw, mission) {
+    const row = record(raw);
+    if (!row) {
+        return null;
+    }
+    if (row.version !== 1 || row.missionId !== mission.id || row.missionVersion !== mission.version) {
+        return null;
+    }
+    if (row.lang !== "es" && row.lang !== "en") {
+        return null;
+    }
+    if (!Array.isArray(row.solved) || typeof row.completed !== "boolean") {
+        return null;
+    }
+    const ids = mission.steps.map((step) => step.id);
+    const solved = [];
+    for (let i = 0; i < row.solved.length; i += 1) {
+        if (row.solved[i] !== ids[i]) {
+            return null;
+        }
+        const id = ids[i];
+        if (!id) {
+            return null;
+        }
+        solved.push(id);
+    }
+    if (row.completed !== (solved.length === mission.steps.length)) {
+        return null;
+    }
+    const attemptsRaw = record(row.attempts);
+    if (!attemptsRaw) {
+        return null;
+    }
+    const attempts = {};
+    for (const [key, value] of Object.entries(attemptsRaw)) {
+        if (!ids.includes(key)) {
+            return null;
+        }
+        if (typeof value !== "number" || !Number.isSafeInteger(value) || value < 0) {
+            return null;
+        }
+        attempts[key] = value;
+    }
+    return {
+        version: 1,
+        missionId: mission.id,
+        missionVersion: mission.version,
+        lang: row.lang,
+        solved,
+        attempts,
+        completed: row.completed,
+    };
+}
+function answer(mission, progress, stepId, optionId) {
+    if (progress.completed) {
+        return { applied: false, code: "ya_completa", correct: false, explanation: null, progress };
+    }
+    const step = currentStep(mission, progress);
+    if (!step || step.id !== stepId) {
+        return { applied: false, code: "paso_no_actual", correct: false, explanation: null, progress };
+    }
+    const option = step.options.find((item) => item.id === optionId);
+    if (!option) {
+        return { applied: false, code: "opcion_desconocida", correct: false, explanation: null, progress };
+    }
+    if (optionId === step.correct) {
+        const solved = [...progress.solved, step.id];
+        const completed = solved.length === mission.steps.length;
+        const explanation = step.whyRight;
+        return {
+            applied: true,
+            code: "correcto",
+            correct: true,
+            explanation,
+            progress: { ...progress, solved, completed },
+        };
+    }
+    const explanation = step.whyWrong[optionId];
+    if (!explanation) {
+        return { applied: false, code: "opcion_desconocida", correct: false, explanation: null, progress };
+    }
+    const prev = progress.attempts[step.id] ?? 0;
+    return {
+        applied: true,
+        code: "incorrecto",
+        correct: false,
+        explanation,
+        progress: {
+            ...progress,
+            attempts: { ...progress.attempts, [step.id]: prev + 1 },
+        },
+    };
+}
+function findEntry(id) {
+  var entries = STUBX_LAB.glossary;
+  for (var i = 0; i < entries.length; i += 1) {
+    if (entries[i].id === id) return entries[i];
+  }
+  return null;
+}
+
+function textOf(value, lang) {
+  if (!value) return lang === "en" ? "unknown" : "desconocido";
+  return value[lang] || value.es;
+}
+
+var STATUS_LABEL = {
+  verificado: { es: "verificado", en: "verified" },
+  inferido: { es: "inferido", en: "inferred" },
+  no_disponible: { es: "no disponible", en: "unavailable" },
+  no_aplica: { es: "no aplica", en: "not applicable" },
+  desconocido: { es: "desconocido", en: "unknown" },
+};
+
+var FIELD_LABEL = {
+  name: { es: "Nombre on-chain", en: "On-chain name" },
+  mint: { es: "Dirección del mint", en: "Mint address" },
+  inRegistry: { es: "En el registro curado", en: "In the curated registry" },
+  statement: { es: "Lectura de autenticidad", en: "Authenticity statement" },
+  mintAuthority: { es: "Autoridad de emisión", en: "Mint authority" },
+  freezeAuthority: { es: "Autoridad de congelación", en: "Freeze authority" },
+  metadata: { es: "Metadatos", en: "Metadata" },
+  holders: { es: "Muestra de holders", en: "Holder sample" },
+  impersonation: { es: "Señal de suplantación", en: "Impersonation signal" },
+  curvePresent: { es: "Cuenta de curva", en: "Curve account" },
+  curveProgress: { es: "Avance de la curva clásica", en: "Classic curve progress" },
+};
+
+var META_LABEL = {
+  no_mutables_en_fuentes: { es: "No mutables en las fuentes leídas", en: "Not mutable in the sources read" },
+  mutables: { es: "Mutables", en: "Mutable" },
+  desconocido: { es: "Desconocido", en: "Unknown" },
+};
+
+function statusLabel(status, lang) {
+  return textOf(STATUS_LABEL[status] || STATUS_LABEL.desconocido, lang);
+}
+
+function factText(status, value, lang) {
+  if (status !== "verificado" && status !== "inferido") return statusLabel(status, lang);
+  if (!value) return statusLabel(status, lang);
+  return value + " · " + statusLabel(status, lang);
+}
+
+function yesNo(value, lang) {
+  if (lang === "en") return value ? "yes" : "no";
+  return value ? "sí" : "no";
+}
+
+function fieldText(card, key, lang) {
+  if (key === "name") return { value: factText(card.nameStatus, card.name, lang), note: null };
+  if (key === "mint") return { value: card.mint, note: null };
+  if (key === "inRegistry") {
+    var registry = card.inRegistry === null ? null : yesNo(card.inRegistry, lang);
+    return { value: factText(card.inRegistryStatus, registry, lang), note: null };
+  }
+  if (key === "statement") return { value: factText(card.statementStatus, card.statement, lang), note: null };
+  if (key === "mintAuthority") return { value: factText(card.mintAuthority.status, card.mintAuthority.state, lang), note: null };
+  if (key === "freezeAuthority") return { value: factText(card.freezeAuthority.status, card.freezeAuthority.state, lang), note: null };
+  if (key === "metadata") return { value: textOf(META_LABEL[card.metadataReading], lang), note: null };
+  if (key === "holders") return { value: factText(card.holdersStatus, null, lang), note: card.holdersNote };
+  if (key === "impersonation") {
+    if (card.impersonation === null) return { value: statusLabel("desconocido", lang), note: null };
+    var label = card.impersonation
+      ? (lang === "en" ? "Possible impersonation" : "Posible suplantación")
+      : (lang === "en" ? "No such signal" : "Sin esa señal");
+    return { value: label + (card.authenticityLevel ? " · " + card.authenticityLevel : ""), note: null };
+  }
+  if (key === "curvePresent") {
+    var present = card.curvePresent === null ? null : yesNo(card.curvePresent, lang);
+    return { value: factText(card.curvePresentStatus, present, lang), note: card.curveModuleNote };
+  }
+  if (key === "curveProgress") {
+    var progress = card.curveProgress ? (lang === "en" ? card.curveProgress + "%" : card.curveProgress + " %") : null;
+    return { value: factText(card.curveProgressStatus, progress, lang), note: card.curveProgressNote };
+  }
+  return { value: statusLabel("desconocido", lang), note: null };
+}
+
+function el(tag, attrs) {
+  var node = document.createElement(tag);
+  if (!attrs) return node;
+  Object.keys(attrs).forEach(function (key) {
+    if (attrs[key] != null) node.setAttribute(key, String(attrs[key]));
+  });
+  return node;
+}
+
+function bootLab() {
+  var root = document.getElementById("mision-app");
+  if (!root) return;
+  var mission = STUBX_LAB.mission;
+  var lang = document.documentElement.getAttribute("data-lang") === "en" ? "en" : "es";
+  var stored = null;
+  try {
+    stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+  } catch (error) {
+    stored = null;
+  }
+  var progress = parseProgress(stored, mission) || initialProgress(mission, lang);
+  progress = withLang(progress, lang);
+  var banner = null;
+  var focusBanner = false;
+  var saveError = false;
+  var reviewId = null;
+
+  function liveStep() {
+    return currentStep(mission, progress);
+  }
+
+  function save() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+      saveError = false;
+    } catch (error) {
+      saveError = true;
+    }
+  }
+
+  function openHelp(id) {
+    var entry = findEntry(id);
+    var dialog = document.getElementById("ayuda");
+    var anchor = document.getElementById("termino-" + id);
+    if (!entry || !dialog || typeof dialog.showModal !== "function") {
+      if (anchor) anchor.scrollIntoView();
+      return;
+    }
+    var title = document.getElementById("ayuda-titulo");
+    var body = document.getElementById("ayuda-cuerpo");
+    var closeBtn = document.getElementById("ayuda-cerrar");
+    if (!title || !body) return;
+    title.textContent = entry.term[lang];
+    body.replaceChildren();
+    ["means", "example", "doesNotConclude"].forEach(function (key) {
+      var paragraph = el("p");
+      paragraph.textContent = entry[key][lang];
+      body.append(paragraph);
+    });
+    var stay = el("p");
+    stay.textContent = lang === "en"
+      ? "Opening help does not change local progress."
+      : "Abrir la ayuda no cambia el progreso local.";
+    body.append(stay);
+    if (closeBtn) closeBtn.textContent = lang === "en" ? "Close" : "Cerrar";
+    dialog.returnFocus = document.activeElement;
+    dialog.showModal();
+  }
+
+  var dialogNode = document.getElementById("ayuda");
+  if (dialogNode) {
+    dialogNode.addEventListener("close", function () {
+      var back = dialogNode.returnFocus;
+      if (back && back.focus) back.focus();
+    });
+  }
+
+  function cardNode(card, fields) {
+    var article = el("article", { class: "ficha" });
+    var heading = el("h3");
+    heading.textContent = card.name || card.mint;
+    var role = el("p", { class: "rol" });
+    role.textContent = card.roleNote[lang];
+    var mint = el("p");
+    var code = el("code", { class: "mint" });
+    code.textContent = card.mint;
+    mint.append(code);
+    var list = el("dl");
+    fields.forEach(function (key) {
+      var item = fieldText(card, key, lang);
+      var term = el("dt");
+      term.textContent = textOf(FIELD_LABEL[key], lang);
+      var detail = el("dd");
+      detail.textContent = item.value;
+      if (item.note) {
+        var note = el("p", { class: "muted" });
+        note.textContent = item.note;
+        detail.append(note);
+      }
+      list.append(term, detail);
+    });
+    article.append(heading, role, mint, list);
+    return article;
+  }
+
+  function helpButton(step) {
+    var id = step.glossary[0];
+    if (!id) return null;
+    var button = el("button", { type: "button", class: "secondary" });
+    button.textContent = lang === "en" ? "What does this word mean?" : "¿Qué significa esta palabra?";
+    button.addEventListener("click", function () { openHelp(id); });
+    return button;
+  }
+
+  function resetButton() {
+    var button = el("button", { type: "button", class: "secondary" });
+    button.textContent = lang === "en" ? "Delete local progress" : "Borrar progreso local";
+    button.addEventListener("click", function () {
+      var question = lang === "en"
+        ? "Delete the local progress of this mission in this browser?"
+        : "¿Borrar el progreso local de esta misión en este navegador?";
+      if (!window.confirm(question)) return;
+      progress = resetProgress(mission, lang);
+      banner = null;
+      reviewId = null;
+      save();
+      render();
+    });
+    return button;
+  }
+
+  function render() {
+    root.replaceChildren();
+    var total = mission.steps.length;
+    var nav = el("ol", { class: "pasos" });
+    mission.steps.forEach(function (step, index) {
+      var item = el("li");
+      var button = el("button", { type: "button", class: "secondary" });
+      var solved = progress.solved.indexOf(step.id) !== -1;
+      var active = liveStep();
+      var isLive = Boolean(active && active.id === step.id);
+      var showing = reviewId ? reviewId === step.id : isLive;
+      var label = String(index + 1);
+      button.textContent = label;
+      if (!solved && !isLive) button.disabled = true;
+      if (showing) button.setAttribute("aria-current", "step");
+      button.addEventListener("click", function () {
+        reviewId = solved && !isLive ? step.id : null;
+        banner = null;
+        render();
+      });
+      item.append(button);
+      nav.append(item);
+    });
+    if (progress.completed) {
+      var resultButton = el("button", { type: "button" });
+      resultButton.textContent = lang === "en" ? "Result" : "Resultado";
+      if (reviewId === null) resultButton.setAttribute("aria-current", "step");
+      resultButton.addEventListener("click", function () {
+        reviewId = null;
+        banner = null;
+        render();
+      });
+      var resultItem = el("li");
+      resultItem.append(resultButton);
+      nav.append(resultItem);
+    }
+    root.append(nav);
+
+    if (saveError) {
+      var warn = el("p", { class: "nota" });
+      warn.textContent = lang === "en"
+        ? "This browser did not store the progress. It will disappear when the page closes."
+        : "Este navegador no guardó el progreso. Se pierde al cerrar la página.";
+      root.append(warn);
+    }
+
+    if (banner) {
+      var feedback = el("div", { class: banner.correct ? "feedback encaja" : "feedback no-encaja", role: "status", tabindex: "-1" });
+      var feedbackTitle = el("h2");
+      feedbackTitle.textContent = banner.correct
+        ? (lang === "en" ? "That answer fits" : "Esa respuesta encaja")
+        : (lang === "en" ? "That answer does not fit" : "Esa respuesta no encaja");
+      var feedbackBody = el("p");
+      feedbackBody.textContent = banner.explanation[lang];
+      var again = el("p");
+      again.textContent = banner.correct
+        ? (lang === "en" ? "You can continue. There is no score and no penalty." : "Puedes seguir. No hay puntuación ni penalización.")
+        : (lang === "en" ? "You can choose another answer. There is no penalty." : "Puedes elegir otra respuesta. No hay penalización.");
+      feedback.append(feedbackTitle, feedbackBody, again);
+      root.append(feedback);
+    }
+
+    var showingResult = progress.completed && reviewId === null;
+    if (showingResult) {
+      var done = el("section");
+      var doneTitle = el("h2");
+      doneTitle.textContent = lang === "en" ? "Result" : "Resultado";
+      done.append(doneTitle);
+      mission.steps.forEach(function (step, index) {
+        var block = el("article", { class: "ficha" });
+        var name = el("h3");
+        name.textContent = (step.kind === "check" ? (index + 1) + ". " : "") + step.prompt[lang];
+        var line = el("p");
+        line.textContent = step.whyRight[lang];
+        block.append(name, line);
+        done.append(block);
+      });
+      var close = el("p");
+      close.textContent = mission.closing[lang];
+      var dated = el("p");
+      dated.textContent = lang === "en"
+        ? "The cards are from " + STUBX_LAB.cardDate + ". Unknown is not the same as verified."
+        : "Las fichas son del " + STUBX_LAB.cardDate + ". Lo desconocido no es lo mismo que lo comprobado.";
+      done.append(close, dated, resetButton());
+      root.append(done);
+    } else {
+      var stepId = reviewId || (liveStep() ? liveStep().id : mission.steps[0].id);
+      var step = null;
+      for (var i = 0; i < mission.steps.length; i += 1) {
+        if (mission.steps[i].id === stepId) step = mission.steps[i];
+      }
+      if (!step) return;
+      var section = el("section");
+      var heading = el("h2");
+      var position = mission.steps.indexOf(step);
+      heading.textContent = lang === "en"
+        ? "Step " + (position + 1) + " of " + total
+        : "Paso " + (position + 1) + " de " + total;
+      var guide = el("p", { class: "apoyo" });
+      guide.textContent = step.guide[lang];
+      section.append(heading, guide);
+      var word = helpButton(step);
+      if (word) section.append(word);
+      if (step.cards.length > 0) {
+        var fold = el("details", { class: "tecnico" });
+        var summary = el("summary");
+        summary.textContent = lang === "en" ? "See the cards" : "Ver las fichas";
+        fold.append(summary);
+        step.cards.forEach(function (mint) {
+          var card = STUBX_LAB.cards[mint];
+          if (card) fold.append(cardNode(card, step.fields));
+        });
+        section.append(fold);
+      }
+      var prompt = el("h3");
+      prompt.textContent = step.prompt[lang];
+      section.append(prompt);
+      var solved = progress.solved.indexOf(step.id) !== -1;
+      if (solved) {
+        var lesson = el("p");
+        lesson.textContent = step.whyRight[lang];
+        var locked = el("p", { class: "muted" });
+        locked.textContent = lang === "en"
+          ? "This check is already done. To try it again, delete the local progress."
+          : "Esta comprobación ya está hecha. Para repetirla, borra el progreso local.";
+        section.append(lesson, locked);
+      } else {
+        var options = el("div", { class: "opciones", role: "group" });
+        options.setAttribute("aria-labelledby", "pregunta-actual");
+        prompt.id = "pregunta-actual";
+        step.options.forEach(function (option) {
+          var button = el("button", { type: "button" });
+          button.textContent = option.label[lang];
+          button.addEventListener("click", function () {
+            var grade = answer(mission, progress, step.id, option.id);
+            if (!grade.applied) return;
+            progress = grade.progress;
+            banner = { correct: grade.correct, explanation: grade.explanation };
+            focusBanner = true;
+            if (grade.correct) reviewId = null;
+            save();
+            render();
+          });
+          options.append(button);
+        });
+        section.append(options);
+      }
+      section.append(resetButton());
+      root.append(section);
+    }
+
+    if (focusBanner) {
+      var region = root.querySelector(".feedback");
+      if (region) region.focus();
+      focusBanner = false;
+    }
+  }
+
+  document.addEventListener("stubx-lang", function (event) {
+    lang = event.detail === "en" ? "en" : "es";
+    progress = withLang(progress, lang);
+    save();
+    render();
+  });
+
+  save();
+  render();
+}
+bootLab();
+})();

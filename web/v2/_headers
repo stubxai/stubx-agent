@@ -1,0 +1,21 @@
+# Vista previa STUBX web v2. No es el despliegue de producción.
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; manifest-src 'self'; media-src 'none'; frame-src 'none'; worker-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+  Cross-Origin-Opener-Policy: same-origin
+  X-Robots-Tag: noindex, nofollow
+
+/assets/*
+  Cache-Control: public, max-age=3600
+/fonts/*
+  Cache-Control: public, max-age=86400
+/onchain/*
+  Cache-Control: public, max-age=86400
+/token.json
+  Content-Type: application/json; charset=utf-8
+  Cache-Control: public, max-age=300
+/.well-known/security.txt
+  Content-Type: text/plain; charset=utf-8

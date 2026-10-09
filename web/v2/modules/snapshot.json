@@ -1,0 +1,15 @@
+{
+  "kind": "pr14-browser-snapshot",
+  "pr": 14,
+  "branch": "feat/lab-mision-1",
+  "commit": "4161ee65fbcdff07f1e55a33e3973362c0592809",
+  "commitDate": "2026-10-09T15:54:12Z",
+  "cardsDate": "2026-10-08",
+  "liveNetwork": false,
+  "merged": false,
+  "uiBundle": "assets/verify.js",
+  "missionBundle": "assets/mission.js",
+  "browserApi": "modules/verify/lookup.mjs",
+  "cards": "modules/verify/cards.json",
+  "note": "La interfaz de la página usa el bundle de navegador de la PR 14. lookup.mjs es la misma regla, importable, para cuando el código de lab/ esté en esta rama. No es una lectura en vivo."
+}

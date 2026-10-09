@@ -1,0 +1,3 @@
+# Vista previa. Las páginas también llevan noindex.
+User-agent: *
+Allow: /

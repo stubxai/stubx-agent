@@ -1,0 +1,18 @@
+# Preparados para cuando Cristian autorice el cambio. No están activos en producción.
+/canales            /security/   301
+/canales/           /security/   301
+/canales.html       /security/   301
+/riesgos            /risks/      301
+/riesgos/           /risks/      301
+/riesgos.html       /risks/      301
+/pruebas            /proofs/     301
+/pruebas/           /proofs/     301
+/pruebas.html       /proofs/     301
+/marca              /marca/      301
+/marca.html         /marca/      301
+/archivo            /proofs/#archivo  301
+/archivo.html       /proofs/#archivo  301
+/docs               /proofs/#archivo  301
+/docs/              /proofs/#archivo  301
+/docs.html          /proofs/#archivo  301
+/.well-known/security.txt  /security.txt  200

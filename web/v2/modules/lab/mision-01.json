@@ -1,0 +1,298 @@
+{
+  "id": "mision-01",
+  "version": "1.1.0",
+  "updated": "2026-10-09",
+  "cardDate": "2026-10-08",
+  "title": {
+    "es": "Cómo detectar un token clon en 5 pasos",
+    "en": "How to spot a clone token in 5 steps"
+  },
+  "intro": {
+    "es": "Cinco preguntas cortas con las fichas del 2026-10-08. Si no aciertas, puedes volver a intentar. El progreso se queda en este navegador.",
+    "en": "Five short questions using the 2026-10-08 cards. If you miss, you can try again. Progress stays in this browser."
+  },
+  "closing": {
+    "es": "Has separado la dirección oficial, una copia y un dato que no se pudo leer. No es un certificado. No hace falta una cuenta ni tener STUBX para leerlo.",
+    "en": "You separated the official address, a copy, and a fact that could not be read. This is not a certificate. No account is required, and holding STUBX is not required to read it."
+  },
+  "steps": [
+    {
+      "id": "direccion",
+      "kind": "check",
+      "glossary": ["direccion"],
+      "cards": [
+        "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump",
+        "DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ",
+        "Hhq4ffySVX3UQqSowjhP1Lwa8YuJDf7iH2hYWvVHTuEf"
+      ],
+      "fields": ["name", "mint", "inRegistry"],
+      "prompt": {
+        "es": "¿Cuál es la dirección del STUBX oficial?",
+        "en": "Which address is the official STUBX?"
+      },
+      "guide": {
+        "es": "El nombre se puede repetir. La dirección, no.",
+        "en": "A name can be copied. The address cannot."
+      },
+      "options": [
+        {
+          "id": "oficial",
+          "mint": "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump",
+          "label": {
+            "es": "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump",
+            "en": "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump"
+          }
+        },
+        {
+          "id": "clon-dj",
+          "mint": "DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ",
+          "label": {
+            "es": "DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ",
+            "en": "DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ"
+          }
+        },
+        {
+          "id": "clon-hh",
+          "mint": "Hhq4ffySVX3UQqSowjhP1Lwa8YuJDf7iH2hYWvVHTuEf",
+          "label": {
+            "es": "Hhq4ffySVX3UQqSowjhP1Lwa8YuJDf7iH2hYWvVHTuEf",
+            "en": "Hhq4ffySVX3UQqSowjhP1Lwa8YuJDf7iH2hYWvVHTuEf"
+          }
+        }
+      ],
+      "correct": "oficial",
+      "whyRight": {
+        "es": "Solo esta dirección está en el registro del 2026-10-08. Las otras se llaman parecido y la ficha lo marca como posible copia. Eso no dice quién lo hizo.",
+        "en": "Only this address is in the 2026-10-08 registry. The others have a similar name and the card marks a possible copy. That does not say who did it."
+      },
+      "whyWrong": {
+        "clon-dj": {
+          "es": "Se llama Comunidad STUBX, pero no está en el registro. El nombre no sustituye a la dirección.",
+          "en": "It is named Comunidad STUBX, but it is not in the registry. The name does not stand in for the address."
+        },
+        "clon-hh": {
+          "es": "Se llama Comunidad STUBX · Creador. El nombre coincide y la dirección es otra.",
+          "en": "It is named Comunidad STUBX · Creador. The name matches and the address is different."
+        }
+      }
+    },
+    {
+      "id": "emision",
+      "kind": "check",
+      "glossary": ["autoridad-emision"],
+      "cards": [
+        "DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ",
+        "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump"
+      ],
+      "fields": ["name", "mint", "mintAuthority", "freezeAuthority"],
+      "prompt": {
+        "es": "Un permiso cerrado no dice cuál es la oficial. ¿Qué es cierto?",
+        "en": "A closed permission does not say which one is official. What is true?"
+      },
+      "guide": {
+        "es": "Cerrar el permiso de crear más tokens, o el de congelar, no cambia la dirección.",
+        "en": "Closing the permission to create more tokens, or the one to freeze, does not change the address."
+      },
+      "options": [
+        {
+          "id": "coincide",
+          "label": {
+            "es": "Es la oficial, porque el permiso coincide.",
+            "en": "It is the official one, because the permission matches."
+          }
+        },
+        {
+          "id": "solo-permiso",
+          "label": {
+            "es": "El permiso está cerrado. Eso no identifica la dirección.",
+            "en": "The permission is closed. That does not identify the address."
+          }
+        },
+        {
+          "id": "no-leido",
+          "label": {
+            "es": "No se leyó, y por eso pone «cerrado».",
+            "en": "It was not read, so it says “closed”."
+          }
+        }
+      ],
+      "correct": "solo-permiso",
+      "whyRight": {
+        "es": "En la ficha del 2026-10-08, crear más tokens y congelar cuentas figuran cerrados en la oficial y en las copias. USDC los tiene abiertos. Cerrado no identifica la dirección.",
+        "en": "On the 2026-10-08 card, creating more tokens and freezing accounts are closed on the official one and on the copies. USDC has them open. Closed does not identify the address."
+      },
+      "whyWrong": {
+        "coincide": {
+          "es": "Dos direcciones distintas pueden tener el mismo permiso. Esta no es la del registro.",
+          "en": "Two different addresses can have the same permission. This one is not the registry address."
+        },
+        "no-leido": {
+          "es": "En esta ficha el permiso sí se leyó. Si no se hubiera leído, no se rellenaría como cerrado.",
+          "en": "On this card the permission was read. If it had not been read, it would not be filled in as closed."
+        }
+      }
+    },
+    {
+      "id": "desconocido",
+      "kind": "check",
+      "glossary": ["desconocido"],
+      "cards": ["TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump"],
+      "fields": ["name", "holders", "metadata"],
+      "prompt": {
+        "es": "Si un dato dice «no disponible», ¿qué haces?",
+        "en": "If a fact says “unavailable”, what do you do?"
+      },
+      "guide": {
+        "es": "Lo que no se leyó sigue sin leerse.",
+        "en": "What was not read stays unread."
+      },
+      "options": [
+        {
+          "id": "prueba-y-cero",
+          "label": {
+            "es": "Lo cuento como cero.",
+            "en": "I count it as zero."
+          }
+        },
+        {
+          "id": "sigue-desconocido",
+          "label": {
+            "es": "Sigue sin saberse. No es un cero.",
+            "en": "It stays unknown. It is not a zero."
+          }
+        },
+        {
+          "id": "anula-ficha",
+          "label": {
+            "es": "Tiro la ficha entera.",
+            "en": "I throw out the whole card."
+          }
+        }
+      ],
+      "correct": "sigue-desconocido",
+      "whyRight": {
+        "es": "En todas las fichas del 2026-10-08 la muestra de holders está no disponible. Eso no es un cero ni anula lo que sí se leyó.",
+        "en": "On every 2026-10-08 card the holder sample is unavailable. That is not a zero and it does not erase what was read."
+      },
+      "whyWrong": {
+        "prueba-y-cero": {
+          "es": "Un hueco no es un dato leído. No se rellena con cero.",
+          "en": "A gap is not a fact that was read. It is not filled in with zero."
+        },
+        "anula-ficha": {
+          "es": "Falta lo que la ficha nombra. El resto, si se leyó, sigue constando.",
+          "en": "What the card names is missing. The rest, if it was read, still stands."
+        }
+      }
+    },
+    {
+      "id": "curva",
+      "kind": "check",
+      "glossary": ["curva-pump"],
+      "cards": [
+        "3Zi6p6wzYZYKyuHdBhsDfb2pRR7XTfTfLKkXL7rwpump",
+        "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump"
+      ],
+      "fields": ["name", "impersonation", "curveProgress"],
+      "prompt": {
+        "es": "Una copia marca 0,00. ¿Eso prueba la intención de alguien?",
+        "en": "A copy shows 0.00. Does that prove someone’s intent?"
+      },
+      "guide": {
+        "es": "El 0,00 es un cálculo de la ficha, no un dato ausente.",
+        "en": "0.00 is a calculation on the card, not a missing fact."
+      },
+      "options": [
+        {
+          "id": "no-leida",
+          "label": {
+            "es": "No se leyó, y prueba la intención.",
+            "en": "It was not read, and it proves intent."
+          }
+        },
+        {
+          "id": "senal-sin-intencion",
+          "label": {
+            "es": "Es una señal. No atribuye intención.",
+            "en": "It is a signal. It does not attribute intent."
+          }
+        },
+        {
+          "id": "virtual-retirable",
+          "label": {
+            "es": "La reserva virtual se puede retirar.",
+            "en": "The virtual reserve can be withdrawn."
+          }
+        }
+      ],
+      "correct": "senal-sin-intencion",
+      "whyRight": {
+        "es": "En los tres clones, el 0,00 sale porque la reserva real coincide con 793100000000000. La señal de copia no atribuye intención.",
+        "en": "On the three clones, 0.00 appears because the real reserve matches 793100000000000. The copy signal does not attribute intent."
+      },
+      "whyWrong": {
+        "no-leida": {
+          "es": "El cálculo sí se hizo. Un dato no leído no se rellena con cero, y la ficha no afirma la intención de nadie.",
+          "en": "The calculation was made. An unread fact is not filled in with zero, and the card does not assert anyone’s intent."
+        },
+        "virtual-retirable": {
+          "es": "La reserva virtual no es el fondo que se puede retirar.",
+          "en": "The virtual reserve is not the balance that can be withdrawn."
+        }
+      }
+    },
+    {
+      "id": "caso-nuevo",
+      "kind": "comprehension",
+      "glossary": ["direccion"],
+      "cards": [],
+      "fields": [],
+      "prompt": {
+        "es": "Nombre igual, otra dirección. ¿Qué miras primero?",
+        "en": "Same name, different address. What do you check first?"
+      },
+      "guide": {
+        "es": "Caso imaginario. No es una ficha real.",
+        "en": "An imagined case. It is not a real card."
+      },
+      "options": [
+        {
+          "id": "fiarse-del-nombre",
+          "label": {
+            "es": "El nombre.",
+            "en": "The name."
+          }
+        },
+        {
+          "id": "comparar-direccion",
+          "label": {
+            "es": "La dirección.",
+            "en": "The address."
+          }
+        },
+        {
+          "id": "revocada-es-registro",
+          "label": {
+            "es": "Si el permiso está cerrado, ya es la oficial.",
+            "en": "If the permission is closed, it is already the official one."
+          }
+        }
+      ],
+      "correct": "comparar-direccion",
+      "whyRight": {
+        "es": "Primero se compara la dirección. Un permiso cerrado no identifica el token, y un dato no leído no se convierte en un hecho.",
+        "en": "The address is compared first. A closed permission does not identify the token, and an unread fact does not become a fact."
+      },
+      "whyWrong": {
+        "fiarse-del-nombre": {
+          "es": "El nombre, aunque lleve «oficial», no es la dirección.",
+          "en": "The name, even if it says “official”, is not the address."
+        },
+        "revocada-es-registro": {
+          "es": "Un permiso cerrado describe ese permiso. Si la dirección es otra, no es la oficial.",
+          "en": "A closed permission describes that permission. If the address is different, it is not the official one."
+        }
+      }
+    }
+  ]
+}
