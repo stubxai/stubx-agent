@@ -1,0 +1,3 @@
+# Sin lista blanca. Las cuentas públicas de token se ignoran solo por las huellas de .gitleaksignore.
+[extend]
+useDefault = true

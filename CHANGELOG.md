@@ -1,5 +1,31 @@
 # Changelog
 
+## 2026-10-09 · Revisión de seguridad de Verify y Lab (borrador, sin publicar)
+
+- El service worker queda en `/lab/sw.js`, con red primero, y no guarda la portada ni páginas de avisos. El índice de borrador pasa a `indice-borrador.html`.
+- El registro de ejemplos de clones añade ERYyy y FMNb. No es una lista completa. La revisión del 09-10 no trae direcciones EVM, así que no se inventan.
+- El detector pliega mayúsculas, NFKC y homoglifos, y marca variantes del nombre y dominios parecidos, incluida la URL de Netlify.
+- Si la muestra de holders recibe 429, se leen las cuentas de la curva y de la creadora sin llamarlas censo. La CLI no descarga URIs de creadores fuera de pasarelas IPFS o Arweave. `redactEndpoint` no escribe claves de la ruta. Hay `_headers` solo para las rutas nuevas.
+- El modo sin «No publicado» ni `noindex` exige `STUBX_PUBLISH=1` y `--publish`. No está activado.
+- `.gitleaksignore` ignora solo huellas de cuentas públicas de token de esta rama (commit, archivo, regla y línea). Gitleaks recorre `base..HEAD`, no el resto de ramas: las huellas de `feat/web-v2` las añade la PR #15. Esta PR se fusiona con merge commit, sin squash. Una semilla bajo `tokenAccount` en otro archivo sigue detectándose. El relleno `\0` de Metaplex se recorta y no se muestra como «�».
+- La CLI fija en cada intento `family` (4 o 6) y `autoSelectFamily: false`. El lookup de la IP ya validada se aplaza a la siguiente vuelta y, antes de conectar, se escucha `error` en el socket y en la petición. Así una conexión real a `2001:db8::1` (IPv6 sin ruta) devuelve `ENETUNREACH` y el proceso sigue. Toda la descarga tiene tope con `AbortSignal.timeout`. El detector marca `STU8X`, la U armenia, el cherokee y un host que contiene `stubxai.com` como etiquetas (`stubxai.com.evil.io`). Si `getTokenLargestAccounts` falla, la ficha oficial también lee la cuenta personal publicada `2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX`, anotada en el registro de esta rama.
+- La lista de ejemplos EVM añade dos direcciones de search-v2 de Pump.fun del 08-10 09:14, sin verificar en la cadena. Cualquier dirección `0x` dice que el STUBX oficial solo existe en Solana y, si coincide, que es una copia conocida.
+- El detector también marca «S.T.U.B.X», «5TUBX», versalitas y handles `x.com/stubxai_` con sufijo. La ficha oficial y la de USDC se releyeron el 2026-10-09.
+
+## 2026-10-09 · STUBX Lab, misión 1 (borrador, sin publicar)
+
+- `lab/`: misión estática «Cómo detectar un token clon en 5 comprobaciones», sobre las fichas de Verify del 2026-10-08. Progreso solo en el navegador. Glosario y tres guías en español, con inglés pendiente de revisión humana.
+- `site-drafts/`: páginas `/verify`, `/lab` y `/tablero` generadas, autocontenidas y sin publicar. No sustituyen la web existente.
+- Pruebas sin red en `lab/test/`. `npm test` las incluye. `npm run lab:build` regenera los HTML.
+- `/verify` comprueba una dirección pegada contra esas fichas, con semáforo y detalles plegados. Si la dirección no es válida o la lectura no está, lo dice en claro y no inventa un resultado. La misión pasa a 5 pasos con preguntas cortas.
+
+## 2026-10-08 · STUBX Verify (MVP, solo lectura)
+
+- Carpeta nueva `verify/`: CLI `verify <mint> [--format json|md|html] [--out dir]`. Componente aparte del agente. El agente sigue sin contactar la red principal ni ningún RPC, y el PPM no cambia (3 marcadas · 1 no aplica).
+- Lee datos públicos de mainnet-beta (RPC por defecto `https://api.mainnet-beta.solana.com`, sustituible con `RPC_URL`), con reintentos, retroceso y pausa. No firma, no envía y no custodia. `npm run verify:scan` falla si aparece ese código.
+- Ficha en JSON, Markdown y HTML estático, con fuente por campo. Pruebas sin red en `verify/test/`. Fichas de ejemplo del 2026-10-08 en `verify/examples/2026-10-08/`.
+- Cómo reproducir cada dato: [verify/README.md](verify/README.md).
+
 ## 2026-10-05 · PPM: casilla Wallet → no aplica
 
 - `ppm:print` pasa `wallet` a `status: "not-applicable"` (`notApplicableOn: 2026-10-05`, `ppmMarked: false`). Motivo: el agente no tiene wallet ni claves por diseño (decisión del creador). La wallet pública del proyecto (SOL) no cuenta para marcar esta casilla.

@@ -1,0 +1,21 @@
+{
+  "version": "1.0.0",
+  "updated": "2026-10-09",
+  "guides": [
+    {
+      "id": "identificar-el-token",
+      "file": "identificar-el-token.md",
+      "title": { "es": "Identificar el token", "en": "Identify the token" }
+    },
+    {
+      "id": "interpretar-permisos",
+      "file": "interpretar-permisos.md",
+      "title": { "es": "Interpretar permisos", "en": "Read permissions" }
+    },
+    {
+      "id": "comprender-liquidez",
+      "file": "comprender-liquidez.md",
+      "title": { "es": "Comprender la curva", "en": "Understand the curve" }
+    }
+  ]
+}

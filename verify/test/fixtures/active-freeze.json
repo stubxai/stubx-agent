@@ -1,0 +1,26 @@
+{
+  "id": "active-freeze",
+  "mint": "GgBaCs3NCBuZN12kCJgAW63ydqohFkHEdfdEXBPzLHq",
+  "slot": 101,
+  "mintAccount": {
+    "owner": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+    "executable": false,
+    "lamports": 1000000,
+    "space": 82,
+    "dataBase64": "AQAAABUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVAIDGpH6NAwAGAQEAAAAWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFg=="
+  },
+  "metaplex": null,
+  "curve": null,
+  "supply": {
+    "amount": "1000000000000000",
+    "decimals": 6
+  },
+  "largest": [
+    {
+      "address": "2Z8oHviEbrqDD5kg2sW8h8kYceqdVTnrrPL6Lk2nBfRG",
+      "amount": "250000000000000",
+      "decimals": 6
+    }
+  ],
+  "metadata": null
+}

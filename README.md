@@ -39,6 +39,10 @@ Cualquier otro nombre se rechaza. Un nombre de firma, custodia, intercambio o en
 
 El detalle está en [LIMITS.md](LIMITS.md) y en [KILL-SWITCH.md](KILL-SWITCH.md).
 
+## STUBX Verify
+
+[`verify/`](verify/README.md) es un componente aparte, de solo lectura, con su propia política. El agente de arriba sigue sin contactar la red principal ni ningún RPC. Verify, solo si se ejecuta a propósito, lee datos públicos de mainnet-beta y no firma, no envía transacciones y no custodia claves. Cómo reproducir cada dato: [verify/README.md](verify/README.md).
+
 ## Estado de las cuatro casillas
 
 `npm run ppm:print` imprime el JSON. Hoy:
@@ -72,7 +76,11 @@ npm ci
 npm run verify:all
 ```
 
-`verify:all` ejecuta en orden `test`, `scan:forbidden`, `drill:killswitch`, `logs:verify` y `logs:status`. No usa red ni secretos y no añade capacidades al agente: solo junta comprobaciones que ya existen.
+`verify:all` ejecuta en orden `test`, `scan:forbidden`, `drill:killswitch`, `logs:verify` y `logs:status`. No usa red ni secretos y no añade capacidades al agente: solo junta comprobaciones que ya existen. `npm test` también ejecuta las pruebas de `lab/` (misión, biblioteca y páginas de `site-drafts/`).
+
+## STUBX Lab (borrador, sin publicar)
+
+[`lab/`](lab/README.md) es la primera misión educativa y la biblioteca mínima en español e inglés. [`site-drafts/`](site-drafts/README.md) tiene las páginas estáticas `/verify`, `/lab` y `/tablero`, generadas desde el repositorio y listas para copiar a la web cuando haya autorización. No están publicadas y no sustituyen las páginas que ya existen. `npm run lab:build` las regenera.
 
 No hace falta red para los tests. No hace falta una clave.
 
@@ -84,7 +92,7 @@ En la pestaña **Actions** del repositorio, workflow `ci`:
 
 `https://github.com/stubxai/stubx-agent/actions/workflows/ci.yml`
 
-Se ejecuta en cada push, en cada pull request y en una ejecución programada semanal (cron `11 7 * * 1`: los lunes a las 07:11 UTC; GitHub puede retrasarla o saltársela), con Node 22.14.0 (la matriz del workflow y `.nvmrc`). Hace `npm ci`, typecheck, tests, la verificación del log público (`logs:verify` y que solo se añadan líneas), `ppm:print`, `npm audit --audit-level=high` y un escaneo de secretos con el binario libre de gitleaks (historia completa). El artefacto `test-report` incluye el informe, la salida de `ppm:print` y `SHA256SUMS`. El artefacto `verify-report` guarda el informe de `npm run verify:all` de esa ejecución.
+Se ejecuta en cada push, en cada pull request y en una ejecución programada semanal (cron `11 7 * * 1`: los lunes a las 07:11 UTC; GitHub puede retrasarla o saltársela), con Node 22.14.0 (la matriz del workflow y `.nvmrc`). Hace `npm ci`, typecheck, tests (incluidos los de `verify/` y `lab/`, sin red), la verificación del log público (`logs:verify` y que solo se añadan líneas), `ppm:print`, `npm run verify:scan` (el componente Verify no firma ni envía), `npm audit --audit-level=high` y un escaneo de secretos con el binario libre de gitleaks. Ese escaneo recorre solo el historial de la rama (`base..HEAD`, el rango de la PR), no el de las demás ramas. Las huellas de `.gitleaksignore` citan el SHA del commit: esta PR se fusiona con un merge commit, sin squash y sin rebase. Un squash cambia esos SHA y gitleaks vuelve a avisar en `main` hasta regenerar las huellas. El artefacto `test-report` incluye el informe, la salida de `ppm:print` y `SHA256SUMS`. El artefacto `verify-report` guarda el informe de `npm run verify:all` de esa ejecución.
 
 En `main`, un job aparte genera la atestación de procedencia de ese informe (`id-token: write` y `attestations: write` solo en ese job). El resto del workflow usa `contents: read`.
 
@@ -113,6 +121,9 @@ Pendiente en el repositorio:
 | Ruta | Para qué |
 | --- | --- |
 | `src/` | Agente. Sin red y sin claves. |
+| `verify/` | STUBX Verify, componente aparte de solo lectura. No forma parte del agente. Ver [verify/README.md](verify/README.md). |
+| `lab/` | Misión educativa y biblioteca. Borrador. Ver [lab/README.md](lab/README.md). |
+| `site-drafts/` | Páginas estáticas `/verify`, `/lab` y `/tablero`. Sin publicar. |
 | `policy/limits.json` | Límites v1, versión máquina. |
 | `state/killswitch.json` | Interruptor. Fail-closed si no se puede leer. |
 | `state/public-mint.json` | Mint público, solo lectura local. |
@@ -130,6 +141,6 @@ Public skeleton of the STUBX agent. Prototype. Experimental memecoin · you can 
 
 Official channels: [x.com/stubxai](https://x.com/stubxai), https://stubxai.com/ (the old address, superb-horse-9036f5.netlify.app, is recorded in the token metadata and redirects with a 301), stubxai.hq@gmail.com.
 
-Verify with Node.js 22 or newer (`npm ci`, `npm run typecheck`, `npm test`, and `npm run ppm:print`). CI runs on Node 22.14.0, on push, on pull request, and on a weekly schedule (cron `11 7 * * 1`, Mondays 07:11 UTC; GitHub may delay or skip scheduled runs). Results are on the Actions tab of `github.com/stubxai/stubx-agent`. Any other GitHub account or organization (including `github.com/stubx`, without “ai”) has no relation to STUBX.
+Verify with Node.js 22 or newer (`npm ci`, `npm run typecheck`, `npm test`, and `npm run ppm:print`). [`verify/`](verify/README.md) is a separate read-only component; the agent above still does not contact mainnet or any RPC. CI runs on Node 22.14.0, on push, on pull request, and on a weekly schedule (cron `11 7 * * 1`, Mondays 07:11 UTC; GitHub may delay or skip scheduled runs). Results are on the Actions tab of `github.com/stubxai/stubx-agent`. Any other GitHub account or organization (including `github.com/stubx`, without “ai”) has no relation to STUBX.
 
 `ppm:print` keeps wallet at `not-applicable` (since 2026-10-05, by design: no agent wallet or keys). Logs, limits and the kill-switch have tests in this repository, and a weekly kill-switch drill is scheduled on the Actions tab (see its history). Three public PPM boxes, logs, limits and kill-switch, were marked on 2026-10-05 with public daily-log, CI and drill runs and legal sign-off; the public count is 3 of 4 marked · 1 not applicable (never a silent 3/3). Marked does not mean audited. The GitHub account `stubxai` has 2FA enabled, as confirmed by its owner on 2026-09-26, and the X account @stubxai has 2FA enabled with an authenticator app, as confirmed by its owner on 2026-09-28 (neither is publicly verifiable). The kill-switch cannot pause holder transfers or freeze accounts. A public append-only, hash-chained log is written by the `daily-log` workflow (scheduled daily; GitHub may delay or skip runs). Its anchors are submitted to OpenTimestamps and each proof stays pending until it is confirmed in Bitcoin; a proof only shows that an anchor existed by then, not that the log is true or complete. The logs box was marked on 2026-10-05 (see LOGS.md).

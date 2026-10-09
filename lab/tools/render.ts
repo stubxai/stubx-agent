@@ -1,0 +1,622 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { DISCLAIMER, DISCLAIMER_EN, DRAFT_LINE, HOW_LAB, HOW_VERIFY, OFFLINE_LINE, READONLY_LINE, UNKNOWN_LINE } from "../copy.js";
+import { loadGlossary, loadMission } from "../mission/load.js";
+import type { CardSummary, GlossaryEntry, Localized, Mission, MissionStep } from "../mission/types.js";
+import { changelogHeadings, listTestFiles, loadBoard } from "../tablero/collect.js";
+import type { BoardFile, TaskRecord, TaskStatus } from "../tablero/collect.js";
+import { authorityWords, type DisplayCard } from "../display-copy.js";
+import { escapeHtml, renderMarkdown, splitBilingualMarkdown } from "../text.js";
+
+export type PageName = "index" | "verify" | "lab" | "tablero";
+
+const STATUS_LABEL: Record<string, Localized> = {
+  verificado: { es: "verificado", en: "verified" },
+  inferido: { es: "inferido", en: "inferred" },
+  no_disponible: { es: "no disponible", en: "unavailable" },
+  no_aplica: { es: "no aplica", en: "not applicable" },
+  desconocido: { es: "desconocido", en: "unknown" },
+};
+
+const TASK_STATUS: Record<TaskStatus, Localized> = {
+  propuesta: { es: "Propuesta", en: "Proposal" },
+  en_curso: { es: "En curso", en: "In progress" },
+  en_revision: { es: "En revisión", en: "In review" },
+  publicada: { es: "Publicada", en: "Published" },
+};
+
+const FIELD_LABEL: Record<string, Localized> = {
+  name: { es: "Nombre on-chain", en: "On-chain name" },
+  mint: { es: "Dirección del mint", en: "Mint address" },
+  inRegistry: { es: "En el registro curado", en: "In the curated registry" },
+  statement: { es: "Lectura de autenticidad", en: "Authenticity statement" },
+  mintAuthority: { es: "Autoridad de emisión", en: "Mint authority" },
+  freezeAuthority: { es: "Autoridad de congelación", en: "Freeze authority" },
+  metadata: { es: "Metadatos", en: "Metadata" },
+  holders: { es: "Muestra de cuentas con STUBX", en: "Token account sample" },
+  impersonation: { es: "Señal de suplantación", en: "Impersonation signal" },
+  curvePresent: { es: "Cuenta de curva", en: "Curve account" },
+  curveProgress: { es: "Avance de la curva clásica", en: "Classic curve progress" },
+};
+
+const META_LABEL: Record<CardSummary["metadataReading"], Localized> = {
+  no_mutables_en_fuentes: { es: "No mutables en las fuentes leídas", en: "Not mutable in the sources read" },
+  mutables: { es: "Mutables", en: "Mutable" },
+  desconocido: { es: "Desconocido", en: "Unknown" },
+};
+
+function both(text: Localized, tag = "span"): string {
+  return `<${tag} class="lang es" lang="es">${escapeHtml(text.es)}</${tag}><${tag} class="lang en" lang="en">${escapeHtml(text.en)}</${tag}>`;
+}
+
+function statusText(status: string): Localized {
+  return STATUS_LABEL[status] ?? STATUS_LABEL.desconocido ?? { es: "desconocido", en: "unknown" };
+}
+
+function fact(status: string, value: Localized | null): Localized {
+  if (status !== "verificado" && status !== "inferido") {
+    return statusText(status);
+  }
+  const mark = statusText(status);
+  if (!value || value.es.length === 0) {
+    return mark;
+  }
+  return { es: `${value.es} · ${mark.es}`, en: `${value.en} · ${mark.en}` };
+}
+
+function yn(value: boolean): Localized {
+  return value ? { es: "sí", en: "yes" } : { es: "no", en: "no" };
+}
+
+function shown(card: CardSummary): DisplayCard {
+  return card as DisplayCard;
+}
+
+function pairNote(es: string | null, en: string | null): Localized | null {
+  if (!es && !en) return null;
+  return { es: es ?? "", en: en || es || "" };
+}
+
+export function safeHref(value: string | undefined): string | null {
+  if (!value) {
+    return null;
+  }
+  if (value.startsWith("https://github.com/stubxai/stubx-agent/")) {
+    return value;
+  }
+  if (/^[a-z0-9./_-]+$/i.test(value) && !value.includes("..")) {
+    return value;
+  }
+  return null;
+}
+
+const LEVEL_LABEL: Record<string, Localized> = {
+  ok: { es: "ok", en: "ok" },
+  "atención": { es: "atención", en: "attention" },
+  riesgo: { es: "riesgo", en: "risk" },
+};
+
+function fieldValue(card: CardSummary, key: string): { value: Localized; note: string | Localized | null; neutral?: boolean } {
+  switch (key) {
+    case "name":
+      return { value: fact(card.nameStatus, card.name ? { es: card.name, en: card.name } : null), note: null };
+    case "mint":
+      return { value: { es: card.mint, en: card.mint }, note: null };
+    case "inRegistry":
+      return {
+        value: fact(card.inRegistryStatus, card.inRegistry === null ? null : yn(card.inRegistry)),
+        note: null,
+      };
+    case "statement":
+      return {
+        value: fact(
+          card.statementStatus,
+          card.statement ? { es: card.statement, en: shown(card).statement_en || card.statement } : null,
+        ),
+        note: null,
+      };
+    case "mintAuthority":
+      return {
+        value: fact(card.mintAuthority.status, authorityWords(card.mintAuthority.state)),
+        note: null,
+      };
+    case "freezeAuthority":
+      return {
+        value: fact(card.freezeAuthority.status, authorityWords(card.freezeAuthority.state)),
+        note: null,
+      };
+    case "metadata":
+      return { value: META_LABEL[card.metadataReading], note: null };
+    case "holders":
+      return { value: fact(card.holdersStatus, null), note: pairNote(shown(card).holdersNote, shown(card).holdersNote_en) };
+    case "impersonation": {
+      if (card.impersonation === null) {
+        return { value: statusText("desconocido"), note: null, neutral: true };
+      }
+      const level = LEVEL_LABEL[card.authenticityLevel ?? ""] ?? {
+        es: card.authenticityLevel ?? "",
+        en: card.authenticityLevel ?? "",
+      };
+      if (card.impersonation) {
+        return {
+          value: { es: `Posible suplantación · ${level.es}`, en: `Possible impersonation · ${level.en}` },
+          note: null,
+        };
+      }
+      if (card.inRegistry === true) {
+        return {
+          value: { es: `En el registro · ${level.es}`, en: `In the registry · ${level.en}` },
+          note: null,
+        };
+      }
+      return {
+        value: { es: "Sin esa señal", en: "No such signal" },
+        note: {
+          es: "Que no aparezca la señal no comprueba el mint.",
+          en: "The lack of that signal does not check the mint.",
+        },
+        neutral: true,
+      };
+    }
+    case "curvePresent":
+      return {
+        value: fact(card.curvePresentStatus, card.curvePresent === null ? null : yn(card.curvePresent)),
+        note: pairNote(shown(card).curveModuleNote, shown(card).curveModuleNote_en),
+      };
+    case "curveProgress":
+      return {
+        value: fact(
+          card.curveProgressStatus,
+          card.curveProgress ? { es: `${card.curveProgress} %`, en: `${card.curveProgress}%` } : null,
+        ),
+        note: pairNote(shown(card).curveProgressNote, shown(card).curveProgressNote_en),
+      };
+    default:
+      return { value: statusText("desconocido"), note: null };
+  }
+}
+
+export function renderCard(card: CardSummary, fields: readonly string[]): string {
+  return `<article class="ficha">${cardInner(card, fields)}</article>`;
+}
+
+function cardInner(card: CardSummary, fields: readonly string[]): string {
+  const rows = fields
+    .map((key) => {
+      const label = FIELD_LABEL[key] ?? { es: key, en: key };
+      const item = fieldValue(card, key);
+      const note = item.note
+        ? `<p class="muted">${typeof item.note === "string" ? escapeHtml(item.note) : both(item.note)}</p>`
+        : "";
+      const tone = item.neutral ? ` class="sin-senal"` : "";
+      return `<dt>${both(label)}</dt><dd${tone}>${both(item.value)}${note}</dd>`;
+    })
+    .join("");
+  return `<h3>${escapeHtml(card.name ?? card.mint)}</h3><p class="rol">${both(card.roleNote)}</p><p><code class="mint">${escapeHtml(card.mint)}</code></p><dl>${rows}</dl>`;
+}
+
+function asset(prefix: string, file: string): string {
+  return `${prefix}assets/${file}`;
+}
+
+function pageHref(prefix: string, page: Exclude<PageName, never>): string {
+  if (page === "index") {
+    return prefix === "" ? "./indice-borrador.html" : "../indice-borrador.html";
+  }
+  return prefix === "" ? `${page}/index.html` : `../${page}/index.html`;
+}
+
+function howDetails(copy: { es: readonly string[]; en: readonly string[] }): string {
+  const items = copy.es
+    .map((line, index) => {
+      const en = copy.en[index] ?? "";
+      return `<li><span class="lang es" lang="es">${escapeHtml(line)}</span><span class="lang en" lang="en">${escapeHtml(en)}</span></li>`;
+    })
+    .join("");
+  return `<details class="como"><summary>${both({ es: "¿Cómo funciona?", en: "How does it work?" })}</summary><ol>${items}</ol></details>`;
+}
+
+function shell(input: { title: string; description: string; prefix: string; current: PageName; main: string; mission?: boolean; verify?: boolean; narrow?: boolean; publish?: boolean }): string {
+  const nav: Array<{ id: Exclude<PageName, "index">; es: string; en: string }> = [
+    { id: "verify", es: "Verify", en: "Verify" },
+    { id: "lab", es: "Lab", en: "Lab" },
+    { id: "tablero", es: "Tablero", en: "Board" },
+  ];
+  const links = nav
+    .map((item) => {
+      const current = item.id === input.current ? ` aria-current="page"` : "";
+      return `<li><a href="${pageHref(input.prefix, item.id)}"${current}>${both({ es: item.es, en: item.en })}</a></li>`;
+    })
+    .join("");
+  const mission = input.mission ? `\n<script src="${asset(input.prefix, "mission.js")}"></script>` : "";
+  const verify = input.verify ? `\n<script src="${asset(input.prefix, "verify.js")}"></script>` : "";
+  const frame = input.narrow ? "wrap estrecha" : "wrap";
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+${input.publish ? "" : `<meta name="robots" content="noindex">\n`}<title>${escapeHtml(input.title)}</title>
+<meta name="description" content="${escapeHtml(input.description)}">
+<link rel="stylesheet" href="${asset(input.prefix, "site.css")}">
+<script src="${asset(input.prefix, "site.js")}"></script>
+</head>
+<body>
+<a class="skip lang es" href="#contenido">Saltar al contenido</a>
+<a class="skip lang en" href="#contenido">Skip to content</a>
+<header class="site"><div class="${frame}">
+<p class="brand"><strong>STUBX</strong></p>
+${input.publish ? "" : `<p class="draft">${both(DRAFT_LINE)}</p>\n`}
+<nav class="site" aria-label="Secciones / Sections"><ul>${links}</ul></nav>
+<div class="langs" role="group" aria-label="Idioma / Language">
+<button type="button" data-set-lang="es" lang="es">Español</button>
+<button type="button" data-set-lang="en" lang="en">English</button>
+</div>
+</div></header>
+<main id="contenido" class="${frame}">
+<div class="aviso" data-disclaimer="si">
+<p class="lang es" lang="es">${escapeHtml(DISCLAIMER)}</p>
+<p class="lang en" lang="en">${escapeHtml(DISCLAIMER_EN)}</p>
+<p>${both(READONLY_LINE)}</p>
+<p>${both(UNKNOWN_LINE)}</p>
+<p>${both({ es: "Fichas del 2026-10-08 y, si las hay, ejemplos posteriores. No se actualizan solas. La hora de cada ficha va en Europe/Madrid.", en: "Cards from 2026-10-08 and, where present, later examples. They do not update themselves. Each card time is shown in Europe/Madrid." })}</p>
+</div>
+<p id="aviso-red" class="nota" hidden>${both(OFFLINE_LINE)}</p>
+<p id="aviso-version" class="nota" hidden>${both({ es: "Hay otra copia de estas páginas. Recargar no borra el progreso local.", en: "Another copy of these pages is available. Reloading does not delete local progress." })} <button type="button" id="recargar">${both({ es: "Recargar", en: "Reload" })}</button></p>
+${input.main}
+</main>
+<footer class="site"><div class="${frame}">
+<p>${both(OFFLINE_LINE)}</p>
+<p>${both(input.publish ? { es: "Sin cuentas, sin firma y sin analítica.", en: "No accounts, no signing, and no analytics." } : { es: "Borrador 2026-10-09. Sin cuentas, sin firma y sin analítica.", en: "Draft 2026-10-09. No accounts, no signing, and no analytics." })}</p>
+</div></footer>${mission}${verify}
+</body>
+</html>
+`;
+}
+
+function staticStep(step: MissionStep, index: number, total: number, cards: ReadonlyMap<string, CardSummary>, glossary: ReadonlyMap<string, GlossaryEntry>): string {
+  const heading = { es: `Paso ${index + 1} de ${total}`, en: `Step ${index + 1} of ${total}` };
+  const termId = step.glossary[0];
+  const term = termId ? glossary.get(termId) : undefined;
+  const help = term
+    ? `<p><a href="#termino-${escapeHtml(term.id)}">${both({ es: "¿Qué significa esta palabra?", en: "What does this word mean?" })}</a></p>`
+    : "";
+  const cardHtml = step.cards
+    .map((mint) => {
+      const card = cards.get(mint);
+      return card ? renderCard(card, step.fields) : "";
+    })
+    .join("");
+  const options = step.options
+    .map((option) => `<li>${both(option.label)}</li>`)
+    .join("");
+  const wrong = Object.values(step.whyWrong)
+    .map((line) => `<p>${both(line)}</p>`)
+    .join("");
+  const cardsFold = cardHtml
+    ? `<details class="tecnico"><summary>${both({ es: "Ver las fichas", en: "See the cards" })}</summary>${cardHtml}</details>`
+    : "";
+  return `<article class="paso"><h3>${both(heading)}</h3><p>${both(step.guide)}</p>${help}${cardsFold}<h4>${both(step.prompt)}</h4><ul>${options}</ul><details class="tecnico"><summary>${both({ es: "Explicación", en: "Explanation" })}</summary><p>${both(step.whyRight)}</p>${wrong}</details></article>`;
+}
+
+function glossaryArticle(entry: GlossaryEntry): string {
+  return `<article id="termino-${escapeHtml(entry.id)}"><h3>${both(entry.term)}</h3><p>${both(entry.means)}</p><p>${both({ es: "Ejemplo. ", en: "Example. " })}${both(entry.example)}</p><p>${both({ es: "No permite concluir: ", en: "It does not let you conclude: " })}${both(entry.doesNotConclude)}</p></article>`;
+}
+
+function guideSection(repoRoot: string): string {
+  const manifest = JSON.parse(readFileSync(path.join(repoRoot, "lab/library/guides.json"), "utf8")) as {
+    guides: Array<{ id: string; file: string; title: Localized }>;
+  };
+  return manifest.guides
+    .map((guide) => {
+      const source = readFileSync(path.join(repoRoot, "lab/library/guides", guide.file), "utf8");
+      const blocks = splitBilingualMarkdown(source);
+      if (!blocks) {
+        throw new Error(`La guía ${guide.id} no tiene español e inglés.`);
+      }
+      return `<article class="guia-texto" id="guia-${escapeHtml(guide.id)}"><h3>${both(guide.title)}</h3><div class="lang es" lang="es">${renderMarkdown(blocks.es)}</div><div class="lang en" lang="en">${renderMarkdown(blocks.en)}</div></article>`;
+    })
+    .join("");
+}
+
+function renderLab(repoRoot: string, cards: readonly CardSummary[], mission: Mission, options: RenderOptions): string {
+  const byMint = new Map(cards.map((card) => [card.mint, card]));
+  const glossary = loadGlossary(repoRoot);
+  const glossaryById = new Map(glossary.entries.map((entry) => [entry.id, entry]));
+  const staticSteps = mission.steps.map((step, index) => staticStep(step, index, mission.steps.length, byMint, glossaryById)).join("");
+  const terms = glossary.entries.map((entry) => glossaryArticle(entry)).join("");
+  const revision = JSON.parse(readFileSync(path.join(repoRoot, "lab/library/revision.json"), "utf8")) as {
+    enStatus: string;
+    enStatusEn?: string;
+  };
+  const main = `<h1>${both(mission.title)}</h1>
+<p class="lede">${both(mission.intro)}</p>
+${howDetails(HOW_LAB)}
+<div id="mision-app" data-mission="${escapeHtml(mission.id)}"></div>
+<div class="estatica" id="mision-estatica"><p class="nota">${both({ es: "Sin JavaScript se pueden leer los pasos, las explicaciones y la biblioteca. El progreso local necesita el script de esta misma carpeta.", en: "Without JavaScript the steps, explanations, and library can still be read. Local progress needs the script in this same folder." })}</p>${staticSteps}</div>
+<section id="biblioteca"><h2>${both({ es: "Biblioteca", en: "Library" })}</h2><p class="muted">${both({ es: revision.enStatus, en: revision.enStatusEn || revision.enStatus })}</p><div class="fichas">${terms}</div><h2>${both({ es: "Guías", en: "Guides" })}</h2><div class="fichas">${guideSection(repoRoot)}</div></section>
+<dialog id="ayuda" aria-labelledby="ayuda-titulo"><h2 id="ayuda-titulo"></h2><div id="ayuda-cuerpo"></div><form method="dialog"><button type="submit" id="ayuda-cerrar">${both({ es: "Cerrar", en: "Close" })}</button></form></dialog>`;
+  return shell({
+    title: "STUBX Lab · misión 1 · borrador",
+    description: "Misión educativa para distinguir un mint del registro de un clon, con fichas del 2026-10-08.",
+    prefix: "../",
+    current: "lab",
+    main,
+    mission: true,
+    narrow: true,
+    publish: options.publish,
+  });
+}
+
+function renderVerify(cards: readonly CardSummary[], glossaryEntries: readonly GlossaryEntry[], options: RenderOptions): string {
+  const fields = ["name", "mint", "inRegistry", "mintAuthority", "freezeAuthority", "metadata", "holders", "impersonation", "statement", "curvePresent", "curveProgress"];
+  const articles = cards
+    .map((card) => {
+      const meta = `<p class="muted">${escapeHtml(madridStamp(card.createdAt))} · id ${escapeHtml(card.id ?? "")} · ${both(card.partial ? { es: "parcial: sí", en: "partial: yes" } : { es: "parcial: no", en: "partial: no" })}</p>`;
+      return `<article class="ficha" data-mint="${escapeHtml(card.mint)}">${meta}${cardInner(card, fields)}</article>`;
+    })
+    .join("");
+  const help = glossaryEntries
+    .filter((entry) =>
+      ["direccion", "autoridad-emision", "autoridad-congelacion", "metadatos-mutables", "desconocido", "curva-pump", "suplantacion"].includes(entry.id),
+    )
+    .map((entry) => glossaryArticle(entry))
+    .join("");
+  const main = `<h1>${both({ es: "Comprueba una dirección", en: "Check an address" })}</h1>
+<p class="lede">${both({ es: "Ejemplos fechados, no una lista completa de clones. Esta página no consulta la red.", en: "Dated examples, not a complete list of clones. This page does not query the network." })}</p>
+${howDetails(HOW_VERIFY)}
+<div class="herramienta">
+<form id="consulta" class="consulta" action="#">
+<label for="direccion-token">${both({ es: "Pega la dirección del token", en: "Paste the token address" })}</label>
+<input id="direccion-token" name="direccion" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done">
+<button type="submit">${both({ es: "Comprobar", en: "Check" })}</button>
+</form>
+<section id="resultado" class="resultado" data-state="vacio" data-luz="neutro" aria-live="polite">
+<h2>${both({ es: "La lectura aparece aquí", en: "The reading shows up here" })}</h2>
+<p class="apoyo">${both({ es: "La lectura será una de estas tres. Los detalles técnicos se quedan plegados.", en: "The reading will be one of these three. Technical details stay folded." })}</p>
+<ul class="leyenda"><li data-luz="ok">${both({ es: "Parece el STUBX oficial", en: "Looks like the official STUBX" })}</li><li data-luz="riesgo">${both({ es: "Cuidado: posible copia", en: "Careful: possible copy" })}</li><li data-luz="neutro">${both({ es: "No se pudo comprobar", en: "Could not be checked" })}</li></ul>
+</section>
+</div>
+<details class="tecnico archivo"><summary>${both({ es: "Fichas de ejemplo", en: "Example cards" })}</summary>
+<p>${both({ es: "Son ejemplos, no una lista completa de clones. Si una ficha es parcial, el dato que falta no se rellena ni anula lo verificado.", en: "These are examples, not a complete list of clones. If a card is partial, the missing fact is not filled in and does not cancel what was verified." })}</p>
+<div class="fichas">${articles}</div>
+<div class="fichas">${help}</div>
+</details>`;
+  return shell({
+    title: "STUBX Verify · borrador",
+    description: "Comprueba una dirección con las fichas públicas de STUBX Verify del 2026-10-08.",
+    prefix: "../",
+    current: "verify",
+    main,
+    verify: true,
+    narrow: true,
+    publish: options.publish,
+  });
+}
+
+const PERSON_EN: Record<string, string> = {
+  "Equipo del repositorio": "Repository team",
+  "Sin asignar": "Unassigned",
+  "Pendiente de una persona distinta del autor, antes de publicar.":
+    "Pending review by a person other than the author, before publication.",
+  "Pendiente de personas ajenas al equipo, como pide la ficha, y de autorización para publicar.":
+    "Pending review by people outside the team, as the record requires, and authorization to publish.",
+  "El creador, antes de cualquier publicación, como pide la ficha.":
+    "The creator, before any publication, as the record requires.",
+  "Revisión lingüística humana pendiente. Hasta entonces, si hay diferencia, manda el español.":
+    "Human language review pending. Until then, if there is a difference, the Spanish version prevails.",
+  "Pendiente de una prueba con lector de pantalla por otra persona.":
+    "Pending a screen-reader test by another person.",
+  "No aplica todavía.": "Not applicable yet.",
+};
+
+const MILESTONE_EN: Record<string, string> = {
+  "2026-10-09 · Revisión de seguridad de Verify y Lab (borrador, sin publicar)":
+    "2026-10-09 · Verify and Lab security review (draft, unpublished)",
+  "2026-10-09 · STUBX Lab, misión 1 (borrador, sin publicar)":
+    "2026-10-09 · STUBX Lab, mission 1 (draft, unpublished)",
+  "2026-10-08 · STUBX Verify (MVP, solo lectura)": "2026-10-08 · STUBX Verify (MVP, read-only)",
+  "2026-10-05 · PPM: casilla Wallet → no aplica": "2026-10-05 · PPM: Wallet check → not applicable",
+  "2026-10-05 · PPM: casilla Logs marcada": "2026-10-05 · PPM: Logs check marked",
+  "Sin publicar": "Unpublished",
+};
+
+function personLabel(value: string): Localized {
+  return { es: value, en: PERSON_EN[value] ?? value };
+}
+
+function editorEn(value: string): string {
+  if (value === "Equipo del repositorio. La revisión por una persona distinta está pendiente.") {
+    return "repository team. Review by a different person is pending.";
+  }
+  return value;
+}
+
+function milestoneEn(value: string): string {
+  return MILESTONE_EN[value] ?? value;
+}
+
+function taskArticle(task: TaskRecord): string {
+  const status = TASK_STATUS[task.status];
+  const evidence = task.evidence
+    .map((item) => {
+      const href = safeHref(item.href);
+      const where = href
+        ? `<a href="${escapeHtml(href)}">${both(item.label)}</a>`
+        : `${both(item.label)}${item.path ? ` <code>${escapeHtml(item.path)}</code>` : ""}`;
+      return `<li>${where} — ${both(item.note)}</li>`;
+    })
+    .join("");
+  const history = task.history.map((item) => `<li><time datetime="${escapeHtml(item.on)}">${escapeHtml(item.on)}</time> — ${both(item.change)}</li>`).join("");
+  const block = task.block ? `<p>${both({ es: "Bloqueo: ", en: "Blocker: " })}${both(task.block)}</p>` : "";
+  const reviewed = task.reviewedOn ?? "—";
+  return `<article class="tarea" id="tarea-${escapeHtml(task.id)}" data-status="${escapeHtml(task.status)}" data-web="${task.webPublished ? "si" : "no"}"><h3>${escapeHtml(task.id)} · ${both(task.title)}</h3><p class="estado">${both(status)} · ${both(task.webPublished ? { es: "En stubxai.com: sí", en: "On stubxai.com: yes" } : { es: "En stubxai.com: no", en: "On stubxai.com: no" })}</p><p>${both(task.scope)}</p><dl><dt>${both({ es: "Responsable", en: "Owner" })}</dt><dd>${both(personLabel(task.owner))}</dd><dt>${both({ es: "Revisión", en: "Review" })}</dt><dd>${both(personLabel(task.reviewer))}</dd><dt>${both({ es: "Fecha de revisión del registro", en: "Record review date" })}</dt><dd>${escapeHtml(reviewed)}</dd></dl>${block}<h4>${both({ es: "Evidencia", en: "Evidence" })}</h4>${evidence ? `<ul>${evidence}</ul>` : `<p>${both({ es: "Todavía no hay evidencia de implementación.", en: "There is no implementation evidence yet." })}</p>`}<h4>${both({ es: "Historial", en: "History" })}</h4><ul>${history}</ul></article>`;
+}
+
+function renderBoard(repoRoot: string, board: BoardFile, options: RenderOptions): string {
+  const changelog = changelogHeadings(readFileSync(path.join(repoRoot, "CHANGELOG.md"), "utf8"));
+  const tests = listTestFiles(repoRoot);
+  const rows = board.tasks
+    .map((task) => {
+      const status = TASK_STATUS[task.status];
+      return `<tr><th scope="row"><a href="#tarea-${escapeHtml(task.id)}">${escapeHtml(task.id)}</a></th><td>${both(task.title)}</td><td>${both(status)}</td><td>${both(task.webPublished ? { es: "sí", en: "yes" } : { es: "no", en: "no" })}</td></tr>`;
+    })
+    .join("");
+  const runs = board.ci.recordedRuns
+    .map((run) => {
+      const href = safeHref(run.url);
+      const link = href ? `<a href="${escapeHtml(href)}">${escapeHtml(run.subject)}</a>` : escapeHtml(run.subject);
+      return `<li>${link} · ${escapeHtml(run.observedOn)} · ${escapeHtml(run.conclusion)} · ${escapeHtml(run.names.join(", "))}. ${both(run.limit)}</li>`;
+    })
+    .join("");
+  const ciHref = safeHref(board.ci.actionsUrl);
+  const main = `<h1>${both({ es: "Tablero de construcción", en: "Construction board" })}</h1>
+<p>${both(board.note)}</p>
+<p class="muted">${both({ es: `Registro ${board.version}, revisado el ${board.updated}. Editor: ${board.editor}`, en: `Record ${board.version}, reviewed on ${board.updated}. Editor: ${editorEn(board.editor)}` })}</p>
+<div class="tabla-scroll" tabindex="0"><table><caption>${both({ es: "Tareas de este registro", en: "Tasks in this record" })}</caption><thead><tr><th scope="col">ID</th><th scope="col">${both({ es: "Tarea", en: "Task" })}</th><th scope="col">${both({ es: "Estado", en: "State" })}</th><th scope="col">stubxai.com</th></tr></thead><tbody>${rows}</tbody></table></div>
+<p>${both({ es: "Propuesta es una idea. En curso o en revisión es trabajo en el repositorio. Publicada sería una función ya expuesta. Hoy ninguna tarea de este registro está en la web.", en: "Proposal means an idea. In progress or in review means work in the repository. Published would mean a function already exposed. Today no task in this record is on the website." })}</p>
+<div class="tareas">${board.tasks.map((task) => taskArticle(task)).join("")}</div>
+<section><h2>${both({ es: "Integración continua", en: "Continuous integration" })}</h2><p><code>${escapeHtml(board.ci.workflow)}</code> · Node ${escapeHtml(board.ci.node)}</p><p>${both(board.ci.whatItRuns)}</p><p>${both(board.ci.limit)}</p>${ciHref ? `<p><a href="${escapeHtml(ciHref)}">${both({ es: "Workflow en Actions", en: "Workflow on Actions" })}</a></p>` : ""}<ul>${runs}</ul></section>
+<section><h2>${both({ es: "Pruebas en el repositorio", en: "Tests in the repository" })}</h2><ul>${tests.map((file) => `<li><code>${escapeHtml(file)}</code></li>`).join("")}</ul></section>
+<section><h2>${both({ es: "Hitos copiados de CHANGELOG.md", en: "Milestones copied from CHANGELOG.md" })}</h2><p class="muted">${both({ es: "Son encabezados del archivo, no compromisos de esta página.", en: "They are headings from the file, not commitments of this page." })}</p><ul>${changelog.map((line) => `<li>${both({ es: line, en: milestoneEn(line) })}</li>`).join("")}</ul></section>`;
+  return shell({
+    title: "STUBX · tablero de construcción · borrador",
+    description: "Tablero estático del trabajo de STUBX, generado desde el repositorio y no publicado.",
+    prefix: "../",
+    current: "tablero",
+    main,
+    publish: options.publish,
+  });
+}
+
+function renderIndex(options: RenderOptions): string {
+  const main = `<h1>${both({ es: "Borradores para la web", en: "Drafts for the website" })}</h1>
+<p>${both({ es: "Tres páginas estáticas listas para copiar a stubxai.com cuando haya autorización. Este índice no se llama index.html: no sustituye la portada.", en: "Three static pages ready to copy onto stubxai.com when there is authorization. This index is not named index.html: it does not replace the homepage." })}</p>
+<ul>
+<li><a href="./verify/index.html">/verify</a> — ${both({ es: "fichas de ejemplo", en: "example cards" })}</li>
+<li><a href="./lab/index.html">/lab</a> — ${both({ es: "misión 1", en: "mission 1" })}</li>
+<li><a href="./tablero/index.html">/tablero</a> — ${both({ es: "tablero de construcción", en: "construction board" })}</li>
+</ul>`;
+  return shell({
+    title: "STUBX · borradores sin publicar",
+    description: "Índice local de los borradores de Verify, Lab y el tablero.",
+    prefix: "",
+    current: "index",
+    main,
+    publish: options.publish,
+  });
+}
+
+export type BuiltPage = { rel: string; body: string };
+
+export type RenderOptions = { publish?: boolean };
+
+export function renderPages(repoRoot: string, cards: readonly CardSummary[], options: RenderOptions = {}): BuiltPage[] {
+  const mission = loadMission(repoRoot);
+  const glossary = loadGlossary(repoRoot);
+  const board = loadBoard(repoRoot);
+  return [
+    { rel: "site-drafts/indice-borrador.html", body: renderIndex(options) },
+    { rel: "site-drafts/verify/index.html", body: renderVerify(cards, glossary.entries, options) },
+    { rel: "site-drafts/lab/index.html", body: renderLab(repoRoot, cards, mission, options) },
+    { rel: "site-drafts/tablero/index.html", body: renderBoard(repoRoot, board, options) },
+    { rel: "site-drafts/lab/sw.js", body: renderLabWorker() },
+    { rel: "site-drafts/_headers", body: renderHeaders() },
+  ];
+}
+
+export function renderLabWorker(): string {
+  return `var CACHE = "stubx-lab-2026-10-09-5";
+var FILES = ["./index.html", "./sw.js"];
+var ALLOWED = { "/lab/": true, "/lab/index.html": true, "/lab/sw.js": true };
+
+function cacheable(url) {
+  return url.search === "" && ALLOWED[url.pathname] === true;
+}
+
+function blocked(url) {
+  var path = url.pathname;
+  if (path === "/" || path === "/index.html") return true;
+  if (/\\/(?:aviso|avisos|notice|notices)(?:\\/|$)/i.test(path)) return true;
+  if (path.indexOf("/lab/") === -1 && !/\\/lab$/.test(path)) return true;
+  return false;
+}
+
+self.addEventListener("install", function (event) {
+  self.skipWaiting();
+  event.waitUntil(caches.open(CACHE).then(function (cache) {
+    return cache.addAll(FILES);
+  }));
+});
+
+self.addEventListener("activate", function (event) {
+  event.waitUntil(caches.keys().then(function (keys) {
+    return Promise.all(keys.filter(function (key) {
+      return key !== CACHE;
+    }).map(function (key) {
+      return caches.delete(key);
+    }));
+  }).then(function () {
+    return self.clients.claim();
+  }));
+});
+
+self.addEventListener("fetch", function (event) {
+  var url = new URL(event.request.url);
+  if (url.origin !== self.location.origin || event.request.method !== "GET") return;
+  if (blocked(url)) return;
+  event.respondWith(fetch(event.request).then(function (response) {
+    if (response && response.ok && cacheable(url)) {
+      var copy = response.clone();
+      caches.open(CACHE).then(function (cache) {
+        return cache.put(url.pathname, copy);
+      });
+    }
+    return response;
+  }).catch(function () {
+    return caches.match(url.pathname);
+  }));
+});
+`;
+}
+
+export function renderHeaders(): string {
+  const lines = [
+    "Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+    "X-Content-Type-Options: nosniff",
+    "Referrer-Policy: no-referrer",
+    "Permissions-Policy:",
+  ];
+  const paths = [
+    "/verify/*",
+    "/verify/index.html",
+    "/lab/*",
+    "/lab/index.html",
+    "/lab/sw.js",
+    "/tablero/*",
+    "/tablero/index.html",
+    "/indice-borrador.html",
+  ];
+  return `${paths.map((item) => `${item}\n  ${lines.join("\n  ")}`).join("\n\n")}\n`;
+}
+
+function madridStamp(iso: string | null): string {
+  if (!iso) {
+    return "";
+  }
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) {
+    return iso;
+  }
+  const formatted = new Intl.DateTimeFormat("sv-SE", {
+    timeZone: "Europe/Madrid",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(date);
+  return `${formatted} Europe/Madrid`;
+}

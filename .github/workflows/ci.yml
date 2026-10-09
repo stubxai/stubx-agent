@@ -44,6 +44,11 @@ jobs:
       - name: Test
         run: npm test
 
+      - name: STUBX Verify offline tests and read-only scan
+        run: |
+          node --test --test-reporter=spec "dist/verify/**/*.test.js"
+          npm run verify:scan
+
       - name: Public log verifies
         run: npm run logs:verify
 
@@ -135,8 +140,11 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
 
-      - name: Gitleaks full history
+      - name: Gitleaks PR history
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           set -euo pipefail
           version="8.30.1"
@@ -145,7 +153,41 @@ jobs:
           curl -fsSL -o "${archive}" "https://github.com/gitleaks/gitleaks/releases/download/v${version}/${archive}"
           echo "${checksum}  ${archive}" | sha256sum -c -
           tar -xzf "${archive}" gitleaks
-          ./gitleaks detect --source . --redact --no-banner --exit-code 1
+          # Solo el rango de esta rama (base...head). No recorre feat/web-v2 ni las demás ramas.
+          if [ -n "${PR_BASE_SHA}" ]; then
+            base="$(git merge-base "${PR_BASE_SHA}" HEAD)"
+          elif git rev-parse --verify origin/main >/dev/null 2>&1; then
+            base="$(git merge-base origin/main HEAD)"
+          else
+            base=""
+          fi
+          if [ -z "${base}" ] || [ "${base}" = "$(git rev-parse HEAD)" ]; then
+            range="HEAD"
+          else
+            range="${base}..HEAD"
+          fi
+          echo "gitleaks range: ${range}"
+          ./gitleaks detect --source . --redact --no-banner --exit-code 1 --log-opts="${range}"
+          probe="$(mktemp -d)"
+          detected=0
+          for _attempt in 1 2 3 4 5; do
+            seed="$(python3 -c 'import random; alphabet="123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"; rng=random.SystemRandom(); print("".join(rng.choice(alphabet) for _ in range(44)))')"
+            printf '{"tokenAccount":"%s"}\n' "$seed" > "${probe}/config.json"
+            set +e
+            ./gitleaks detect --no-git --source "$probe" --redact --no-banner --exit-code 1 > /tmp/gitleaks-probe.txt 2>&1
+            code=$?
+            set -e
+            if [ "$code" -eq 1 ]; then
+              detected=1
+              break
+            fi
+          done
+          rm -rf "$probe"
+          if [ "$detected" -ne 1 ]; then
+            echo "una semilla falsa bajo tokenAccount en otro archivo no se detectó"
+            cat /tmp/gitleaks-probe.txt || true
+            exit 1
+          fi
 
   attest:
     name: attest test report

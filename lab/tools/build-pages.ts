@@ -1,0 +1,103 @@
+import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
+import { repoRootFromMeta } from "../paths.js";
+import { presentCard } from "../display-copy.js";
+import { loadCards, loadFuentes, loadGlossary, loadMission } from "../mission/load.js";
+import { validateMission } from "../mission/validate.js";
+import { renderCss } from "./css.js";
+import { bundleMission, bundleVerify } from "./bundle.js";
+import { renderPages } from "./render.js";
+import type { BuiltPage } from "./render.js";
+
+export function buildOutputs(repoRoot: string, options: { publish?: boolean } = {}): BuiltPage[] {
+  const fuentes = loadFuentes(repoRoot);
+  const cards = loadCards(repoRoot, fuentes).map((card) => presentCard(card));
+  const mission = loadMission(repoRoot);
+  const glossary = loadGlossary(repoRoot);
+  const issues = validateMission(mission, glossary, cards);
+  if (issues.length > 0) {
+    throw new Error(issues.join("\n"));
+  }
+  const enginePath = path.join(repoRoot, "dist/lab/mission/engine.js");
+  const uiPath = path.join(repoRoot, "lab/client/ui.js");
+  const byMint: Record<string, (typeof cards)[number]> = {};
+  for (const card of cards) {
+    byMint[card.mint] = card;
+  }
+  const lookupPath = path.join(repoRoot, "dist/lab/verify/lookup.js");
+  const verifyUiPath = path.join(repoRoot, "lab/client/verify-ui.js");
+  const clones = JSON.parse(readFileSync(path.join(repoRoot, "verify/registry/clones.json"), "utf8")) as {
+    evm?: unknown[];
+  };
+  const verifyJs = bundleVerify(readFileSync(lookupPath, "utf8"), readFileSync(verifyUiPath, "utf8"), {
+    cards,
+    source: "lista" as const,
+    evm: Array.isArray(clones.evm) ? clones.evm : [],
+  });
+  const missionJs = bundleMission(readFileSync(enginePath, "utf8"), readFileSync(uiPath, "utf8"), {
+    mission,
+    cards: byMint,
+    glossary: glossary.entries,
+    cardDate: mission.cardDate,
+  });
+  return [
+    { rel: "site-drafts/assets/site.css", body: renderCss() },
+    { rel: "site-drafts/assets/mission.js", body: missionJs },
+    { rel: "site-drafts/assets/verify.js", body: verifyJs },
+    ...renderPages(repoRoot, cards, options),
+  ];
+}
+
+export function pagesDiffer(repoRoot: string, pages: readonly BuiltPage[]): string[] {
+  const diffs: string[] = [];
+  for (const page of pages) {
+    const file = path.join(repoRoot, page.rel);
+    let current = "";
+    try {
+      current = readFileSync(file, "utf8");
+    } catch {
+      diffs.push(page.rel);
+      continue;
+    }
+    if (current !== page.body) {
+      diffs.push(page.rel);
+    }
+  }
+  return diffs;
+}
+
+function writePages(repoRoot: string, pages: readonly BuiltPage[]): void {
+  for (const page of pages) {
+    const file = path.join(repoRoot, page.rel);
+    mkdirSync(path.dirname(file), { recursive: true });
+    writeFileSync(file, page.body);
+  }
+}
+
+function main(): void {
+  const repoRoot = repoRootFromMeta(import.meta.url);
+  const publishRequested = process.argv.includes("--publish");
+  const publishConfirmed = process.env.STUBX_PUBLISH === "1";
+  if (publishRequested !== publishConfirmed) {
+    process.stderr.write("El modo publicación solo se activa con STUBX_PUBLISH=1 y --publish, y solo cuando Cristian lo decida. El borrador no cambia.\n");
+    process.exitCode = 1;
+    return;
+  }
+  const pages = buildOutputs(repoRoot, { publish: publishRequested && publishConfirmed });
+  const check = process.argv.includes("--check");
+  if (check) {
+    const diffs = pagesDiffer(repoRoot, pages);
+    if (diffs.length > 0) {
+      process.stderr.write(`Borradores desactualizados:\n${diffs.join("\n")}\n`);
+      process.exitCode = 1;
+    }
+    return;
+  }
+  writePages(repoRoot, pages);
+}
+
+const entry = process.argv[1];
+if (entry && import.meta.url === pathToFileURL(entry).href) {
+  main();
+}

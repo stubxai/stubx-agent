@@ -1,0 +1,294 @@
+import type { AuthorityFact, CardSummary, Localized } from "../mission/types.js";
+
+export type LookupKind =
+  | "vacio"
+  | "invalida"
+  | "oficial"
+  | "copia"
+  | "evm"
+  | "otra"
+  | "sin_ficha"
+  | "lectura_caida"
+  | "comprobando";
+
+export type EvmExample = {
+  chain: string;
+  address: string;
+  creator?: string;
+  source?: string;
+  verifiedOnChain?: boolean;
+};
+
+export type LookupLight = "ok" | "riesgo" | "atencion" | "neutro" | "espera";
+
+export type LookupSource = "lista" | "caida";
+
+export type LookupRow = {
+  label: Localized;
+  value: Localized;
+};
+
+export type LookupView = {
+  kind: LookupKind;
+  light: LookupLight;
+  lightLabel: Localized;
+  title: Localized;
+  support: Localized;
+  mint: string | null;
+  rows: LookupRow[];
+  partialNote: Localized | null;
+};
+
+const BASE58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
+const COPY = {
+  vacio: {
+    light: "neutro" as const,
+    lightLabel: { es: "Sin resultado", en: "No result" },
+    title: { es: "La lectura aparece aquí", en: "The reading shows up here" },
+    support: {
+      es: "La lectura será una de estas tres. Los detalles técnicos se quedan plegados.",
+      en: "The reading will be one of these three. Technical details stay folded.",
+    },
+  },
+  invalida: {
+    light: "atencion" as const,
+    lightLabel: { es: "Dirección no válida", en: "Address is not valid" },
+    title: { es: "Esta dirección no es válida", en: "This address is not valid" },
+    support: {
+      es: "Tiene que ser la dirección completa, sin el nombre del token y sin texto alrededor.",
+      en: "It has to be the full address, without the token name and without surrounding text.",
+    },
+  },
+  oficial: {
+    light: "ok" as const,
+    lightLabel: { es: "Parece oficial", en: "Looks official" },
+    title: { es: "Parece el STUBX oficial", en: "Looks like the official STUBX" },
+    support: {
+      es: "La dirección coincide con la ficha del registro. La fecha va en los detalles. «Parece» no es una garantía permanente.",
+      en: "The address matches the registry card. The date is in the details. “Looks like” is not a permanent guarantee.",
+    },
+  },
+  copia: {
+    light: "riesgo" as const,
+    lightLabel: { es: "Posible copia", en: "Possible copy" },
+    title: { es: "Cuidado: posible copia", en: "Careful: possible copy" },
+    support: {
+      es: "El nombre se parece, pero la dirección no es la del registro. Esto no dice quién lo hizo.",
+      en: "The name looks similar, but the address is not the registry one. This does not say who did it.",
+    },
+  },
+  otra: {
+    light: "atencion" as const,
+    lightLabel: { es: "Otra dirección", en: "Another address" },
+    title: { es: "No es el STUBX oficial", en: "This is not the official STUBX" },
+    support: {
+      es: "Hay ficha de esta dirección y no es la del registro. Tampoco es una señal de copia.",
+      en: "There is a card for this address and it is not the registry one. It is not a copy signal either.",
+    },
+  },
+  sin_ficha: {
+    light: "neutro" as const,
+    lightLabel: { es: "Sin ficha", en: "No card" },
+    title: { es: "No se pudo comprobar", en: "Could not be checked" },
+    support: {
+      es: "No está entre las fichas de ejemplo. La lista no es completa y esta página no consulta la red, así que no rellena el hueco.",
+      en: "It is not among the example cards. The list is not complete and this page does not query the network, so it does not fill the gap.",
+    },
+  },
+  lectura_caida: {
+    light: "neutro" as const,
+    lightLabel: { es: "Lectura no disponible", en: "Reading unavailable" },
+    title: { es: "No se pudo comprobar", en: "Could not be checked" },
+    support: {
+      es: "La lectura no está disponible. Pasa lo mismo si la red de lectura no responde: no hay resultado y no se inventa uno.",
+      en: "The reading is unavailable. The same happens if the read network does not respond: there is no result, and none is invented.",
+    },
+  },
+  comprobando: {
+    light: "espera" as const,
+    lightLabel: { es: "Comprobando", en: "Checking" },
+    title: { es: "Comprobando esta dirección…", en: "Checking this address…" },
+    support: {
+      es: "Solo se mira la ficha local. La dirección no se envía a ningún sitio.",
+      en: "Only the local card is read. The address is not sent anywhere.",
+    },
+  },
+};
+
+function pair(es: string, en: string): Localized {
+  return { es, en };
+}
+
+function shown(status: string, value: string | null): string {
+  if (status === "no_disponible") return "no_disponible";
+  if (status === "no_aplica") return "no_aplica";
+  if (status !== "verificado" && status !== "inferido") return "desconocido";
+  if (value === null || value === "") return "desconocido";
+  return value;
+}
+
+function statusWord(status: string, lang: "es" | "en"): string {
+  if (status === "no_disponible") return lang === "en" ? "Unavailable" : "No disponible";
+  if (status === "no_aplica") return lang === "en" ? "Not applicable" : "No aplica";
+  if (status === "verificado") return lang === "en" ? "verified" : "verificado";
+  if (status === "inferido") return lang === "en" ? "inferred" : "inferido";
+  return lang === "en" ? "Unknown" : "No se sabe";
+}
+
+function authorityLine(fact: AuthorityFact): Localized {
+  const visible = shown(fact.status, fact.state);
+  if (visible === "no_disponible" || visible === "desconocido" || visible === "no_aplica") {
+    return pair(statusWord(visible, "es"), statusWord(visible, "en"));
+  }
+  const es = fact.state === "revocada" ? "Cerrado" : fact.state === "activa" ? "Abierto" : "No se pudo leer";
+  const en = fact.state === "revocada" ? "Closed" : fact.state === "activa" ? "Open" : "Could not be read";
+  return pair(`${es} · ${statusWord(fact.status, "es")}`, `${en} · ${statusWord(fact.status, "en")}`);
+}
+
+export function normalizeAddress(raw: string): string {
+  return raw.replace(/[\s\u00a0]+/g, "");
+}
+
+export function isAddress(value: string): boolean {
+  return BASE58.test(value);
+}
+
+function viewOf(kind: keyof typeof COPY, mint: string | null, rows: LookupRow[], partialNote: Localized | null): LookupView {
+  const copy = COPY[kind];
+  return {
+    kind,
+    light: copy.light,
+    lightLabel: copy.lightLabel,
+    title: copy.title,
+    support: copy.support,
+    mint,
+    rows,
+    partialNote,
+  };
+}
+
+export function pendingView(raw: string): LookupView {
+  const mint = normalizeAddress(raw);
+  return viewOf("comprobando", mint.length > 0 ? mint : null, [], null);
+}
+
+export function emptyView(): LookupView {
+  return viewOf("vacio", null, [], null);
+}
+
+function rowsFor(card: CardSummary): LookupRow[] {
+  const registry = shown(card.inRegistryStatus, card.inRegistry === null ? null : card.inRegistry ? "sí" : "no");
+  const registryEn = shown(card.inRegistryStatus, card.inRegistry === null ? null : card.inRegistry ? "yes" : "no");
+  const name = shown(card.nameStatus, card.name);
+  const copySignal =
+    card.impersonation === null
+      ? pair("No se sabe", "Unknown")
+      : card.impersonation
+        ? pair("Sí", "Yes")
+        : pair("No", "No");
+  const progress = shown(card.curveProgressStatus, card.curveProgress);
+  const progressValue =
+    progress === "no_disponible" || progress === "no_aplica" || progress === "desconocido"
+      ? pair(statusWord(progress, "es"), statusWord(progress, "en"))
+      : pair(`${progress} % · ${statusWord(card.curveProgressStatus, "es")}`, `${progress}% · ${statusWord(card.curveProgressStatus, "en")}`);
+  const metadata =
+    card.metadataReading === "mutables"
+      ? pair("Sí, en la ficha", "Yes, on the card")
+      : card.metadataReading === "no_mutables_en_fuentes"
+        ? pair("No, en las fuentes leídas", "No, in the sources read")
+        : pair("No se sabe", "Unknown");
+  return [
+    { label: pair("Nombre", "Name"), value: name === card.name && card.name ? pair(card.name, card.name) : pair(statusWord(name, "es"), statusWord(name, "en")) },
+    {
+      label: pair("En el registro de esta ficha", "In this card’s registry"),
+      value: registry === "sí" || registry === "no" ? pair(registry === "sí" ? "Sí" : "No", registryEn === "yes" ? "Yes" : "No") : pair(statusWord(registry, "es"), statusWord(registry, "en")),
+    },
+    { label: pair("Permiso de crear más tokens", "Permission to create more tokens"), value: authorityLine(card.mintAuthority) },
+    { label: pair("Permiso de congelar", "Permission to freeze"), value: authorityLine(card.freezeAuthority) },
+    { label: pair("El nombre puede cambiar", "The name can change"), value: metadata },
+    { label: pair("Señal de copia", "Copy signal"), value: copySignal },
+    { label: pair("Avance de la curva", "Curve progress"), value: progressValue },
+    { label: pair("Fecha de la ficha", "Card date"), value: pair(card.createdAt ?? "2026-10-08", card.createdAt ?? "2026-10-08") },
+  ];
+}
+
+const PARTIAL = pair(
+  "La ficha está incompleta: la muestra de cuentas con tokens no está. Eso no se rellena con un cero.",
+  "The card is incomplete: the token account sample is missing. That is not filled in with a zero.",
+);
+
+const CENSUS = pair(
+  "Hay saldos de la curva y de la creadora. No es un censo ni se rellena el resto con un cero.",
+  "There are balances for the curve and the creator. It is not a census, and the rest is not filled in with a zero.",
+);
+
+const CENSUS_PERSONAL = pair(
+  "Hay saldos de la curva, de la creadora y de la cuenta personal publicada. No es un censo ni se rellena el resto con un cero.",
+  "There are balances for the curve, the creator, and the published personal account. It is not a census, and the rest is not filled in with a zero.",
+);
+
+const SOLANA_ONLY = "El STUBX oficial solo existe en Solana";
+
+function partialNoteFor(card: CardSummary): Localized | null {
+  if (!card.partial) return null;
+  if (card.holdersNote && /cuenta personal publicada/i.test(card.holdersNote) && !/no apareció/i.test(card.holdersNote)) return CENSUS_PERSONAL;
+  if (card.holdersNote && /no es un censo/i.test(card.holdersNote)) return CENSUS;
+  return PARTIAL;
+}
+
+function evmView(address: string, evm: readonly EvmExample[]): LookupView {
+  const found = evm.find((item) => item.address.toLowerCase() === address.toLowerCase());
+  if (found) {
+    const chain = found.chain || "EVM";
+    const creator = found.creator ?? "";
+    return {
+      kind: "evm",
+      light: "riesgo",
+      lightLabel: pair("Copia conocida", "Known copy"),
+      title: pair("Copia conocida", "Known copy"),
+      support: pair(
+        `${SOLANA_ONLY}. Ejemplo de search-v2 de Pump.fun, 08-10 09:14, sin verificar en la cadena (${chain}).`,
+        `The official STUBX exists only on Solana. Example from Pump.fun search-v2, 2026-10-08 09:14, not verified on-chain (${chain}).`,
+      ),
+      mint: found.address,
+      rows: [
+        { label: pair("Red", "Network"), value: pair(chain, chain) },
+        { label: pair("Creadora anotada", "Noted creator"), value: pair(creator || "No se sabe", creator || "Unknown") },
+        { label: pair("En la cadena", "On-chain"), value: pair("Sin verificar", "Not verified") },
+      ],
+      partialNote: null,
+    };
+  }
+  const shown = /^0x[0-9a-fA-F]{40}$/.test(address) ? address : null;
+  return {
+    kind: "evm",
+    light: "atencion",
+    lightLabel: pair("Otra red", "Another network"),
+    title: pair(SOLANA_ONLY, "The official STUBX exists only on Solana"),
+    support: pair(
+      "Una dirección que empieza por 0x no es el mint de Solana. La lista de ejemplos no es completa y no se ha verificado en la cadena.",
+      "An address that starts with 0x is not the Solana mint. The example list is not complete and it has not been verified on-chain.",
+    ),
+    mint: shown,
+    rows: [],
+    partialNote: null,
+  };
+}
+
+export function classifyAddress(
+  raw: string,
+  cards: readonly CardSummary[],
+  source: LookupSource,
+  evm: readonly EvmExample[] = [],
+): LookupView {
+  if (raw.trim() === "") return emptyView();
+  const mint = normalizeAddress(raw);
+  if (/^0x/i.test(mint)) return evmView(mint, evm);
+  if (!isAddress(mint)) return viewOf("invalida", null, [], null);
+  if (source === "caida") return viewOf("lectura_caida", mint, [], null);
+  const card = cards.find((item) => item.mint === mint);
+  if (!card) return viewOf("sin_ficha", mint, [], null);
+  const kind = card.role === "registro" ? "oficial" : card.role === "clon" ? "copia" : "otra";
+  return viewOf(kind, card.mint, rowsFor(card), partialNoteFor(card));
+}

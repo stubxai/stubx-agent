@@ -6,7 +6,7 @@ Fuera de alcance: el token en sí, Pump.fun, el comportamiento de terceros.
 
 | Id | Amenaza | Control en este repositorio |
 | --- | --- | --- |
-| T1 | Filtrar un secreto | Historia nueva, `.gitignore`, sin secretos de CI, gitleaks sobre la historia en cada ejecución. El agente no usa claves. |
+| T1 | Filtrar un secreto | Historia nueva, `.gitignore`, sin secretos de CI, gitleaks sobre el historial de la rama (`base..HEAD`) en cada ejecución. Las huellas de `.gitleaksignore` valen para esos SHA: esta PR se fusiona con merge commit, sin squash. El agente no usa claves. |
 | T2 | Afirmar de más | `ppm:print` no marca casillas. Wallet y logs quedan `pending`. Los textos dicen «en este repositorio, esta versión». |
 | T3 | Suplantar el repo | El único repo oficial es `github.com/stubxai/stubx-agent`, que tiene que estar enlazado desde la web (https://superb-horse-9036f5.netlify.app/) y desde [@stubxai](https://x.com/stubxai); si no lo está, no lo des por oficial. `github.com/stubx` es una cuenta ajena. |
 | T4 | Cadena de suministro | Cero dependencias de ejecución. `npm ci` con lockfile. Actions fijadas por SHA. Dependabot. CodeQL y Scorecard en workflows aparte. |
@@ -20,6 +20,8 @@ Fuera de alcance: el token en sí, Pump.fun, el comportamiento de terceros.
 | T12 | Toma de la cuenta de X | 2FA con app de autenticación de la cuenta oficial [@stubxai](https://x.com/stubxai): activada, según confirmó el propietario el 28-09-2026 (no verificable desde fuera). No se resuelve con código de este repo. La 2FA no protege una sesión ya abierta. |
 
 Los rulesets de `main` (PR, checks, sin force-push) son un ajuste de GitHub. Este árbol no puede activarlos.
+
+La CLI de Verify (`npm run verify`) descarga metadatos de pasarelas IPFS o Arweave y sigue hasta 3 redirecciones https. Comprueba el DNS y conecta a esas IP ya validadas, IPv4 primero y el resto después (`lookup` fijo y aplazado a la siguiente vuelta, `family` explícito y `autoSelectFamily: false`). En cada intento se escucha `error` en el socket y en la petición. Un `ENETUNREACH` real queda en ese listener y se prueba la siguiente. Toda la descarga tiene tope con `AbortSignal.timeout`. No usa el paquete `undici`: Node 22.14 no lo exporta y este repo no añade dependencias de ejecución. Queda riesgo residual: una de esas IP públicas puede ser la del atacante; TLS sigue comprobando el nombre del certificado; cada salto se fija a sus IP comprobadas; un `fetch` sustituido en pruebas no usa ese fijado; la CLI se ejecuta a mano, no en la web ni en la CI. No la ejecutes en un servidor con servicios internos https sin autenticar.
 
 ## English
 

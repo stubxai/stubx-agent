@@ -1,0 +1,215 @@
+{
+  "version": "1.0.0",
+  "updated": "2026-10-09",
+  "sourceLanguage": "es",
+  "entries": [
+    {
+      "id": "direccion",
+      "term": { "es": "Dirección del mint", "en": "Mint address" },
+      "means": {
+        "es": "Es la dirección de la cuenta del token. Identifica ese mint en la red de la ficha. El nombre y el símbolo son textos aparte.",
+        "en": "It is the address of the token’s mint account. It identifies that mint on the network named in the card. The name and the symbol are separate text."
+      },
+      "example": {
+        "es": "En las fichas del 2026-10-08, TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump y DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ son direcciones distintas aunque los nombres se parezcan.",
+        "en": "On the 2026-10-08 cards, TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump and DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ are different addresses even if the names look alike."
+      },
+      "doesNotConclude": {
+        "es": "No dice quién es una persona, ni si conviene hacer nada con el token. Dos nombres iguales no son la misma dirección.",
+        "en": "It does not name a person, and it does not say that any action with the token is advisable. Two equal names are not the same address."
+      }
+    },
+    {
+      "id": "registro",
+      "term": { "es": "Registro curado", "en": "Curated registry" },
+      "means": {
+        "es": "Lista local que Verify compara con el mint, el nombre, el símbolo, la imagen y algunos enlaces. Hoy incluye STUBX. Que un mint no esté no significa que sea falso.",
+        "en": "A local list Verify compares with the mint, name, symbol, image, and some links. Today it includes STUBX. A mint that is not on the list is not necessarily fake."
+      },
+      "example": {
+        "es": "USDC, en la ficha del 2026-10-08, no está en el registro. La propia ficha dice que eso no significa que sea falso ni una copia.",
+        "en": "USDC, on the 2026-10-08 card, is not in the registry. The card itself says that does not mean it is false or a copy."
+      },
+      "doesNotConclude": {
+        "es": "Estar en el registro no es una auditoría ni una garantía. No estar tampoco es una acusación.",
+        "en": "Being in the registry is not an audit or a guarantee. Being absent is not an accusation either."
+      }
+    },
+    {
+      "id": "autoridad-emision",
+      "term": { "es": "Autoridad de emisión", "en": "Mint authority" },
+      "means": {
+        "es": "Permiso para aumentar el suministro de ese mint. Si la ficha dice revocada y el campo está verificado, la opción leída está en 0. Si dice activa, el permiso sigue asignado a una dirección.",
+        "en": "Permission to increase the supply of that mint. If the card says revoked and the field is verified, the field that was read is empty (no authority set). If it says active, the permission is still assigned to an address."
+      },
+      "example": {
+        "es": "En la tanda del 2026-10-08, el mint del registro y los clones la tienen revocada. USDC la tiene activa.",
+        "en": "In the 2026-10-08 batch, the registry mint and the clones have it revoked. USDC has it active."
+      },
+      "doesNotConclude": {
+        "es": "Revocada no identifica el mint, no demuestra que el proyecto sea legítimo y no dice nada de la demanda ni de la liquidez. Un campo no disponible no se rellena como revocada.",
+        "en": "Revoked does not identify the mint, does not show that the project is legitimate, and says nothing about demand or liquidity. An unavailable field is not filled in as revoked."
+      }
+    },
+    {
+      "id": "autoridad-congelacion",
+      "term": { "es": "Autoridad de congelación", "en": "Freeze authority" },
+      "means": {
+        "es": "Permiso para congelar cuentas de ese token. Revocada quita ese permiso concreto en la lectura. Activa significa que sigue asignado.",
+        "en": "Permission to freeze accounts of that token. “Revoked” means that specific permission was removed at the time of reading. Active means it is still assigned."
+      },
+      "example": {
+        "es": "En la misma tanda, el mint del registro la tiene revocada y USDC la tiene activa, asignada a una dirección que la ficha muestra.",
+        "en": "In the same batch, the registry mint has it revoked and USDC has it active, assigned to an address the card shows."
+      },
+      "doesNotConclude": {
+        "es": "No es una garantía ni una prueba de identidad. Que no haya este permiso no impide otras limitaciones del token.",
+        "en": "It is not a guarantee or proof of identity. The absence of this permission does not rule out other restrictions on the token."
+      }
+    },
+    {
+      "id": "metadatos-mutables",
+      "term": { "es": "Metadatos mutables", "en": "Mutable metadata" },
+      "means": {
+        "es": "Si hay una autoridad de actualización o is_mutable es verdadero, el nombre, el símbolo o la imagen pueden cambiar. «No mutables en las fuentes leídas» describe esas fuentes en esa fecha.",
+        "en": "If there is an update authority or is_mutable is true, the name, symbol, or image can change. “Not mutable in the sources read” describes those sources on that date."
+      },
+      "example": {
+        "es": "El mint del registro, el 2026-10-08, queda como no mutable en las fuentes leídas. USDC tiene is_mutable verdadero en Metaplex.",
+        "en": "The registry mint, on 2026-10-08, is recorded as not mutable in the sources read. USDC has is_mutable true in Metaplex."
+      },
+      "doesNotConclude": {
+        "es": "Que no se puedan cambiar en esa lectura no demuestra legitimidad. Que se puedan cambiar no es, por sí solo, una suplantación.",
+        "en": "That they cannot be changed in that reading does not show legitimacy. That they can be changed is not, by itself, impersonation."
+      }
+    },
+    {
+      "id": "desconocido",
+      "term": { "es": "Desconocido y no disponible", "en": "Unknown and unavailable" },
+      "means": {
+        "es": "No disponible significa que esa llamada no dejó un dato utilizable. Desconocido es lo que no se leyó. Ninguno de los dos es un valor comprobado.",
+        "en": "Unavailable means that call did not leave a usable fact. Unknown is what was not read. Neither one is a verified value."
+      },
+      "example": {
+        "es": "En las cinco fichas del 2026-10-08, getTokenLargestAccounts respondió HTTP 429. La muestra de cuentas con tokens queda en no disponible. No es concentración cero.",
+        "en": "On all five cards from 2026-10-08, getTokenLargestAccounts returned HTTP 429. The token account sample stays unavailable. It is not zero concentration."
+      },
+      "doesNotConclude": {
+        "es": "No se convierte en cero, en autoridad revocada ni en metadatos inmutables. Una ficha parcial tampoco anula los campos que sí están verificados.",
+        "en": "It does not become zero, a revoked authority, or immutable metadata. A partial card also does not cancel the fields that are verified."
+      }
+    },
+    {
+      "id": "curva-pump",
+      "term": { "es": "Curva de Pump.fun", "en": "Pump.fun curve" },
+      "means": {
+        "es": "Si la cuenta derivada es del programa de la curva, Verify lee sus campos públicos. El avance clásico es un cálculo inferido, no un campo de la cuenta. Si no hay curva, no se rellenan con cero las cantidades de la curva (Pump.fun lo llama ‘reserves’).",
+        "en": "If the derived account belongs to the curve program, Verify reads its public fields. Classic progress is an inferred calculation, not a field of the account. If there is no curve, the curve amounts (Pump.fun calls these ‘reserves’) are not filled in with zero."
+      },
+      "example": {
+        "es": "El 2026-10-08 el mint del registro tiene avance inferido 1,74. Los clones tienen 0,00 inferido porque la cantidad real de la curva coincide con la inicial documentada. USDC no es una curva: el avance queda en no aplica.",
+        "en": "On 2026-10-08 the registry mint has inferred progress 1.74. The clones have inferred 0.00 because the real curve amount matches the documented initial amount. USDC is not a curve: progress stays not applicable."
+      },
+      "doesNotConclude": {
+        "es": "El avance no dice qué hacer. 0,00 inferido no significa que faltara la cuenta. Esta misión no simula un intercambio.",
+        "en": "Progress does not say what to do. Inferred 0.00 does not mean the account was missing. This mission does not simulate a swap."
+      }
+    },
+    {
+      "id": "reserva-real",
+      "term": { "es": "Cantidad real de la curva", "en": "Real curve amount" },
+      "means": {
+        "es": "Campo real_token_reserves o real_quote_reserves de la cuenta de la curva, en unidades mínimas. Es distinto de la cantidad virtual de la curva.",
+        "en": "The real_token_reserves or real_quote_reserves field of the curve account, in base units. It is different from the virtual curve amount."
+      },
+      "example": {
+        "es": "En los clones del 2026-10-08, la cantidad real de tokens de la curva coincide con 793100000000000, la inicial documentada de la curva clásica. Por eso el avance inferido es 0,00.",
+        "en": "On the 2026-10-08 clones, the real curve amount of tokens matches 793100000000000, the documented initial amount of the classic curve. That is why inferred progress is 0.00."
+      },
+      "doesNotConclude": {
+        "es": "No es una auditoría de fondos ni un saldo que esta página calcule como retirable. Si el campo no está, no se inventa un cero.",
+        "en": "It is not an audit of funds, and this page does not compute it as a withdrawable balance. If the field is absent, a zero is not invented."
+      }
+    },
+    {
+      "id": "reserva-virtual",
+      "term": { "es": "Cantidad virtual de la curva", "en": "Virtual curve amount" },
+      "means": {
+        "es": "Campo virtual_token_reserves o virtual_quote_reserves. La ficha lo separa de la cantidad real de la curva. En la curva clásica, y con la quote por defecto, la cantidad quote va en lamports.",
+        "en": "The virtual_token_reserves or virtual_quote_reserves field. The card keeps it apart from the real curve amount. On the classic curve, and with the default quote, the quote amount is in lamports."
+      },
+      "example": {
+        "es": "La ficha del mint del registro, el 2026-10-08, muestra la cantidad virtual y la cantidad real de tokens de la curva como números distintos, cada una con su estado.",
+        "en": "The registry mint card, on 2026-10-08, shows the virtual and the real curve amounts of tokens as different numbers, each with its own status."
+      },
+      "doesNotConclude": {
+        "es": "La cantidad virtual de la curva no es una cantidad retirable. Sumarla con la real no crea una única cantidad disponible.",
+        "en": "The virtual curve amount is not the withdrawable balance. Adding it to the real curve amount does not create one available pool."
+      }
+    },
+    {
+      "id": "suplantacion",
+      "term": { "es": "Posible suplantación", "en": "Possible impersonation" },
+      "means": {
+        "es": "Señal de Verify: el nombre, el símbolo, la imagen o un enlace coinciden con el registro curado y el mint es otro. La coincidencia no atribuye intención.",
+        "en": "A Verify signal: the name, symbol, image, or a link matches the curated registry and the mint is a different one. The match does not attribute intent."
+      },
+      "example": {
+        "es": "Las fichas de Hhq4ffySVX3UQqSowjhP1Lwa8YuJDf7iH2hYWvVHTuEf, DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ y 3Zi6p6wzYZYKyuHdBhsDfb2pRR7XTfTfLKkXL7rwpump, del 2026-10-08, llevan esa señal. USDC no.",
+        "en": "The 2026-10-08 cards for Hhq4ffySVX3UQqSowjhP1Lwa8YuJDf7iH2hYWvVHTuEf, DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ, and 3Zi6p6wzYZYKyuHdBhsDfb2pRR7XTfTfLKkXL7rwpump carry that signal. USDC does not."
+      },
+      "doesNotConclude": {
+        "es": "No es una sentencia ni una prueba de lo que alguien quiso hacer. Un nombre parecido, por sí solo, tampoco sustituye a leer la dirección.",
+        "en": "It is not a verdict or proof of what someone meant to do. A similar name, by itself, also does not replace reading the address."
+      }
+    },
+    {
+      "id": "titular",
+      "term": { "es": "Titular y persona", "en": "Account owner and person" },
+      "means": {
+        "es": "Una dirección guardada en una cuenta, como el creator de la curva, es un campo público. No identifica a una persona ni a un titular jurídico.",
+        "en": "An address stored on an account, such as the curve creator, is a public field. It does not identify a person or a legal owner."
+      },
+      "example": {
+        "es": "La ficha del mint del registro anota el creator de la curva y dice que esa pubkey no identifica a una persona.",
+        "en": "The registry mint card records the curve creator and says that pubkey does not identify a person."
+      },
+      "doesNotConclude": {
+        "es": "No se puede pasar de una dirección a un nombre de persona con esta misión. No pide datos personales.",
+        "en": "This mission cannot turn an address into a person's name. It does not ask for personal data."
+      }
+    },
+    {
+      "id": "holder",
+      "term": { "es": "‘Holder’ (término del sector)", "en": "‘Holder’ (industry term)" },
+      "means": {
+        "es": "‘Holder’ (término del sector): cuenta que tiene tokens. No implica derechos ni comunidad de inversores.",
+        "en": "‘Holder’ (industry term): an account that holds tokens. It implies no rights and no investor community."
+      },
+      "example": {
+        "es": "Cuenta que tiene tokens.",
+        "en": "An account that holds tokens."
+      },
+      "doesNotConclude": {
+        "es": "No implica derechos ni comunidad de inversores.",
+        "en": "It implies no rights and no investor community."
+      }
+    },
+    {
+      "id": "comision",
+      "term": { "es": "Comisión", "en": "Fee" },
+      "means": {
+        "es": "Regla de un conector sobre un intercambio. Esta misión no calcula comisiones ni intercambios.",
+        "en": "A fee rule set by a connector (for example a DEX or an aggregator) on a swap. This mission does not calculate fees or swaps."
+      },
+      "example": {
+        "es": "Las fichas usadas aquí leen campos públicos de la curva. No incluyen un cálculo de comisión, y esta página no lo añade.",
+        "en": "The cards used here read public curve fields. They do not include a fee calculation, and this page does not add one."
+      },
+      "doesNotConclude": {
+        "es": "Una comisión no identifica el mint, no convierte la cantidad virtual de la curva en un saldo retirable y no es un resultado prometido.",
+        "en": "A fee does not identify the mint, does not turn the virtual curve amount into a withdrawable balance, and is not a promised result."
+      }
+    }
+  ]
+}
