@@ -6,7 +6,7 @@ export const BRAND_BG = Object.freeze([16, 36, 63, 255]);
 export const BRAND_FG = Object.freeze([244, 247, 251, 255]);
 export const FOOTER_BG = Object.freeze([7, 20, 34, 255]);
 export const FOOTER_FG = Object.freeze([244, 247, 251, 255]);
-export const WATERMARK_ALPHA = 0.12;
+export const WATERMARK_ALPHA = 0.15;
 export const PNG_TEXT = PNG_COMMENT;
 
 export function brandFontSize(height) {
@@ -141,13 +141,18 @@ function fitBlock(text, zone, maxSize, minSize) {
   return { lines: lines.slice(0, maxLines), size: minSize, fits: lines.length <= maxLines };
 }
 
-function zoneOf(spec, width, height, limit) {
+function zoneOf(spec, width, height, limitBottom, limitTop = 0) {
   const x = spec.x * width;
-  const y = spec.y * height;
   const w = spec.w * width;
+  let y = spec.y * height;
   let h = spec.h * height;
-  if (y >= limit) return { x, y: limit, w, h: 0 };
-  if (y + h > limit) h = limit - y;
+  if (y < limitTop) {
+    h -= limitTop - y;
+    y = limitTop;
+  }
+  if (h < 0) h = 0;
+  if (y >= limitBottom) return { x, y: limitBottom, w, h: 0 };
+  if (y + h > limitBottom) h = limitBottom - y;
   return { x, y, w, h };
 }
 
@@ -230,6 +235,7 @@ export async function renderCard(options) {
   const footerH = Math.ceil(footerLines.length * lineH + size * 0.8);
   const brandH = Math.ceil(brandLines.length * lineH + size * 0.6);
   const aiH = aiLines.length ? Math.ceil(aiLines.length * lineH + size * 0.45) : 0;
+  const topBand = brandH;
   const footerTop = height - footerH;
   const brandTop = footerTop - brandH;
   const aiTop = brandTop - aiH;
@@ -240,9 +246,9 @@ export async function renderCard(options) {
     body: { x: 0.06, y: 0.26, w: 0.56, h: 0.34 },
     avatar: { x: 0.64, y: 0.26, w: 0.3, h: 0.34 },
   };
-  const titleZone = zoneOf(zones.title, width, height, contentBottom);
-  const bodyZone = zoneOf(zones.body, width, height, contentBottom);
-  const avatarZone = zoneOf(zones.avatar, width, height, contentBottom);
+  const titleZone = zoneOf(zones.title, width, height, contentBottom, topBand);
+  const bodyZone = zoneOf(zones.body, width, height, contentBottom, topBand);
+  const avatarZone = zoneOf(zones.avatar, width, height, contentBottom, topBand);
   blit(rgba, width, height, avatarZone, options.avatar ?? null);
 
   const watermarkColor = luma(fill) > 0.45 ? [18, 10, 14] : [255, 243, 245];
@@ -256,9 +262,11 @@ export async function renderCard(options) {
   drawLines(rgba, width, height, titleFit.lines, titleZone.x, titleZone.y, titleFit.size, ink, "title", glyphs);
   drawLines(rgba, width, height, bodyFit.lines, bodyZone.x, bodyZone.y, bodyFit.size, ink, "body", glyphs);
 
+  fillRect(rgba, width, height, 0, 0, width, topBand, BRAND_BG);
   fillRect(rgba, width, height, 0, aiTop, width, aiH, FOOTER_BG);
   fillRect(rgba, width, height, 0, brandTop, width, brandH, BRAND_BG);
   fillRect(rgba, width, height, 0, footerTop, width, footerH, FOOTER_BG);
+  drawLines(rgba, width, height, brandLines, pad, size * 0.25, size, BRAND_FG, "brandTop", glyphs);
   if (aiLines.length) drawLines(rgba, width, height, aiLines, pad, aiTop + size * 0.2, size, FOOTER_FG, "ai", glyphs);
   drawLines(rgba, width, height, brandLines, pad, brandTop + size * 0.25, size, BRAND_FG, "brand", glyphs);
   drawLines(rgba, width, height, footerLines, pad, footerTop + size * 0.3, size, FOOTER_FG, "footer", glyphs);
@@ -277,6 +285,7 @@ export async function renderCard(options) {
     brandTop,
     footerTop,
     aiTop,
+    topBand,
     contentBottom,
     watermarkAlpha: WATERMARK_ALPHA,
     watermarkColor,

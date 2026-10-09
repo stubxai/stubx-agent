@@ -84,6 +84,32 @@ const REQUIRED_TERMS = [
   "investment",
   "investing",
   "inversión",
+  "prix",
+  "preis",
+  "preço",
+  "prezzo",
+  "цена",
+  "价格",
+  "ganancia",
+  "rentable",
+  "lucro",
+  "subirá",
+  "ser rico",
+  "get rich",
+  "multiplica tu dinero",
+  "se va a disparar",
+  "vale el doble",
+  "ahora o nunca",
+  "date prisa",
+  "no te lo pierdas",
+  "quedan pocas horas",
+  "equipo de STUBX",
+  "admin de STUBX",
+  "support team",
+  "soporte de STUBX",
+  "dm me",
+  "escríbeme por privado",
+  "a la luna",
   "pump",
   "pump.fun",
   "oficial",
@@ -92,8 +118,6 @@ const REQUIRED_TERMS = [
   "verified",
   "partner",
   "anuncio oficial",
-  "cristian",
-  "camacho",
 ];
 
 type Hit = { kind: string; term: string };
@@ -118,6 +142,7 @@ type Card = {
   footerTop: number;
   label: string;
   watermarkAlpha: number;
+  topBand: number;
   fill: number[];
   texts: string[];
 };
@@ -180,6 +205,7 @@ describe("studio", () => {
       emojiSequences: string[];
       handles: string[];
       domains: string[];
+      nameHashes: string[];
     };
     assert.deepEqual(list.shortWords, [
       "ya",
@@ -194,14 +220,18 @@ describe("studio", () => {
       "ath",
       "invest",
       "roi",
-      "pardo",
       "cex",
       "corre",
       "chart",
     ]);
     for (const term of REQUIRED_TERMS) assert.ok(list.terms.includes(term), term);
     for (const word of list.shortWords) assert.equal(list.terms.includes(word), false, word);
-    assert.deepEqual(list.emojis, ["🚀", "🌕", "📈", "💎", "🙌", "🤑", "💰"]);
+    assert.deepEqual(list.emojis, ["🚀", "🌕", "📈", "💎", "🙌", "🤑", "💰", "🔥", "🌙", "💸", "📊", "💲"]);
+    const hiddenNames = ["cristian", "pardo", "camacho"];
+    assert.deepEqual(
+      [...list.nameHashes].sort(),
+      hiddenNames.map((name) => createHash("sha256").update(name).digest("hex")).sort(),
+    );
     assert.deepEqual(list.emojiSequences, ["💎🙌"]);
     assert.deepEqual(list.handles, ["stubxai", "CreadorSTUBX"]);
     assert.deepEqual(list.domains, ["stubxai.com", "t.me"]);
@@ -240,6 +270,11 @@ describe("studio", () => {
       "roi",
       "r o i",
       "pardo",
+      "Pardo",
+      "p4rd0",
+      "cr1stian",
+      "c4m4ch0",
+      "p a r d o",
       "cex",
       "chart",
       "🚀",
@@ -259,6 +294,47 @@ describe("studio", () => {
       "Zz9".repeat(11),
       [..."Zz9".repeat(11)].join(" "),
       "antes de que suba el gráfico",
+      "abc".repeat(12),
+      "p/r/e/c/i/o",
+      "p·r·e·c·i·o",
+      "\u1D18\u0280\u1D07\u1D04\u026A\u1D0F",
+      "\u00D7100",
+      "prix",
+      "Preis",
+      "preço",
+      "prezzo",
+      "цена",
+      "价格",
+      "ganancia",
+      "rentable",
+      "lucro",
+      "subirá",
+      "ser rico",
+      "get rich",
+      "multiplica tu dinero",
+      "se va a disparar",
+      "vale el doble",
+      "ahora o nunca",
+      "date prisa",
+      "no te lo pierdas",
+      "quedan pocas horas",
+      "🔥",
+      "🌙",
+      "💸",
+      "📊",
+      "💲",
+      "soy el equipo de STUBX",
+      "admin de STUBX",
+      "support team",
+      "soporte de STUBX",
+      "telegram stubxai",
+      "stubxai",
+      "stubxai[.]com",
+      "dm me",
+      "escríbeme por privado",
+      "$STUBX a la luna",
+      "oficial",
+      "anuncio oficial",
     ];
     for (const sample of blocked) {
       assert.equal(analyze(sample).blocked, true, sample);
@@ -276,14 +352,17 @@ describe("studio", () => {
       "profundo",
       "investigar",
       "heroico",
+      "fundamental",
       "leopardo",
       "hace xbox",
       "charter",
       "comprobar la dirección",
       "La gracia no sustituye a mirar nada mas ahora.",
-      "abc".repeat(12),
       "El nombre no basta",
-      "hablo de stubxai",
+      "no oficial",
+      "unofficial",
+      "no/oficial",
+      "contenido no oficial",
       "@stubxaiextra",
       "1".repeat(31),
       `${"1".repeat(20)}0${"1".repeat(20)}`,
@@ -300,6 +379,10 @@ describe("studio", () => {
     assert.equal(analyze("c o r r e").hits.some((hit) => hit.kind === "short" && hit.term === "corre"), true);
     assert.equal(analyze("f u n d").hits.some((hit) => hit.kind === "short" && hit.term === "fund"), true);
     assert.equal(analyze("fondos").hits.some((hit) => hit.kind === "short" && hit.term === "fondos"), true);
+    const named = analyze("pardo");
+    assert.equal(named.hits.some((hit) => hit.kind === "name" && hit.term === "nombre"), true);
+    assert.equal(JSON.stringify(named).toLowerCase().includes("pardo"), false);
+    assert.equal(analyze("leopardo").blocked, false);
   });
 
   test("el filtro no mira la marca ni el pie, y el dibujo sí los incluye", async () => {
@@ -311,10 +394,18 @@ describe("studio", () => {
       FOOTER: { es: string; en: string };
       WATERMARK: string;
     }>("lib/copy.mjs");
-    assert.equal(analyze(BRAND.es).blocked, true);
-    assert.equal(analyze(BRAND.en).blocked, true);
+    assert.equal(analyze("oficial").blocked, true);
+    assert.equal(analyze("anuncio oficial").blocked, true);
+    assert.equal(analyze("no oficial").blocked, false);
+    assert.equal(analyze("unofficial").blocked, false);
+    assert.equal(analyze("correcto").blocked, false);
+    assert.equal(analyze("fundamental").blocked, false);
+    assert.equal(analyze("heroico").blocked, false);
+    assert.equal(analyze(BRAND.es).blocked, false);
+    assert.equal(analyze(BRAND.en).blocked, false);
+    assert.equal(analyze(WATERMARK).blocked, false);
+    assert.equal(analyze(FOOTER.es).blocked, true);
     assert.equal(analyze(FOOTER.en).blocked, true);
-    assert.equal(analyze(WATERMARK).blocked, true);
     const templates = JSON.parse(readStudio("templates.json")) as {
       templates: { title: { es: string; en: string }; body: { es: string; en: string } }[];
     };
@@ -382,6 +473,16 @@ describe("studio", () => {
     assert.match(script, /injectComment/);
     assert.match(script, /navigator\.share/);
     assert.match(script, /exportAllowed/);
+    assert.match(script, /setTimeout\(\(\) => URL\.revokeObjectURL\(url\), 1000\)/);
+    assert.equal(/link\.click\(\);\s*URL\.revokeObjectURL\(url\)/.test(script), false);
+    assert.match(editor, /El borrador de Studio se guarda en este dispositivo/);
+    assert.match(editor, /The Studio draft is saved on this device/);
+    assert.match(reglas, /El borrador de Studio se guarda en este dispositivo/);
+    assert.match(reglas, /The Studio draft is saved on this device/);
+    assert.match(reglas, /El filtro y la banda ayudan, pero no son una garantía/);
+    assert.match(reglas, /La imagen sigue siendo contenido no oficial/);
+    assert.match(reglas, /The filter and the band help, but they are not a guarantee/);
+    assert.match(reglas, /The image remains unofficial content/);
     assert.match(editor, /id="descargar"[^>]*disabled/);
     assert.match(editor, /id="borrar"/);
     assert.match(readStudio("studio.css"), /min-height:\s*44px/);
@@ -441,6 +542,9 @@ describe("studio", () => {
     assert.equal(loadDraft(storage), null);
     storage.setItem(DRAFT_KEY, "{");
     assert.equal(loadDraft(storage), null);
+    const { clipDraftText } = await load<{ clipDraftText: (value: string, max: number) => string }>("lib/draft.mjs");
+    assert.equal(clipDraftText("abcdefghijklmnopqrstuvwxyz", 4), "abcd");
+    assert.equal(clipDraftText("hola", 72), "hola");
   });
 
   test("cada PNG lleva banda, pie, marca de agua, contraste y comentario", { timeout: 120_000 }, async () => {
@@ -484,9 +588,11 @@ describe("studio", () => {
     assert.ok(marked.brandFontSize >= 8);
     assert.equal(marked.label, AI_LABEL.mascota.es);
     assert.equal(joined(marked, "brand"), BRAND.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
+    assert.equal(joined(marked, "brandTop"), BRAND.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
     assert.equal(joined(marked, "footer"), FOOTER.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
     assert.equal(joined(marked, "ai"), AI_LABEL.mascota.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
-    assert.ok(marked.watermarkAlpha >= 0.1 && marked.watermarkAlpha <= 0.15);
+    assert.equal(marked.watermarkAlpha, 0.15);
+    assert.ok(marked.topBand > 0 && marked.topBand < marked.height * 0.2);
     assert.equal(readComments(marked.png).some((item) => item.keyword === "Comment" && item.text === PNG_COMMENT), true);
     const replaced = injectComment(marked.png, PNG_COMMENT);
     assert.equal(readComments(replaced).filter((item) => item.keyword === "Comment").length, 1);
@@ -498,6 +604,10 @@ describe("studio", () => {
     assert.ok(sameColor(glyphPixel(marked, brand, span.top), BRAND_FG));
     assert.ok(sameColor(glyphPixel(marked, brand, span.bottom), BRAND_FG));
     assert.ok(sameColor(pixel(marked, 2, marked.brandTop + 2), BRAND_BG));
+    assert.ok(sameColor(pixel(marked, 2, 2), BRAND_BG));
+    const topBrand = marked.glyphs.find((glyph) => glyph.role === "brandTop" && glyph.ch === "C");
+    assert.ok(topBrand);
+    assert.ok(topBrand.y < marked.topBand);
 
     const fill = marked.fill;
     const wm = [255, 243, 245];
@@ -521,6 +631,7 @@ describe("studio", () => {
 
     const english = await renderCard({ ...base, lang: "en", origins: ["ninguno"], watermark: false });
     assert.equal(joined(english, "brand"), BRAND.en.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
+    assert.equal(joined(english, "brandTop"), BRAND.en.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
     assert.equal(joined(english, "footer"), FOOTER.en.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
 
     for (const format of templates.formats) {
@@ -559,6 +670,7 @@ describe("studio", () => {
     });
     assert.equal(card.fits, false);
     assert.equal(joined(card, "brand"), BRAND.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
+    assert.equal(joined(card, "brandTop"), BRAND.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
     assert.equal(joined(card, "footer"), FOOTER.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
     for (const ch of ["¿", "Ñ", "Ü", "¡"]) {
       const glyph = card.glyphs.find((item) => item.ch === ch && (item.role === "title" || item.role === "body"));
@@ -576,5 +688,50 @@ describe("studio", () => {
     });
     assert.ok(story.brandFontSize >= 1920 * 0.025);
     assert.equal(joined(story, "footer"), FOOTER.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
+    assert.equal(joined(story, "brandTop"), BRAND.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
+  });
+
+  test("el nombre no aparece en ningún archivo de web/v2", () => {
+    const names = ["cristian", "pardo", "camacho"];
+    const root = path.join(repoRoot(), "web/v2");
+    const walk = (dir: string, out: string[] = []): string[] => {
+      for (const name of readdirSync(dir)) {
+        const full = path.join(dir, name);
+        if (statSync(full).isDirectory()) walk(full, out);
+        else out.push(full);
+      }
+      return out;
+    };
+    for (const file of walk(root)) {
+      const text = readFileSync(file).toString("latin1").toLowerCase();
+      for (const name of names) assert.equal(text.includes(name), false, `${name} en ${path.relative(root, file)}`);
+    }
+  });
+
+  test("las direcciones reales se bloquean aunque vayan partidas", async () => {
+    const { analyze } = await load<{ analyze: Analyze }>("lib/filter.mjs");
+    const home = readFileSync(path.join(repoRoot(), "web/v2/index.html"), "utf8");
+    const wallet = home.match(/GtYJu[1-9A-HJ-NP-Za-km-z]+/)?.[0] ?? "";
+    assert.ok(wallet.length >= 32 && wallet.length <= 44);
+    const cards = JSON.parse(readFileSync(path.join(repoRoot(), "web/v2/modules/verify/cards.json"), "utf8")) as {
+      cards: { symbol?: string; role?: string; mint?: string }[];
+    };
+    const ca = cards.cards.find((card) => card.symbol === "STUBX" && card.role === "registro")?.mint ?? "";
+    assert.ok(ca.length >= 32 && ca.length <= 44);
+    const clones = JSON.parse(readFileSync(path.join(repoRoot(), "web/v2/modules/verify/clones.json"), "utf8")) as {
+      evm: { address: string }[];
+    };
+    const evm = clones.evm.map((item) => item.address).filter((item) => /^0x[0-9a-fA-F]{40}$/.test(item));
+    assert.equal(evm.length, 2);
+    for (const value of [wallet, ca, ...evm]) {
+      assert.equal(analyze(value).hits.some((hit) => hit.kind === "base58"), true, value.slice(0, 6));
+      const mid = Math.floor(value.length / 2);
+      for (const sep of [" ", "/", "-", "·"]) {
+        const split = value.slice(0, mid) + sep + value.slice(mid);
+        const parted = `${value.slice(0, 8)}${sep}${value.slice(8, 16)}${sep}${value.slice(16)}`;
+        assert.equal(analyze(split).hits.some((hit) => hit.kind === "base58"), true, `${sep} ${value.slice(0, 6)}`);
+        assert.equal(analyze(parted).hits.some((hit) => hit.kind === "base58"), true, `partes ${sep}`);
+      }
+    }
   });
 });

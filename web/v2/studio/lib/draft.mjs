@@ -19,3 +19,10 @@ export function saveDraft(storage, draft) {
 export function clearDraft(storage) {
   storage.removeItem(DRAFT_KEY);
 }
+
+export function clipDraftText(value, max) {
+  const text = String(value ?? "");
+  const limit = Number(max);
+  if (!Number.isFinite(limit) || limit < 0) return text;
+  return text.slice(0, limit);
+}

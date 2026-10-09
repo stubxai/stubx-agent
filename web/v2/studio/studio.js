@@ -1,7 +1,7 @@
 import catalog from "./catalog.json" with { type: "json" };
 import templates from "./templates.json" with { type: "json" };
 import { BRAND, FOOTER, PNG_COMMENT } from "./lib/copy.mjs";
-import { clearDraft, loadDraft, saveDraft } from "./lib/draft.mjs";
+import { clearDraft, clipDraftText, loadDraft, saveDraft } from "./lib/draft.mjs";
 import { analyze, exportAllowed } from "./lib/filter.mjs";
 import { decodePng, injectComment } from "./lib/png.mjs";
 import { renderCard } from "./lib/render.mjs";
@@ -115,6 +115,7 @@ function paintChoices() {
 
 function hitLabel(hit, code) {
   if (hit.kind === "base58") return code === "en" ? "address" : "dirección";
+  if (hit.kind === "name") return code === "en" ? "name" : "nombre";
   if (hit.kind === "url") return code === "en" ? "link" : "enlace";
   if (hit.kind === "handle") return hit.term;
   return hit.term;
@@ -236,7 +237,7 @@ download.addEventListener("click", async () => {
   link.href = url;
   link.download = "stubx-studio.png";
   link.click();
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 });
 share.addEventListener("click", async () => {
   const blob = await exportedBlob();
@@ -267,8 +268,9 @@ if (saved) {
   avatarId = saved.avatarId || "";
   dirty = Boolean(saved.dirty);
   applyTemplate(templateId, lang(), true);
-  titleInput.value = saved.title ?? titleInput.value;
-  bodyInput.value = saved.body ?? bodyInput.value;
+  const max = limits();
+  titleInput.value = clipDraftText(saved.title ?? titleInput.value, max.title);
+  bodyInput.value = clipDraftText(saved.body ?? bodyInput.value, max.body);
   document.querySelectorAll("[data-format]").forEach((button) => {
     button.setAttribute("aria-pressed", button.getAttribute("data-format") === formatId ? "true" : "false");
   });
