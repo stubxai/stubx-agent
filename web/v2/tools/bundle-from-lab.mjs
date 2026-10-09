@@ -29,6 +29,10 @@ function labCommit() {
   if (isAncestor(anchor) && git(["rev-parse", `${anchor}:lab/verify/lookup.ts`]) === headBlob) return anchor;
   const origin = git(["rev-parse", "--verify", "origin/feat/lab-mision-1"]);
   if (origin && isAncestor(origin) && git(["rev-parse", `${origin}:lab/verify/lookup.ts`]) === headBlob) return origin;
+  // lookup.ts ya no coincide con el ancla. El snapshot sigue citando ese
+  // commit: si no, un checkout de pull_request (merge de esta rama en main)
+  // toma el segundo padre, que es la propia rama, y reescribe snapshot.json.
+  if (isAncestor(anchor)) return anchor;
   const merges = git(["log", "--merges", "--pretty=%H", "HEAD"]).split("\n").filter(Boolean);
   for (const merge of merges) {
     const second = git(["rev-parse", `${merge}^2`]);
@@ -36,7 +40,6 @@ function labCommit() {
     if (git(["rev-parse", `${second}:lab/verify/lookup.ts`]) !== headBlob) continue;
     return second;
   }
-  if (isAncestor(anchor)) return anchor;
   return "";
 }
 
