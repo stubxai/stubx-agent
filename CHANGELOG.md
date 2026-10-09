@@ -7,7 +7,7 @@
 - El detector pliega mayúsculas, NFKC y homoglifos, y marca variantes del nombre y dominios parecidos, incluida la URL de Netlify.
 - Si la muestra de holders recibe 429, se leen las cuentas de la curva y de la creadora sin llamarlas censo. La CLI no descarga URIs de creadores fuera de pasarelas IPFS o Arweave. `redactEndpoint` no escribe claves de la ruta. Hay `_headers` solo para las rutas nuevas.
 - El modo sin «No publicado» ni `noindex` exige `STUBX_PUBLISH=1` y `--publish`. No está activado.
-- `.gitleaksignore` ignora solo las tres huellas de cuentas públicas de token en las fichas del 2026-10-09. Una semilla bajo `tokenAccount` en otro archivo sigue detectándose. El relleno `\0` de Metaplex se recorta y no se muestra como «�».
+- `.gitleaksignore` ignora solo las huellas de cuentas públicas de token en las fichas del 2026-10-09 (tres de los ejemplos y dos de la ficha oficial releída). Una semilla bajo `tokenAccount` en otro archivo sigue detectándose. El relleno `\0` de Metaplex se recorta y no se muestra como «�».
 - La lista de ejemplos EVM añade dos direcciones de search-v2 de Pump.fun del 08-10 09:14, sin verificar en la cadena. Cualquier dirección `0x` dice que el STUBX oficial solo existe en Solana y, si coincide, que es una copia conocida.
 - El detector también marca «S.T.U.B.X», «5TUBX», versalitas y handles `x.com/stubxai_` con sufijo. La ficha oficial y la de USDC se releyeron el 2026-10-09.
 
