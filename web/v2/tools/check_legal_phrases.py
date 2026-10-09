@@ -8,6 +8,7 @@ tiene que estar en el texto generado.
 
 from __future__ import annotations
 
+import html
 import json
 import re
 import sys
@@ -120,6 +121,64 @@ def covered(sentence: str, words: set[str]) -> bool:
     return hit / len(own) >= need
 
 
+class HowToExtractor(HTMLParser):
+    """Bloques «Cómo repetirlo tú», incluidos los comandos de <pre>."""
+
+    INLINE = {"a", "code", "strong", "em", "span", "b", "i", "abbr", "small", "sup", "sub"}
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.skip = 0
+        self.in_how = False
+        self.mode = ""
+        self.buf: list[str] = []
+        self.blocks: list[str] = []
+
+    def _flush(self) -> None:
+        text = re.sub(r"\s+", " ", "".join(self.buf)).strip()
+        self.buf = []
+        if self.mode == "h3":
+            self.in_how = text.startswith("Cómo repetirlo")
+            if self.in_how:
+                self.blocks.append(text)
+        elif self.in_how and self.mode in {"p", "pre"} and text:
+            self.blocks.append(text)
+        self.mode = ""
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag in {"script", "style", "svg", "nav", "header", "footer"}:
+            self.skip += 1
+        if self.skip:
+            return
+        if tag in {"h3", "p", "pre"}:
+            self._flush()
+            self.mode = tag
+        elif self.mode and tag not in self.INLINE:
+            self.buf.append(" ")
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag in {"h3", "p", "pre"} and self.mode == tag and self.skip == 0:
+            self._flush()
+        if tag in {"script", "style", "svg", "nav", "header", "footer"} and self.skip:
+            self.skip -= 1
+
+    def handle_data(self, data: str) -> None:
+        if self.skip == 0 and self.mode:
+            self.buf.append(data)
+
+
+def plain_corpus() -> str:
+    chunks: list[str] = []
+    for path in V2.rglob("*"):
+        if not path.is_file() or path.suffix.lower() not in {".html", ".json", ".txt", ".md"}:
+            continue
+        if "node_modules" in path.parts:
+            continue
+        raw = html.unescape(path.read_text(encoding="utf-8", errors="replace"))
+        chunks.append(re.sub(r"<[^>]+>", "", raw))
+    return normalize("\n".join(chunks))
+
+
 def main() -> int:
     pairs = json.loads(PAIRS.read_text(encoding="utf-8")) if PAIRS.exists() else []
     mapped = {normalize(item["current"]): item["v2"] for item in pairs}
@@ -140,12 +199,23 @@ def main() -> int:
             if target and (normalize(target) in corpus or covered(normalize(target), words)):
                 continue
             missing.append(sentence)
-    if missing:
-        sys.stderr.write(f"{len(missing)} frases de web/current sin equivalente en web/v2:\n")
-        for sentence in missing:
-            sys.stderr.write(f"- {sentence}\n")
+    repeat_parser = HowToExtractor()
+    repeat_parser.feed((CURRENT / "pruebas.html").read_text(encoding="utf-8"))
+    plain = plain_corpus()
+    how_missing = [block for block in repeat_parser.blocks if normalize(block) not in plain]
+    if not repeat_parser.blocks:
+        how_missing = ["pruebas.html no tiene secciones «Cómo repetirlo tú»"]
+    if missing or how_missing:
+        if missing:
+            sys.stderr.write(f"{len(missing)} frases de web/current sin equivalente en web/v2:\n")
+            for sentence in missing:
+                sys.stderr.write(f"- {sentence}\n")
+        if how_missing:
+            sys.stderr.write(f"{len(how_missing)} bloques «Cómo repetirlo tú» sin equivalente en web/v2:\n")
+            for block in how_missing:
+                sys.stderr.write(f"- {block}\n")
         return 1
-    print(f"frases de seguridad o legal cubiertas: {len(seen)}")
+    print(f"frases de seguridad o legal cubiertas: {len(seen)}; bloques de repetición: {len(repeat_parser.blocks)}")
     return 0
 
 

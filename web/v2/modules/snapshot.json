@@ -2,17 +2,17 @@
   "kind": "pr14-browser-snapshot",
   "pr": 14,
   "branch": "feat/lab-mision-1",
-  "commit": "635a1edf39faf8fb68a5b164f79ef948a32e1dc9",
-  "commitDate": "2026-10-09T16:46:42Z",
+  "commit": "b820aa3d3b57aa77de49f2667f0e215aba3b04df",
+  "commitDate": "2026-10-09T17:33:46+00:00",
   "cardsDate": "2026-10-09",
   "earlierCardsDate": "2026-10-08",
   "liveNetwork": false,
-  "merged": false,
+  "merged": true,
   "serviceWorker": "lab/sw.js",
   "serviceWorkerScope": "/lab/",
   "uiBundle": "assets/verify.js",
   "missionBundle": "assets/mission.js",
   "browserApi": "modules/verify/lookup.mjs",
   "cards": "modules/verify/cards.json",
-  "note": "Instantánea del commit 635a1ed. Verify usa las fichas de ejemplo del 2026-10-09 (oficial releída, clones ERYyy y FMNb, USDC) junto con las del 2026-10-08 y dos direcciones 0x sin verificar en la cadena. El service worker solo se registra en /lab/. No es una lectura en vivo."
+  "note": "Bundle regenerado desde lab/ en b820aa3d3b57aa77de49f2667f0e215aba3b04df. La ficha oficial incluye la cuenta personal publicada 2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX. merged significa que ese commit está en esta rama, no que se haya fusionado en main ni publicado."
 }

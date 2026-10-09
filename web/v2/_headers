@@ -14,7 +14,7 @@
   X-Robots-Tag: noindex, nofollow
 
 /assets/*
-  Cache-Control: public, max-age=604800
+  Cache-Control: public, max-age=0, must-revalidate
 /fonts/*
   Cache-Control: public, max-age=2592000
 /kit/*

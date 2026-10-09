@@ -163,20 +163,27 @@ def rel_href(frm: str, to: str) -> str:
     return os.path.relpath(to, start=start)
 
 
-def page_href(frm: str, to: str, absolute: bool) -> str:
-    if not absolute:
-        return rel_href(frm, to)
-    if to == "index.html":
+def clean_path(to: str) -> str:
+    """URLs que Cloudflare Pages sirve: sin .html. Un index.html vive en /ruta/."""
+    if to in ("index.html", "/", ""):
         return "/"
-    return "/" + to
+    if to in ("archivo.html", "archivo"):
+        return "/archivo"
+    if to.endswith("/index.html"):
+        return "/" + to[: -len("index.html")]
+    if to.endswith(".html"):
+        return "/" + to[: -len(".html")]
+    if not to.startswith("/"):
+        return "/" + to
+    return to
+
+
+def page_href(frm: str, to: str, absolute: bool = False) -> str:
+    return clean_path(to)
 
 
 def public_url(frm: str) -> str:
-    if frm in ("index.html", "404.html"):
-        return ORIGIN + ("/" if frm == "index.html" else "/404.html")
-    if frm.endswith("/index.html"):
-        return ORIGIN + "/" + frm[: -len("index.html")]
-    return ORIGIN + "/" + frm
+    return ORIGIN + clean_path(frm)
 
 
 def nav(frm: str, current: str, absolute: bool = False) -> str:
@@ -290,10 +297,10 @@ def home() -> str:
 <h1>{t("Contrasta la dirección antes de creer el nombre.", "Check the address before you trust the name.")}</h1>
 <p class="lede">{t("STUBX Verify compara una dirección con fichas de ejemplo. La oficial está releída el 2026-10-09, con el saldo de la curva y el de la creadora. No consulta la red, no pide una wallet y no dice qué comprar.", "STUBX Verify compares an address with example cards. The official one was read again on 2026-10-09, with the curve balance and the creator balance. It does not query the network, it does not ask for a wallet, and it does not say what to buy.")}</p>
 <div class="hero-actions">
-<a class="primary" href="verify/index.html">{t("Analizar token", "Analyze token")}</a>
-<a href="methodology/index.html">{t("Ver la metodología", "Read the methodology")}</a>
+<a class="primary" href="/verify/">{t("Analizar token", "Analyze token")}</a>
+<a href="/methodology/">{t("Ver la metodología", "Read the methodology")}</a>
 </div>
-<p class="source">{t("La acción abre la demo fechada de la PR 14 (commit 635a1ed), no una lectura en vivo. La PR no está fusionada.", "The action opens the dated demo from PR 14 (commit 635a1ed), not a live reading. The PR is not merged.")}</p>
+<p class="source">{t("La acción abre la demo fechada del 2026-10-09 (commit b820aa3), no una lectura en vivo. La PR 14 sigue sin fusionarse en main.", "The action opens the dated demo of 2026-10-09 (commit b820aa3), not a live reading. PR 14 is still not merged into main.")}</p>
 </div>
 <figure>
 <picture>
@@ -323,14 +330,14 @@ def home() -> str:
 <h2>{t("Herramientas de esta misma web", "Tools in this same website")}</h2>
 <p>{t("Misma navegación, mismos estilos y el mismo selector de idioma. Lo que no está construido no tiene un botón que finja funcionar.", "Same navigation, same styles, and the same language switch. What is not built has no button pretending to work.")}</p>
 <div class="grid-3">
-<article class="card"><p class="estado-pill">{t("Demo fechada · 2026-10-09", "Dated demo · 2026-10-09")}</p><h3>Verify</h3><p>{t("Pega una dirección y lee el semáforo en lenguaje llano. Incluye la ficha oficial de ese día, los clones ERYyy y FMNb, los del 2026-10-08 y dos ejemplos 0x sin verificar en la cadena.", "Paste an address and read the traffic light in plain language. It includes that day’s official card, the ERYyy and FMNb clones, the 2026-10-08 ones, and two 0x examples that are not verified on-chain.")}</p><p><a class="primary" href="verify/index.html">{t("Analizar token", "Analyze token")}</a></p></article>
-<article class="card"><p class="estado-pill">{t("Demo fechada · 2026-10-09", "Dated demo · 2026-10-09")}</p><h3>Lab</h3><p>{t("Una misión de cinco pasos para distinguir el mint del registro de un clon. El progreso se queda en este navegador.", "A five-step mission to tell the registry mint from a clone. Progress stays in this browser.")}</p><p><a href="lab/index.html">{t("Hacer la misión", "Do the mission")}</a></p></article>
-<article class="card"><p class="estado-pill">{t("Registro · 2026-10-09", "Record · 2026-10-09")}</p><h3>{t("Tablero", "Board")}</h3><p>{t("Estados reales del registro de la PR 14. Una idea, un código en el repositorio y una función publicada no son lo mismo.", "Real states from the PR 14 record. An idea, code in the repository, and a published function are not the same thing.")}</p><p><a href="tablero/index.html">{t("Abrir el tablero", "Open the board")}</a></p></article>
+<article class="card"><p class="estado-pill">{t("Demo fechada · 2026-10-09", "Dated demo · 2026-10-09")}</p><h3>Verify</h3><p>{t("Pega una dirección y lee el semáforo en lenguaje llano. Incluye la ficha oficial de ese día, los clones ERYyy y FMNb, los del 2026-10-08 y dos ejemplos 0x sin verificar en la cadena.", "Paste an address and read the traffic light in plain language. It includes that day’s official card, the ERYyy and FMNb clones, the 2026-10-08 ones, and two 0x examples that are not verified on-chain.")}</p><p><a class="primary" href="/verify/">{t("Analizar token", "Analyze token")}</a></p></article>
+<article class="card"><p class="estado-pill">{t("Demo fechada · 2026-10-09", "Dated demo · 2026-10-09")}</p><h3>Lab</h3><p>{t("Una misión de cinco pasos para distinguir el mint del registro de un clon. El progreso se queda en este navegador.", "A five-step mission to tell the registry mint from a clone. Progress stays in this browser.")}</p><p><a href="/lab/">{t("Hacer la misión", "Do the mission")}</a></p></article>
+<article class="card"><p class="estado-pill">{t("Registro · 2026-10-09", "Record · 2026-10-09")}</p><h3>{t("Tablero", "Board")}</h3><p>{t("Estados reales del registro de la PR 14. Una idea, un código en el repositorio y una función publicada no son lo mismo.", "Real states from the PR 14 record. An idea, code in the repository, and a published function are not the same thing.")}</p><p><a href="/tablero/">{t("Abrir el tablero", "Open the board")}</a></p></article>
 </div>
 <div class="grid-3">
-<article class="slot"><p class="estado-pill">{t("No construido · 2026-10-09", "Not built · 2026-10-09")}</p><h3>Studio</h3><p>{t("No hay editor ni exportación. La ficha U02 sigue en propuesta.", "There is no editor and no export. Item U02 is still a proposal.")}</p><p><a href="studio/index.html">{t("Ver qué falta", "See what is missing")}</a></p></article>
-<article class="slot"><p class="estado-pill">{t("No construido · 2026-10-09", "Not built · 2026-10-09")}</p><h3>{t("Cuaderno", "Notebook")}</h3><p>{t("No hay notas ni historial de consultas. Lab solo guarda el progreso de la misión.", "There are no notes and no query history. Lab only stores mission progress.")}</p><p><a href="cuaderno/index.html">{t("Ver qué falta", "See what is missing")}</a></p></article>
-<article class="slot"><p class="estado-pill">{t("No construido · 2026-10-09", "Not built · 2026-10-09")}</p><h3>{t("Contribuir", "Contribute")}</h3><p>{t("No hay formulario ni entrega de archivos. No se piden aportaciones.", "There is no form and no file upload. Contributions are not being requested.")}</p><p><a href="contribuir/index.html">{t("Ver qué falta", "See what is missing")}</a></p></article>
+<article class="slot"><p class="estado-pill">{t("No construido · 2026-10-09", "Not built · 2026-10-09")}</p><h3>Studio</h3><p>{t("No hay editor ni exportación. La ficha U02 sigue en propuesta.", "There is no editor and no export. Item U02 is still a proposal.")}</p><p><a href="/studio/">{t("Ver qué falta", "See what is missing")}</a></p></article>
+<article class="slot"><p class="estado-pill">{t("No construido · 2026-10-09", "Not built · 2026-10-09")}</p><h3>{t("Cuaderno", "Notebook")}</h3><p>{t("No hay notas ni historial de consultas. Lab solo guarda el progreso de la misión.", "There are no notes and no query history. Lab only stores mission progress.")}</p><p><a href="/cuaderno/">{t("Ver qué falta", "See what is missing")}</a></p></article>
+<article class="slot"><p class="estado-pill">{t("No construido · 2026-10-09", "Not built · 2026-10-09")}</p><h3>{t("Contribuir", "Contribute")}</h3><p>{t("No hay formulario ni entrega de archivos. No se piden aportaciones.", "There is no form and no file upload. Contributions are not being requested.")}</p><p><a href="/contribuir/">{t("Ver qué falta", "See what is missing")}</a></p></article>
 </div>
 <section id="transparencia">
 <h2>{t("Transparencia", "Transparency")}</h2>
@@ -341,34 +348,34 @@ def home() -> str:
 <p><code>{PROJECT}</code></p>
 <p>{t(f"Cada movimiento se publica en https://stubxai.com/#wallets en un máximo de 7 días, con fecha, importe, motivo y transacción. Es una wallet normal, no multifirma. La controla el creador. No acepta aportaciones ni donaciones. 0 STUBX el 2026-10-04 a las 12:24 (Madrid).", f"Each movement is published at https://stubxai.com/#wallets within 7 days, with the date, the amount, the reason, and the transaction. It is a normal wallet, not a multisig. The creator controls it. It does not accept contributions or donations. 0 STUBX on 2026-10-04 at 12:24 (Madrid).")}</p>
 </div>
-<p><a href="tokenomics/index.html#transparencia">{t("Detalle del reparto y de la comisión", "Supply and fee detail")}</a></p>
+<p><a href="/tokenomics/#transparencia">{t("Detalle del reparto y de la comisión", "Supply and fee detail")}</a></p>
 </section>
 <section id="reparto">
 <h2>{t("Reparto", "Supply")}</h2>
 <p>{t(f"A 2026-10-03 14:19 (Madrid): curva {CURVE} 986.122.445,10 STUBX (98,61 %); wallet creadora 5.272.727,23 (0,53 %); wallet personal 8.604.827,67 (0,86 %). Suman 1.000.000.000. Las dos wallets del creador suman 1,39 %.", f"As of 2026-10-03 14:19 (Madrid): curve {CURVE} 986,122,445.10 STUBX (98.61%); creator wallet 5,272,727.23 (0.53%); personal wallet 8,604,827.67 (0.86%). They sum to 1,000,000,000. The creator’s two wallets add up to 1.39%.")}</p>
-<p><a href="tokenomics/index.html#reparto">{t("Tabla completa", "Full table")}</a></p>
+<p><a href="/tokenomics/#reparto">{t("Tabla completa", "Full table")}</a></p>
 </section>
 <section id="estado">
 <h2>{t("Estado", "Status")}</h2>
 <div id="ppm">
 <p>{t("Prueba pública mínima a 2026-10-05: 3 de 4 marcadas y 1 que no aplica (la wallet del agente). No es un 3/3. Marcada no significa auditada.", "Minimum public proof as of 2026-10-05: 3 of 4 marked and 1 not applicable (the agent wallet). It is not 3/3. Marked does not mean audited.")}</p>
 </div>
-<p><a href="status/index.html#ppm">{t("Ver las casillas", "See the boxes")}</a></p>
+<p><a href="/status/#ppm">{t("Ver las casillas", "See the boxes")}</a></p>
 </section>
 <section id="pruebas">
 <h2>{t("Pruebas", "Proofs")}</h2>
-<p>{t("Siete pruebas con fecha, y el archivo histórico de los 18 posts en archivo.html.", "Seven dated proofs, and the historical archive of the 18 posts at archivo.html.")}</p>
-<p><a href="proofs/index.html">{t("Abrir las pruebas", "Open the proofs")}</a> · <a href="archivo.html">{t("Abrir el archivo", "Open the archive")}</a></p>
+<p>{t("Siete pruebas con fecha, y el archivo histórico de los 18 posts en /archivo.", "Seven dated proofs, and the historical archive of the 18 posts at /archivo.")}</p>
+<p><a href="/proofs/">{t("Abrir las pruebas", "Open the proofs")}</a> · <a href="/archivo">{t("Abrir el archivo", "Open the archive")}</a></p>
 </section>
 <section id="roadmap">
 <h2>{t("Versiones", "Versions")}</h2>
 <p>{t("Lo hecho lleva fecha. Lo que sigue es un objetivo, no una promesa.", "What is done has a date. What follows is a target, not a promise.")}</p>
-<p><a href="build/index.html">{t("Ver la lista", "See the list")}</a></p>
+<p><a href="/build/">{t("Ver la lista", "See the list")}</a></p>
 </section>
 <section class="risk-block" id="riesgos">
 <h2>{t("Léelo antes de nada", "Read this before anything else")}</h2>
 <p>{t("STUBX es un criptoactivo experimental de alto riesgo. Puedes perder todo lo que aportes. No es asesoramiento ni una recomendación, y no lo ha aprobado la CNMV ni ninguna otra autoridad.", "STUBX is an experimental high-risk crypto-asset. You can lose everything you put in. It is not advice or a recommendation, and it has not been approved by the CNMV or any other authority.")}</p>
-<p><a href="risks/index.html">{t("El aviso completo, con MiCA", "The full notice, including MiCA")}</a> · <a href="security/index.html">{t("Canales y aviso de clones", "Channels and clone notice")}</a></p>
+<p><a href="/risks/">{t("El aviso completo, con MiCA", "The full notice, including MiCA")}</a> · <a href="/security/">{t("Canales y aviso de clones", "Channels and clone notice")}</a></p>
 </section>
 <section id="contacto">
 <h2>{t("Contacto", "Contact")}</h2>
@@ -411,24 +418,24 @@ def methodology() -> str:
     return f"""
 <h1>{t("Metodología", "Methodology")}</h1>
 <p class="lede">{t("De dónde sale cada dato de esta vista previa, qué se calculó y qué no se rellena cuando falta.", "Where each figure in this preview comes from, what was calculated, and what is not filled in when something is missing.")}</p>
-{source("Textos de la web en producción revisados hasta el 2026-10-05. Fichas de Verify: ejemplos del 2026-10-08 y la tanda del 2026-10-09, commit 635a1ed de la PR 14. Registro del tablero de ese mismo commit. Esta página no vuelve a consultar la red.", "Production website texts reviewed through 2026-10-05. Verify cards: examples from 2026-10-08 and the 2026-10-09 batch, commit 635a1ed of PR 14. Board record from that same commit. This page does not query the network again.")}
+{source("Textos de la web en producción revisados hasta el 2026-10-05. Fichas de Verify: ejemplos del 2026-10-08 y la tanda del 2026-10-09, commit b820aa3 del 2026-10-09. Registro del tablero de ese mismo commit. Esta página no vuelve a consultar la red.", "Production website texts reviewed through 2026-10-05. Verify cards: examples from 2026-10-08 and the 2026-10-09 batch, commit b820aa3 of 2026-10-09. Board record from that same commit. This page does not query the network again.")}
 <h2>{t("Qué hace Verify aquí", "What Verify does here")}</h2>
 <ul class="clean">
 <li>{t("Acepta una dirección y comprueba el formato. El nombre del token no sirve.", "It accepts an address and checks the format. The token name is not enough.")}</li>
-<li>{t("La compara con las fichas guardadas: la oficial releída el 2026-10-09, los clones ERYyy y FMNb de ese día, los tres clones y el contraste USDC del 2026-10-08, y dos ejemplos 0x sin verificar en la cadena. Commit 635a1ed de la rama feat/lab-mision-1, PR 14 sin fusionar.", "It compares it with the stored cards: the official one read again on 2026-10-09, the ERYyy and FMNb clones from that day, the three clones and the USDC contrast from 2026-10-08, and two 0x examples that are not verified on-chain. Commit 635a1ed on branch feat/lab-mision-1, PR 14 unmerged.")}</li>
+<li>{t("La compara con las fichas guardadas: la oficial releída el 2026-10-09, con la cuenta personal publicada 2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX, los clones ERYyy y FMNb de ese día, los tres clones y el contraste USDC del 2026-10-08, y dos ejemplos 0x sin verificar en la cadena. Commit b820aa3 del 2026-10-09. La PR 14 sigue sin fusionarse en main.", "It compares it with the stored cards: the official one read again on 2026-10-09, including the published personal account 2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX, the ERYyy and FMNb clones from that day, the three clones and the USDC contrast from 2026-10-08, and two 0x examples that are not verified on-chain. Commit b820aa3 of 2026-10-09. PR 14 is still not merged into main.")}</li>
 <li>{t("Si no hay ficha, el resultado es «no se pudo comprobar». No se inventa un verde.", "If there is no card, the result is “could not be checked”. A green result is not invented.")}</li>
 <li>{t("«Parece el STUBX oficial» significa que la dirección coincide con el registro de esa tanda. No es una garantía permanente ni una auditoría.", "“Looks like the official STUBX” means the address matches the registry for that batch. It is not a permanent guarantee or an audit.")}</li>
 <li>{t("Una señal de copia dice que el nombre, el símbolo, la imagen o un enlace coinciden y el mint es otro. No dice quién lo hizo.", "A copy signal says the name, symbol, image, or a link matches and the mint is a different one. It does not say who did it.")}</li>
 </ul>
 <h2>{t("Desconocido no es comprobado", "Unknown is not verified")}</h2>
 <p>{t("No disponible significa que esa llamada no dejó un dato usable. Desconocido es lo que no se leyó. Ninguno de los dos se convierte en cero, en autoridad revocada ni en metadatos inmutables.", "Unavailable means that call did not leave a usable fact. Unknown is what was not read. Neither one becomes zero, a revoked authority, or immutable metadata.")}</p>
-<p>{t("La ficha oficial del 2026-10-09 lee el saldo de la curva y el de la creadora y dice que no es un censo. Los tres clones del 2026-10-08 y USDC siguen con la muestra no disponible: en esa tanda getTokenLargestAccounts respondió HTTP 429. ERYyy y FMNb traen saldos de curva y creadora, también sin ser un censo. Una cuenta puede ser de un custodio. No disponible no es concentración cero.", "The official card of 2026-10-09 reads the curve balance and the creator balance and says it is not a census. The three clones from 2026-10-08 and USDC still have an unavailable sample: in that batch getTokenLargestAccounts returned HTTP 429. ERYyy and FMNb carry curve and creator balances, also without being a census. An account can belong to a custodian. Unavailable is not zero concentration.")}</p>
+<p>{t("La ficha oficial del 2026-10-09 lee el saldo de la curva, el de la creadora y el de la cuenta personal publicada 2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX. El resto respecto al suministro es 0.0000 %. No es un censo. Los tres clones del 2026-10-08 y USDC siguen con la muestra no disponible: en esa tanda getTokenLargestAccounts respondió HTTP 429. ERYyy y FMNb traen saldos de curva y creadora, también sin ser un censo. Una cuenta puede ser de un custodio. No disponible no es concentración cero.", "The official card of 2026-10-09 reads the curve balance, the creator balance, and the published personal account 2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX. The rest of the supply is 0.0000%. It is not a census. The three clones from 2026-10-08 and USDC still have an unavailable sample: in that batch getTokenLargestAccounts returned HTTP 429. ERYyy and FMNb carry curve and creator balances, also without being a census. An account can belong to a custodian. Unavailable is not zero concentration.")}</p>
 <h2>{t("Curva", "Curve")}</h2>
 <p>{t("Si la cuenta derivada es del programa de la curva, la ficha lo dice. El avance clásico es un cálculo inferido con la reserva real inicial pública documentada (793100000000000), truncado a 2 decimales hacia cero. No es un campo de la cuenta. Si no hay curva, el avance queda en no aplica y no se rellenan reservas con cero.", "If the derived account belongs to the curve program, the card says so. Classic progress is an inferred calculation using the documented public initial real reserve (793100000000000), truncated to 2 decimals toward zero. It is not a field of the account. If there is no curve, progress stays not applicable and reserves are not filled in with zero.")}</p>
 <p>{t("En la ficha del mint del registro, el 2026-10-08 a las 07:41:29 UTC, el avance inferido es 1.74. Los tres clones de esa tanda tienen 0.00 inferido. USDC no es una curva.", "On the registry mint card, 2026-10-08 at 07:41:29 UTC, inferred progress is 1.74. The three clones in that batch have inferred 0.00. USDC is not a curve.")}</p>
 <h2>{t("Prueba pública mínima", "Minimum public proof")}</h2>
 <p>{t("Cuatro casillas: wallet, logs, límites y kill-switch. A 2026-10-05 hay 3 marcadas y 1 que no aplica. No es un 3/3. Marcada no significa auditada. El detalle y las ejecuciones están en Estado.", "Four boxes: wallet, logs, limits, and kill-switch. As of 2026-10-05, 3 are marked and 1 does not apply. It is not 3/3. Marked does not mean audited. The detail and the runs are on Status.")}</p>
-<p><a href="../status/index.html">{t("Ver las casillas", "See the boxes")}</a> · <a href="../proofs/index.html">{t("Ver las pruebas, una a una", "See the proofs, one by one")}</a></p>
+<p><a href="/status/">{t("Ver las casillas", "See the boxes")}</a> · <a href="/proofs/">{t("Ver las pruebas, una a una", "See the proofs, one by one")}</a></p>
 """
 
 
@@ -467,7 +474,7 @@ def security() -> str:
 <li>{t(f"Comprueba la CA entera, carácter a carácter: {CA}. Cualquier otra es una copia.", f"Check the whole CA, character by character: {CA}. Any other one is a copy.")}</li>
 <li>{t("Usa una wallet propia. Nadie de STUBX te pedirá la frase semilla ni claves, ni que conectes tu wallet en otra web.", "Use your own wallet. Nobody from STUBX will ask for the seed phrase or for keys, or for you to connect your wallet on another website.")}</li>
 <li>{t("No te fíes de mensajes directos, grupos o «soporte» que te escriban: STUBX nunca escribe primero por privado, y solo son oficiales los canales de esta lista.", "Do not trust direct messages, groups, or “support” that write to you: STUBX never writes first in private, and only the channels on this list are official.")}</li>
-<li>{t("Cada operación paga comisiones de Pump.fun y de la red Solana (consulta las vigentes en su página de comisiones). Además, el creador de STUBX cobra una comisión por cada operación.", "Each trade pays Pump.fun fees and Solana network fees (check the current ones on their fees page). In addition, the creator of STUBX collects a fee on every trade.")} <a href="https://pump.fun/docs/fees">{t("Página de comisiones", "Fees page")}</a> · <a href="../index.html#transparencia">{t("transparencia", "transparency")}</a></li>
+<li>{t("Cada operación paga comisiones de Pump.fun y de la red Solana (consulta las vigentes en su página de comisiones). Además, el creador de STUBX cobra una comisión por cada operación.", "Each trade pays Pump.fun fees and Solana network fees (check the current ones on their fees page). In addition, the creator of STUBX collects a fee on every trade.")} <a href="https://pump.fun/docs/fees">{t("Página de comisiones", "Fees page")}</a> · <a href="/#transparencia">{t("transparencia", "transparency")}</a></li>
 <li>{t("Pump.fun tiene sus propias condiciones, como la edad mínima de 18 años y países excluidos.", "Pump.fun has its own terms, such as a minimum age of 18 and excluded countries.")}</li>
 </ol>
 <p>{t("Cada venta baja el precio: si ha caído, vender puede devolverte muy poco o casi nada, y Pump.fun o la red Solana pueden fallar o saturarse. Puedes perder todo lo que pongas.", "Every sale lowers the price: if it has fallen, selling can return very little or almost nothing, and Pump.fun or the Solana network can fail or become congested. You can lose everything you put in.")}</p>
@@ -557,6 +564,15 @@ def legal() -> str:
 """
 
 
+def how_to(intro_es: str, intro_en: str, commands: str, note_es: str, note_en: str) -> str:
+    return (
+        f"<h3>{t('Cómo repetirlo tú', 'How to repeat it yourself')}</h3>"
+        f"<p>{t(intro_es, intro_en)}</p>"
+        f"<pre>{html.escape(commands.strip())}</pre>"
+        f"<p>{t(note_es, note_en)}</p>"
+    )
+
+
 def proofs() -> str:
     blocks = []
 
@@ -578,6 +594,13 @@ def proofs() -> str:
         + source(
             "Ejecución citada en la web en producción: github.com/stubxai/stubx-agent, commit e4faf6e, comprobado el 2026-10-04.",
             "Run cited on the production website: github.com/stubxai/stubx-agent, commit e4faf6e, checked on 2026-10-04.",
+        )
+        + how_to(
+            "Necesitas git y Node.js 22. No hace falta ninguna clave ni wallet.",
+            "You need git and Node.js 22. No key or wallet is required.",
+            "git clone https://github.com/stubxai/stubx-agent\ncd stubx-agent\ngit checkout e4faf6e\nnpm ci && npm test",
+            "Al final debe salir tests 115, pass 115 y fail 0. Sin git checkout pruebas la última versión de main, que puede tener otra cifra.",
+            "The end must show tests 115, pass 115 and fail 0. Without git checkout you test the latest main, which can have another count.",
         ),
     )
     proof(
@@ -586,6 +609,13 @@ def proofs() -> str:
         t(
             "logs/agent-log.jsonl tenía 9 entradas, del 26-09 al 04-10-2026, escritas por github-actions[bot] con el workflow daily-log. Cada entrada lleva la huella de la anterior. El 04-10-2026 a las 12:40, logs:verify dio ok con 9 entradas. Demuestra que no se cambió una entrada antigua sin rehacer las siguientes. No demuestra que el registro esté completo ni que lo anotado sea verdad. No anota los posts de @stubxai ni la cadena del token.",
             "logs/agent-log.jsonl had 9 entries, from 2026-09-26 to 2026-10-04, written by github-actions[bot] with the daily-log workflow. Each entry carries the hash of the previous one. On 2026-10-04 at 12:40, logs:verify reported ok with 9 entries. It shows that an old entry was not changed without redoing the later ones. It does not show that the log is complete or that what it records is true. It does not record @stubxai posts or the token chain.",
+        )
+        + how_to(
+            "En el mismo clon de la prueba anterior:",
+            "In the same clone as the previous proof:",
+            "npm run logs:verify\nnpm run logs:status\ngit log --format='%an %s' -- logs/agent-log.jsonl",
+            'logs:verify recalcula todas las huellas: debe decir "ok": true. logs:status cuenta los días (distinctDays). El git log enseña quién escribió cada entrada.',
+            'logs:verify recomputes every hash: it must say "ok": true. logs:status counts the days (distinctDays). The git log shows who wrote each entry.',
         ),
     )
     proof(
@@ -594,6 +624,13 @@ def proofs() -> str:
         t(
             "Había 9 anclas y 9 sellos .ots. Los 8 del 26-09 al 03-10 estaban confirmados en Bitcoin. El del 04-10 seguía pendiente. El primer bloque del ancla 2026-09-26-000001 es 968752. Bitcoin solo es el reloj: no respalda STUBX. Un sello prueba que el ancla existía a más tardar a la hora de su bloque, no que el texto sea verdad. Comprobado a mano el 03-10 y de nuevo el 04-10-2026 a las 12:41 contra blockstream.info.",
             "There were 9 anchors and 9 .ots proofs. The 8 from 09-26 to 10-03 were confirmed in Bitcoin. The 10-04 proof was still pending. The first block of anchor 2026-09-26-000001 is 968752. Bitcoin is only the clock: it does not back STUBX. A proof shows that the anchor existed by the time of its block, not that the text is true. Checked by hand on 10-03 and again on 2026-10-04 at 12:41 against blockstream.info.",
+        )
+        + how_to(
+            "En el mismo clon, con Python 3 y curl (pasos de LOGS.md):",
+            "In the same clone, with Python 3 and curl (steps in LOGS.md):",
+            'python3 -m venv /tmp/ots\n/tmp/ots/bin/pip install --require-hashes --no-deps -r .github/ots-requirements.txt\nA=logs/anchors/2026-09-26-000001.txt\nsha256sum "$A"\n/tmp/ots/bin/ots info "$A.ots" | grep -E "File sha256 hash|BitcoinBlockHeaderAttestation|merkle root"\nH=968752\ncurl -s https://blockstream.info/api/block/$(curl -s https://blockstream.info/api/block-height/$H) | grep -o \'"merkle_root":"[^"]*"\'',
+            'La huella del ancla debe coincidir con «File sha256 hash», y el merkle root del sello con el del bloque. Sin terminal: sube el .txt y su .ots a <a href="https://opentimestamps.org/">opentimestamps.org</a>.',
+            'The anchor hash must match “File sha256 hash”, and the proof’s merkle root must match the block’s. Without a terminal: upload the .txt and its .ots to <a href="https://opentimestamps.org/">opentimestamps.org</a>.',
         ),
     )
     proof(
@@ -602,6 +639,15 @@ def proofs() -> str:
         t(
             f"El mint {CA} (Token-2022) no tiene autoridad de emisión ni de congelación, y los metadatos no tienen autoridad de actualización. Leído en el RPC público el 04-10-2026 a las 12:41 (Madrid), slot 453232549. Suministro 1.000.000.000, 6 decimales. Demuestra que nadie puede crear más STUBX ni congelar cuentas de STUBX, y que esos metadatos no se cambian. No dice nada del precio y no evita las copias.",
             f"Mint {CA} (Token-2022) has no mint authority and no freeze authority, and the metadata has no update authority. Read on the public RPC on 2026-10-04 at 12:41 (Madrid), slot 453232549. Supply 1,000,000,000, 6 decimals. It shows that nobody can create more STUBX or freeze STUBX accounts, and that this metadata cannot be changed. It says nothing about price and it does not stop copies.",
+        )
+        + how_to(
+            f'Abre la CA en <a href="https://solscan.io/token/{CA}">Solscan</a>: la autoridad de emisión (Mint Authority) y la de congelación (Freeze Authority) deben salir vacías. O pregunta tú al RPC público:',
+            f'Open the CA on <a href="https://solscan.io/token/{CA}">Solscan</a>: mint authority and freeze authority must be empty. Or ask the public RPC yourself:',
+            "curl -s https://api.mainnet-beta.solana.com -H 'Content-Type: application/json' \\\n"
+            f'  -d \'{{"jsonrpc":"2.0","id":1,"method":"getAccountInfo","params":["{CA}",{{"encoding":"jsonParsed"}}]}}\' \\\n'
+            "  | grep -oE '\"(mintAuthority|freezeAuthority|updateAuthority)\":[^,]*'",
+            "Deben salir las tres con null.",
+            "All three must come back as null.",
         ),
     )
     proof(
@@ -611,7 +657,16 @@ def proofs() -> str:
             f"Curva {CURVE}: 986.122.445,10 STUBX (98,61 %). Wallet creadora {CREATOR}: 5.272.727,23 (0,53 %). Wallet personal {PERSONAL}: 8.604.827,67 (0,86 %). Suman 1.000.000.000. Releído el 04-10-2026 a las 12:41, slots 453232551 y 453232552, con las mismas cifras. La wallet del proyecto tenía 0 STUBX. No dice dónde estarán mañana. Los del creador no están bloqueados.",
             f"Curve {CURVE}: 986,122,445.10 STUBX (98.61%). Creator wallet {CREATOR}: 5,272,727.23 (0.53%). Personal wallet {PERSONAL}: 8,604,827.67 (0.86%). They sum to 1,000,000,000. Read again on 2026-10-04 at 12:41, slots 453232551 and 453232552, with the same figures. The project wallet held 0 STUBX. It does not say where they will be tomorrow. The creator’s tokens are not locked.",
         )
-        + f'<p><a href="../tokenomics/index.html">{t("Tabla completa", "Full table")}</a></p>',
+        + f'<p><a href="/tokenomics/">{t("Tabla completa", "Full table")}</a></p>'
+        + how_to(
+            f'En Solscan, pestaña de holders de la <a href="https://solscan.io/token/{CA}">CA</a>. O con el RPC público: getTokenSupply da el total y getTokenAccountsByOwner, con el mint de STUBX, da lo que tiene cada dirección. Ejemplo con la wallet creadora:',
+            f'On Solscan, the holders tab of the <a href="https://solscan.io/token/{CA}">CA</a>. Or with the public RPC: getTokenSupply gives the total and getTokenAccountsByOwner, with the STUBX mint, gives what each address holds. Example with the creator wallet:',
+            "curl -s https://api.mainnet-beta.solana.com -H 'Content-Type: application/json' \\\n"
+            f'  -d \'{{"jsonrpc":"2.0","id":1,"method":"getTokenAccountsByOwner","params":["{CREATOR}",{{"mint":"{CA}"}},{{"encoding":"jsonParsed"}}]}}\' \\\n'
+            "  | grep -o '\"amount\":\"[0-9]*\"'",
+            "La cifra sale en unidades mínimas (6 decimales): 5272727232064 son 5.272.727,232064 STUBX. Repite con las otras dos direcciones de la tabla.",
+            "The figure is in minor units (6 decimals): 5272727232064 is 5,272,727.232064 STUBX. Repeat with the other two addresses in the table.",
+        ),
     )
     proof(
         "Wallet pública del proyecto: 0 STUBX",
@@ -619,6 +674,14 @@ def proofs() -> str:
         t(
             f"{PROJECT} no tenía ninguna cuenta de STUBX el 04-10-2026 a las 12:24 (Madrid), slot 453228585. Es una wallet normal, no multifirma. La controla el creador. El SOL es suyo y solo paga costes del proyecto. No pertenece a los holders, no da derechos y no acepta aportaciones. La cadena no dice quién la controla: lo declara el creador. No es la wallet del agente.",
             f"{PROJECT} had no STUBX account on 2026-10-04 at 12:24 (Madrid), slot 453228585. It is a normal wallet, not a multisig. The creator controls it. The SOL is theirs and it only pays project costs. It does not belong to holders, it grants no rights, and it does not accept contributions. The chain does not say who controls it: the creator declares that. It is not the agent wallet.",
+        )
+        + how_to(
+            f'Ábrela en <a href="https://solscan.io/account/{PROJECT}">Solscan</a> y mira sus tokens y sus transacciones. O con el RPC público:',
+            f'Open it on <a href="https://solscan.io/account/{PROJECT}">Solscan</a> and look at its tokens and transactions. Or with the public RPC:',
+            "curl -s https://api.mainnet-beta.solana.com -H 'Content-Type: application/json' \\\n"
+            f'  -d \'{{"jsonrpc":"2.0","id":1,"method":"getTokenAccountsByOwner","params":["{PROJECT}",{{"mint":"{CA}"}},{{"encoding":"jsonParsed"}}]}}\'',
+            'Si no tiene STUBX, la respuesta acaba en "value":[].',
+            'If it holds no STUBX, the response ends in "value":[].',
         ),
     )
     proof(
@@ -627,6 +690,15 @@ def proofs() -> str:
         t(
             "El 04-10-2026 a las 11:06 (Madrid), slot 453211124, la transacción 4FhEmdch5DnDSN8BXfH7pFP2h9w8o2MdAMw16FcYxkLiaZ3BJEaqEhRf5e4rVPQxYGRt8oz2n3TDi5dzsL726KEy envió 0,033020866 SOL desde la wallet personal a la wallet del proyecto. 0,031554107 SOL reintegran la comisión cobrada el 2026-09-23 (transacción 3rDQEqHoTQFVgkiAmtBX3sRia9sScEs3K5rcEaDu9riYSNMBrQ3uLQbu9aSBB3zNnCisafbMQo7puURyGF5FtLmH). Los otros 0,001466759 SOL son del creador, para comisiones de red. La cadena demuestra el envío, no el motivo. La comisión es un ingreso del creador: no se reparte.",
             "On 2026-10-04 at 11:06 (Madrid), slot 453211124, transaction 4FhEmdch5DnDSN8BXfH7pFP2h9w8o2MdAMw16FcYxkLiaZ3BJEaqEhRf5e4rVPQxYGRt8oz2n3TDi5dzsL726KEy sent 0.033020866 SOL from the personal wallet to the project wallet. 0.031554107 SOL reimburses the fee collected on 2026-09-23 (transaction 3rDQEqHoTQFVgkiAmtBX3sRia9sScEs3K5rcEaDu9riYSNMBrQ3uLQbu9aSBB3zNnCisafbMQo7puURyGF5FtLmH). The other 0.001466759 SOL is the creator’s, for network fees. The chain shows the transfer, not the reason. The fee is the creator’s income: it is not distributed.",
+        )
+        + how_to(
+            'Abre la <a href="https://solscan.io/tx/4FhEmdch5DnDSN8BXfH7pFP2h9w8o2MdAMw16FcYxkLiaZ3BJEaqEhRf5e4rVPQxYGRt8oz2n3TDi5dzsL726KEy">transacción en Solscan</a> y mira el origen, el destino y el importe. O con el RPC público:',
+            'Open the <a href="https://solscan.io/tx/4FhEmdch5DnDSN8BXfH7pFP2h9w8o2MdAMw16FcYxkLiaZ3BJEaqEhRf5e4rVPQxYGRt8oz2n3TDi5dzsL726KEy">transaction on Solscan</a> and look at the source, the destination, and the amount. Or with the public RPC:',
+            "curl -s https://api.mainnet-beta.solana.com -H 'Content-Type: application/json' \\\n"
+            "  -d '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"getTransaction\",\"params\":[\"4FhEmdch5DnDSN8BXfH7pFP2h9w8o2MdAMw16FcYxkLiaZ3BJEaqEhRf5e4rVPQxYGRt8oz2n3TDi5dzsL726KEy\",{\"encoding\":\"jsonParsed\",\"maxSupportedTransactionVersion\":0}]}' \\\n"
+            "  | grep -oE '\"(destination|lamports)\":[^,}]*|\"source\":\"[1-9A-HJ-NP-Za-km-z]{32,44}\"'",
+            'Debe salir "lamports":33020866 (0,033020866 SOL), con el origen y el destino de arriba.',
+            'It must show "lamports":33020866 (0.033020866 SOL), with the source and destination above.',
         ),
     )
     return f"""
@@ -645,8 +717,8 @@ def proofs() -> str:
 <li>{t("Staking, rentabilidad o listados. No se prometen.", "Staking, returns, or listings. They are not promised.")}</li>
 </ul>
 <h2 id="archivo">{t("Archivo histórico", "Historical archive")}</h2>
-<p>{t("Los 18 posts están publicados íntegros en archivo.html de esta misma web. Son los textos anteriores al estado vigente y las 18 publicaciones de @stubxai retiradas el 2026-10-03, hacia las 11:35 (Madrid). Fuente: copia hecha el 2026-10-03 a las 11:21 (Madrid). Huella SHA-256 de esa copia: 654f8b25a72bae9d80c83ba3b3aa16ef16a1a531c450fce17d1d806342706897. No describen el estado actual.", "The 18 posts are published in full at archivo.html on this same website. They are the texts from before the current state and the 18 @stubxai posts removed on 2026-10-03 at about 11:35 (Madrid). Source: a copy made on 2026-10-03 at 11:21 (Madrid). SHA-256 of that copy: 654f8b25a72bae9d80c83ba3b3aa16ef16a1a531c450fce17d1d806342706897. They do not describe the current state.")}</p>
-<p><a href="../archivo.html">{t("Abrir archivo.html", "Open archivo.html")}</a></p>
+<p>{t("Los 18 posts están publicados íntegros en /archivo, en esta misma web. Son los textos anteriores al estado vigente y las 18 publicaciones de @stubxai retiradas el 2026-10-03, hacia las 11:35 (Madrid). Fuente: copia hecha el 2026-10-03 a las 11:21 (Madrid). Huella SHA-256 de esa copia: 654f8b25a72bae9d80c83ba3b3aa16ef16a1a531c450fce17d1d806342706897. No describen el estado actual.", "The 18 posts are published in full at /archivo on this same website. They are the texts from before the current state and the 18 @stubxai posts removed on 2026-10-03 at about 11:35 (Madrid). Source: a copy made on 2026-10-03 at 11:21 (Madrid). SHA-256 of that copy: 654f8b25a72bae9d80c83ba3b3aa16ef16a1a531c450fce17d1d806342706897. They do not describe the current state.")}</p>
+<p><a href="/archivo">{t("Abrir el archivo", "Open the archive")}</a></p>
 <p>{t("Notas que ya acompañan a ese archivo: las respuestas del 2026-10-01 a @solana, @Raydium y @WhiteHouse se retiraron por ambiguas. STUBX no está listado en Raydium y no tiene relación, acuerdo ni anuncio con Solana, Raydium o la Casa Blanca. La frase de la comisión de creador en el post del 2026-10-02 no era exacta: el detalle vigente está en el reparto.", "Notes that already accompany that archive: the 2026-10-01 replies to @solana, @Raydium, and @WhiteHouse were removed as ambiguous. STUBX is not listed on Raydium and has no relationship, agreement, or announcement with Solana, Raydium, or the White House. The creator-fee sentence in the 2026-10-02 post was not accurate: the current detail is on the supply page.")}</p>
 <p>{t(HOSTING_ES, HOSTING_EN)}</p>
 """
@@ -678,7 +750,7 @@ def status() -> str:
 </ul>
 <p>{t("Si la cadena o un sello dejan de cuadrar, se desmarca y se explica aquí. Si una CI posterior falla en estos tests, se desmarca y se explica aquí. Si un simulacro sale en rojo, se desmarca y se explica aquí.", "If the chain or a stamp stops checking out, it is unmarked and explained here. If a later CI run fails these tests, it is unmarked and explained here. If a drill goes red, it is unmarked and explained here.")}</p>
 <p>{t("Escáner de código prohibido. Busca funciones de firma o envío de transacciones: 0 hallazgos, como publicó la portada en producción. Esta página no ha vuelto a ejecutarlo.", "Forbidden-code scan. It looks for functions that sign or send transactions: 0 findings, as the production home page published. This page has not run it again.")}</p>
-<p><a href="../verify/index.html">{t("Probar esos estados en Verify", "Try those states in Verify")}</a></p>
+<p><a href="/verify/">{t("Probar esos estados en Verify", "Try those states in Verify")}</a></p>
 """
 
 
@@ -734,7 +806,7 @@ def community() -> str:
 </ul>
 <p>{t("No hay Discord. No hay atención 24 horas. Un mensaje directo no es soporte. Las normas antiestafa están en Seguridad.", "There is no Discord. There is no 24-hour support. A direct message is not support. The anti-scam rules are on Security.")}</p>
 <p>{t("Los domingos, @stubxai puede destacar un meme de la comunidad, pidiendo permiso antes en una respuesta pública, con crédito. No hay premios, pagos ni tokens por hacer memes. Nadie escribirá por privado por un meme.", "@stubxai may highlight a community meme on Sundays, asking permission first in a public reply, with credit. There are no prizes, payments, or tokens for making memes. Nobody will write in private about a meme.")}</p>
-<p><a href="../security/index.html">{t("Lista cerrada y aviso de clones", "Closed list and clone notice")}</a> · <a href="../marca/index.html">{t("Reglas del kit", "Kit rules")}</a></p>
+<p><a href="/security/">{t("Lista cerrada y aviso de clones", "Closed list and clone notice")}</a> · <a href="/marca/">{t("Reglas del kit", "Kit rules")}</a></p>
 """
 
 
@@ -809,7 +881,7 @@ def build_page() -> str:
 <li>{t("Hitos pequeños con problema, cambio, prueba, límites y una captura con fecha.", "Small milestones with a problem, a change, a proof, limits, and a dated capture.")}</li>
 </ul>
 <p>{t("El tablero de producto, con lo que está en revisión y lo que sigue en propuesta, es otra página. No mezcla estas fechas con esas fichas.", "The product board, with what is in review and what is still a proposal, is another page. It does not mix these dates with those cards.")}</p>
-<p><a href="../tablero/index.html">{t("Abrir el tablero", "Open the board")}</a></p>
+<p><a href="/tablero/">{t("Abrir el tablero", "Open the board")}</a></p>
 """
 
 
@@ -817,7 +889,7 @@ def avances() -> str:
     return f"""
 <h1>{t("Avances", "Progress")}</h1>
 <p>{t("El plan del 2026-10-09 llamó /avances al tablero. En esta vista previa el tablero está en Tablero, con el mismo registro. No hay un segundo tablero.", "The 2026-10-09 plan called the board /avances. In this preview the board is on Board, with the same record. There is not a second board.")}</p>
-<p><a class="primary" href="../tablero/index.html">{t("Abrir el tablero", "Open the board")}</a></p>
+<p><a class="primary" href="/tablero/">{t("Abrir el tablero", "Open the board")}</a></p>
 """
 
 
@@ -828,7 +900,7 @@ def slot(title_es: str, title_en: str, body_es: str, body_en: str, anchor: str) 
 <h1>{t(title_es, title_en)}</h1>
 <p>{t(body_es, body_en)}</p>
 <p>{t("No hay botón de crear, guardar, exportar ni enviar. Cuando exista, usará esta navegación y estos estilos.", "There is no create, save, export, or send button. When it exists, it will use this navigation and these styles.")}</p>
-<p><a href="../tablero/index.html#{anchor}">{t("Registro en el tablero", "Record on the board")}</a></p>
+<p><a href="/tablero/#{anchor}">{t("Registro en el tablero", "Record on the board")}</a></p>
 </article>
 """
 
@@ -875,12 +947,12 @@ def aprender() -> str:
     return f"""
 <h1>{t("Aprender", "Learn")}</h1>
 <p class="lede">{t("Glosario y tres guías de la misión, versión 1.0.0 del 2026-10-09. Es texto, no una aplicación aparte.", "Glossary and three mission guides, version 1.0.0 of 2026-10-09. It is text, not a separate app.")}</p>
-<p class="source">{t(f"Inglés: {note} Si una frase no coincide, manda el español. Fuente: lab/library de la PR 14, commit 635a1ed.", f"English: {note} If a sentence does not match, Spanish prevails. Source: lab/library from PR 14, commit 635a1ed.")}</p>
+<p class="source">{t(f"Inglés: {note} Si una frase no coincide, manda el español. Fuente: lab/library del commit b820aa3, 2026-10-09.", f"English: {note} If a sentence does not match, Spanish prevails. Source: lab/library from commit b820aa3, 2026-10-09.")}</p>
 <h2>{t("Glosario", "Glossary")}</h2>
 <div class="grid-2">{''.join(cards)}</div>
 <h2>{t("Guías", "Guides")}</h2>
 {''.join(guide_html)}
-<p><a href="../lab/index.html">{t("Usar estos términos en la misión", "Use these terms in the mission")}</a></p>
+<p><a href="/lab/">{t("Usar estos términos en la misión", "Use these terms in the mission")}</a></p>
 """
 
 
@@ -909,7 +981,7 @@ def headers() -> str:
   X-Robots-Tag: noindex, nofollow
 
 /assets/*
-  Cache-Control: public, max-age=604800
+  Cache-Control: public, max-age=0, must-revalidate
 /fonts/*
   Cache-Control: public, max-age=2592000
 /kit/*
@@ -934,7 +1006,10 @@ def redirects() -> str:
 # La dirección está grabada en los metadatos on-chain. El «!» fuerza el 301 aunque el archivo exista.
 https://superb-horse-9036f5.netlify.app/*  https://stubxai.com/:splat  301!
 
-# Rutas de la web en producción y de token.json. archivo.html se sirve tal cual: no se redirige.
+# Cloudflare Pages quita la extensión de un HTML suelto y lo sirve sin ella.
+# Si el archivo es index.html, la URL lleva barra final. No redirigir /archivo
+# hacia ese HTML con extensión: con la regla de Pages eso es un bucle.
+# /docs apunta a la URL que responde 200.
 /canales            /security/   301
 /canales/           /security/   301
 /canales.html       /security/   301
@@ -946,11 +1021,9 @@ https://superb-horse-9036f5.netlify.app/*  https://stubxai.com/:splat  301!
 /pruebas.html       /proofs/     301
 /marca              /marca/      301
 /marca.html         /marca/      301
-/archivo            /archivo.html  301
-/archivo/           /archivo.html  301
-/docs               /archivo.html  301
-/docs/              /archivo.html  301
-/docs.html          /archivo.html  301
+/docs               /archivo     301
+/docs/              /archivo     301
+/docs.html          /archivo     301
 /.well-known/security.txt  /security.txt  200
 """
 
@@ -996,7 +1069,7 @@ def sitemap() -> str:
         ("https://stubxai.com/marca/", "2026-10-09"),
         ("https://stubxai.com/build/", "2026-10-09"),
         ("https://stubxai.com/aprender/", "2026-10-09"),
-        ("https://stubxai.com/archivo.html", "2026-10-03"),
+        ("https://stubxai.com/archivo", "2026-10-03"),
     ]
     rows = "\n".join(f"  <url><loc>{loc}</loc><lastmod>{day}</lastmod></url>" for loc, day in dated)
     return f"""<?xml version="1.0" encoding="UTF-8"?>
@@ -1018,6 +1091,9 @@ def main() -> None:
     (ROOT / "sitemap.xml").write_text(sitemap(), encoding="utf-8")
     current = REPO / "web/current"
     shutil.copyfile(current / "archivo.html", ROOT / "archivo.html")
+    archive = (ROOT / "archivo.html").read_text(encoding="utf-8")
+    archive = archive.replace("https://stubxai.com/archivo.html", "https://stubxai.com/archivo")
+    (ROOT / "archivo.html").write_text(archive, encoding="utf-8")
     shutil.copyfile(current / "styles.css", ROOT / "styles.css")
     shutil.copyfile(current / "app.js", ROOT / "app.js")
 

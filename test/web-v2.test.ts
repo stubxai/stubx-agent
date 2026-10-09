@@ -75,6 +75,7 @@ function localTargetExists(root: string, fromFile: string, url: string): boolean
     : path.resolve(path.dirname(fromFile), clean);
   const asFile = candidate.endsWith(".html") || path.extname(candidate) !== "" ? candidate : path.join(candidate, "index.html");
   if (statSync(asFile, { throwIfNoEntry: false })?.isFile()) return true;
+  if (statSync(`${candidate}.html`, { throwIfNoEntry: false })?.isFile()) return true;
   if (statSync(candidate, { throwIfNoEntry: false })?.isFile()) return true;
   const rel = clean.startsWith("/") ? clean : `/${path.relative(root, candidate).split(path.sep).join("/")}`;
   const dest = redirectMap(root).get(rel.replace(/\/+$/, "") || "/");
@@ -240,7 +241,7 @@ describe("web v2", () => {
       assert.match(html, /github\.com\/stubxai\/stubx-agent/);
       assert.match(html, /t\.me\/stubxai/);
     }
-    assert.match(home, /href="verify\/index\.html"/);
+    assert.match(home, /href="\/verify\/"/);
     assert.match(home, /Analizar token/);
     assert.match(home, /Analyze token/);
     assert.match(security, /Comunidad STUBX/);
@@ -278,8 +279,8 @@ describe("web v2", () => {
     assert.equal(/fetch\(/.test(bundle), false);
     assert.equal(bundle.includes("\uFFFD"), false);
     const snap = JSON.parse(read("modules/snapshot.json")) as { commit: string; merged: boolean; liveNetwork: boolean; cardsDate: string };
-    assert.equal(snap.commit, "635a1edf39faf8fb68a5b164f79ef948a32e1dc9");
-    assert.equal(snap.merged, false);
+    assert.equal(snap.commit, "b820aa3d3b57aa77de49f2667f0e215aba3b04df");
+    assert.equal(snap.merged, true);
     assert.equal(snap.liveNetwork, false);
     assert.equal(snap.cardsDate, "2026-10-09");
   });
@@ -298,7 +299,12 @@ describe("web v2", () => {
     assert.equal(official.kind, "oficial");
     assert.equal(official.light, "ok");
     assert.equal(official.mint, CA);
+    assert.match(official.partialNote?.es ?? "", /cuenta personal publicada/);
     assert.match(official.partialNote?.es ?? "", /censo/);
+    const officialCard = data.cards.find((card) => (card as { mint?: string }).mint === CA) as { id?: string; holdersNote?: string };
+    assert.equal(officialCard.id, "a9e7f8d9d16fa3113f669afbcb4966123279efed3efa0769a864be484f43d9eb");
+    assert.match(officialCard.holdersNote ?? "", /2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX|cuenta personal publicada/);
+    assert.match(officialCard.holdersNote ?? "", /0\.0000 %/);
     const clone = lookup.classifyAddress(CLONE, data.cards, "lista", data.evm);
     assert.equal(clone.kind, "copia");
     assert.equal(clone.light, "riesgo");
@@ -382,7 +388,21 @@ describe("web v2", () => {
       assert.match(robots, new RegExp(`User-agent: ${bot}\\nDisallow: /`));
     }
     assert.match(read("sitemap.xml"), /https:\/\/stubxai.com\/verify\//);
-    assert.match(read("sitemap.xml"), /https:\/\/stubxai.com\/archivo\.html/);
+    assert.match(read("sitemap.xml"), /https:\/\/stubxai.com\/archivo</);
+    assert.equal(read("sitemap.xml").includes("archivo.html"), false);
+    assert.match(read("_headers"), /\/assets\/\*[\s\S]*max-age=0, must-revalidate/);
+    assert.equal(redirects.includes("/archivo.html"), false);
+    assert.match(redirects, /\/docs\s+\/archivo\s+301/);
+    assert.deepEqual(redirectCycles(redirects, siteRoot()), []);
+    assert.ok(redirectCycles("/archivo /archivo.html 301\n", siteRoot()).length > 0);
+    const proofs = read("proofs/index.html");
+    assert.equal((proofs.match(/Cómo repetirlo tú/g) ?? []).length, 7);
+    assert.match(proofs, /ots info/);
+    assert.match(proofs, /blockstream\.info/);
+    assert.match(proofs, /logs\/anchors/);
+    assert.match(proofs, /https:\/\/opentimestamps\.org\//);
+    assert.match(read("verify/index.html"), /2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX/);
+    assert.match(read("verify/index.html"), /cuenta personal publicada/);
     const security = read("security/index.html");
     assert.match(security, /ERYyyaE2Y2GuKB28YbC2w1nCuQ5ENQ89LR44kicvpump/);
     assert.match(security, /FMNb4CR8ksibmgY7Ztei6BWcZXi3WHcVeJhYb9TNpump/);
@@ -427,12 +447,89 @@ describe("web v2", () => {
     assert.equal(flag.status, 0, flag.stderr);
   });
 
-  test("the lab bundle hook keeps the snapshot when lab/ is absent", () => {
+  test("the browser bundle matches lab/", async () => {
+    const root = repoRoot();
     const run = spawnSync(process.execPath, ["web/v2/tools/bundle-from-lab.mjs"], {
-      cwd: repoRoot(),
+      cwd: root,
       encoding: "utf8",
     });
-    assert.equal(run.status, 0, run.stderr);
-    assert.match(run.stdout, /635a1ed/);
+    assert.equal(run.status, 0, `${run.stdout}\n${run.stderr}`);
+    assert.match(run.stdout, /b820aa3/);
+    const same = (left: string, right: string) => {
+      assert.equal(readFileSync(path.join(root, left), "utf8"), readFileSync(path.join(root, right), "utf8"), left);
+    };
+    same("web/v2/assets/verify.js", "site-drafts/assets/verify.js");
+    same("web/v2/assets/mission.js", "site-drafts/assets/mission.js");
+    same("web/v2/lab/sw.js", "site-drafts/lab/sw.js");
+    same("web/v2/modules/lab/mision-01.json", "lab/mission/mision-01.json");
+    const verifyJs = readFileSync(path.join(root, "web/v2/assets/verify.js"), "utf8");
+    assert.match(verifyJs, /CENSUS_PERSONAL/);
+    assert.match(verifyJs, /cuenta personal publicada/);
+    assert.match(verifyJs, /0\.0000 %/);
+    const { loadCards, loadFuentes } = (await import(pathToFileURL(path.join(root, "dist/lab/mission/load.js")).href)) as {
+      loadCards: (repo: string, fuentes: unknown) => unknown[];
+      loadFuentes: (repo: string) => unknown;
+    };
+    const clones = JSON.parse(readFileSync(path.join(root, "verify/registry/clones.json"), "utf8")) as { evm: unknown[] };
+    const expected = { source: "lista", cards: loadCards(root, loadFuentes(root)), evm: clones.evm };
+    assert.deepEqual(JSON.parse(readFileSync(path.join(root, "web/v2/modules/verify/cards.json"), "utf8")), expected);
+    const compiled = readFileSync(path.join(root, "dist/lab/verify/lookup.js"), "utf8")
+      .replaceAll("\r\n", "\n")
+      .replaceAll(/^\/\/# sourceMappingURL=.*\n?/gm, "")
+      .trim();
+    assert.equal(readFileSync(path.join(root, "web/v2/modules/verify/lookup.mjs"), "utf8"), `${compiled}\n`);
+    const ancestor = spawnSync("git", ["merge-base", "--is-ancestor", "b820aa3d3b57aa77de49f2667f0e215aba3b04df", "HEAD"], {
+      cwd: root,
+    });
+    assert.equal(ancestor.status, 0);
   });
 });
+
+function redirectCycles(text: string, root: string): string[] {
+  const rules = new Map<string, string>();
+  for (const line of text.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const parts = trimmed.split(/\s+/);
+    const from = parts[0] ?? "";
+    const to = parts[1] ?? "";
+    const status = parts[2] ?? "";
+    if (!from.startsWith("/") || !to.startsWith("/") || status === "200") continue;
+    rules.set(from, to);
+  }
+  const htmlFiles = new Set<string>();
+  const walkHtml = (dir: string, prefix: string) => {
+    for (const name of readdirSync(dir)) {
+      const full = path.join(dir, name);
+      const rel = prefix ? `${prefix}/${name}` : name;
+      if (statSync(full).isDirectory()) walkHtml(full, rel);
+      else if (name.endsWith(".html")) htmlFiles.add(`/${rel}`);
+    }
+  };
+  walkHtml(root, "");
+  const implicit = (url: string): string | null => {
+    if (url.endsWith("/index.html")) {
+      const parent = url.slice(0, -"index.html".length);
+      return parent.endsWith("/") ? parent : `${parent}/`;
+    }
+    if (url.endsWith(".html")) return url.slice(0, -".html".length) || "/";
+    if (url !== "/" && url.endsWith("/") && htmlFiles.has(`${url.slice(0, -1)}.html`)) return url.slice(0, -1);
+    return null;
+  };
+  const hop = (url: string): string | null => rules.get(url) ?? implicit(url);
+  const cycles: string[] = [];
+  const starts = new Set<string>([...rules.keys(), ...htmlFiles]);
+  for (const start of starts) {
+    const seen: string[] = [];
+    let url: string | null = start;
+    for (let step = 0; url && step < 8; step += 1) {
+      if (seen.includes(url)) {
+        cycles.push([...seen.slice(seen.indexOf(url)), url].join(" -> "));
+        break;
+      }
+      seen.push(url);
+      url = hop(url);
+    }
+  }
+  return cycles;
+}

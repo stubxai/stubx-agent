@@ -1,40 +1,150 @@
 /**
- * Punto de integración con la PR 14.
- * Si lab/ y site-drafts/ ya están en el árbol (rama fusionada), copia
- * el bundle de navegador que genera esa PR. Si no están, deja la
- * instantánea fechada y sale bien: no finge un build que no existe.
+ * Regenera la Verify, Lab y el tablero de web/v2 desde lab/ y site-drafts/.
+ * lookup.mjs y cards.json salen del código de lab/, no de una copia a mano.
+ * Si lab/ no está, no inventa un build.
  */
-import { copyFileSync, existsSync, readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { copyFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "../../..");
-const snapshotPath = path.join(root, "web/v2/modules/snapshot.json");
-const snapshot = JSON.parse(readFileSync(snapshotPath, "utf8"));
-const PINNED = "635a1edf39faf8fb68a5b164f79ef948a32e1dc9";
+const PERSONAL = "2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX";
 
+function git(args) {
+  const run = spawnSync("git", args, { cwd: root, encoding: "utf8" });
+  if (run.status !== 0) return "";
+  return run.stdout.trim();
+}
+
+function isAncestor(commit) {
+  if (!commit) return false;
+  return spawnSync("git", ["merge-base", "--is-ancestor", commit, "HEAD"], { cwd: root }).status === 0;
+}
+
+function labCommit() {
+  const origin = git(["rev-parse", "--verify", "origin/feat/lab-mision-1"]);
+  if (isAncestor(origin)) return origin;
+  const headBlob = git(["rev-parse", "HEAD:lab/verify/lookup.ts"]);
+  const merges = git(["log", "--merges", "--pretty=%H", "HEAD"]).split("\n").filter(Boolean);
+  for (const merge of merges) {
+    const second = git(["rev-parse", `${merge}^2`]);
+    if (!isAncestor(second)) continue;
+    if (git(["rev-parse", `${second}:lab/verify/lookup.ts`]) !== headBlob) continue;
+    return second;
+  }
+  return "";
+}
+
+function ensureCompiled() {
+  const lookupJs = path.join(root, "dist/lab/verify/lookup.js");
+  const loadJs = path.join(root, "dist/lab/mission/load.js");
+  if (existsSync(lookupJs) && existsSync(loadJs)) return;
+  const tsc = spawnSync("npx", ["tsc", "-p", "tsconfig.json"], { cwd: root, encoding: "utf8" });
+  if (tsc.status !== 0) {
+    console.error(tsc.stdout);
+    console.error(tsc.stderr);
+    process.exit(tsc.status ?? 1);
+  }
+}
+
+function lookupModule() {
+  const compiled = readFileSync(path.join(root, "dist/lab/verify/lookup.js"), "utf8");
+  const body = compiled.replaceAll("\r\n", "\n").replaceAll(/^\/\/# sourceMappingURL=.*\n?/gm, "").trim();
+  if (/^\s*import\s/m.test(body)) {
+    throw new Error("lookup compilado todavía importa módulos.");
+  }
+  return `${body}\n`;
+}
+
+function mainInner(file) {
+  const html = readFileSync(file, "utf8");
+  const start = html.indexOf("<main");
+  const open = html.indexOf(">", start);
+  const end = html.lastIndexOf("</main>");
+  if (start < 0 || open < 0 || end < 0) {
+    throw new Error(`No hay <main> en ${file}`);
+  }
+  return `${html.slice(open + 1, end).trim()}\n`;
+}
+
+function withPersonalAccount(html) {
+  const needle = "de la cuenta personal publicada. El resto respecto al suministro es 0.0000 %. No es un censo de holders.</p>";
+  const next = `de la cuenta personal publicada (${PERSONAL}). El resto respecto al suministro es 0.0000 %. No es un censo de holders.</p>`;
+  if (!html.includes(needle) && !html.includes(PERSONAL)) {
+    throw new Error("La ficha oficial de site-drafts no trae la nota N12.");
+  }
+  return html.includes(PERSONAL) ? html : html.replace(needle, next);
+}
+
+function dateProcessLinks(html) {
+  return html
+    .replaceAll("PR 13 en borrador", "PR 13 en borrador · 2026-10-08")
+    .replaceAll("Draft PR 13", "Draft PR 13 · 2026-10-08")
+    .replaceAll("PR 14 en borrador", "PR 14 en borrador · 2026-10-09")
+    .replaceAll("Draft PR 14", "Draft PR 14 · 2026-10-09");
+}
+
+const lookupSource = path.join(root, "lab/verify/lookup.ts");
 const verifyBundle = path.join(root, "site-drafts/assets/verify.js");
 const missionBundle = path.join(root, "site-drafts/assets/mission.js");
-const lookupSource = path.join(root, "lab/verify/lookup.ts");
-const labWorker = path.join(root, "site-drafts/lab/sw.js");
-
 if (!existsSync(lookupSource) || !existsSync(verifyBundle) || !existsSync(missionBundle)) {
-  if (snapshot.merged !== false || snapshot.commit !== PINNED) {
-    console.error("La instantánea no coincide con la PR 14 y lab/ tampoco está en esta rama.");
-    process.exit(1);
-  }
-  console.log(
-    "lab/ no está en esta rama. Se mantiene el bundle de navegador de la PR 14, commit 635a1ed, fichas del 2026-10-09.",
-  );
-  process.exit(0);
+  console.error("lab/ o site-drafts/ no están en esta rama. No se inventa un bundle.");
+  process.exit(1);
 }
 
+const commit = labCommit();
+if (!commit) {
+  console.error("No se encontró el commit de lab/ incluido en HEAD.");
+  process.exit(1);
+}
+
+ensureCompiled();
+const { loadCards, loadFuentes } = await import(pathToFileURL(path.join(root, "dist/lab/mission/load.js")).href);
+const clones = JSON.parse(readFileSync(path.join(root, "verify/registry/clones.json"), "utf8"));
+const cards = loadCards(root, loadFuentes(root));
+const payload = {
+  source: "lista",
+  cards,
+  evm: Array.isArray(clones.evm) ? clones.evm : [],
+};
+writeFileSync(path.join(root, "web/v2/modules/verify/cards.json"), `${JSON.stringify(payload, null, 2)}\n`);
+writeFileSync(path.join(root, "web/v2/modules/verify/lookup.mjs"), lookupModule());
 copyFileSync(verifyBundle, path.join(root, "web/v2/assets/verify.js"));
 copyFileSync(missionBundle, path.join(root, "web/v2/assets/mission.js"));
-if (existsSync(labWorker)) {
-  copyFileSync(labWorker, path.join(root, "web/v2/lab/sw.js"));
-}
-console.log(
-  "Bundles copiados desde site-drafts/. El worker queda en web/v2/lab/sw.js, alcance /lab/. Vuelve a ejecutar web/v2/tools/build_site.py y revisa que las fichas sigan fechadas.",
+copyFileSync(path.join(root, "site-drafts/lab/sw.js"), path.join(root, "web/v2/lab/sw.js"));
+copyFileSync(path.join(root, "lab/mission/mision-01.json"), path.join(root, "web/v2/modules/lab/mision-01.json"));
+copyFileSync(path.join(root, "lab/tablero/registros.json"), path.join(root, "web/v2/modules/tablero/registros.json"));
+
+writeFileSync(
+  path.join(root, "web/v2/content/tools/verify.html"),
+  withPersonalAccount(mainInner(path.join(root, "site-drafts/verify/index.html"))),
 );
+writeFileSync(path.join(root, "web/v2/content/tools/lab.html"), mainInner(path.join(root, "site-drafts/lab/index.html")));
+writeFileSync(
+  path.join(root, "web/v2/content/tools/tablero.html"),
+  dateProcessLinks(mainInner(path.join(root, "site-drafts/tablero/index.html"))),
+);
+
+const when = git(["log", "-1", "--format=%cI", commit]);
+const snapshot = {
+  kind: "pr14-browser-snapshot",
+  pr: 14,
+  branch: "feat/lab-mision-1",
+  commit,
+  commitDate: when,
+  cardsDate: "2026-10-09",
+  earlierCardsDate: "2026-10-08",
+  liveNetwork: false,
+  merged: true,
+  serviceWorker: "lab/sw.js",
+  serviceWorkerScope: "/lab/",
+  uiBundle: "assets/verify.js",
+  missionBundle: "assets/mission.js",
+  browserApi: "modules/verify/lookup.mjs",
+  cards: "modules/verify/cards.json",
+  note: `Bundle regenerado desde lab/ en ${commit}. La ficha oficial incluye la cuenta personal publicada ${PERSONAL}. merged significa que ese commit está en esta rama, no que se haya fusionado en main ni publicado.`,
+};
+writeFileSync(path.join(root, "web/v2/modules/snapshot.json"), `${JSON.stringify(snapshot, null, 2)}\n`);
+console.log(`Bundle regenerado desde lab/ ${commit}.`);
