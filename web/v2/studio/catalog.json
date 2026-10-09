@@ -1,0 +1,136 @@
+{
+  "version": "2026-10-09",
+  "items": [
+    {
+      "id": "talon-avatar-512",
+      "archivo": "assets/agente-talon-avatar-512.png",
+      "tipo": "avatar",
+      "nombre": { "es": "Agente Talón", "en": "Agente Talón" },
+      "licencia": "Licencia del kit de memes STUBX · Agente Talón",
+      "autor": "STUBX",
+      "permitido": true,
+      "aiOrigin": "mascota",
+      "sha256": "22e9182dbfa7fca0ed2c7fc8a52c305ee9df2d069530dd47a7cc80edf24d59d1"
+    },
+    {
+      "id": "talon-cara-512",
+      "archivo": "assets/agente-talon-cara-512.png",
+      "tipo": "avatar",
+      "nombre": { "es": "Cara de Talón", "en": "Talón face" },
+      "licencia": "Licencia del kit de memes STUBX · Agente Talón",
+      "autor": "STUBX",
+      "permitido": true,
+      "aiOrigin": "mascota",
+      "sha256": "d5dcf25a2321432271341291278c34637510ee21cbe033d0dcd7a1c8c2a8e542"
+    },
+    {
+      "id": "fondo-carbon",
+      "archivo": "assets/fondo-carbon.png",
+      "tipo": "fondo",
+      "nombre": { "es": "Noche", "en": "Night" },
+      "fill": "#0a090d",
+      "ink": "#fff3f5",
+      "licencia": "Código MIT. Color plano tomado de la paleta del kit de memes STUBX v0.2.",
+      "autor": "STUBX",
+      "permitido": true,
+      "aiOrigin": "ninguno",
+      "sha256": "3395326290a7641f6c60d7746c2285a939f49181962d07d08623abfc96d75775"
+    },
+    {
+      "id": "fondo-panel",
+      "archivo": "assets/fondo-panel.png",
+      "tipo": "fondo",
+      "nombre": { "es": "Panel", "en": "Panel" },
+      "fill": "#17131b",
+      "ink": "#fff3f5",
+      "licencia": "Código MIT. Color plano tomado de la paleta del kit de memes STUBX v0.2.",
+      "autor": "STUBX",
+      "permitido": true,
+      "aiOrigin": "ninguno",
+      "sha256": "f39b59bf1f4cd6c8a80e6fc66170064f4fcf8290eee278537300f758e7a62075"
+    },
+    {
+      "id": "fondo-tinta",
+      "archivo": "assets/fondo-tinta.png",
+      "tipo": "fondo",
+      "nombre": { "es": "Tinta", "en": "Ink" },
+      "fill": "#120a0e",
+      "ink": "#fff3f5",
+      "licencia": "Código MIT. Color plano tomado de la paleta del kit de memes STUBX v0.2.",
+      "autor": "STUBX",
+      "permitido": true,
+      "aiOrigin": "ninguno",
+      "sha256": "aa6abfcd5b8d58a6ae3cefcb92827d3ab6cb08223d39d29129a08bc656005eda"
+    },
+    {
+      "id": "fondo-rosa",
+      "archivo": "assets/fondo-rosa.png",
+      "tipo": "fondo",
+      "nombre": { "es": "Rosa", "en": "Pink" },
+      "fill": "#fe8596",
+      "ink": "#120a0e",
+      "licencia": "Código MIT. Color plano tomado de la paleta del kit de memes STUBX v0.2.",
+      "autor": "STUBX",
+      "permitido": true,
+      "aiOrigin": "ninguno",
+      "sha256": "142b878abbaaaa738796b1fa8d899700535d2e90d9803652732b8a02e97da3e8"
+    },
+    {
+      "id": "fondo-claro",
+      "archivo": "assets/fondo-claro.png",
+      "tipo": "fondo",
+      "nombre": { "es": "Papel", "en": "Paper" },
+      "fill": "#fff3f5",
+      "ink": "#120a0e",
+      "licencia": "Código MIT. Color plano tomado de la paleta del kit de memes STUBX v0.2.",
+      "autor": "STUBX",
+      "permitido": true,
+      "aiOrigin": "ninguno",
+      "sha256": "78b1341dde13060e919236341a4d7056ec6289d1a76c4e06d420f564dff15bcb"
+    },
+    {
+      "id": "inter-regular",
+      "archivo": "assets/Inter-Regular.woff2",
+      "tipo": "fuente",
+      "nombre": { "es": "Inter Regular", "en": "Inter Regular" },
+      "licencia": "This Font Software is licensed under the SIL Open Font License, Version 1.1.",
+      "autor": "The Inter Project Authors",
+      "permitido": true,
+      "aiOrigin": "ninguno",
+      "sha256": "dd05e326cf8eac3b55acecf29c842ed73e6e6dd06491cf47f7e8800680ab3e33"
+    },
+    {
+      "id": "inter-semibold",
+      "archivo": "assets/Inter-SemiBold.woff2",
+      "tipo": "fuente",
+      "nombre": { "es": "Inter SemiBold", "en": "Inter SemiBold" },
+      "licencia": "This Font Software is licensed under the SIL Open Font License, Version 1.1.",
+      "autor": "The Inter Project Authors",
+      "permitido": true,
+      "aiOrigin": "ninguno",
+      "sha256": "62553d159189834af73c9a6264704be5b2bee9a08da66a14768d8e5c6ffd2cdb"
+    },
+    {
+      "id": "silkscreen-regular",
+      "archivo": "assets/Silkscreen-Regular.woff2",
+      "tipo": "fuente",
+      "nombre": { "es": "Silkscreen Regular", "en": "Silkscreen Regular" },
+      "licencia": "This Font Software is licensed under the SIL Open Font License, Version 1.1.",
+      "autor": "The Silkscreen Project Authors",
+      "permitido": true,
+      "aiOrigin": "ninguno",
+      "sha256": "e6c72ea4702249202bcdd79d3343057e4e25ef1f04e3fcffd8602ab53b40b4cc"
+    },
+    {
+      "id": "silkscreen-bold",
+      "archivo": "assets/Silkscreen-Bold.woff2",
+      "tipo": "fuente",
+      "nombre": { "es": "Silkscreen Bold", "en": "Silkscreen Bold" },
+      "licencia": "This Font Software is licensed under the SIL Open Font License, Version 1.1.",
+      "autor": "The Silkscreen Project Authors",
+      "permitido": true,
+      "aiOrigin": "ninguno",
+      "sha256": "5741b7f01a127f40ed70281fa2f686e8fc2cfe241930a120e4d1a1cebe78f995"
+    }
+  ]
+}

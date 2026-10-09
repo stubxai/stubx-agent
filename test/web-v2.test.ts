@@ -33,6 +33,7 @@ const ROUTES = [
   "build/index.html",
   "aprender/index.html",
   "studio/index.html",
+  "studio/reglas/index.html",
   "cuaderno/index.html",
   "contribuir/index.html",
   "404.html",
@@ -252,7 +253,7 @@ describe("web v2", () => {
   });
 
   test("unbuilt modules stay explanatory", () => {
-    for (const rel of ["studio/index.html", "cuaderno/index.html", "contribuir/index.html"]) {
+    for (const rel of ["cuaderno/index.html", "contribuir/index.html"]) {
       const html = read(rel);
       assert.match(html, /No construido/);
       assert.match(html, /Not built/);
@@ -578,6 +579,7 @@ test("las palabras prohibidas no salen en el texto visible, y token.json queda f
   for (const file of walkFiles(root)) {
     const rel = path.relative(root, file);
     if (rel === "token.json" || rel === "archivo.html" || rel.startsWith("tools/")) continue;
+    if (rel === "studio/blocklist.json") continue;
     if (!/\.(html|json|md|js|mjs)$/.test(rel)) continue;
     const text = readFileSync(file, "utf8");
     const stripped = text
