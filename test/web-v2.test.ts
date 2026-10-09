@@ -394,6 +394,17 @@ describe("web v2", () => {
     for (const bot of ["GPTBot", "Google-Extended", "CCBot", "ClaudeBot", "anthropic-ai", "Applebot-Extended", "Bytespider", "meta-externalagent"]) {
       assert.match(robots, new RegExp(`User-agent: ${bot}\\nDisallow: /`));
     }
+    assert.match(robots, /User-agent: \*\nAllow: \//);
+    assert.match(robots, /Sitemap: https:\/\/stubxai\.com\/sitemap\.xml/);
+    const globalHeaders = read("_headers").split(/\n\/assets\/\*/)[0] ?? "";
+    assert.equal(globalHeaders.includes("X-Robots-Tag"), false);
+    for (const rule of ["/lab/sw.js", "/modules/*", "/token.json"]) {
+      assert.match(read("_headers"), new RegExp(`${rule.replace(/[.*/]/g, "\\$&")}\n(?:  .*\n)*  X-Robots-Tag: noindex, nofollow`));
+    }
+    for (const rel of ["index.html", "verify/index.html", "lab/index.html", "archivo.html", "proofs/index.html"]) {
+      assert.equal(read(rel).includes("noindex"), false, rel);
+      assert.match(read(rel), /<link rel="canonical" href="https:\/\/stubxai\.com\//, rel);
+    }
     assert.match(read("sitemap.xml"), /https:\/\/stubxai.com\/verify\//);
     assert.match(read("sitemap.xml"), /https:\/\/stubxai.com\/archivo</);
     assert.equal(read("sitemap.xml").includes("archivo.html"), false);
