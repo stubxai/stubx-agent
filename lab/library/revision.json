@@ -4,6 +4,7 @@
   "sourceLanguage": "es",
   "languages": ["es", "en"],
   "enStatus": "Redactado en los mismos archivos que la fuente española. Pendiente de revisión humana antes de cualquier publicación.",
+  "enStatusEn": "Written in the same files as the Spanish source. Pending human review before any publication.",
   "reviewer": null,
   "notes": [
     "No se traducen las direcciones de los mints.",

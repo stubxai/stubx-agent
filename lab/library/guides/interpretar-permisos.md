@@ -16,7 +16,7 @@ Un ejemplo hipotético, no leído de la cadena: un token con la emisión revocad
 
 ## English
 
-A permission is not a guarantee. Mint authority, if active, can increase the supply of that mint. If the card marks it revoked and the field is verified, that specific permission is recorded as 0 in that reading.
+A permission is not a guarantee. Mint authority, if active, can increase the supply of that mint. If the card marks it revoked and the field is verified, that specific permission is recorded as empty (none) in that reading.
 
 Freeze authority is a different permission: freezing accounts of that token. Revoked removes it in that reading. Active leaves it assigned to the address the card shows.
 

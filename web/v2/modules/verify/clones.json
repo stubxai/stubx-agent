@@ -22,7 +22,8 @@
       "notedOn": "2026-10-08",
       "source": "search-v2 de Pump.fun, 08-10 09:14 CEST",
       "verifiedOnChain": false,
-      "note": "La red eip155:5042 no está identificada con certeza."
+      "note": "La red eip155:5042 no está identificada con certeza.",
+      "note_en": "The eip155:5042 network is not identified with certainty."
     }
   ],
   "examples": [
@@ -65,7 +66,10 @@
       "symbol": "STUBX",
       "creator": "3KhCByAF8e4mfcuHeLS51dEsUfwHQexhRoEW9m18XvT7",
       "notedOn": "2026-10-09",
-      "note": "Nombre y creadora leídos en la ficha del 2026-10-09. No identifica a una persona."
+      "note": "Nombre y creadora leídos en la ficha del 2026-10-09. No identifica a una persona.",
+      "note_en": "Name and creator read from the 2026-10-09 card. It does not identify a person."
     }
-  ]
+  ],
+  "note_en": "Known examples, not a complete list of clones. An address that is not here is not necessarily the official mint, nor is it necessarily fake. The match does not attribute intent.",
+  "evmNote_en": "Examples from Pump.fun search-v2, 2026-10-08 09:14 CEST. They have not been verified on-chain. This is not a complete list. The eip155:5042 network is not identified with certainty."
 }

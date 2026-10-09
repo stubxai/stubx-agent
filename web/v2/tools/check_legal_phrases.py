@@ -202,7 +202,16 @@ def main() -> int:
     repeat_parser = HowToExtractor()
     repeat_parser.feed((CURRENT / "pruebas.html").read_text(encoding="utf-8"))
     plain = plain_corpus()
-    how_missing = [block for block in repeat_parser.blocks if normalize(block) not in plain]
+
+    def how_covered(block: str) -> bool:
+        if normalize(block) in plain:
+            return True
+        rewritten = block
+        for item in pairs:
+            rewritten = rewritten.replace(item["current"], item["v2"])
+        return normalize(rewritten) in plain
+
+    how_missing = [block for block in repeat_parser.blocks if not how_covered(block)]
     if not repeat_parser.blocks:
         how_missing = ["pruebas.html no tiene secciones «Cómo repetirlo tú»"]
     if missing or how_missing:

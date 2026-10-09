@@ -4,7 +4,7 @@
  * Si lab/ no está, no inventa un build.
  */
 import { spawnSync } from "node:child_process";
-import { copyFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
+import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -70,12 +70,12 @@ function mainInner(file) {
 }
 
 function withPersonalAccount(html) {
-  const needle = "de la cuenta personal publicada. El resto respecto al suministro es 0.0000 %. No es un censo de holders.</p>";
-  const next = `de la cuenta personal publicada (${PERSONAL}). El resto respecto al suministro es 0.0000 %. No es un censo de holders.</p>`;
-  if (!html.includes(needle) && !html.includes(PERSONAL)) {
+  if (html.includes(PERSONAL)) return html;
+  const needle = "de la cuenta personal publicada. El resto respecto al suministro es 0.0000 %.";
+  if (!html.includes(needle)) {
     throw new Error("La ficha oficial de site-drafts no trae la nota N12.");
   }
-  return html.includes(PERSONAL) ? html : html.replace(needle, next);
+  return html.replace(needle, `de la cuenta personal publicada (${PERSONAL}). El resto respecto al suministro es 0.0000 %.`);
 }
 
 function dateProcessLinks(html) {
@@ -102,20 +102,32 @@ if (!commit) {
 
 ensureCompiled();
 const { loadCards, loadFuentes } = await import(pathToFileURL(path.join(root, "dist/lab/mission/load.js")).href);
+const { presentCard, presentClones, presentEvmItem } = await import(
+  pathToFileURL(path.join(root, "dist/lab/display-copy.js")).href
+);
 const clones = JSON.parse(readFileSync(path.join(root, "verify/registry/clones.json"), "utf8"));
-const cards = loadCards(root, loadFuentes(root));
+const cards = loadCards(root, loadFuentes(root)).map((card) => presentCard(card));
 const payload = {
   source: "lista",
   cards,
-  evm: Array.isArray(clones.evm) ? clones.evm : [],
+  evm: (Array.isArray(clones.evm) ? clones.evm : []).map((item) => presentEvmItem(item)),
 };
 writeFileSync(path.join(root, "web/v2/modules/verify/cards.json"), `${JSON.stringify(payload, null, 2)}\n`);
+writeFileSync(
+  path.join(root, "web/v2/modules/verify/clones.json"),
+  `${JSON.stringify(presentClones(clones), null, 2)}\n`,
+);
 writeFileSync(path.join(root, "web/v2/modules/verify/lookup.mjs"), lookupModule());
 copyFileSync(verifyBundle, path.join(root, "web/v2/assets/verify.js"));
 copyFileSync(missionBundle, path.join(root, "web/v2/assets/mission.js"));
 copyFileSync(path.join(root, "site-drafts/lab/sw.js"), path.join(root, "web/v2/lab/sw.js"));
 copyFileSync(path.join(root, "lab/mission/mision-01.json"), path.join(root, "web/v2/modules/lab/mision-01.json"));
 copyFileSync(path.join(root, "lab/tablero/registros.json"), path.join(root, "web/v2/modules/tablero/registros.json"));
+copyFileSync(path.join(root, "lab/library/glossary.json"), path.join(root, "web/v2/modules/lab/glossary.json"));
+copyFileSync(path.join(root, "lab/library/revision.json"), path.join(root, "web/v2/modules/lab/revision.json"));
+copyFileSync(path.join(root, "lab/library/guides.json"), path.join(root, "web/v2/modules/lab/guides.json"));
+mkdirSync(path.join(root, "web/v2/modules/lab/guides"), { recursive: true });
+cpSync(path.join(root, "lab/library/guides"), path.join(root, "web/v2/modules/lab/guides"), { recursive: true });
 
 writeFileSync(
   path.join(root, "web/v2/content/tools/verify.html"),

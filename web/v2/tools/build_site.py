@@ -50,7 +50,7 @@ RISK_EN = (
     "STUBX is an experimental high-risk crypto-asset. It has no guaranteed value, it "
     "grants no rights of any kind (ownership, voting, dividends, reimbursement, or a "
     "share of revenue), and no return is promised. It can lose all of its value: you "
-    "can lose everything you put in. As checked on 2026-10-03, STUBX trades on the "
+    "could lose everything you put in. As checked on 2026-10-03, STUBX trades on the "
     "Pump.fun curve: the contract itself buys and sells without needing another person, "
     "but every sale lowers the price and large sales receive a worse price. If the price "
     "falls, selling can return very little or almost nothing. If the token completes the "
@@ -98,7 +98,7 @@ HOSTING_ES = (
 HOSTING_EN = (
     "Cloudflare Pages serves www.stubxai.com. The apex stubxai.com goes through the Cloudflare proxy. "
     "Netlify only answers on superb-horse-9036f5.netlify.app: that address, recorded in the on-chain metadata, "
-    "redirects with a 301 to https://stubxai.com/ and keeps the path. It is still STUBX."
+    "redirects with a 301 to https://stubxai.com/ and keeps the path. It still belongs to STUBX."
 )
 ORIGIN = "https://stubxai.com"
 OG_IMAGE = f"{ORIGIN}/assets/og-stubx-2026-10-1200x630.jpg"
@@ -106,6 +106,9 @@ OG_ALT = (
     "STUBX: Agente Talón, mascota rosa con forma de ticket, sostiene un recibo junto a un globo terráqueo. "
     "Texto: «Un meme que pide pruebas. Qué es, qué funciona hoy y qué falta. CA oficial y pruebas en stubxai.com». "
     "Pie: «Criptoactivo de alto riesgo · puedes perderlo todo · no es consejo de inversión · Imagen generada con IA»"
+    " / STUBX: Agente Talón, a pink ticket-shaped mascot, holds a receipt next to a globe. "
+    "Text: “A meme that asks for proof. What it is, what works today, and what is missing. Official CA and proofs at stubxai.com”. "
+    "Footer: “High-risk crypto-asset · you can lose everything · not investment advice · AI-generated image”"
 )
 DRAFT_ES = "Borrador del repositorio. No publicado en stubxai.com."
 DRAFT_EN = "Repository draft. Not published on stubxai.com."
@@ -196,7 +199,7 @@ def nav(frm: str, current: str, absolute: bool = False) -> str:
         return "".join(out)
 
     return (
-        f'<nav class="site" aria-label="Principal"><ul>{items(PRIMARY)}</ul></nav>'
+        f'<nav class="site" aria-label="Principal / Main"><ul>{items(PRIMARY)}</ul></nav>'
         f'<details class="mapa"><summary>{t("Mapa del sitio", "Site map")}</summary>'
         f'<nav aria-label="{html.escape("Mapa del sitio / Site map")}"><ul>{items(MORE)}</ul></nav></details>'
     )
@@ -216,14 +219,15 @@ def shell(frm: str, current: str, title_es: str, title_en: str, desc_es: str, de
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta name="robots" content="noindex, nofollow">
-<meta name="description" content="{html.escape(desc_es)}">
+<meta name="description" content="{html.escape(desc_es + " / " + desc_en)}">
 <link rel="canonical" href="{url}">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="STUBX">
 <meta property="og:locale" content="es_ES">
+<meta property="og:locale:alternate" content="en_US">
 <meta property="og:url" content="{url}">
-<meta property="og:title" content="{html.escape(title_es)}">
-<meta property="og:description" content="{html.escape(desc_es)}">
+<meta property="og:title" content="{html.escape(title_es + " / " + title_en)}">
+<meta property="og:description" content="{html.escape(desc_es + " / " + desc_en)}">
 <meta property="og:image" content="{OG_IMAGE}">
 <meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1200">
@@ -231,8 +235,8 @@ def shell(frm: str, current: str, title_es: str, title_en: str, desc_es: str, de
 <meta property="og:image:alt" content="{html.escape(OG_ALT)}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:site" content="@stubxai">
-<meta name="twitter:title" content="{html.escape(title_es)}">
-<meta name="twitter:description" content="{html.escape(desc_es)}">
+<meta name="twitter:title" content="{html.escape(title_es + " / " + title_en)}">
+<meta name="twitter:description" content="{html.escape(desc_es + " / " + desc_en)}">
 <meta name="twitter:image" content="{OG_IMAGE}">
 <meta name="twitter:image:alt" content="{html.escape(OG_ALT)}">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; manifest-src 'self'; media-src 'none'; frame-src 'none'; worker-src {worker_src}; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'">
@@ -266,7 +270,7 @@ def shell(frm: str, current: str, title_es: str, title_en: str, desc_es: str, de
 {body}
 </main>
 <footer class="site"><div class="wrap">
-<p><strong>{t("Aviso:", "Notice:")}</strong> {t("Cripto de alto riesgo · Puedes perderlo todo · No es consejo de inversión.", "High-risk crypto · You can lose everything · Not investment advice.")} <a href="{page_href(frm, "risks/index.html", absolute)}">{t("Riesgos", "Risks")}</a></p>
+<p><strong>{t("Aviso:", "Notice:")}</strong> {t("Cripto de alto riesgo · Puedes perderlo todo · No es consejo de inversión.", "High-risk crypto · You could lose everything · Not investment advice.")} <a href="{page_href(frm, "risks/index.html", absolute)}">{t("Riesgos", "Risks")}</a></p>
 <p class="mica"><strong>{t("Aviso MiCA (art. 7.1.e):", "MiCA notice (art. 7.1.e):")}</strong> {t(MICA_ES, MICA_EN)}</p>
 <p>{t("CA oficial y única:", "Official and only CA:")} <code>{CA}</code></p>
 <p>{t("Canales oficiales:", "Official channels:")} <a href="https://x.com/stubxai">@stubxai</a> · <a href="https://github.com/stubxai/stubx-agent">github.com/stubxai/stubx-agent</a> · <a href="mailto:stubxai.hq@gmail.com">stubxai.hq@gmail.com</a> · <a href="https://t.me/stubxai">t.me/stubxai</a> · <a href="https://farcaster.xyz/stubxai">Farcaster</a> · <a href="https://www.tiktok.com/@stubxai">TikTok</a></p>
@@ -300,19 +304,19 @@ def home() -> str:
 <a class="primary" href="/verify/">{t("Analizar token", "Analyze token")}</a>
 <a href="/methodology/">{t("Ver la metodología", "Read the methodology")}</a>
 </div>
-<p class="source">{t("La acción abre la demo fechada del 2026-10-09 (commit b820aa3), no una lectura en vivo. La PR 14 sigue sin fusionarse en main.", "The action opens the dated demo of 2026-10-09 (commit b820aa3), not a live reading. PR 14 is still not merged into main.")}</p>
+<p class="source">{t("La acción abre la demo fechada del 2026-10-09 (commit 86df576), no una lectura en vivo. La PR 14 sigue sin fusionarse en main.", "The action opens the dated demo of 2026-10-09 (commit 86df576), not a live reading. PR 14 is still not merged into main.")}</p>
 </div>
 <figure>
 <picture>
 <source media="(min-width: 900px)" srcset="assets/hero-talon-1000.webp" type="image/webp">
-<img src="assets/hero-talon-movil-800.webp" width="800" height="750" alt="{html.escape("Agente Talón, personaje de STUBX: ticket rosa con una gema verde. Ilustración con elementos generados con IA.")}">
+<img src="assets/hero-talon-movil-800.webp" width="800" height="750" alt="{html.escape("Agente Talón, personaje de STUBX: ticket rosa con una gema verde. Ilustración con elementos generados con IA. / Agente Talón, the STUBX character: a pink ticket with a green gem. Illustration with AI-generated elements.")}">
 </picture>
 <figcaption>{t("Agente Talón. Ilustración con elementos generados con IA. No es un sello de aprobación.", "Agente Talón. Illustration with AI-generated elements. It is not a seal of approval.")}</figcaption>
 </figure>
 </section>
 <section class="ca-panel" id="contrato" aria-labelledby="ca-title">
 <h2 id="ca-title">{t("Contrato oficial", "Official contract")}</h2>
-<p id="ca-label">{t("CA oficial del token, dirección del mint. Única.", "Official token CA, the mint address. The only one.")}</p>
+<p id="ca-label">{t("CA oficial del token, dirección del mint. Única.", "The official token CA (the mint address). There is only one.")}</p>
 <p class="ca-value" aria-labelledby="ca-label">{CA}</p>
 <div class="ca-actions">
 <button type="button" class="primary" data-copy="{CA}" aria-describedby="ca-label"><span data-copy-label>{t("Copiar contrato", "Copy contract")}</span></button>
@@ -320,18 +324,18 @@ def home() -> str:
 <a href="https://solscan.io/token/{CA}">{t("Abrir en Solscan", "Open on Solscan")}</a>
 <a href="token.json">token.json</a>
 </div>
-<p>{t(f"Compárala entera con la de la cuenta oficial en X: @stubxai. Cualquier otra CA con el nombre STUBX no es oficial. Fuente: token.json, campo mint, actualizado el 2026-10-05.", f"Compare the whole address with the official X account: @stubxai. Any other CA using the name STUBX is not official. Source: token.json, mint field, updated 2026-10-05.")}</p>
+<p>{t(f"Compárala entera con la de la cuenta oficial en X: @stubxai. Cualquier otra CA con el nombre STUBX no es oficial. Fuente: token.json, campo mint, actualizado el 2026-10-05.", f"Compare the full address with the one posted by the official X account, @stubxai. Any other CA using the name STUBX is not official. Source: token.json, mint field, updated 2026-10-05.")}</p>
 </section>
 <div class="grid-3" id="proyecto">
 <article class="card"><h2>{t("Un personaje", "A character")}</h2><p>{t("Agente Talón pide pruebas antes de creer una promesa. Las imágenes se generan con IA. El lema es «No stub, no story».", "Agente Talón asks for proof before believing a promise. The images are generated with AI. The motto is “No stub, no story”.")}</p></article>
-<article class="card"><h2>{t("Un token", "A token")}</h2><p>{t("Creado el 2026-09-23 en Pump.fun. Sin autoridad de emisión ni de congelación. No da derechos. La descripción grabada dice «AI-native» y ya no se puede cambiar: hoy no hay un agente autónomo.", "Created on 2026-09-23 on Pump.fun. No mint authority and no freeze authority. It grants no rights. The recorded description says “AI-native” and can no longer be changed: there is no autonomous agent today.")}</p></article>
+<article class="card"><h2>{t("Un token", "A token")}</h2><p>{t("Creado el 2026-09-23 en Pump.fun. Sin autoridad de emisión ni de congelación. No da derechos. La descripción grabada dice «AI-native» y ya no se puede cambiar: hoy no hay un agente autónomo.", "Created on 2026-09-23 on Pump.fun. No mint authority and no freeze authority. It grants no rights. The on-chain description says “AI-native” and can no longer be changed: there is no autonomous agent today.")}</p></article>
 <article class="card" id="repo"><h2>{t("Un prototipo", "A prototype")}</h2><p>{t("El repositorio github.com/stubxai/stubx-agent no tiene wallet ni claves, no firma y no envía transacciones. Licencia MIT.", "The repository github.com/stubxai/stubx-agent has no wallet and no keys, it does not sign, and it does not send transactions. MIT license.")}</p></article>
 </div>
-<h2>{t("Herramientas de esta misma web", "Tools in this same website")}</h2>
+<h2>{t("Herramientas de esta misma web", "Tools on this website")}</h2>
 <p>{t("Misma navegación, mismos estilos y el mismo selector de idioma. Lo que no está construido no tiene un botón que finja funcionar.", "Same navigation, same styles, and the same language switch. What is not built has no button pretending to work.")}</p>
 <div class="grid-3">
 <article class="card"><p class="estado-pill">{t("Demo fechada · 2026-10-09", "Dated demo · 2026-10-09")}</p><h3>Verify</h3><p>{t("Pega una dirección y lee el semáforo en lenguaje llano. Incluye la ficha oficial de ese día, los clones ERYyy y FMNb, los del 2026-10-08 y dos ejemplos 0x sin verificar en la cadena.", "Paste an address and read the traffic light in plain language. It includes that day’s official card, the ERYyy and FMNb clones, the 2026-10-08 ones, and two 0x examples that are not verified on-chain.")}</p><p><a class="primary" href="/verify/">{t("Analizar token", "Analyze token")}</a></p></article>
-<article class="card"><p class="estado-pill">{t("Demo fechada · 2026-10-09", "Dated demo · 2026-10-09")}</p><h3>Lab</h3><p>{t("Una misión de cinco pasos para distinguir el mint del registro de un clon. El progreso se queda en este navegador.", "A five-step mission to tell the registry mint from a clone. Progress stays in this browser.")}</p><p><a href="/lab/">{t("Hacer la misión", "Do the mission")}</a></p></article>
+<article class="card"><p class="estado-pill">{t("Demo fechada · 2026-10-09", "Dated demo · 2026-10-09")}</p><h3>Lab</h3><p>{t("Una misión de cinco pasos para distinguir el mint del registro de un clon. El progreso se queda en este navegador.", "A five-step mission to tell the registry mint from a clone. Progress stays in this browser.")}</p><p><a href="/lab/">{t("Hacer la misión", "Start the mission")}</a></p></article>
 <article class="card"><p class="estado-pill">{t("Registro · 2026-10-09", "Record · 2026-10-09")}</p><h3>{t("Tablero", "Board")}</h3><p>{t("Estados reales del registro de la PR 14. Una idea, un código en el repositorio y una función publicada no son lo mismo.", "Real states from the PR 14 record. An idea, code in the repository, and a published function are not the same thing.")}</p><p><a href="/tablero/">{t("Abrir el tablero", "Open the board")}</a></p></article>
 </div>
 <div class="grid-3">
@@ -341,7 +345,7 @@ def home() -> str:
 </div>
 <section id="transparencia">
 <h2>{t("Transparencia", "Transparency")}</h2>
-<p>{t("Pump.fun paga al creador una comisión por las operaciones del token. Cobros hasta el 2026-10-03: uno, de 0,0316 SOL, el 2026-09-23 (transacción 3rDQEqHoTQFVgkiAmtBX3sRia9sScEs3K5rcEaDu9riYSNMBrQ3uLQbu9aSBB3zNnCisafbMQo7puURyGF5FtLmH). Uso: la comisión pasó, junto con el resto del SOL de la wallet creadora, a wallets personales del creador (transacciones 2BsW5YrvJTWuyUaA9jTZCmbk9Wiz68cpa2EwMMNmXh1DgiG7mK5Mr97JAqwqEZyAxrpp8J8YAX3jaumHBE8iEFNN y 3oxwGw2dBphbT4fvMjpJVyEnTQr5ATsbzF6ZCHdU9wyXcRPkncfvi5HRa8dnDDEcv9Zr8J7EyJzSTJEAEuJbDge7) y se mezcló con su dinero; no se usó por separado para el proyecto. Es un ingreso del creador: no se reparte a los holders ni a nadie. El 2026-10-04 el creador reintegró ese importe, 0,031554107 SOL, desde su wallet personal a la wallet pública del proyecto, dentro de un envío de 0,033020866 SOL (transacción 4FhEmdch5DnDSN8BXfH7pFP2h9w8o2MdAMw16FcYxkLiaZ3BJEaqEhRf5e4rVPQxYGRt8oz2n3TDi5dzsL726KEy). Cada nuevo cobro de la comisión pasará a esa wallet en un máximo de 7 días y se publicará aquí con las dos transacciones.", "Pump.fun pays the creator a fee on the token’s trades. Collections through 2026-10-03: one, of 0.0316 SOL, on 2026-09-23 (transaction 3rDQEqHoTQFVgkiAmtBX3sRia9sScEs3K5rcEaDu9riYSNMBrQ3uLQbu9aSBB3zNnCisafbMQo7puURyGF5FtLmH). Use: the fee, together with the rest of the SOL in the creator wallet, moved to the creator’s personal wallets (transactions 2BsW5YrvJTWuyUaA9jTZCmbk9Wiz68cpa2EwMMNmXh1DgiG7mK5Mr97JAqwqEZyAxrpp8J8YAX3jaumHBE8iEFNN and 3oxwGw2dBphbT4fvMjpJVyEnTQr5ATsbzF6ZCHdU9wyXcRPkncfvi5HRa8dnDDEcv9Zr8J7EyJzSTJEAEuJbDge7) and was mixed with their money; it was not used separately for the project. It is the creator’s income: it is not shared with holders or with anyone else. On 2026-10-04 the creator reimbursed that amount, 0.031554107 SOL, from their personal wallet to the public project wallet, inside a transfer of 0.033020866 SOL (transaction 4FhEmdch5DnDSN8BXfH7pFP2h9w8o2MdAMw16FcYxkLiaZ3BJEaqEhRf5e4rVPQxYGRt8oz2n3TDi5dzsL726KEy). Each new fee collection will move to that wallet within 7 days and will be published here with both transactions.")}</p>
+<p>{t("Pump.fun paga al creador una comisión por las operaciones del token. Cobros hasta el 2026-10-03: uno, de 0,0316 SOL, el 2026-09-23 (transacción 3rDQEqHoTQFVgkiAmtBX3sRia9sScEs3K5rcEaDu9riYSNMBrQ3uLQbu9aSBB3zNnCisafbMQo7puURyGF5FtLmH). Uso: la comisión pasó, junto con el resto del SOL de la wallet creadora, a wallets personales del creador (transacciones 2BsW5YrvJTWuyUaA9jTZCmbk9Wiz68cpa2EwMMNmXh1DgiG7mK5Mr97JAqwqEZyAxrpp8J8YAX3jaumHBE8iEFNN y 3oxwGw2dBphbT4fvMjpJVyEnTQr5ATsbzF6ZCHdU9wyXcRPkncfvi5HRa8dnDDEcv9Zr8J7EyJzSTJEAEuJbDge7) y se mezcló con su dinero; no se usó por separado para el proyecto. Es un ingreso del creador: no se reparte entre las cuentas con tokens ni con nadie. El 2026-10-04 el creador reintegró ese importe, 0,031554107 SOL, desde su wallet personal a la wallet pública del proyecto, dentro de un envío de 0,033020866 SOL (transacción 4FhEmdch5DnDSN8BXfH7pFP2h9w8o2MdAMw16FcYxkLiaZ3BJEaqEhRf5e4rVPQxYGRt8oz2n3TDi5dzsL726KEy). Cada nuevo cobro de la comisión pasará a esa wallet en un máximo de 7 días y se publicará aquí con las dos transacciones.", "Pump.fun pays the creator a fee on the token’s trades. Fees collected through 2026-10-03: one payment of 0.0316 SOL, on 2026-09-23 (transaction 3rDQEqHoTQFVgkiAmtBX3sRia9sScEs3K5rcEaDu9riYSNMBrQ3uLQbu9aSBB3zNnCisafbMQo7puURyGF5FtLmH). Use: the fee, together with the rest of the SOL in the creator wallet, moved to the creator’s personal wallets (transactions 2BsW5YrvJTWuyUaA9jTZCmbk9Wiz68cpa2EwMMNmXh1DgiG7mK5Mr97JAqwqEZyAxrpp8J8YAX3jaumHBE8iEFNN and 3oxwGw2dBphbT4fvMjpJVyEnTQr5ATsbzF6ZCHdU9wyXcRPkncfvi5HRa8dnDDEcv9Zr8J7EyJzSTJEAEuJbDge7) and was mixed with their money; it was not used separately for the project. It is the creator’s income: it is not shared with token accounts or with anyone else. On 2026-10-04 the creator reimbursed that amount, 0.031554107 SOL, from their personal wallet to the public project wallet, inside a transfer of 0.033020866 SOL (transaction 4FhEmdch5DnDSN8BXfH7pFP2h9w8o2MdAMw16FcYxkLiaZ3BJEaqEhRf5e4rVPQxYGRt8oz2n3TDi5dzsL726KEy). Each new fee collection will move to that wallet within 7 days and will be published here with both transactions.")}</p>
 <p>{t("El creador de STUBX cobra una comisión por cada operación. Pump.fun tiene sus propias condiciones, como la edad mínima de 18 años y países excluidos.", "The creator of STUBX collects a fee on every trade. Pump.fun has its own terms, such as a minimum age of 18 and excluded countries.")}</p>
 <div id="wallets">
 <h3>{t("Wallet pública del proyecto", "Public project wallet")}</h3>
@@ -358,9 +362,9 @@ def home() -> str:
 <section id="estado">
 <h2>{t("Estado", "Status")}</h2>
 <div id="ppm">
-<p>{t("Prueba pública mínima a 2026-10-05: 3 de 4 marcadas y 1 que no aplica (la wallet del agente). No es un 3/3. Marcada no significa auditada.", "Minimum public proof as of 2026-10-05: 3 of 4 marked and 1 not applicable (the agent wallet). It is not 3/3. Marked does not mean audited.")}</p>
+<p>{t("Prueba pública mínima a 2026-10-05: 3 de 4 marcadas y 1 que no aplica (la wallet del agente). No es un 3/3. Marcada no significa auditada.", "Minimum public proof as of 2026-10-05: 3 of 4 checked and 1 not applicable (the agent wallet). It is not 3/3. Checked does not mean audited.")}</p>
 </div>
-<p><a href="/status/#ppm">{t("Ver las casillas", "See the boxes")}</a></p>
+<p><a href="/status/#ppm">{t("Ver las casillas", "See the checklist")}</a></p>
 </section>
 <section id="pruebas">
 <h2>{t("Pruebas", "Proofs")}</h2>
@@ -374,7 +378,7 @@ def home() -> str:
 </section>
 <section class="risk-block" id="riesgos">
 <h2>{t("Léelo antes de nada", "Read this before anything else")}</h2>
-<p>{t("STUBX es un criptoactivo experimental de alto riesgo. Puedes perder todo lo que aportes. No es asesoramiento ni una recomendación, y no lo ha aprobado la CNMV ni ninguna otra autoridad.", "STUBX is an experimental high-risk crypto-asset. You can lose everything you put in. It is not advice or a recommendation, and it has not been approved by the CNMV or any other authority.")}</p>
+<p>{t("STUBX es un criptoactivo experimental de alto riesgo. Puedes perder todo lo que aportes. No es asesoramiento ni una recomendación, y no lo ha aprobado la CNMV ni ninguna otra autoridad.", "STUBX is an experimental high-risk crypto-asset. You could lose everything you put in. It is not advice or a recommendation, and it has not been approved by the CNMV or any other authority.")}</p>
 <p><a href="/risks/">{t("El aviso completo, con MiCA", "The full notice, including MiCA")}</a> · <a href="/security/">{t("Canales y aviso de clones", "Channels and clone notice")}</a></p>
 </section>
 <section id="contacto">
@@ -388,12 +392,11 @@ def prepare_tool(name: str) -> str:
     raw = (ROOT / "content" / "tools" / f"{name}.html").read_text(encoding="utf-8")
     raw = re.sub(r"^<main[^>]*>", "", raw)
     raw = re.sub(r"</main>\s*$", "", raw)
+    notice_es = "Herramienta educativa con datos públicos. No es consejo de inversión. Cripto de alto riesgo · Puedes perderlo todo."
+    notice_en = "Educational tool using public data. Not investment advice. High-risk crypto · You could lose everything."
     raw = raw.replace(
-        "<p>Herramienta educativa con datos públicos. No es consejo de inversión. Cripto de alto riesgo · Puedes perderlo todo.</p>\n<p lang=\"en\">Educational tool using public data. Not investment advice. High-risk crypto · You can lose everything.</p>",
-        "<p>" + t(
-            "Herramienta educativa con datos públicos. No es consejo de inversión. Cripto de alto riesgo · Puedes perderlo todo.",
-            "Educational tool using public data. Not investment advice. High-risk crypto · You can lose everything.",
-        ) + "</p>",
+        f'<p class="lang es" lang="es">{notice_es}</p>\n<p class="lang en" lang="en">{notice_en}</p>',
+        f"<p>{t(notice_es, notice_en)}</p>",
     )
     raw = raw.replace('<section id="resultado"', '<section id="resultado" tabindex="-1"', 1)
     if name == "verify":
@@ -418,11 +421,11 @@ def methodology() -> str:
     return f"""
 <h1>{t("Metodología", "Methodology")}</h1>
 <p class="lede">{t("De dónde sale cada dato de esta vista previa, qué se calculó y qué no se rellena cuando falta.", "Where each figure in this preview comes from, what was calculated, and what is not filled in when something is missing.")}</p>
-{source("Textos de la web en producción revisados hasta el 2026-10-05. Fichas de Verify: ejemplos del 2026-10-08 y la tanda del 2026-10-09, commit b820aa3 del 2026-10-09. Registro del tablero de ese mismo commit. Esta página no vuelve a consultar la red.", "Production website texts reviewed through 2026-10-05. Verify cards: examples from 2026-10-08 and the 2026-10-09 batch, commit b820aa3 of 2026-10-09. Board record from that same commit. This page does not query the network again.")}
+{source("Textos de la web en producción revisados hasta el 2026-10-05. Fichas de Verify: ejemplos del 2026-10-08 y la tanda del 2026-10-09, commit 86df576 del 2026-10-09. Registro del tablero de ese mismo commit. Esta página no vuelve a consultar la red.", "Production website texts reviewed through 2026-10-05. Verify cards: examples from 2026-10-08 and the 2026-10-09 batch, commit 86df576 of 2026-10-09. Board record from that same commit. This page does not query the network again.")}
 <h2>{t("Qué hace Verify aquí", "What Verify does here")}</h2>
 <ul class="clean">
 <li>{t("Acepta una dirección y comprueba el formato. El nombre del token no sirve.", "It accepts an address and checks the format. The token name is not enough.")}</li>
-<li>{t("La compara con las fichas guardadas: la oficial releída el 2026-10-09, con la cuenta personal publicada 2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX, los clones ERYyy y FMNb de ese día, los tres clones y el contraste USDC del 2026-10-08, y dos ejemplos 0x sin verificar en la cadena. Commit b820aa3 del 2026-10-09. La PR 14 sigue sin fusionarse en main.", "It compares it with the stored cards: the official one read again on 2026-10-09, including the published personal account 2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX, the ERYyy and FMNb clones from that day, the three clones and the USDC contrast from 2026-10-08, and two 0x examples that are not verified on-chain. Commit b820aa3 of 2026-10-09. PR 14 is still not merged into main.")}</li>
+<li>{t("La compara con las fichas guardadas: la oficial releída el 2026-10-09, con la cuenta personal publicada 2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX, los clones ERYyy y FMNb de ese día, los tres clones y el contraste USDC del 2026-10-08, y dos ejemplos 0x sin verificar en la cadena. Commit 86df576 del 2026-10-09. La PR 14 sigue sin fusionarse en main.", "It compares it with the stored cards: the official one read again on 2026-10-09, including the published personal account 2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX, the ERYyy and FMNb clones from that day, the three clones and the USDC contrast from 2026-10-08, and two 0x examples that are not verified on-chain. Commit 86df576 of 2026-10-09. PR 14 is still not merged into main.")}</li>
 <li>{t("Si no hay ficha, el resultado es «no se pudo comprobar». No se inventa un verde.", "If there is no card, the result is “could not be checked”. A green result is not invented.")}</li>
 <li>{t("«Parece el STUBX oficial» significa que la dirección coincide con el registro de esa tanda. No es una garantía permanente ni una auditoría.", "“Looks like the official STUBX” means the address matches the registry for that batch. It is not a permanent guarantee or an audit.")}</li>
 <li>{t("Una señal de copia dice que el nombre, el símbolo, la imagen o un enlace coinciden y el mint es otro. No dice quién lo hizo.", "A copy signal says the name, symbol, image, or a link matches and the mint is a different one. It does not say who did it.")}</li>
@@ -431,11 +434,11 @@ def methodology() -> str:
 <p>{t("No disponible significa que esa llamada no dejó un dato usable. Desconocido es lo que no se leyó. Ninguno de los dos se convierte en cero, en autoridad revocada ni en metadatos inmutables.", "Unavailable means that call did not leave a usable fact. Unknown is what was not read. Neither one becomes zero, a revoked authority, or immutable metadata.")}</p>
 <p>{t("La ficha oficial del 2026-10-09 lee el saldo de la curva, el de la creadora y el de la cuenta personal publicada 2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX. El resto respecto al suministro es 0.0000 %. No es un censo. Los tres clones del 2026-10-08 y USDC siguen con la muestra no disponible: en esa tanda getTokenLargestAccounts respondió HTTP 429. ERYyy y FMNb traen saldos de curva y creadora, también sin ser un censo. Una cuenta puede ser de un custodio. No disponible no es concentración cero.", "The official card of 2026-10-09 reads the curve balance, the creator balance, and the published personal account 2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX. The rest of the supply is 0.0000%. It is not a census. The three clones from 2026-10-08 and USDC still have an unavailable sample: in that batch getTokenLargestAccounts returned HTTP 429. ERYyy and FMNb carry curve and creator balances, also without being a census. An account can belong to a custodian. Unavailable is not zero concentration.")}</p>
 <h2>{t("Curva", "Curve")}</h2>
-<p>{t("Si la cuenta derivada es del programa de la curva, la ficha lo dice. El avance clásico es un cálculo inferido con la reserva real inicial pública documentada (793100000000000), truncado a 2 decimales hacia cero. No es un campo de la cuenta. Si no hay curva, el avance queda en no aplica y no se rellenan reservas con cero.", "If the derived account belongs to the curve program, the card says so. Classic progress is an inferred calculation using the documented public initial real reserve (793100000000000), truncated to 2 decimals toward zero. It is not a field of the account. If there is no curve, progress stays not applicable and reserves are not filled in with zero.")}</p>
+<p>{t("Si la cuenta derivada es del programa de la curva, la ficha lo dice. El avance clásico es un cálculo inferido con la cantidad real inicial pública documentada de la curva (Pump.fun lo llama ‘reserves’) (793100000000000), truncado a 2 decimales hacia cero. No es un campo de la cuenta. Si no hay curva, el avance queda en no aplica y no se rellenan con cero las cantidades de la curva.", "If the derived account belongs to the curve program, the card says so. Classic progress is an inferred calculation using the documented public initial real curve amount (Pump.fun calls these ‘reserves’) (793100000000000), truncated to 2 decimals toward zero. It is not a field of the account. If there is no curve, progress stays not applicable and the curve amounts are not filled in with zero.")}</p>
 <p>{t("En la ficha del mint del registro, el 2026-10-08 a las 07:41:29 UTC, el avance inferido es 1.74. Los tres clones de esa tanda tienen 0.00 inferido. USDC no es una curva.", "On the registry mint card, 2026-10-08 at 07:41:29 UTC, inferred progress is 1.74. The three clones in that batch have inferred 0.00. USDC is not a curve.")}</p>
 <h2>{t("Prueba pública mínima", "Minimum public proof")}</h2>
-<p>{t("Cuatro casillas: wallet, logs, límites y kill-switch. A 2026-10-05 hay 3 marcadas y 1 que no aplica. No es un 3/3. Marcada no significa auditada. El detalle y las ejecuciones están en Estado.", "Four boxes: wallet, logs, limits, and kill-switch. As of 2026-10-05, 3 are marked and 1 does not apply. It is not 3/3. Marked does not mean audited. The detail and the runs are on Status.")}</p>
-<p><a href="/status/">{t("Ver las casillas", "See the boxes")}</a> · <a href="/proofs/">{t("Ver las pruebas, una a una", "See the proofs, one by one")}</a></p>
+<p>{t("Cuatro casillas: wallet, logs, límites y kill-switch. A 2026-10-05 hay 3 marcadas y 1 que no aplica. No es un 3/3. Marcada no significa auditada. El detalle y las ejecuciones están en Estado.", "Four checks: wallet, logs, limits, and kill-switch. As of 2026-10-05, 3 are checked and 1 does not apply. It is not 3/3. Checked does not mean audited. The detail and the runs are on Status.")}</p>
+<p><a href="/status/">{t("Ver las casillas", "See the checklist")}</a> · <a href="/proofs/">{t("Ver las pruebas, una a una", "See the proofs, one by one")}</a></p>
 """
 
 
@@ -452,9 +455,9 @@ def security() -> str:
 <p>{t("Cópiala solo desde esta web o desde @stubxai. Compárala entera, no solo el principio y el final. En Solscan debe decir STUBX, creado el 2026-09-23, y la wallet creadora es la de abajo.", "Copy it only from this website or from @stubxai. Compare the whole address, not only the start and the end. On Solscan it should say STUBX, created on 2026-09-23, and the creator wallet is the one below.")}</p>
 <h2>{t("Canales oficiales", "Official channels")}</h2>
 <ul class="clean">
-<li>{t("X, único canal oficial en X:", "X, the only official X channel:")} <a href="https://x.com/stubxai">@stubxai</a></li>
+<li>{t("X, único canal oficial en X:", "X (the only official account on X):")} <a href="https://x.com/stubxai" title="Único canal oficial en X / The only official channel on X">@stubxai</a></li>
 <li>{t("Web:", "Website:")} <a href="https://stubxai.com/">stubxai.com</a>. {t(HOSTING_ES, HOSTING_EN)}</li>
-<li>{t("Correo, único:", "Email, the only one:")} <a href="mailto:stubxai.hq@gmail.com">stubxai.hq@gmail.com</a></li>
+<li>{t("Correo, único:", "Email (the only one):")} <a href="mailto:stubxai.hq@gmail.com">stubxai.hq@gmail.com</a></li>
 <li>{t("Código, único repositorio:", "Code, the only repository:")} <a href="https://github.com/stubxai/stubx-agent">github.com/stubxai/stubx-agent</a>. {t("github.com/stubx, sin «ai», no tiene relación con STUBX.", "github.com/stubx, without “ai”, has no relation to STUBX.")}</li>
 <li>{t("Telegram, solo anuncios:", "Telegram, announcements only:")} <a href="https://t.me/stubxai">t.me/stubxai</a>. {t("Los admins nunca escriben primero por privado.", "Admins never write first in private.")}</li>
 <li>Farcaster: <a href="https://farcaster.xyz/stubxai">@stubxai</a></li>
@@ -467,7 +470,7 @@ def security() -> str:
 <li>{t("Wallet personal del creador:", "Creator’s personal wallet:")} <code>{PERSONAL}</code>. {t("Tiene STUBX. Nunca pide que le envíes nada y no acepta aportaciones.", "It holds STUBX. It never asks you to send anything and it does not accept contributions.")}</li>
 <li>{t("Wallet pública del proyecto, SOL, controlada por el creador:", "Public project wallet, SOL, controlled by the creator:")} <code>{PROJECT}</code>. {t("No es multifirma. No acepta aportaciones ni donaciones.", "It is not a multisig. It does not accept contributions or donations.")}</li>
 </ul>
-<p>{t("Cualquier otra wallet que diga ser de STUBX o pida un envío es una estafa. Cualquier dirección «de práctica» o «de prueba» que veas por ahí: no es la CA oficial. La cuenta personal de X del creador, @CreadorSTUBX, no es un canal oficial.", "Any other wallet that claims to be STUBX or asks for a transfer is a scam. Any “practice” or “test” address you see elsewhere: it is not the official CA. The creator’s personal X account, @CreadorSTUBX, is not an official channel.")}</p>
+<p>{t("Cualquier otra wallet que diga ser de STUBX o pida un envío es una estafa. Cualquier dirección «de práctica» o «de prueba» que veas por ahí: no es la CA oficial. La cuenta personal de X del creador, @CreadorSTUBX, no es un canal oficial.", "Any other wallet that claims to be STUBX or asks for a transfer is a scam. Any “practice” or “test” address you see elsewhere is not the official CA. The creator’s personal X account, @CreadorSTUBX, is not an official channel.")}</p>
 <h2 id="negociacion">{t("¿Dónde se negocia STUBX?", "Where does STUBX trade?")}</h2>
 <p>{t("Información, no recomendación. STUBX se creó el 2026-09-23 en Pump.fun, una plataforma de terceros para crear y negociar tokens en Solana. STUBX no es un exchange: no intermedia, no custodia fondos y no puede deshacer operaciones. Usa una wallet propia.", "Information, not a recommendation. STUBX was created on 2026-09-23 on Pump.fun, a third-party platform for creating and trading tokens on Solana. STUBX is not an exchange: it does not intermediate, it does not custody funds, and it cannot undo trades. Use your own wallet.")}</p>
 <ol>
@@ -477,13 +480,13 @@ def security() -> str:
 <li>{t("Cada operación paga comisiones de Pump.fun y de la red Solana (consulta las vigentes en su página de comisiones). Además, el creador de STUBX cobra una comisión por cada operación.", "Each trade pays Pump.fun fees and Solana network fees (check the current ones on their fees page). In addition, the creator of STUBX collects a fee on every trade.")} <a href="https://pump.fun/docs/fees">{t("Página de comisiones", "Fees page")}</a> · <a href="/#transparencia">{t("transparencia", "transparency")}</a></li>
 <li>{t("Pump.fun tiene sus propias condiciones, como la edad mínima de 18 años y países excluidos.", "Pump.fun has its own terms, such as a minimum age of 18 and excluded countries.")}</li>
 </ol>
-<p>{t("Cada venta baja el precio: si ha caído, vender puede devolverte muy poco o casi nada, y Pump.fun o la red Solana pueden fallar o saturarse. Puedes perder todo lo que pongas.", "Every sale lowers the price: if it has fallen, selling can return very little or almost nothing, and Pump.fun or the Solana network can fail or become congested. You can lose everything you put in.")}</p>
+<p>{t("Cada venta baja el precio: si ha caído, vender puede devolverte muy poco o casi nada, y Pump.fun o la red Solana pueden fallar o saturarse. Puedes perder todo lo que pongas.", "Every sale lowers the price: if it has fallen, selling can return very little or almost nothing, and Pump.fun or the Solana network can fail or become congested. You could lose everything you put in.")}</p>
 <p><a href="https://pump.fun/coin/TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump">{t("Página del token en Pump.fun (plataforma de terceros)", "Token page on Pump.fun (third-party platform)")}</a></p>
-<h2>{t("Cinco reglas para no caer.", "Five rules so you do not get caught.")}</h2>
+<h2>{t("Cinco reglas para no caer.", "Five rules to avoid getting scammed.")}</h2>
 <ol>
 <li>{t("Usa solo la CA de esta lista.", "Use only the CA on this list.")}</li>
 <li>{t("Nunca compartas tu clave privada, frase semilla (seed) ni códigos de acceso.", "Never share your private key, seed phrase, or access codes.")}</li>
-<li>{t("Nunca envíes SOL ni dinero por un mensaje directo.", "Never send SOL or money because of a direct message.")}</li>
+<li>{t("Nunca envíes SOL ni dinero por un mensaje directo.", "Never send SOL or money in response to a direct message.")}</li>
 <li>{t("No conectes tu wallet en webs que no aparezcan en esta lista.", "Do not connect your wallet on websites that are not on this list.")}</li>
 <li>{t("Nadie oficial te prometerá rentabilidad, precio, listado ni venta pública.", "Nobody official will promise you a return, a price, a listing, or a public sale.")}</li>
 </ol>
@@ -492,7 +495,7 @@ def security() -> str:
 <ul class="clean">
 <li>{t("Que envíes SOL, tokens o dinero.", "That you send SOL, tokens, or money.")}</li>
 <li>{t("Tu frase semilla, tu clave privada o tus códigos.", "Your seed phrase, your private key, or your codes.")}</li>
-<li>{t("Que conectes una wallet o firmes algo por un mensaje privado.", "That you connect a wallet or sign something because of a private message.")}</li>
+<li>{t("Que conectes una wallet o firmes algo por un mensaje privado.", "That you connect a wallet or sign anything in response to a private message.")}</li>
 <li>{t("Preventas, whitelists o airdrops.", "Presales, whitelists, or airdrops.")}</li>
 </ul>
 <p>{t("STUBX no escribe primero por mensaje directo. Si alguien lo hace en nombre de STUBX, trátalo como una estafa: no respondas, no abras enlaces y no firmes. La información válida se publica en abierto. Si hay contradicción, no actúes.", "STUBX does not write first in a direct message. If someone does it in STUBX’s name, treat it as a scam: do not reply, do not open links, and do not sign. Valid information is published in the open. If there is a contradiction, do not act.")}</p>
@@ -514,22 +517,22 @@ def risks() -> str:
 </div>
 <h2>{t("Lo que puede salir mal", "What can go wrong")}</h2>
 <div class="grid-3">
-<article class="card"><h3>{t("Pérdida total", "Total loss")}</h3><p>{t("Un memecoin puede irse a cero. Puedes perder el 100 % de lo que aportes.", "A memecoin can go to zero. You can lose 100% of what you put in.")}</p></article>
+<article class="card"><h3>{t("Pérdida total", "Total loss")}</h3><p>{t("Un memecoin puede irse a cero. Puedes perder el 100 % de lo que aportes.", "A memecoin can go to zero. You could lose 100% of what you put in.")}</p></article>
 <article class="card"><h3>{t("Mercado y liquidez", "Market and liquidity")}</h3><p>{t("Bots que compran antes que nadie, copias del nombre, poco SOL en la curva, caídas de la red y acceso limitado según el país. Nadie aquí dice que compres o vendas.", "Bots that buy before anyone else, copies of the name, little SOL on the curve, network outages, and access limited by country. Nobody here tells you to buy or sell.")}</p></article>
 <article class="card"><h3>{t("Sin promesas", "No promises")}</h3><p>{t("No prometemos rentabilidad, precio, listado en exchanges ni venta pública. STUBX no da derechos, dividendos ni reparto de nada.", "We do not promise a return, a price, an exchange listing, or a public sale. STUBX grants no rights, dividends, or distribution of anything.")}</p></article>
-<article class="card"><h3>{t("Riesgo técnico", "Technical risk")}</h3><p>{t("Lanzamiento en la curva pública de Pump.fun, sin reserva de equipo y sin autoridades de emisión ni congelación. Eso reduce algunos riesgos técnicos, no el riesgo de mercado. El código del agente es un prototipo y puede tener fallos.", "Launch on the public Pump.fun curve, with no team reserve and no mint or freeze authority. That reduces some technical risks, not market risk. The agent code is a prototype and can have faults.")}</p></article>
-<article class="card"><h3>{t("Estafas y copias", "Scams and copies")}</h3><p>{t("Habrá cuentas, webs y CAs falsas. Solo es oficial lo que aparece en Seguridad. Nadie de STUBX pedirá tu semilla ni fondos por mensaje directo.", "There will be fake accounts, websites, and CAs. Only what appears on Security is official. Nobody from STUBX will ask for your seed or for funds in a direct message.")}</p></article>
-<article class="card"><h3>{t("Datos parciales y operación", "Partial data and operations")}</h3><p>{t("La ficha oficial del 2026-10-09 lee curva y creadora y no es un censo. Otras fichas de esa demo siguen sin muestra de holders. El creador puede vender sus STUBX en cualquier momento: no hay vesting. La wallet del proyecto la controla una persona y no es multifirma.", "The official card of 2026-10-09 reads the curve and the creator and is not a census. Other cards in that demo still have no holder sample. The creator can sell their STUBX at any time: there is no vesting. One person controls the project wallet and it is not a multisig.")}</p></article>
+<article class="card"><h3>{t("Riesgo técnico", "Technical risk")}</h3><p>{t("Lanzamiento en la curva pública de Pump.fun, sin reserva de equipo y sin autoridades de emisión ni congelación. Eso reduce algunos riesgos técnicos, no el riesgo de mercado. El código del agente es un prototipo y puede tener fallos.", "Launch on the public Pump.fun curve, with no team reserve and no mint or freeze authority. That reduces some technical risks, not market risk. The agent code is a prototype and may contain bugs.")}</p></article>
+<article class="card"><h3>{t("Estafas y copias", "Scams and copies")}</h3><p>{t("Habrá cuentas, webs y CAs falsas. Solo es oficial lo que aparece en Seguridad. Nadie de STUBX pedirá tu semilla ni fondos por mensaje directo.", "There will be fake accounts, websites, and CAs. Only what is listed on the Security page is official. Nobody from STUBX will ask for your seed or for funds in a direct message.")}</p></article>
+<article class="card"><h3>{t("Datos parciales y operación", "Partial data and operations")}</h3><p>{t("La ficha oficial del 2026-10-09 lee curva y creadora y no es un censo. Otras fichas de esa demo siguen sin muestra de cuentas con tokens. El creador puede vender sus STUBX en cualquier momento: no hay vesting. La wallet del proyecto la controla una persona y no es multifirma.", "The official card of 2026-10-09 reads the curve and the creator and is not a census. Other cards in that demo still have no token account sample. The creator can sell their STUBX at any time: there is no vesting. One person controls the project wallet and it is not a multisig.")}</p></article>
 </div>
 <h2>{t("Qué es y qué no es", "What it is and what it is not")}</h2>
 <div class="grid-2">
-<article class="card"><h3>{t("Qué es", "What it is")}</h3><ul class="clean"><li>{t("Un personaje-meme sobre agentes de IA que piden pruebas.", "A character-meme about AI agents that ask for proof.")}</li><li>{t(f"Un token en Solana creado en Pump.fun el 2026-09-23. CA {CA}.", f"A Solana token created on Pump.fun on 2026-09-23. CA {CA}.")}</li><li>{t("Un prototipo de código abierto, sin wallet ni claves, con tests, kill-switch y registro público.", "An open-source prototype, with no wallet and no keys, with tests, a kill-switch, and a public log.")}</li></ul></article>
-<article class="card"><h3>{t("Qué no es", "What it is not")}</h3><ul class="clean"><li>{t("No es consejo de inversión ni una recomendación.", "It is not investment advice or a recommendation.")}</li><li>{t("No es un agente autónomo: no firma, no custodia y no opera.", "It is not an autonomous agent: it does not sign, custody, or trade.")}</li><li>{t("El kill-switch solo afecta al agente del repositorio. No pausa transferencias ni congela cuentas.", "The kill-switch only affects the repository agent. It does not pause transfers or freeze accounts.")}</li><li>{t("No hay agente autónomo, aunque la descripción grabada diga «AI-native».", "There is no autonomous agent, even if the recorded description says “AI-native”.")}</li></ul></article>
+<article class="card"><h3>{t("Qué es", "What it is")}</h3><ul class="clean"><li>{t("Un personaje-meme sobre agentes de IA que piden pruebas.", "A meme character about AI agents that ask for proof.")}</li><li>{t(f"Un token en Solana creado en Pump.fun el 2026-09-23. CA {CA}.", f"A Solana token created on Pump.fun on 2026-09-23. CA {CA}.")}</li><li>{t("Un prototipo de código abierto, sin wallet ni claves, con tests, kill-switch y registro público.", "An open-source prototype, with no wallet and no keys, with tests, a kill-switch, and a public log.")}</li></ul></article>
+<article class="card"><h3>{t("Qué no es", "What it is not")}</h3><ul class="clean"><li>{t("No es consejo de inversión ni una recomendación.", "It is not investment advice or a recommendation.")}</li><li>{t("No es un agente autónomo: no firma, no custodia y no opera.", "It is not an autonomous agent: it does not sign transactions, take custody of assets, or trade.")}</li><li>{t("El kill-switch solo afecta al agente del repositorio. No pausa transferencias ni congela cuentas.", "The kill-switch only affects the repository agent. It does not pause transfers or freeze accounts.")}</li><li>{t("No hay agente autónomo, aunque la descripción grabada diga «AI-native».", "There is no autonomous agent, even if the on-chain description says “AI-native”.")}</li></ul></article>
 </div>
 <h2>{t("Lo que no decimos ni hacemos", "What we do not say or do")}</h2>
 <ul class="clean">
 <li>{t("Sin promesas de rentabilidad ni de precio.", "No promises of return or price.")}</li>
-<li>{t("No hay aprobación de la CNMV ni white paper MiCA notificado. Tampoco hay sello de la CNMV ni un «preparado para MiCA».", "There is no CNMV approval and no notified MiCA white paper. There is also no CNMV seal and no “MiCA-ready”.")}</li>
+<li>{t("No hay aprobación de la CNMV ni white paper MiCA notificado. Tampoco hay sello de la CNMV ni un «preparado para MiCA».", "There is no CNMV approval and no notified MiCA white paper. There is also no CNMV seal and no “MiCA-ready” label.")}</li>
 <li>{t("Sin volumen falso.", "No fake volume.")}</li>
 <li>{t("Sin llamadas a comprar, ni urgencias, ni anuncios de listados.", "No calls to buy, no urgency, and no listing announcements.")}</li>
 </ul>
@@ -623,7 +626,7 @@ def proofs() -> str:
         "Timestamps: 8 confirmed and 1 pending (as of 2026-10-04)",
         t(
             "Había 9 anclas y 9 sellos .ots. Los 8 del 26-09 al 03-10 estaban confirmados en Bitcoin. El del 04-10 seguía pendiente. El primer bloque del ancla 2026-09-26-000001 es 968752. Bitcoin solo es el reloj: no respalda STUBX. Un sello prueba que el ancla existía a más tardar a la hora de su bloque, no que el texto sea verdad. Comprobado a mano el 03-10 y de nuevo el 04-10-2026 a las 12:41 contra blockstream.info.",
-            "There were 9 anchors and 9 .ots proofs. The 8 from 09-26 to 10-03 were confirmed in Bitcoin. The 10-04 proof was still pending. The first block of anchor 2026-09-26-000001 is 968752. Bitcoin is only the clock: it does not back STUBX. A proof shows that the anchor existed by the time of its block, not that the text is true. Checked by hand on 10-03 and again on 2026-10-04 at 12:41 against blockstream.info.",
+            "There were 9 anchors and 9 .ots timestamp files. The 8 from 2026-09-26 to 2026-10-03 were confirmed in Bitcoin. The 2026-10-04 timestamp was still pending. The first block of anchor 2026-09-26-000001 is 968752. Bitcoin is only the clock: it does not back STUBX. A timestamp shows that the anchor existed by the time of its block, not that the text is true. Checked by hand on 2026-10-03 and again on 2026-10-04 at 12:41 against blockstream.info.",
         )
         + how_to(
             "En el mismo clon, con Python 3 y curl (pasos de LOGS.md):",
@@ -659,8 +662,8 @@ def proofs() -> str:
         )
         + f'<p><a href="/tokenomics/">{t("Tabla completa", "Full table")}</a></p>'
         + how_to(
-            f'En Solscan, pestaña de holders de la <a href="https://solscan.io/token/{CA}">CA</a>. O con el RPC público: getTokenSupply da el total y getTokenAccountsByOwner, con el mint de STUBX, da lo que tiene cada dirección. Ejemplo con la wallet creadora:',
-            f'On Solscan, the holders tab of the <a href="https://solscan.io/token/{CA}">CA</a>. Or with the public RPC: getTokenSupply gives the total and getTokenAccountsByOwner, with the STUBX mint, gives what each address holds. Example with the creator wallet:',
+            f'En Solscan, la pestaña que lista las cuentas con tokens de la <a href="https://solscan.io/token/{CA}">CA</a>. O con el RPC público: getTokenSupply da el total y getTokenAccountsByOwner, con el mint de STUBX, da lo que tiene cada dirección. Ejemplo con la wallet creadora:',
+            f'On Solscan, the tab that lists the token accounts of the <a href="https://solscan.io/token/{CA}">CA</a>. Or with the public RPC: getTokenSupply gives the total and getTokenAccountsByOwner, with the STUBX mint, gives what each address holds. Example with the creator wallet:',
             "curl -s https://api.mainnet-beta.solana.com -H 'Content-Type: application/json' \\\n"
             f'  -d \'{{"jsonrpc":"2.0","id":1,"method":"getTokenAccountsByOwner","params":["{CREATOR}",{{"mint":"{CA}"}},{{"encoding":"jsonParsed"}}]}}\' \\\n'
             "  | grep -o '\"amount\":\"[0-9]*\"'",
@@ -672,8 +675,8 @@ def proofs() -> str:
         "Wallet pública del proyecto: 0 STUBX",
         "Public project wallet: 0 STUBX",
         t(
-            f"{PROJECT} no tenía ninguna cuenta de STUBX el 04-10-2026 a las 12:24 (Madrid), slot 453228585. Es una wallet normal, no multifirma. La controla el creador. El SOL es suyo y solo paga costes del proyecto. No pertenece a los holders, no da derechos y no acepta aportaciones. La cadena no dice quién la controla: lo declara el creador. No es la wallet del agente.",
-            f"{PROJECT} had no STUBX account on 2026-10-04 at 12:24 (Madrid), slot 453228585. It is a normal wallet, not a multisig. The creator controls it. The SOL is theirs and it only pays project costs. It does not belong to holders, it grants no rights, and it does not accept contributions. The chain does not say who controls it: the creator declares that. It is not the agent wallet.",
+            f"{PROJECT} no tenía ninguna cuenta de STUBX el 04-10-2026 a las 12:24 (Madrid), slot 453228585. Es una wallet normal. La controla el creador y el SOL es suyo (no es multifirma). Solo se usa con SOL y solo paga costes del proyecto. No da derechos a nadie y no acepta aportaciones. La cadena no dice quién la controla: lo declara el creador. No es la wallet del agente.",
+            f"{PROJECT} had no STUBX account on 2026-10-04 at 12:24 (Madrid), slot 453228585. It is a normal wallet. It is controlled by the creator and the SOL is theirs (not a multisig). It is only used with SOL and it only pays project costs. It gives no rights to anyone and it does not accept contributions. The chain does not say who controls it: the creator declares that. It is not the agent wallet.",
         )
         + how_to(
             f'Ábrela en <a href="https://solscan.io/account/{PROJECT}">Solscan</a> y mira sus tokens y sus transacciones. O con el RPC público:',
@@ -711,13 +714,13 @@ def proofs() -> str:
 <ul class="clean">
 <li>{t("Wallet o claves del agente. La wallet pública del proyecto la controla el creador.", "Agent wallet or keys. The creator controls the public project wallet.")}</li>
 <li>{t("Firmar o enviar transacciones.", "Signing or sending transactions.")}</li>
-<li>{t("Conexión del agente del repositorio a la red principal: lee una ficha local.", "The repository agent connecting to the public network: it reads a local card.")}</li>
+<li>{t("Conexión del agente del repositorio a la red principal: lee una ficha local.", "Connection of the repository agent to Solana mainnet: it reads a local card.")}</li>
 <li>{t("Autonomía real. «Agente autónomo» es el personaje.", "Real autonomy. “Autonomous agent” is the character.")}</li>
 <li>{t("Publicar en X desde este repositorio. Los posts de @stubxai los prepara otro agente, con textos aprobados antes.", "Posting to X from this repository. @stubxai posts are prepared by another agent, from texts approved beforehand.")}</li>
 <li>{t("Staking, rentabilidad o listados. No se prometen.", "Staking, returns, or listings. They are not promised.")}</li>
 </ul>
 <h2 id="archivo">{t("Archivo histórico", "Historical archive")}</h2>
-<p>{t("Los 18 posts están publicados íntegros en /archivo, en esta misma web. Son los textos anteriores al estado vigente y las 18 publicaciones de @stubxai retiradas el 2026-10-03, hacia las 11:35 (Madrid). Fuente: copia hecha el 2026-10-03 a las 11:21 (Madrid). Huella SHA-256 de esa copia: 654f8b25a72bae9d80c83ba3b3aa16ef16a1a531c450fce17d1d806342706897. No describen el estado actual.", "The 18 posts are published in full at /archivo on this same website. They are the texts from before the current state and the 18 @stubxai posts removed on 2026-10-03 at about 11:35 (Madrid). Source: a copy made on 2026-10-03 at 11:21 (Madrid). SHA-256 of that copy: 654f8b25a72bae9d80c83ba3b3aa16ef16a1a531c450fce17d1d806342706897. They do not describe the current state.")}</p>
+<p>{t("Los 18 posts están publicados íntegros en /archivo, en esta misma web. Son los textos anteriores al estado vigente y las 18 publicaciones de @stubxai retiradas el 2026-10-03, hacia las 11:35 (Madrid). Fuente: copia hecha el 2026-10-03 a las 11:21 (Madrid). Huella SHA-256 de esa copia: 654f8b25a72bae9d80c83ba3b3aa16ef16a1a531c450fce17d1d806342706897. Esa huella es el SHA-256 de la copia fuente no publicada de los 18 posts (2026-10-03 a las 11:21, Madrid), no el del archivo publicado en /archivo. No describen el estado actual.", "The 18 posts are published in full at /archivo on this same website. They are the texts from before the current state and the 18 @stubxai posts removed on 2026-10-03 at about 11:35 (Madrid). Source: a copy made on 2026-10-03 at 11:21 (Madrid). SHA-256 of that copy: 654f8b25a72bae9d80c83ba3b3aa16ef16a1a531c450fce17d1d806342706897. That hash is the SHA-256 of the unpublished source copy of the 18 posts (2026-10-03 at 11:21, Madrid), not of the file published at /archivo. They do not describe the current state.")}</p>
 <p><a href="/archivo">{t("Abrir el archivo", "Open the archive")}</a></p>
 <p>{t("Notas que ya acompañan a ese archivo: las respuestas del 2026-10-01 a @solana, @Raydium y @WhiteHouse se retiraron por ambiguas. STUBX no está listado en Raydium y no tiene relación, acuerdo ni anuncio con Solana, Raydium o la Casa Blanca. La frase de la comisión de creador en el post del 2026-10-02 no era exacta: el detalle vigente está en el reparto.", "Notes that already accompany that archive: the 2026-10-01 replies to @solana, @Raydium, and @WhiteHouse were removed as ambiguous. STUBX is not listed on Raydium and has no relationship, agreement, or announcement with Solana, Raydium, or the White House. The creator-fee sentence in the 2026-10-02 post was not accurate: the current detail is on the supply page.")}</p>
 <p>{t(HOSTING_ES, HOSTING_EN)}</p>
@@ -735,9 +738,9 @@ def status() -> str:
 <thead><tr><th scope="col">{t("Casilla", "Box")}</th><th scope="col">{t("Estado", "State")}</th><th scope="col">{t("Prueba", "Proof")}</th></tr></thead>
 <tbody>
 <tr><th scope="row">{t("Wallet del agente", "Agent wallet")}</th><td>{t("No aplica · 2026-10-05", "Not applicable · 2026-10-05")}</td><td>{t(f"El agente no tiene wallet ni claves, por diseño. La wallet del proyecto {PROJECT} la controla el creador y no cuenta para esta casilla.", f"The agent has no wallet and no keys, by design. The creator controls the project wallet {PROJECT} and it does not count for this box.")}</td></tr>
-<tr><th scope="row">{t("Logs", "Logs")}</th><td>{t("Marcada · 2026-10-05", "Marked · 2026-10-05")}</td><td>{t("Log de solo añadir, ancla 2026-09-26-000001 confirmada en el bloque de Bitcoin 968752. Ejecución daily-log del 05-10: github.com/stubxai/stubx-agent/actions/runs/37274282121. Marcada no significa que registre todo ni que lo anotado sea cierto.", "Append-only log, anchor 2026-09-26-000001 confirmed in Bitcoin block 968752. daily-log run of 10-05: github.com/stubxai/stubx-agent/actions/runs/37274282121. Marked does not mean it records everything or that the notes are true.")}</td></tr>
-<tr><th scope="row">{t("Límites", "Limits")}</th><td>{t("Marcada · 2026-10-05", "Marked · 2026-10-05")}</td><td>{t("CI pública del 05-10: github.com/stubxai/stubx-agent/actions/runs/37278171372, commit a960380. Un test en verde demuestra lo que ese test comprueba, en esa versión.", "Public CI of 10-05: github.com/stubxai/stubx-agent/actions/runs/37278171372, commit a960380. A green test shows what that test checks, in that version.")}</td></tr>
-<tr><th scope="row">{t("Kill-switch", "Kill-switch")}</th><td>{t("Marcada · 2026-10-05", "Marked · 2026-10-05")}</td><td>{t("Simulacros en verde: 26-09 (36264436020), 28-09 (36397668286) y 05-10 (37284177840). Solo afecta al agente. No pausa transferencias ni congela cuentas.", "Green drills: 09-26 (36264436020), 09-28 (36397668286), and 10-05 (37284177840). It only affects the agent. It does not pause transfers or freeze accounts.")}</td></tr>
+<tr><th scope="row">{t("Logs", "Logs")}</th><td>{t("Marcada · 2026-10-05", "Marked · 2026-10-05")}</td><td>{t("Log de solo añadir, ancla 2026-09-26-000001 confirmada en el bloque de Bitcoin 968752. Ejecución daily-log del 05-10: github.com/stubxai/stubx-agent/actions/runs/37274282121. Marcada no significa que registre todo ni que lo anotado sea cierto.", "Append-only log, anchor 2026-09-26-000001 confirmed in Bitcoin block 968752. daily-log run of 2026-10-05: github.com/stubxai/stubx-agent/actions/runs/37274282121. Marked does not mean it records everything or that the notes are true.")}</td></tr>
+<tr><th scope="row">{t("Límites", "Limits")}</th><td>{t("Marcada · 2026-10-05", "Marked · 2026-10-05")}</td><td>{t("CI pública del 05-10: github.com/stubxai/stubx-agent/actions/runs/37278171372, commit a960380. Un test en verde demuestra lo que ese test comprueba, en esa versión.", "Public CI of 2026-10-05: github.com/stubxai/stubx-agent/actions/runs/37278171372, commit a960380. A green test shows what that test checks, in that version.")}</td></tr>
+<tr><th scope="row">{t("Kill-switch", "Kill-switch")}</th><td>{t("Marcada · 2026-10-05", "Marked · 2026-10-05")}</td><td>{t("Simulacros en verde: 26-09 (36264436020), 28-09 (36397668286) y 05-10 (37284177840). Solo afecta al agente. No pausa transferencias ni congela cuentas.", "Green drills: 2026-09-26 (36264436020), 2026-09-28 (36397668286), and 2026-10-05 (37284177840). It only affects the agent. It does not pause transfers or freeze accounts.")}</td></tr>
 </tbody>
 </table></div>
 <h2>{t("Estados de un dato", "States of a fact")}</h2>
@@ -745,10 +748,10 @@ def status() -> str:
 <li>{t("Vacío: todavía no hay lectura. En Verify, el cuadro espera una dirección.", "Empty: there is no reading yet. On Verify, the box waits for an address.")}</li>
 <li>{t("Cargando: «Comprobando». No es un resultado.", "Loading: “Checking”. It is not a result.")}</li>
 <li>{t("Completo: la ficha tiene los campos verificados que muestra, con su hora.", "Complete: the card has the verified fields it shows, with its time.")}</li>
-<li>{t("Parcial: la ficha existe y dice qué falta. La muestra de holders del 2026-10-08 está en no disponible. Eso no anula lo demás y no se rellena con cero.", "Partial: the card exists and says what is missing. The 2026-10-08 holder sample is unavailable. That does not cancel the rest and it is not filled in with zero.")}</li>
+<li>{t("Parcial: la ficha existe y dice qué falta. La muestra de cuentas con tokens del 2026-10-08 está en no disponible. Eso no anula lo demás y no se rellena con cero.", "Partial: the card exists and says what is missing. The 2026-10-08 token account sample is unavailable. That does not cancel the rest and it is not filled in with zero.")}</li>
 <li>{t("Error o no disponible: dirección no válida, sin ficha, o lectura que no responde. No hay semáforo verde.", "Error or unavailable: the address is not valid, there is no card, or the reading does not respond. There is no green light.")}</li>
 </ul>
-<p>{t("Si la cadena o un sello dejan de cuadrar, se desmarca y se explica aquí. Si una CI posterior falla en estos tests, se desmarca y se explica aquí. Si un simulacro sale en rojo, se desmarca y se explica aquí.", "If the chain or a stamp stops checking out, it is unmarked and explained here. If a later CI run fails these tests, it is unmarked and explained here. If a drill goes red, it is unmarked and explained here.")}</p>
+<p>{t("Si la cadena o un sello dejan de cuadrar, se desmarca y se explica aquí. Si una CI posterior falla en estos tests, se desmarca y se explica aquí. Si un simulacro sale en rojo, se desmarca y se explica aquí.", "If the chain or a timestamp stops matching, it is unmarked and explained here. If a later CI run fails these tests, it is unmarked and explained here. If a drill goes red, it is unmarked and explained here.")}</p>
 <p>{t("Escáner de código prohibido. Busca funciones de firma o envío de transacciones: 0 hallazgos, como publicó la portada en producción. Esta página no ha vuelto a ejecutarlo.", "Forbidden-code scan. It looks for functions that sign or send transactions: 0 findings, as the production home page published. This page has not run it again.")}</p>
 <p><a href="/verify/">{t("Probar esos estados en Verify", "Try those states in Verify")}</a></p>
 """
@@ -774,7 +777,7 @@ def tokenomics() -> str:
 <div><div class="bar"><span style="width:0.53%"></span></div></div>
 <div><div class="bar"><span style="width:0.86%"></span></div></div>
 </div>
-<p>{t("Las dos wallets del creador suman 13.877.554,90 STUBX (1,39 %). A esa hora eran todos los STUBX fuera de la curva: no había más holders. Los de la curva no están bloqueados ni reservados y no garantizan liquidez ni valor: están a la venta y salen o vuelven con cada compra o venta. Los STUBX de la curva no están bloqueados ni reservados y no garantizan liquidez ni valor. Los del creador tampoco están bloqueados: puede venderlos. Eso es un riesgo.", "The creator’s two wallets add up to 13,877,554.90 STUBX (1.39%). At that time they were all the STUBX outside the curve: there were no other holders. The curve’s tokens are not locked or reserved and they do not guarantee liquidity or value: they are for sale and they leave or return with each buy or sale. The STUBX on the curve are not locked or reserved and they do not guarantee liquidity or value. The creator’s are not locked either: they can be sold. That is a risk.")}</p>
+<p>{t("Las dos wallets del creador suman 13.877.554,90 STUBX (1,39 %). A esa hora eran todos los STUBX fuera de la curva: no había más cuentas con tokens. Los STUBX de la curva no están bloqueados ni reservados y no garantizan liquidez ni valor: están a la venta y salen o vuelven con cada compra o venta. Los del creador tampoco están bloqueados: puede venderlos en cualquier momento. Eso es un riesgo.", "The creator’s two wallets add up to 13,877,554.90 STUBX (1.39%). At that time they were all the STUBX outside the curve: there were no other token accounts. The STUBX on the curve are not locked or reserved and do not guarantee liquidity or value: they are for sale and leave or return with each buy or sale. The creator’s tokens are not locked either: the creator can sell them at any time. That is a risk.")}</p>
 <h2>{t("Cómo se obtuvieron", "How they were acquired")}</h2>
 <ul class="clean">
 <li>{t(f"Wallet creadora {CREATOR}: unos 5,27 M, comprados al crear el token el 2026-09-23 por unos 0,15 SOL, en la curva pública.", f"Creator wallet {CREATOR}: about 5.27 M, bought when the token was created on 2026-09-23 for about 0.15 SOL, on the public curve.")}</li>
@@ -783,10 +786,10 @@ def tokenomics() -> str:
 <li>{t("Autoridades de emisión y de congelación revocadas. Eso no hace el token más seguro ni dice nada de su valor.", "Mint and freeze authorities revoked. That does not make the token safer and it says nothing about its value.")}</li>
 </ul>
 <h2 id="transparencia">{t("Comisión de creador", "Creator fee")}</h2>
-<p>{t("Pump.fun paga al creador una comisión por las operaciones del token. Cobros hasta el 2026-10-03: uno, de 0,0316 SOL, el 2026-09-23. Uso: la comisión pasó, junto con el resto del SOL de la wallet creadora, a wallets personales del creador y se mezcló con su dinero; no se usó por separado para el proyecto. Es un ingreso del creador: no se reparte a los holders ni a nadie. El creador de STUBX cobra una comisión por cada operación. El reintegro del 2026-10-04 está en el movimiento de abajo.", "Pump.fun pays the creator a fee on the token’s trades. Collections through 2026-10-03: one, of 0.0316 SOL, on 2026-09-23. Use: the fee, together with the rest of the SOL in the creator wallet, moved to the creator’s personal wallets and was mixed with their money; it was not used separately for the project. It is the creator’s income: it is not shared with holders or with anyone else. The creator of STUBX collects a fee on every trade. The 2026-10-04 reimbursement is in the movement below.")}</p>
+<p>{t("Pump.fun paga al creador una comisión por las operaciones del token. Cobros hasta el 2026-10-03: uno, de 0,0316 SOL, el 2026-09-23. Uso: la comisión pasó, junto con el resto del SOL de la wallet creadora, a wallets personales del creador y se mezcló con su dinero; no se usó por separado para el proyecto. Es un ingreso del creador: no se reparte entre las cuentas con tokens ni con nadie. El creador de STUBX cobra una comisión por cada operación. El reintegro del 2026-10-04 está en el movimiento de abajo.", "Pump.fun pays the creator a fee on the token’s trades. Fees collected through 2026-10-03: one payment of 0.0316 SOL, on 2026-09-23. Use: the fee, together with the rest of the SOL in the creator wallet, moved to the creator’s personal wallets and was mixed with their money; it was not used separately for the project. It is the creator’s income: it is not shared with token accounts or with anyone else. The creator of STUBX collects a fee on every trade. The 2026-10-04 reimbursement is in the movement below.")}</p>
 <h2 id="wallets">{t("Wallet del proyecto", "Project wallet")}</h2>
 <p><code>{PROJECT}</code></p>
-<p>{t("0 STUBX el 2026-10-04 a las 12:24 (Madrid), slot 453228585. No forma parte del suministro ni del gráfico. Wallet normal, no multifirma, creada el 2026-10-04. La controla el creador. El SOL es suyo: no pertenece a los holders, no da derechos y no acepta aportaciones ni donaciones. Solo paga costes del proyecto. Nunca tiene, compra ni vende STUBX. Cada movimiento se publica aquí en un máximo de 7 días, con la fecha, el importe, el motivo y la transacción. Si alguien envía SOL sin pedirlo, se devuelve a su origen en un máximo de 30 días, descontando la comisión de red. Los tokens que lleguen sin pedirlo no se tocan. Esta wallet no es la del agente: el agente sigue sin wallet.", "0 STUBX on 2026-10-04 at 12:24 (Madrid), slot 453228585. It is not part of the supply or of the chart. A normal wallet, not a multisig, created on 2026-10-04. The creator controls it. The SOL is theirs: it does not belong to holders, it grants no rights, and it does not accept contributions or donations. It only pays project costs. It never holds, buys, or sells STUBX. Each movement is published here within 7 days, with the date, the amount, the reason, and the transaction. If someone sends SOL without being asked, it is returned to its origin within 30 days, minus the network fee. Tokens that arrive unasked are left untouched. This wallet is not the agent’s: the agent still has no wallet.")}</p>
+<p>{t("0 STUBX el 2026-10-04 a las 12:24 (Madrid), slot 453228585. No forma parte del suministro ni del gráfico. Wallet normal, creada el 2026-10-04. La controla el creador y el SOL es suyo (no es multifirma). Solo se usa con SOL y solo paga costes del proyecto. No da derechos a nadie y no acepta aportaciones ni donaciones. Nunca tiene, compra ni vende STUBX. Cada movimiento se publica aquí en un máximo de 7 días, con la fecha, el importe, el motivo y la transacción. Si alguien envía SOL sin pedirlo, se devuelve a su origen en un máximo de 30 días, descontando la comisión de red. Los tokens que lleguen sin pedirlo no se tocan. Esta wallet no es la del agente: el agente sigue sin wallet.", "0 STUBX on 2026-10-04 at 12:24 (Madrid), slot 453228585. It is not part of the supply or of the chart. A normal wallet, created on 2026-10-04. It is controlled by the creator and the SOL is theirs (not a multisig). It is only used with SOL and it only pays project costs. It gives no rights to anyone and it does not accept contributions or donations. It never holds, buys, or sells STUBX. Each movement is published here within 7 days, with the date, the amount, the reason, and the transaction. If someone sends SOL without being asked, it is returned to its origin within 30 days, minus the network fee. Tokens that arrive unasked are left untouched. This wallet is not the agent’s: the agent still has no wallet.")}</p>
 <p>{t("Movimiento publicado: 2026-10-04, entrada de 0,033020866 SOL desde la wallet personal. 0,031554107 SOL reintegran la comisión de creador del 2026-09-23. 0,001466759 SOL son del creador, para comisiones de red. Salidas: ninguna, en esa publicación. Transacción 4FhEmdch5DnDSN8BXfH7pFP2h9w8o2MdAMw16FcYxkLiaZ3BJEaqEhRf5e4rVPQxYGRt8oz2n3TDi5dzsL726KEy.", "Published movement: 2026-10-04, incoming 0.033020866 SOL from the personal wallet. 0.031554107 SOL reimburses the creator fee of 2026-09-23. 0.001466759 SOL is the creator’s, for network fees. Outgoing: none, in that publication. Transaction 4FhEmdch5DnDSN8BXfH7pFP2h9w8o2MdAMw16FcYxkLiaZ3BJEaqEhRf5e4rVPQxYGRt8oz2n3TDi5dzsL726KEy.")}</p>
 <h2>{t("Reglas de las operaciones del creador", "Rules for the creator’s trades")}</h2>
 <p>{t("El creador publica aquí todas sus wallets con STUBX y la cantidad de cada una. Cualquier compra, venta o traspaso suyo se comunica en @stubxai y aquí en un máximo de 24 horas, con la transacción, la cantidad, el SOL y la posición resultante. No opera con STUBX mientras prepara un anuncio no publicado, ni desde 24 horas antes hasta 24 horas después de un anuncio del proyecto o de un post con el enlace de negociación, ni para sostener o mover el precio, ni con compras y ventas de ida y vuelta. No anuncia planes de compra ni de venta.", "The creator publishes here every wallet that holds STUBX and the amount in each. Any buy, sale, or transfer of theirs is reported on @stubxai and here within 24 hours, with the transaction, the amount, the SOL, and the resulting position. They do not trade STUBX while preparing an unpublished announcement, nor from 24 hours before until 24 hours after a project announcement or a post with the trading link, nor to support or move the price, nor with round-trip buys and sales. They do not announce buy or sell plans.")}</p>
@@ -816,16 +819,16 @@ def marca() -> str:
 <p class="lede">{t("Dos piezas ya aprobadas: el personaje y el logo que está en el token. Esta web no los sustituye. La interfaz usa la paleta de Verify (PR 14) para que las herramientas y las páginas se lean como un solo sitio.", "Two pieces already approved: the character and the logo that is on the token. This website does not replace them. The interface uses the Verify palette (PR 14) so the tools and the pages read as one site.")}</p>
 <div class="pair">
 <figure>
-<img src="../logo/stubx-logo-256.png" width="256" height="256" alt="{html.escape("Agente Talón en el logo para agregadores: ticket rosa con gema verde, fondo oscuro. Ilustración con elementos generados con IA.")}">
+<img src="../logo/stubx-logo-256.png" width="256" height="256" alt="{html.escape("Agente Talón en el logo para agregadores: ticket rosa con gema verde, fondo oscuro. Ilustración con elementos generados con IA. / Agente Talón on the aggregator logo: a pink ticket with a green gem on a dark background. Illustration with AI-generated elements.")}">
 <figcaption>{t("Logo para agregadores, 1024 px en logo/stubx-logo-1024.png. SHA-256 389982f374a4c057aba84833acd78938d90fc8871152271c5602501265d4216e. No sustituye al logo on-chain.", "Aggregator logo, 1024 px at logo/stubx-logo-1024.png. SHA-256 389982f374a4c057aba84833acd78938d90fc8871152271c5602501265d4216e. It does not replace the on-chain logo.")}</figcaption>
 </figure>
 <figure>
-<img src="../onchain/logo-bafkreiew224xxf6ncagzzew5bfxlc6hejrib6jmxx66kxdrv5pkeoavd5e.png" width="256" height="256" alt="{html.escape("Logo pixel art grabado en el token STUBX, copia de los mismos bytes que el CID on-chain.")}">
+<img src="../onchain/logo-bafkreiew224xxf6ncagzzew5bfxlc6hejrib6jmxx66kxdrv5pkeoavd5e.png" width="256" height="256" alt="{html.escape("Logo pixel art grabado en el token STUBX, copia de los mismos bytes que el CID on-chain. / Pixel-art logo recorded in the STUBX token, a copy of the same bytes as the on-chain CID.")}">
 <figcaption>{t("Logo on-chain, pixel art, copia de los mismos bytes. CID bafkreiew224xxf6ncagzzew5bfxlc6hejrib6jmxx66kxdrv5pkeoavd5e. SHA-256 96d6b97b97cd100d9c92dd096eb178e44c501f2597bfbcab8e35ebd44702a3e9. Inmutable.", "On-chain logo, pixel art, a copy of the same bytes. CID bafkreiew224xxf6ncagzzew5bfxlc6hejrib6jmxx66kxdrv5pkeoavd5e. SHA-256 96d6b97b97cd100d9c92dd096eb178e44c501f2597bfbcab8e35ebd44702a3e9. Immutable.")}</figcaption>
 </figure>
 </div>
 <h2>{t("Cómo comprobar el logo y los metadatos on-chain", "How to check the logo and the on-chain metadata")}</h2>
-<p>{t("Los metadatos del token son inmutables y apuntan a IPFS (ipfs.io). Ese gateway público está dejando de servir archivos a apps, así que algunas webs o wallets pueden mostrar un «?» en lugar del logo. La CA y el token no cambian por eso.", "The token metadata is immutable and points at IPFS (ipfs.io). That public gateway is stopping serving files to apps, so some websites or wallets may show a “?” instead of the logo. The CA and the token do not change because of that.")}</p>
+<p>{t("Los metadatos del token son inmutables y apuntan a IPFS (ipfs.io). Ese gateway público está dejando de servir archivos a apps, así que algunas webs o wallets pueden mostrar un «?» en lugar del logo. La CA y el token no cambian por eso.", "The token metadata is immutable and points at IPFS (ipfs.io). That public gateway is phasing out serving files to apps, so some websites or wallets may show a “?” instead of the logo. The CA and the token do not change because of that.")}</p>
 <p>{t("Cómo comprobarlo: el CID del logo aparece dentro de los metadatos del token (campo image) y el de los metadatos en su URI on-chain (visible en Solscan). Descarga el archivo y calcula su SHA-256 o su CID (ipfs add --only-hash --cid-version=1 --raw-leaves): debe coincidir. Un logo «oficial» que no coincida con estos archivos no es STUBX.", "How to check it: the logo CID appears inside the token metadata (image field) and the metadata CID is in its on-chain URI (visible on Solscan). Download the file and compute its SHA-256 or its CID (ipfs add --only-hash --cid-version=1 --raw-leaves): it must match. An “official” logo that does not match these files is not STUBX.")}</p>
 <ul class="clean">
 <li>{t("Logo on-chain, copia de los mismos bytes. CID bafkreiew224xxf6ncagzzew5bfxlc6hejrib6jmxx66kxdrv5pkeoavd5e. SHA-256 96d6b97b97cd100d9c92dd096eb178e44c501f2597bfbcab8e35ebd44702a3e9.", "On-chain logo, a copy of the same bytes. CID bafkreiew224xxf6ncagzzew5bfxlc6hejrib6jmxx66kxdrv5pkeoavd5e. SHA-256 96d6b97b97cd100d9c92dd096eb178e44c501f2597bfbcab8e35ebd44702a3e9.")} <a href="../onchain/logo-bafkreiew224xxf6ncagzzew5bfxlc6hejrib6jmxx66kxdrv5pkeoavd5e.png">{t("archivo", "file")}</a></li>
@@ -833,12 +836,12 @@ def marca() -> str:
 <li>{t("Única excepción: el logo para agregadores publicado en stubxai.com/logo/stubx-logo-1024.png (SHA-256 que empieza por 389982f3; el hash completo está en token.json y arriba). Es el mismo personaje, ilustración con elementos generados con IA, servido desde stubxai.com para las webs que no cargan IPFS. La CA y los metadatos on-chain no cambian.", "The only exception: the aggregator logo published at stubxai.com/logo/stubx-logo-1024.png (SHA-256 starting with 389982f3; the full hash is in token.json and above). It is the same character, an illustration with AI-generated elements, served from stubxai.com for websites that do not load IPFS. The CA and the on-chain metadata do not change.")}</li>
 </ul>
 <h2>{t("Personaje", "Character")}</h2>
-<p>{t("Un ticket rosa en pixel art, borde perforado, ojos cuadrados, boca recta y una gema verde. Seco y escéptico. La gema significa que el prototipo está en pie. No significa «aprobado para invertir». El personaje se generó con IA. Lema: No stub, no story.", "A pink pixel-art ticket, perforated edge, square eyes, a straight mouth, and a green gem. Dry and skeptical. The gem means the prototype is standing. It does not mean “approved to invest”. The character was generated with AI. Motto: No stub, no story.")}</p>
+<p>{t("Un ticket rosa en pixel art, borde perforado, ojos cuadrados, boca recta y una gema verde. Seco y escéptico. La gema significa que el prototipo está en pie. No significa «aprobado para invertir». El personaje se generó con IA. Lema: No stub, no story.", "A pink pixel-art ticket, perforated edge, square eyes, a straight mouth, and a green gem. Dry and skeptical. The gem means the prototype is standing. It does not mean “approved for investment”. The character was generated with AI. Motto: No stub, no story.")}</p>
 <h2>{t("Paleta de la interfaz", "Interface palette")}</h2>
 <p>{t("Fondo #071422, panel #10243f, texto #f4f7fb, línea #8eaccf, acento #ff2d6f. Es la paleta de los borradores de Verify y Lab (PR 14, 2026-10-09), para que el semáforo y las páginas usen los mismos componentes. El kit de memes v0.2 conserva sus propios colores: rosa #fb437f, esmeralda #1beb91, azul noche #05122e.", "Background #071422, panel #10243f, text #f4f7fb, line #8eaccf, accent #ff2d6f. It is the palette of the Verify and Lab drafts (PR 14, 2026-10-09), so the traffic light and the pages use the same components. The meme kit v0.2 keeps its own colors: pink #fb437f, emerald #1beb91, night blue #05122e.")}</p>
 <h2>{t("Kit de memes 0.2 · 2026-09-27", "Meme kit 0.2 · 2026-09-27")}</h2>
 <p><a href="../kit/stubx-kit-memes-v0.2.zip">{t("Descargar el zip (2,9 MB)", "Download the zip (2.9 MB)")}</a>. SHA-256 799e0371bdfd4619d61d9e29206ca7eb020e78a01981bb11e73a412405091461. {t("28 archivos. Licencia propia dentro del zip (LICENCIA.md). Las fuentes Silkscreen e Inter van con SIL OFL 1.1. El código del agente es MIT.", "28 files. Its own license inside the zip (LICENCIA.md). The Silkscreen and Inter fonts ship with SIL OFL 1.1. The agent code is MIT.")}</p>
-<p>{t("Plantillas: T01 Pide el talón, T02 Talón opina, T05 Escalera de pruebas, T06 Ticket PPM, T07 Reacción, T08 Glosario Talón. El pie «Memecoin experimental · puedes perderlo todo · no es consejo de inversión» se deja visible.", "Templates: T01 Pide el talón, T02 Talón opina, T05 Escalera de pruebas, T06 Ticket PPM, T07 Reacción, T08 Glosario Talón. The footer “Memecoin experimental · puedes perderlo todo · no es consejo de inversión” stays visible.")}</p>
+<p>{t("Plantillas: T01 Pide el talón, T02 Talón opina, T05 Escalera de pruebas, T06 Ticket PPM, T07 Reacción, T08 Glosario Talón. El pie «Cripto de alto riesgo · Puedes perderlo todo · No es consejo de inversión.» se mantiene visible.", "Templates: T01 Pide el talón, T02 Talón opina, T05 Escalera de pruebas, T06 Ticket PPM, T07 Reacción, T08 Glosario Talón. The footer “High-risk crypto · You could lose everything · Not investment advice.” stays visible.")}</p>
 <h2 id="reglas">{t("Reglas del kit", "Kit rules")}</h2>
 <h3>{t("Sí", "Yes")}</h3>
 <ul class="clean">
@@ -870,7 +873,7 @@ def build_page() -> str:
 <li>{t("2026-09-23. Token creado. Autoridades de emisión y de congelación revocadas.", "2026-09-23. Token created. Mint and freeze authorities revoked.")}</li>
 <li>{t("2026-09-26. Repositorio público, tests, límites y primer simulacro del kill-switch.", "2026-09-26. Public repository, tests, limits, and the first kill-switch drill.")}</li>
 <li>{t("2026-09-26 a 2026-10-03. Registro diario del workflow, en los días que LOGS.md y la portada ya contaron.", "2026-09-26 to 2026-10-03. Daily workflow log, on the days LOGS.md and the home page already counted.")}</li>
-<li>{t("2026-09-28. Primer simulacro semanal programado en verde. Dominio stubxai.com registrado.", "2026-09-28. First scheduled weekly drill, green. Domain stubxai.com registered.")}</li>
+<li>{t("2026-09-28. Primer simulacro semanal programado en verde. Dominio stubxai.com registrado.", "2026-09-28. First scheduled weekly drill passed. Domain stubxai.com registered.")}</li>
 <li>{t("Octubre 2026. stubxai.com es la web oficial y www.stubxai.com ya va a Cloudflare Pages. Netlify solo redirige superb-horse-9036f5.netlify.app con 301.", "October 2026. stubxai.com is the official website and www.stubxai.com already goes to Cloudflare Pages. Netlify only redirects superb-horse-9036f5.netlify.app with a 301.")}</li>
 <li>{t("2026-10-03. Revisión manual de la parte técnica de la PPM. Ninguna casilla marcada todavía ese día.", "2026-10-03. Manual review of the technical part of the PPM. No box marked yet that day.")}</li>
 <li>{t("2026-10-05. Casillas Logs, Límites y Kill-switch marcadas. Wallet del agente pasa a no aplica. En la portada en producción este punto seguía en la lista de objetivos aunque el texto ya decía que estaba marcado: aquí queda en hecho, con los mismos hechos.", "2026-10-05. Logs, Limits, and Kill-switch boxes marked. The agent wallet becomes not applicable. On the production home page this item was still in the target list even though the sentence already said it was marked: here it sits under done, with the same facts.")}</li>
@@ -878,7 +881,7 @@ def build_page() -> str:
 <h2>{t("Objetivo, no promesa", "Target, not a promise")}</h2>
 <ul class="clean">
 <li>{t("Proteger más el repositorio: rama principal con reglas y enlace a la web. Preparado, sin aplicar, según la portada del 2026-10-05.", "Protect the repository further: main branch rules and a link to the website. Prepared, not applied, according to the home page of 2026-10-05.")}</li>
-<li>{t("Hitos pequeños con problema, cambio, prueba, límites y una captura con fecha.", "Small milestones with a problem, a change, a proof, limits, and a dated capture.")}</li>
+<li>{t("Hitos pequeños con problema, cambio, prueba, límites y una captura con fecha.", "Small milestones with a problem, a change, a proof, limits, and a dated screenshot.")}</li>
 </ul>
 <p>{t("El tablero de producto, con lo que está en revisión y lo que sigue en propuesta, es otra página. No mezcla estas fechas con esas fichas.", "The product board, with what is in review and what is still a proposal, is another page. It does not mix these dates with those cards.")}</p>
 <p><a href="/tablero/">{t("Abrir el tablero", "Open the board")}</a></p>
@@ -947,7 +950,7 @@ def aprender() -> str:
     return f"""
 <h1>{t("Aprender", "Learn")}</h1>
 <p class="lede">{t("Glosario y tres guías de la misión, versión 1.0.0 del 2026-10-09. Es texto, no una aplicación aparte.", "Glossary and three mission guides, version 1.0.0 of 2026-10-09. It is text, not a separate app.")}</p>
-<p class="source">{t(f"Inglés: {note} Si una frase no coincide, manda el español. Fuente: lab/library del commit b820aa3, 2026-10-09.", f"English: {note} If a sentence does not match, Spanish prevails. Source: lab/library from commit b820aa3, 2026-10-09.")}</p>
+<p class="source">{t(f"Inglés: {note} Si una frase no coincide, manda el español. Fuente: lab/library del commit 86df576, 2026-10-09.", "English: written in the same files as the Spanish source. Pending human review before any publication. If a sentence does not match, the Spanish version prevails. Source: lab/library from commit 86df576, 2026-10-09.")}</p>
 <h2>{t("Glosario", "Glossary")}</h2>
 <div class="grid-2">{''.join(cards)}</div>
 <h2>{t("Guías", "Guides")}</h2>
@@ -959,8 +962,8 @@ def aprender() -> str:
 def not_found() -> str:
     return f"""
 <h1>{t("Esta página no está", "This page is not here")}</h1>
-<p>{t("La vista previa no tiene esa ruta. La portada sigue en el inicio.", "The preview does not have that route. The home page is still at the start.")}</p>
-<p><a class="primary" href="/">{t("Ir al inicio", "Go to the start")}</a></p>
+<p>{t("La vista previa no tiene esa ruta. La portada sigue en el inicio.", "This preview has no page at that address. Go back to the home page.")}</p>
+<p><a class="primary" href="/">{t("Ir al inicio", "Go to the home page")}</a></p>
 """
 
 
@@ -1034,7 +1037,7 @@ def manifest() -> str:
             "id": "/",
             "name": "STUBX",
             "short_name": "STUBX",
-            "description": "Web de STUBX: dirección oficial, canales y pruebas. Cripto de alto riesgo · Puedes perderlo todo · No es consejo de inversión.",
+            "description": "STUBX: a meme that asks for proof. High-risk crypto.",
             "lang": "es",
             "start_url": "/",
             "scope": "./",
@@ -1097,7 +1100,7 @@ def main() -> None:
     shutil.copyfile(current / "styles.css", ROOT / "styles.css")
     shutil.copyfile(current / "app.js", ROOT / "app.js")
 
-    write_page("index.html", "home", "STUBX · Contrasta la dirección", "STUBX · Check the address", "Vista previa de STUBX. Comprueba la dirección con fichas fechadas. No es consejo de inversión.", "STUBX preview. Check the address with dated cards. Not investment advice.", home())
+    write_page("index.html", "home", "STUBX · Contrasta la dirección", "STUBX · Check the address", "Vista previa de STUBX. Comprueba la dirección con fichas fechadas. No es consejo de inversión.", "STUBX preview. Check the address against dated cards. Not investment advice.", home())
     write_page("verify/index.html", "verify", "STUBX Verify", "STUBX Verify", "Comprueba una dirección con las fichas del 2026-10-09 y los ejemplos anteriores.", "Check an address with the 2026-10-09 cards and the earlier examples.", prepare_tool("verify"), ["assets/verify.js"], True)
     write_page("lab/index.html", "lab", "STUBX Lab", "STUBX Lab", "Misión para distinguir el mint del registro de un clon.", "A mission to tell the registry mint from a clone.", prepare_tool("lab"), ["assets/mission.js"], True, True)
     board = prepare_tool("tablero")

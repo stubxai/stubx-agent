@@ -214,8 +214,8 @@ function rowsFor(card: CardSummary): LookupRow[] {
 }
 
 const PARTIAL = pair(
-  "La ficha está incompleta: la muestra de holders no está. Eso no se rellena con un cero.",
-  "The card is incomplete: the holder sample is missing. That is not filled in with a zero.",
+  "La ficha está incompleta: la muestra de cuentas con tokens no está. Eso no se rellena con un cero.",
+  "The card is incomplete: the token account sample is missing. That is not filled in with a zero.",
 );
 
 const CENSUS = pair(

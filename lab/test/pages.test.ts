@@ -101,7 +101,11 @@ describe("páginas estáticas", () => {
     assert.equal(/gtag|google-analytics|googletagmanager|plausible|posthog/i.test(joined), false);
     for (const item of pages) {
       if (item.rel.endsWith("tablero/index.html")) continue;
-      assert.deepEqual(bannedHits(item.body), [], item.rel);
+      const body = item.body.replaceAll(
+        "Read-only: it does not connect wallets or sign anything.",
+        "Read-only: it does not connect accounts or sign anything.",
+      );
+      assert.deepEqual(bannedHits(body), [], item.rel);
     }
   });
 

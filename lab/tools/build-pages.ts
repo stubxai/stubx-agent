@@ -2,6 +2,7 @@ import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { repoRootFromMeta } from "../paths.js";
+import { presentCard } from "../display-copy.js";
 import { loadCards, loadFuentes, loadGlossary, loadMission } from "../mission/load.js";
 import { validateMission } from "../mission/validate.js";
 import { renderCss } from "./css.js";
@@ -11,7 +12,7 @@ import type { BuiltPage } from "./render.js";
 
 export function buildOutputs(repoRoot: string, options: { publish?: boolean } = {}): BuiltPage[] {
   const fuentes = loadFuentes(repoRoot);
-  const cards = loadCards(repoRoot, fuentes);
+  const cards = loadCards(repoRoot, fuentes).map((card) => presentCard(card));
   const mission = loadMission(repoRoot);
   const glossary = loadGlossary(repoRoot);
   const issues = validateMission(mission, glossary, cards);

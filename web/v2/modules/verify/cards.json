@@ -28,7 +28,7 @@
       "metadataReading": "no_mutables_en_fuentes",
       "metadataLevel": "ok",
       "holdersStatus": "verificado",
-      "holdersNote": "Saldos leídos de la curva, de la creadora y de la cuenta personal publicada. El resto respecto al suministro es 0.0000 %. No es un censo de holders.",
+      "holdersNote": "Saldos leídos de la curva, de la creadora y de la cuenta personal publicada (2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX). El resto respecto al suministro es 0.0000 %. No es un censo de cuentas con tokens.",
       "impersonation": false,
       "authenticityLevel": "ok",
       "signals": [
@@ -40,9 +40,16 @@
       "curvePresentStatus": "verificado",
       "curveProgress": "1.74",
       "curveProgressStatus": "inferido",
-      "curveProgressNote": "Porcentaje inferido con la reserva real inicial pública de la curva clásica (793100000000000). Truncado a 2 decimales hacia cero.",
+      "curveProgressNote": "Porcentaje inferido con la cantidad real inicial pública de la curva clásica (Pump.fun lo llama ‘reserves’) (793100000000000). Truncado a 2 decimales hacia cero.",
       "curveModuleNote": "Cuenta con el discriminador público de BondingCurve.",
-      "rulesVersion": "0.1.0"
+      "rulesVersion": "0.1.0",
+      "statement_en": "The mint matches the curated registry (stubx). Being in the registry is not an audit.",
+      "holdersNote_en": "Balances read from the curve, from the creator, and from the published personal account (2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX). The rest of the supply is 0.0000 %. It is not a census of token accounts.",
+      "curveProgressNote_en": "Percentage inferred from the public initial real curve amount of the classic curve (Pump.fun calls these ‘reserves’) (793100000000000). Truncated to 2 decimals toward zero.",
+      "curveModuleNote_en": "Account with the public BondingCurve discriminator.",
+      "signals_en": [
+        "mint in the registry"
+      ]
     },
     {
       "mint": "Hhq4ffySVX3UQqSowjhP1Lwa8YuJDf7iH2hYWvVHTuEf",
@@ -71,7 +78,7 @@
       "metadataReading": "no_mutables_en_fuentes",
       "metadataLevel": "ok",
       "holdersStatus": "no_disponible",
-      "holdersNote": "Sin respuesta utilizable. No se interpreta como autoridad revocada, como inmutabilidad ni como reserva cero.",
+      "holdersNote": "Sin respuesta utilizable. No se interpreta como autoridad revocada, como inmutabilidad ni como cantidad cero.",
       "impersonation": true,
       "authenticityLevel": "riesgo",
       "signals": [
@@ -84,9 +91,17 @@
       "curvePresentStatus": "verificado",
       "curveProgress": "0.00",
       "curveProgressStatus": "inferido",
-      "curveProgressNote": "Porcentaje inferido con la reserva real inicial pública de la curva clásica (793100000000000). Truncado a 2 decimales hacia cero.",
+      "curveProgressNote": "Porcentaje inferido con la cantidad real inicial pública de la curva clásica (Pump.fun lo llama ‘reserves’) (793100000000000). Truncado a 2 decimales hacia cero.",
       "curveModuleNote": "Cuenta con el discriminador público de BondingCurve.",
-      "rulesVersion": "0.1.0"
+      "rulesVersion": "0.1.0",
+      "statement_en": "Possible impersonation: the name, symbol, image, or a link matches a token in the curated registry, but the mint is different. The match does not attribute intent.",
+      "holdersNote_en": "No usable response. It is not interpreted as a revoked authority, as immutability, or as a zero balance.",
+      "curveProgressNote_en": "Percentage inferred from the public initial real curve amount of the classic curve (Pump.fun calls these ‘reserves’) (793100000000000). Truncated to 2 decimals toward zero.",
+      "curveModuleNote_en": "Account with the public BondingCurve discriminator.",
+      "signals_en": [
+        "name “Comunidad STUBX · Creador” includes STUBX",
+        "link “https://stubxai.com/canales” matches a link or host in the registry"
+      ]
     },
     {
       "mint": "DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ",
@@ -115,7 +130,7 @@
       "metadataReading": "no_mutables_en_fuentes",
       "metadataLevel": "ok",
       "holdersStatus": "no_disponible",
-      "holdersNote": "Sin respuesta utilizable. No se interpreta como autoridad revocada, como inmutabilidad ni como reserva cero.",
+      "holdersNote": "Sin respuesta utilizable. No se interpreta como autoridad revocada, como inmutabilidad ni como cantidad cero.",
       "impersonation": true,
       "authenticityLevel": "riesgo",
       "signals": [
@@ -128,9 +143,17 @@
       "curvePresentStatus": "verificado",
       "curveProgress": "0.00",
       "curveProgressStatus": "inferido",
-      "curveProgressNote": "Porcentaje inferido con la reserva real inicial pública de la curva clásica (793100000000000). Truncado a 2 decimales hacia cero.",
+      "curveProgressNote": "Porcentaje inferido con la cantidad real inicial pública de la curva clásica (Pump.fun lo llama ‘reserves’) (793100000000000). Truncado a 2 decimales hacia cero.",
       "curveModuleNote": "Cuenta con el discriminador público de BondingCurve.",
-      "rulesVersion": "0.1.0"
+      "rulesVersion": "0.1.0",
+      "statement_en": "Possible impersonation: the name, symbol, image, or a link matches a token in the curated registry, but the mint is different. The match does not attribute intent.",
+      "holdersNote_en": "No usable response. It is not interpreted as a revoked authority, as immutability, or as a zero balance.",
+      "curveProgressNote_en": "Percentage inferred from the public initial real curve amount of the classic curve (Pump.fun calls these ‘reserves’) (793100000000000). Truncated to 2 decimals toward zero.",
+      "curveModuleNote_en": "Account with the public BondingCurve discriminator.",
+      "signals_en": [
+        "name “Comunidad STUBX” includes STUBX",
+        "link “https://stubxai.com/canales” matches a link or host in the registry"
+      ]
     },
     {
       "mint": "3Zi6p6wzYZYKyuHdBhsDfb2pRR7XTfTfLKkXL7rwpump",
@@ -159,7 +182,7 @@
       "metadataReading": "no_mutables_en_fuentes",
       "metadataLevel": "ok",
       "holdersStatus": "no_disponible",
-      "holdersNote": "Sin respuesta utilizable. No se interpreta como autoridad revocada, como inmutabilidad ni como reserva cero.",
+      "holdersNote": "Sin respuesta utilizable. No se interpreta como autoridad revocada, como inmutabilidad ni como cantidad cero.",
       "impersonation": true,
       "authenticityLevel": "riesgo",
       "signals": [
@@ -172,9 +195,17 @@
       "curvePresentStatus": "verificado",
       "curveProgress": "0.00",
       "curveProgressStatus": "inferido",
-      "curveProgressNote": "Porcentaje inferido con la reserva real inicial pública de la curva clásica (793100000000000). Truncado a 2 decimales hacia cero.",
+      "curveProgressNote": "Porcentaje inferido con la cantidad real inicial pública de la curva clásica (Pump.fun lo llama ‘reserves’) (793100000000000). Truncado a 2 decimales hacia cero.",
       "curveModuleNote": "Cuenta con el discriminador público de BondingCurve.",
-      "rulesVersion": "0.1.0"
+      "rulesVersion": "0.1.0",
+      "statement_en": "Possible impersonation: the name, symbol, image, or a link matches a token in the curated registry, but the mint is different. The match does not attribute intent.",
+      "holdersNote_en": "No usable response. It is not interpreted as a revoked authority, as immutability, or as a zero balance.",
+      "curveProgressNote_en": "Percentage inferred from the public initial real curve amount of the classic curve (Pump.fun calls these ‘reserves’) (793100000000000). Truncated to 2 decimals toward zero.",
+      "curveModuleNote_en": "Account with the public BondingCurve discriminator.",
+      "signals_en": [
+        "name “Comunidad STUBX” includes STUBX",
+        "link “https://stubxai.com/canales” matches a link or host in the registry"
+      ]
     },
     {
       "mint": "ERYyyaE2Y2GuKB28YbC2w1nCuQ5ENQ89LR44kicvpump",
@@ -203,7 +234,7 @@
       "metadataReading": "no_mutables_en_fuentes",
       "metadataLevel": "ok",
       "holdersStatus": "verificado",
-      "holdersNote": "Saldos leídos de la curva y de la creadora. El resto respecto al suministro es 0.0006 %. No es un censo de holders.",
+      "holdersNote": "Saldos leídos de la curva y de la creadora. El resto respecto al suministro es 0.0006 %. No es un censo de cuentas con tokens.",
       "impersonation": true,
       "authenticityLevel": "riesgo",
       "signals": [
@@ -217,9 +248,18 @@
       "curvePresentStatus": "verificado",
       "curveProgress": "0.00",
       "curveProgressStatus": "inferido",
-      "curveProgressNote": "Porcentaje inferido con la reserva real inicial pública de la curva clásica (793100000000000). Truncado a 2 decimales hacia cero.",
+      "curveProgressNote": "Porcentaje inferido con la cantidad real inicial pública de la curva clásica (Pump.fun lo llama ‘reserves’) (793100000000000). Truncado a 2 decimales hacia cero.",
       "curveModuleNote": "Cuenta con el discriminador público de BondingCurve.",
-      "rulesVersion": "0.1.0"
+      "rulesVersion": "0.1.0",
+      "statement_en": "Possible impersonation: the name, symbol, image, or a link matches a token in the curated registry, but the mint is different. The match does not attribute intent.",
+      "holdersNote_en": "Balances read from the curve and from the creator. The rest of the supply is 0.0006 %. It is not a census of token accounts.",
+      "curveProgressNote_en": "Percentage inferred from the public initial real curve amount of the classic curve (Pump.fun calls these ‘reserves’) (793100000000000). Truncated to 2 decimals toward zero.",
+      "curveModuleNote_en": "Account with the public BondingCurve discriminator.",
+      "signals_en": [
+        "name “STUBX” includes STUBX",
+        "symbol “STUBX” includes STUBX",
+        "link “https://.superb-horse-9036f5.netlify.app” matches a link or host in the registry"
+      ]
     },
     {
       "mint": "FMNb4CR8ksibmgY7Ztei6BWcZXi3WHcVeJhYb9TNpump",
@@ -248,7 +288,7 @@
       "metadataReading": "no_mutables_en_fuentes",
       "metadataLevel": "ok",
       "holdersStatus": "verificado",
-      "holdersNote": "Saldos leídos de la curva y de la creadora. El resto respecto al suministro es 0.0000 %. No es un censo de holders.",
+      "holdersNote": "Saldos leídos de la curva y de la creadora. El resto respecto al suministro es 0.0000 %. No es un censo de cuentas con tokens.",
       "impersonation": true,
       "authenticityLevel": "riesgo",
       "signals": [
@@ -262,9 +302,18 @@
       "curvePresentStatus": "verificado",
       "curveProgress": "0.00",
       "curveProgressStatus": "inferido",
-      "curveProgressNote": "Porcentaje inferido con la reserva real inicial pública de la curva clásica (793100000000000). Truncado a 2 decimales hacia cero.",
+      "curveProgressNote": "Porcentaje inferido con la cantidad real inicial pública de la curva clásica (Pump.fun lo llama ‘reserves’) (793100000000000). Truncado a 2 decimales hacia cero.",
       "curveModuleNote": "Cuenta con el discriminador público de BondingCurve.",
-      "rulesVersion": "0.1.0"
+      "rulesVersion": "0.1.0",
+      "statement_en": "Possible impersonation: the name, symbol, image, or a link matches a token in the curated registry, but the mint is different. The match does not attribute intent.",
+      "holdersNote_en": "Balances read from the curve and from the creator. The rest of the supply is 0.0000 %. It is not a census of token accounts.",
+      "curveProgressNote_en": "Percentage inferred from the public initial real curve amount of the classic curve (Pump.fun calls these ‘reserves’) (793100000000000). Truncated to 2 decimals toward zero.",
+      "curveModuleNote_en": "Account with the public BondingCurve discriminator.",
+      "signals_en": [
+        "name “STUBX” includes STUBX",
+        "symbol “STUBX” includes STUBX",
+        "link “https://superb-horse-9036f5.netlify.app” matches a link or host in the registry"
+      ]
     },
     {
       "mint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
@@ -293,7 +342,7 @@
       "metadataReading": "mutables",
       "metadataLevel": "atención",
       "holdersStatus": "no_disponible",
-      "holdersNote": "Sin respuesta utilizable. No se interpreta como autoridad revocada, como inmutabilidad ni como reserva cero.",
+      "holdersNote": "Sin respuesta utilizable. No se interpreta como autoridad revocada, como inmutabilidad ni como cantidad cero.",
       "impersonation": false,
       "authenticityLevel": "ok",
       "signals": [],
@@ -304,8 +353,13 @@
       "curveProgress": null,
       "curveProgressStatus": "no_aplica",
       "curveProgressNote": "No hay curva. No se rellena con cero.",
-      "curveModuleNote": "La dirección derivada tiene una cuenta cuyo propietario no es el programa de Pump.fun. No es una curva y no se rellenan reservas a cero.",
-      "rulesVersion": "0.1.0"
+      "curveModuleNote": "La dirección derivada tiene una cuenta cuyo propietario no es el programa de Pump.fun. No es una curva y no se rellenan con cero las cantidades de la curva.",
+      "rulesVersion": "0.1.0",
+      "statement_en": "This mint is not in the curated registry. That does not mean it is fake or a copy.",
+      "holdersNote_en": "No usable response. It is not interpreted as a revoked authority, as immutability, or as a zero balance.",
+      "curveProgressNote_en": "There is no curve. It is not filled with zero.",
+      "curveModuleNote_en": "The derived address has an account whose owner is not the Pump.fun program. It is not a curve, and the curve amounts are not filled in with zero.",
+      "signals_en": []
     }
   ],
   "evm": [
@@ -328,7 +382,8 @@
       "notedOn": "2026-10-08",
       "source": "search-v2 de Pump.fun, 08-10 09:14 CEST",
       "verifiedOnChain": false,
-      "note": "La red eip155:5042 no está identificada con certeza."
+      "note": "La red eip155:5042 no está identificada con certeza.",
+      "note_en": "The eip155:5042 network is not identified with certainty."
     }
   ]
 }

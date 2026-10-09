@@ -27,7 +27,7 @@ var FIELD_LABEL = {
   mintAuthority: { es: "Autoridad de emisión", en: "Mint authority" },
   freezeAuthority: { es: "Autoridad de congelación", en: "Freeze authority" },
   metadata: { es: "Metadatos", en: "Metadata" },
-  holders: { es: "Muestra de holders", en: "Holder sample" },
+  holders: { es: "Muestra de cuentas con STUBX", en: "Token account sample" },
   impersonation: { es: "Señal de suplantación", en: "Impersonation signal" },
   curvePresent: { es: "Cuenta de curva", en: "Curve account" },
   curveProgress: { es: "Avance de la curva clásica", en: "Classic curve progress" },
@@ -54,6 +54,18 @@ function yesNo(value, lang) {
   return value ? "sí" : "no";
 }
 
+function authorityWord(state, lang) {
+  if (lang !== "en") return state;
+  if (state === "revocada") return "revoked";
+  if (state === "activa") return "active";
+  return state;
+}
+
+function noteFor(card, key, lang) {
+  if (lang === "en" && card[key + "_en"]) return card[key + "_en"];
+  return card[key];
+}
+
 function fieldText(card, key, lang) {
   if (key === "name") return { value: factText(card.nameStatus, card.name, lang), note: null };
   if (key === "mint") return { value: card.mint, note: null };
@@ -61,11 +73,14 @@ function fieldText(card, key, lang) {
     var registry = card.inRegistry === null ? null : yesNo(card.inRegistry, lang);
     return { value: factText(card.inRegistryStatus, registry, lang), note: null };
   }
-  if (key === "statement") return { value: factText(card.statementStatus, card.statement, lang), note: null };
-  if (key === "mintAuthority") return { value: factText(card.mintAuthority.status, card.mintAuthority.state, lang), note: null };
-  if (key === "freezeAuthority") return { value: factText(card.freezeAuthority.status, card.freezeAuthority.state, lang), note: null };
+  if (key === "statement") {
+    var statement = lang === "en" && card.statement_en ? card.statement_en : card.statement;
+    return { value: factText(card.statementStatus, statement, lang), note: null };
+  }
+  if (key === "mintAuthority") return { value: factText(card.mintAuthority.status, authorityWord(card.mintAuthority.state, lang), lang), note: null };
+  if (key === "freezeAuthority") return { value: factText(card.freezeAuthority.status, authorityWord(card.freezeAuthority.state, lang), lang), note: null };
   if (key === "metadata") return { value: textOf(META_LABEL[card.metadataReading], lang), note: null };
-  if (key === "holders") return { value: factText(card.holdersStatus, null, lang), note: card.holdersNote };
+  if (key === "holders") return { value: factText(card.holdersStatus, null, lang), note: noteFor(card, "holdersNote", lang) };
   if (key === "impersonation") {
     if (card.impersonation === null) return { value: statusLabel("desconocido", lang), note: null };
     var level = levelWord(card.authenticityLevel, lang);
@@ -81,11 +96,11 @@ function fieldText(card, key, lang) {
   }
   if (key === "curvePresent") {
     var present = card.curvePresent === null ? null : yesNo(card.curvePresent, lang);
-    return { value: factText(card.curvePresentStatus, present, lang), note: card.curveModuleNote };
+    return { value: factText(card.curvePresentStatus, present, lang), note: noteFor(card, "curveModuleNote", lang) };
   }
   if (key === "curveProgress") {
     var progress = card.curveProgress ? (lang === "en" ? card.curveProgress + "%" : card.curveProgress + " %") : null;
-    return { value: factText(card.curveProgressStatus, progress, lang), note: card.curveProgressNote };
+    return { value: factText(card.curveProgressStatus, progress, lang), note: noteFor(card, "curveProgressNote", lang) };
   }
   return { value: statusLabel("desconocido", lang), note: null };
 }

@@ -8,7 +8,7 @@ Vista previa del 2026-10-09. No está publicada en stubxai.com. La copia recuper
 | --- | --- |
 | `/` (`index.html`) | `/` Portada. Acción principal: Analizar token → `/verify`. |
 | Anclas `#wallets`, `#transparencia`, `#reparto`, `#estado`, `#ppm` de `token.json` | Siguen en `/` con el mismo `id`. El detalle largo está en `/tokenomics` y `/status`. |
-| Ancla `#verificar` | `/verify` Demo con las fichas del commit `b820aa3` (2026-10-09). La ficha oficial nombra la cuenta personal `2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX` y el resto 0,0000 %. |
+| Ancla `#verificar` | `/verify` Demo con las fichas del commit `86df576` (2026-10-09). La ficha oficial nombra la cuenta personal `2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX` y el resto 0,0000 %. |
 | No existía | `/lab` Misión de cinco pasos de la PR 14. |
 | No existía | `/tablero` Registro de construcción del 2026-10-09. |
 | No existía | `/avances` Alias: el tablero no se duplica. |
@@ -48,7 +48,7 @@ Las direcciones, los canales y los avisos dicen lo mismo en español y en inglé
 | Portada, acción principal | «Ver las pruebas» hacia `#pruebas` | «Analizar token» hacia `/verify`, con la fecha de las fichas. |
 | Portada, riesgos | Una línea y un enlace al ensayo de la misma página | Dos frases y enlace a `/risks`. El ensayo no se ha acortado allí. |
 | Versiones | «Cerrar la revisión de la PPM» seguía en objetivos aunque el texto ya decía que el 2026-10-05 estaban marcadas Logs, Límites y Kill-switch, y wallet no aplica | Ese punto pasa a «Hecho», con los mismos hechos y la misma fecha. El resto de objetivos no cambia. |
-| Verify, Lab, tablero | No estaban en la web | Interfaz real de la PR 14 (commit `b820aa3`, 2026-10-09), regenerada desde `lab/` y `site-drafts/`. Fichas del 2026-10-09 (oficial con la cuenta personal publicada, ERYyy, FMNb, USDC) más las del 2026-10-08 y dos ejemplos 0x. Sin red. `snapshot.json` marca `merged` porque ese commit está en esta rama; la PR 14 sigue sin fusionarse en main y esto no está publicado. Los enlaces del tablero a las PR 13 y 14 llevan la fecha (2026-10-08 y 2026-10-09). |
+| Verify, Lab, tablero | No estaban en la web | Interfaz real de la PR 14 (commit `86df576`, 2026-10-09), regenerada desde `lab/` y `site-drafts/`. Fichas del 2026-10-09 (oficial con la cuenta personal publicada, ERYyy, FMNb, USDC) más las del 2026-10-08 y dos ejemplos 0x. Sin red. `snapshot.json` marca `merged` porque ese commit está en esta rama; la PR 14 sigue sin fusionarse en main y esto no está publicado. Los enlaces del tablero a las PR 13 y 14 llevan la fecha (2026-10-08 y 2026-10-09). |
 | Studio, cuaderno, contribuir | No estaban | «No construido · 2026-10-09». Sin controles. |
 
 No se han inventado cifras. Suministro, PPM, pruebas y avisos conservan la fecha de la fuente que ya estaba publicada. Esta vista previa no ha vuelto a consultar GitHub ni la red.

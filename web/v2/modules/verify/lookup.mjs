@@ -165,7 +165,7 @@ function rowsFor(card) {
         { label: pair("Fecha de la ficha", "Card date"), value: pair(card.createdAt ?? "2026-10-08", card.createdAt ?? "2026-10-08") },
     ];
 }
-const PARTIAL = pair("La ficha está incompleta: la muestra de holders no está. Eso no se rellena con un cero.", "The card is incomplete: the holder sample is missing. That is not filled in with a zero.");
+const PARTIAL = pair("La ficha está incompleta: la muestra de cuentas con tokens no está. Eso no se rellena con un cero.", "The card is incomplete: the token account sample is missing. That is not filled in with a zero.");
 const CENSUS = pair("Hay saldos de la curva y de la creadora. No es un censo ni se rellena el resto con un cero.", "There are balances for the curve and the creator. It is not a census, and the rest is not filled in with a zero.");
 const CENSUS_PERSONAL = pair("Hay saldos de la curva, de la creadora y de la cuenta personal publicada. No es un censo ni se rellena el resto con un cero.", "There are balances for the curve, the creator, and the published personal account. It is not a census, and the rest is not filled in with a zero.");
 const SOLANA_ONLY = "El STUBX oficial solo existe en Solana";

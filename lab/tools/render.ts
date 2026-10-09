@@ -5,6 +5,7 @@ import { loadGlossary, loadMission } from "../mission/load.js";
 import type { CardSummary, GlossaryEntry, Localized, Mission, MissionStep } from "../mission/types.js";
 import { changelogHeadings, listTestFiles, loadBoard } from "../tablero/collect.js";
 import type { BoardFile, TaskRecord, TaskStatus } from "../tablero/collect.js";
+import { authorityWords, type DisplayCard } from "../display-copy.js";
 import { escapeHtml, renderMarkdown, splitBilingualMarkdown } from "../text.js";
 
 export type PageName = "index" | "verify" | "lab" | "tablero";
@@ -32,7 +33,7 @@ const FIELD_LABEL: Record<string, Localized> = {
   mintAuthority: { es: "Autoridad de emisión", en: "Mint authority" },
   freezeAuthority: { es: "Autoridad de congelación", en: "Freeze authority" },
   metadata: { es: "Metadatos", en: "Metadata" },
-  holders: { es: "Muestra de holders", en: "Holder sample" },
+  holders: { es: "Muestra de cuentas con STUBX", en: "Token account sample" },
   impersonation: { es: "Señal de suplantación", en: "Impersonation signal" },
   curvePresent: { es: "Cuenta de curva", en: "Curve account" },
   curveProgress: { es: "Avance de la curva clásica", en: "Classic curve progress" },
@@ -67,6 +68,15 @@ function yn(value: boolean): Localized {
   return value ? { es: "sí", en: "yes" } : { es: "no", en: "no" };
 }
 
+function shown(card: CardSummary): DisplayCard {
+  return card as DisplayCard;
+}
+
+function pairNote(es: string | null, en: string | null): Localized | null {
+  if (!es && !en) return null;
+  return { es: es ?? "", en: en || es || "" };
+}
+
 export function safeHref(value: string | undefined): string | null {
   if (!value) {
     return null;
@@ -99,23 +109,26 @@ function fieldValue(card: CardSummary, key: string): { value: Localized; note: s
       };
     case "statement":
       return {
-        value: fact(card.statementStatus, card.statement ? { es: card.statement, en: card.statement } : null),
+        value: fact(
+          card.statementStatus,
+          card.statement ? { es: card.statement, en: shown(card).statement_en || card.statement } : null,
+        ),
         note: null,
       };
     case "mintAuthority":
       return {
-        value: fact(card.mintAuthority.status, { es: card.mintAuthority.state, en: card.mintAuthority.state }),
+        value: fact(card.mintAuthority.status, authorityWords(card.mintAuthority.state)),
         note: null,
       };
     case "freezeAuthority":
       return {
-        value: fact(card.freezeAuthority.status, { es: card.freezeAuthority.state, en: card.freezeAuthority.state }),
+        value: fact(card.freezeAuthority.status, authorityWords(card.freezeAuthority.state)),
         note: null,
       };
     case "metadata":
       return { value: META_LABEL[card.metadataReading], note: null };
     case "holders":
-      return { value: fact(card.holdersStatus, null), note: card.holdersNote };
+      return { value: fact(card.holdersStatus, null), note: pairNote(shown(card).holdersNote, shown(card).holdersNote_en) };
     case "impersonation": {
       if (card.impersonation === null) {
         return { value: statusText("desconocido"), note: null, neutral: true };
@@ -148,7 +161,7 @@ function fieldValue(card: CardSummary, key: string): { value: Localized; note: s
     case "curvePresent":
       return {
         value: fact(card.curvePresentStatus, card.curvePresent === null ? null : yn(card.curvePresent)),
-        note: card.curveModuleNote,
+        note: pairNote(shown(card).curveModuleNote, shown(card).curveModuleNote_en),
       };
     case "curveProgress":
       return {
@@ -156,7 +169,7 @@ function fieldValue(card: CardSummary, key: string): { value: Localized; note: s
           card.curveProgressStatus,
           card.curveProgress ? { es: `${card.curveProgress} %`, en: `${card.curveProgress}%` } : null,
         ),
-        note: card.curveProgressNote,
+        note: pairNote(shown(card).curveProgressNote, shown(card).curveProgressNote_en),
       };
     default:
       return { value: statusText("desconocido"), note: null };
@@ -243,8 +256,8 @@ ${input.publish ? "" : `<p class="draft">${both(DRAFT_LINE)}</p>\n`}
 </div></header>
 <main id="contenido" class="${frame}">
 <div class="aviso" data-disclaimer="si">
-<p>${escapeHtml(DISCLAIMER)}</p>
-<p lang="en">${escapeHtml(DISCLAIMER_EN)}</p>
+<p class="lang es" lang="es">${escapeHtml(DISCLAIMER)}</p>
+<p class="lang en" lang="en">${escapeHtml(DISCLAIMER_EN)}</p>
 <p>${both(READONLY_LINE)}</p>
 <p>${both(UNKNOWN_LINE)}</p>
 <p>${both({ es: "Fichas del 2026-10-08 y, si las hay, ejemplos posteriores. No se actualizan solas. La hora de cada ficha va en Europe/Madrid.", en: "Cards from 2026-10-08 and, where present, later examples. They do not update themselves. Each card time is shown in Europe/Madrid." })}</p>
@@ -313,14 +326,17 @@ function renderLab(repoRoot: string, cards: readonly CardSummary[], mission: Mis
   const glossaryById = new Map(glossary.entries.map((entry) => [entry.id, entry]));
   const staticSteps = mission.steps.map((step, index) => staticStep(step, index, mission.steps.length, byMint, glossaryById)).join("");
   const terms = glossary.entries.map((entry) => glossaryArticle(entry)).join("");
-  const revision = JSON.parse(readFileSync(path.join(repoRoot, "lab/library/revision.json"), "utf8")) as { enStatus: string };
+  const revision = JSON.parse(readFileSync(path.join(repoRoot, "lab/library/revision.json"), "utf8")) as {
+    enStatus: string;
+    enStatusEn?: string;
+  };
   const main = `<h1>${both(mission.title)}</h1>
 <p class="lede">${both(mission.intro)}</p>
 ${howDetails(HOW_LAB)}
 <div id="mision-app" data-mission="${escapeHtml(mission.id)}"></div>
 <div class="estatica" id="mision-estatica"><p class="nota">${both({ es: "Sin JavaScript se pueden leer los pasos, las explicaciones y la biblioteca. El progreso local necesita el script de esta misma carpeta.", en: "Without JavaScript the steps, explanations, and library can still be read. Local progress needs the script in this same folder." })}</p>${staticSteps}</div>
-<section id="biblioteca"><h2>${both({ es: "Biblioteca", en: "Library" })}</h2><p class="muted">${escapeHtml(revision.enStatus)}</p><div class="fichas">${terms}</div><h2>${both({ es: "Guías", en: "Guides" })}</h2><div class="fichas">${guideSection(repoRoot)}</div></section>
-<dialog id="ayuda" aria-labelledby="ayuda-titulo"><h2 id="ayuda-titulo"></h2><div id="ayuda-cuerpo"></div><form method="dialog"><button type="submit" id="ayuda-cerrar">Cerrar</button></form></dialog>`;
+<section id="biblioteca"><h2>${both({ es: "Biblioteca", en: "Library" })}</h2><p class="muted">${both({ es: revision.enStatus, en: revision.enStatusEn || revision.enStatus })}</p><div class="fichas">${terms}</div><h2>${both({ es: "Guías", en: "Guides" })}</h2><div class="fichas">${guideSection(repoRoot)}</div></section>
+<dialog id="ayuda" aria-labelledby="ayuda-titulo"><h2 id="ayuda-titulo"></h2><div id="ayuda-cuerpo"></div><form method="dialog"><button type="submit" id="ayuda-cerrar">${both({ es: "Cerrar", en: "Close" })}</button></form></dialog>`;
   return shell({
     title: "STUBX Lab · misión 1 · borrador",
     description: "Misión educativa para distinguir un mint del registro de un clon, con fichas del 2026-10-08.",
@@ -379,6 +395,48 @@ ${howDetails(HOW_VERIFY)}
   });
 }
 
+const PERSON_EN: Record<string, string> = {
+  "Equipo del repositorio": "Repository team",
+  "Sin asignar": "Unassigned",
+  "Pendiente de una persona distinta del autor, antes de publicar.":
+    "Pending review by a person other than the author, before publication.",
+  "Pendiente de personas ajenas al equipo, como pide la ficha, y de autorización para publicar.":
+    "Pending review by people outside the team, as the record requires, and authorization to publish.",
+  "El creador, antes de cualquier publicación, como pide la ficha.":
+    "The creator, before any publication, as the record requires.",
+  "Revisión lingüística humana pendiente. Hasta entonces, si hay diferencia, manda el español.":
+    "Human language review pending. Until then, if there is a difference, the Spanish version prevails.",
+  "Pendiente de una prueba con lector de pantalla por otra persona.":
+    "Pending a screen-reader test by another person.",
+  "No aplica todavía.": "Not applicable yet.",
+};
+
+const MILESTONE_EN: Record<string, string> = {
+  "2026-10-09 · Revisión de seguridad de Verify y Lab (borrador, sin publicar)":
+    "2026-10-09 · Verify and Lab security review (draft, unpublished)",
+  "2026-10-09 · STUBX Lab, misión 1 (borrador, sin publicar)":
+    "2026-10-09 · STUBX Lab, mission 1 (draft, unpublished)",
+  "2026-10-08 · STUBX Verify (MVP, solo lectura)": "2026-10-08 · STUBX Verify (MVP, read-only)",
+  "2026-10-05 · PPM: casilla Wallet → no aplica": "2026-10-05 · PPM: Wallet check → not applicable",
+  "2026-10-05 · PPM: casilla Logs marcada": "2026-10-05 · PPM: Logs check marked",
+  "Sin publicar": "Unpublished",
+};
+
+function personLabel(value: string): Localized {
+  return { es: value, en: PERSON_EN[value] ?? value };
+}
+
+function editorEn(value: string): string {
+  if (value === "Equipo del repositorio. La revisión por una persona distinta está pendiente.") {
+    return "repository team. Review by a different person is pending.";
+  }
+  return value;
+}
+
+function milestoneEn(value: string): string {
+  return MILESTONE_EN[value] ?? value;
+}
+
 function taskArticle(task: TaskRecord): string {
   const status = TASK_STATUS[task.status];
   const evidence = task.evidence
@@ -391,9 +449,9 @@ function taskArticle(task: TaskRecord): string {
     })
     .join("");
   const history = task.history.map((item) => `<li><time datetime="${escapeHtml(item.on)}">${escapeHtml(item.on)}</time> — ${both(item.change)}</li>`).join("");
-  const block = task.block ? `<p>${both({ es: "Bloqueo: ", en: "Block: " })}${both(task.block)}</p>` : "";
+  const block = task.block ? `<p>${both({ es: "Bloqueo: ", en: "Blocker: " })}${both(task.block)}</p>` : "";
   const reviewed = task.reviewedOn ?? "—";
-  return `<article class="tarea" id="tarea-${escapeHtml(task.id)}" data-status="${escapeHtml(task.status)}" data-web="${task.webPublished ? "si" : "no"}"><h3>${escapeHtml(task.id)} · ${both(task.title)}</h3><p class="estado">${both(status)} · ${both(task.webPublished ? { es: "En stubxai.com: sí", en: "On stubxai.com: yes" } : { es: "En stubxai.com: no", en: "On stubxai.com: no" })}</p><p>${both(task.scope)}</p><dl><dt>${both({ es: "Responsable", en: "Owner" })}</dt><dd>${escapeHtml(task.owner)}</dd><dt>${both({ es: "Revisión", en: "Review" })}</dt><dd>${escapeHtml(task.reviewer)}</dd><dt>${both({ es: "Fecha de revisión del registro", en: "Record review date" })}</dt><dd>${escapeHtml(reviewed)}</dd></dl>${block}<h4>${both({ es: "Evidencia", en: "Evidence" })}</h4>${evidence ? `<ul>${evidence}</ul>` : `<p>${both({ es: "Todavía no hay evidencia de implementación.", en: "There is no implementation evidence yet." })}</p>`}<h4>${both({ es: "Historial", en: "History" })}</h4><ul>${history}</ul></article>`;
+  return `<article class="tarea" id="tarea-${escapeHtml(task.id)}" data-status="${escapeHtml(task.status)}" data-web="${task.webPublished ? "si" : "no"}"><h3>${escapeHtml(task.id)} · ${both(task.title)}</h3><p class="estado">${both(status)} · ${both(task.webPublished ? { es: "En stubxai.com: sí", en: "On stubxai.com: yes" } : { es: "En stubxai.com: no", en: "On stubxai.com: no" })}</p><p>${both(task.scope)}</p><dl><dt>${both({ es: "Responsable", en: "Owner" })}</dt><dd>${both(personLabel(task.owner))}</dd><dt>${both({ es: "Revisión", en: "Review" })}</dt><dd>${both(personLabel(task.reviewer))}</dd><dt>${both({ es: "Fecha de revisión del registro", en: "Record review date" })}</dt><dd>${escapeHtml(reviewed)}</dd></dl>${block}<h4>${both({ es: "Evidencia", en: "Evidence" })}</h4>${evidence ? `<ul>${evidence}</ul>` : `<p>${both({ es: "Todavía no hay evidencia de implementación.", en: "There is no implementation evidence yet." })}</p>`}<h4>${both({ es: "Historial", en: "History" })}</h4><ul>${history}</ul></article>`;
 }
 
 function renderBoard(repoRoot: string, board: BoardFile, options: RenderOptions): string {
@@ -402,7 +460,7 @@ function renderBoard(repoRoot: string, board: BoardFile, options: RenderOptions)
   const rows = board.tasks
     .map((task) => {
       const status = TASK_STATUS[task.status];
-      return `<tr><th scope="row"><a href="#tarea-${escapeHtml(task.id)}">${escapeHtml(task.id)}</a></th><td>${both(task.title)}</td><td>${both(status)}</td><td>${task.webPublished ? "sí" : "no"}</td></tr>`;
+      return `<tr><th scope="row"><a href="#tarea-${escapeHtml(task.id)}">${escapeHtml(task.id)}</a></th><td>${both(task.title)}</td><td>${both(status)}</td><td>${both(task.webPublished ? { es: "sí", en: "yes" } : { es: "no", en: "no" })}</td></tr>`;
     })
     .join("");
   const runs = board.ci.recordedRuns
@@ -415,13 +473,13 @@ function renderBoard(repoRoot: string, board: BoardFile, options: RenderOptions)
   const ciHref = safeHref(board.ci.actionsUrl);
   const main = `<h1>${both({ es: "Tablero de construcción", en: "Construction board" })}</h1>
 <p>${both(board.note)}</p>
-<p class="muted">${both({ es: `Registro ${board.version}, revisado el ${board.updated}. Editor: ${board.editor}`, en: `Record ${board.version}, reviewed on ${board.updated}. Editor: ${board.editor}` })}</p>
+<p class="muted">${both({ es: `Registro ${board.version}, revisado el ${board.updated}. Editor: ${board.editor}`, en: `Record ${board.version}, reviewed on ${board.updated}. Editor: ${editorEn(board.editor)}` })}</p>
 <div class="tabla-scroll" tabindex="0"><table><caption>${both({ es: "Tareas de este registro", en: "Tasks in this record" })}</caption><thead><tr><th scope="col">ID</th><th scope="col">${both({ es: "Tarea", en: "Task" })}</th><th scope="col">${both({ es: "Estado", en: "State" })}</th><th scope="col">stubxai.com</th></tr></thead><tbody>${rows}</tbody></table></div>
 <p>${both({ es: "Propuesta es una idea. En curso o en revisión es trabajo en el repositorio. Publicada sería una función ya expuesta. Hoy ninguna tarea de este registro está en la web.", en: "Proposal means an idea. In progress or in review means work in the repository. Published would mean a function already exposed. Today no task in this record is on the website." })}</p>
 <div class="tareas">${board.tasks.map((task) => taskArticle(task)).join("")}</div>
 <section><h2>${both({ es: "Integración continua", en: "Continuous integration" })}</h2><p><code>${escapeHtml(board.ci.workflow)}</code> · Node ${escapeHtml(board.ci.node)}</p><p>${both(board.ci.whatItRuns)}</p><p>${both(board.ci.limit)}</p>${ciHref ? `<p><a href="${escapeHtml(ciHref)}">${both({ es: "Workflow en Actions", en: "Workflow on Actions" })}</a></p>` : ""}<ul>${runs}</ul></section>
 <section><h2>${both({ es: "Pruebas en el repositorio", en: "Tests in the repository" })}</h2><ul>${tests.map((file) => `<li><code>${escapeHtml(file)}</code></li>`).join("")}</ul></section>
-<section><h2>${both({ es: "Hitos copiados de CHANGELOG.md", en: "Milestones copied from CHANGELOG.md" })}</h2><p class="muted">${both({ es: "Son encabezados del archivo, no compromisos de esta página.", en: "They are headings from the file, not commitments of this page." })}</p><ul>${changelog.map((line) => `<li>${escapeHtml(line)}</li>`).join("")}</ul></section>`;
+<section><h2>${both({ es: "Hitos copiados de CHANGELOG.md", en: "Milestones copied from CHANGELOG.md" })}</h2><p class="muted">${both({ es: "Son encabezados del archivo, no compromisos de esta página.", en: "They are headings from the file, not commitments of this page." })}</p><ul>${changelog.map((line) => `<li>${both({ es: line, en: milestoneEn(line) })}</li>`).join("")}</ul></section>`;
   return shell({
     title: "STUBX · tablero de construcción · borrador",
     description: "Tablero estático del trabajo de STUBX, generado desde el repositorio y no publicado.",

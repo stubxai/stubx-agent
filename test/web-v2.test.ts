@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { describe, test } from "node:test";
@@ -247,7 +248,7 @@ describe("web v2", () => {
     assert.match(security, /Comunidad STUBX/);
     assert.match(security, /COMUNIDAD/);
     assert.match(risks, /puedes perder todo lo que aportes/);
-    assert.match(risks, /you can lose everything you put in/i);
+    assert.match(risks, /you could lose everything you put in/i);
   });
 
   test("unbuilt modules stay explanatory", () => {
@@ -279,7 +280,7 @@ describe("web v2", () => {
     assert.equal(/fetch\(/.test(bundle), false);
     assert.equal(bundle.includes("\uFFFD"), false);
     const snap = JSON.parse(read("modules/snapshot.json")) as { commit: string; merged: boolean; liveNetwork: boolean; cardsDate: string };
-    assert.equal(snap.commit, "b820aa3d3b57aa77de49f2667f0e215aba3b04df");
+    assert.equal(snap.commit, "86df5760554c65d53dbe022739f620a86c93b684");
     assert.equal(snap.merged, true);
     assert.equal(snap.liveNetwork, false);
     assert.equal(snap.cardsDate, "2026-10-09");
@@ -449,12 +450,20 @@ describe("web v2", () => {
 
   test("the browser bundle matches lab/", async () => {
     const root = repoRoot();
+    const bundlePaths = [
+      "web/v2/modules",
+      "web/v2/assets/verify.js",
+      "web/v2/assets/mission.js",
+      "web/v2/content/tools",
+      "web/v2/lab/sw.js",
+    ];
+    const before = digestTree(root, bundlePaths);
     const run = spawnSync(process.execPath, ["web/v2/tools/bundle-from-lab.mjs"], {
       cwd: root,
       encoding: "utf8",
     });
     assert.equal(run.status, 0, `${run.stdout}\n${run.stderr}`);
-    assert.match(run.stdout, /b820aa3/);
+    assert.match(run.stdout, /86df576/);
     const same = (left: string, right: string) => {
       assert.equal(readFileSync(path.join(root, left), "utf8"), readFileSync(path.join(root, right), "utf8"), left);
     };
@@ -467,22 +476,142 @@ describe("web v2", () => {
     assert.match(verifyJs, /cuenta personal publicada/);
     assert.match(verifyJs, /0\.0000 %/);
     const { loadCards, loadFuentes } = (await import(pathToFileURL(path.join(root, "dist/lab/mission/load.js")).href)) as {
-      loadCards: (repo: string, fuentes: unknown) => unknown[];
+      loadCards: (repo: string, fuentes: unknown) => Array<Record<string, unknown>>;
       loadFuentes: (repo: string) => unknown;
     };
-    const clones = JSON.parse(readFileSync(path.join(root, "verify/registry/clones.json"), "utf8")) as { evm: unknown[] };
-    const expected = { source: "lista", cards: loadCards(root, loadFuentes(root)), evm: clones.evm };
+    const { presentCard, presentClones, presentEvmItem } = (await import(
+      pathToFileURL(path.join(root, "dist/lab/display-copy.js")).href
+    )) as {
+      presentCard: (card: Record<string, unknown>) => Record<string, unknown>;
+      presentClones: (clones: Record<string, unknown>) => Record<string, unknown>;
+      presentEvmItem: (item: Record<string, unknown>) => Record<string, unknown>;
+    };
+    const clones = JSON.parse(readFileSync(path.join(root, "verify/registry/clones.json"), "utf8")) as {
+      evm: Array<Record<string, unknown>>;
+    };
+    const expected = {
+      source: "lista",
+      cards: loadCards(root, loadFuentes(root)).map((card) => presentCard(card)),
+      evm: clones.evm.map((item) => presentEvmItem(item)),
+    };
     assert.deepEqual(JSON.parse(readFileSync(path.join(root, "web/v2/modules/verify/cards.json"), "utf8")), expected);
+    assert.deepEqual(
+      JSON.parse(readFileSync(path.join(root, "web/v2/modules/verify/clones.json"), "utf8")),
+      presentClones(clones),
+    );
+    assert.equal(digestTree(root, bundlePaths), before, "el bundle de web/v2 no coincide con lab/: hay que regenerarlo y commitearlo");
     const compiled = readFileSync(path.join(root, "dist/lab/verify/lookup.js"), "utf8")
       .replaceAll("\r\n", "\n")
       .replaceAll(/^\/\/# sourceMappingURL=.*\n?/gm, "")
       .trim();
     assert.equal(readFileSync(path.join(root, "web/v2/modules/verify/lookup.mjs"), "utf8"), `${compiled}\n`);
-    const ancestor = spawnSync("git", ["merge-base", "--is-ancestor", "b820aa3d3b57aa77de49f2667f0e215aba3b04df", "HEAD"], {
+    const ancestor = spawnSync("git", ["merge-base", "--is-ancestor", "86df5760554c65d53dbe022739f620a86c93b684", "HEAD"], {
       cwd: root,
     });
     assert.equal(ancestor.status, 0);
   });
+});
+
+function digestTree(root: string, rels: readonly string[]): string {
+  const hash = createHash("sha256");
+  const files: string[] = [];
+  const walk = (rel: string) => {
+    const full = path.join(root, rel);
+    let info;
+    try {
+      info = statSync(full);
+    } catch {
+      return;
+    }
+    if (info.isDirectory()) {
+      for (const name of readdirSync(full).sort()) walk(path.join(rel, name));
+      return;
+    }
+    files.push(rel);
+  };
+  for (const rel of rels) walk(rel);
+  for (const rel of files.sort()) {
+    hash.update(rel);
+    hash.update(readFileSync(path.join(root, rel)));
+  }
+  return hash.digest("hex");
+}
+
+const FOOTER_ES = "Cripto de alto riesgo · Puedes perderlo todo · No es consejo de inversión.";
+const FOOTER_EN = "High-risk crypto · You could lose everything · Not investment advice.";
+const HOLDER_GLOSSARY_ES = "‘Holder’ (término del sector): cuenta que tiene tokens. No implica derechos ni comunidad de inversores.";
+const HOLDER_GLOSSARY_EN = "‘Holder’ (industry term): an account that holds tokens. It implies no rights and no investor community.";
+
+function walkFiles(dir: string, out: string[] = []): string[] {
+  for (const name of readdirSync(dir)) {
+    const full = path.join(dir, name);
+    if (statSync(full).isDirectory()) walkFiles(full, out);
+    else out.push(full);
+  }
+  return out;
+}
+
+test("el pie es el mismo en español y en inglés", () => {
+  const root = repoRoot();
+  for (const rel of ROUTES) {
+    const html = readFileSync(path.join(root, "web/v2", rel), "utf8");
+    const footer = html.slice(html.lastIndexOf("<footer"));
+    assert.ok(footer.includes(FOOTER_ES), rel);
+    assert.ok(footer.includes(FOOTER_EN), rel);
+    assert.equal(footer.includes("Memecoin experimental"), false, rel);
+    assert.equal(footer.includes("You can lose"), false, rel);
+  }
+});
+
+test("las palabras prohibidas no salen en el texto visible, y token.json queda fuera", () => {
+  const root = path.join(repoRoot(), "web/v2");
+  const token = readFileSync(path.join(root, "token.json"), "utf8");
+  assert.match(token, /holders/);
+  const allowedHolder = new Set([HOLDER_GLOSSARY_ES, HOLDER_GLOSSARY_EN, "‘Holder’ (término del sector)", "‘Holder’ (industry term)"]);
+  const hits: string[] = [];
+  for (const file of walkFiles(root)) {
+    const rel = path.relative(root, file);
+    if (rel === "token.json" || rel === "archivo.html" || rel.startsWith("tools/")) continue;
+    if (!/\.(html|json|md|js|mjs)$/.test(rel)) continue;
+    const text = readFileSync(file, "utf8");
+    const stripped = text
+      .replaceAll(HOLDER_GLOSSARY_ES, "")
+      .replaceAll(HOLDER_GLOSSARY_EN, "")
+      .replaceAll("‘Holder’ (término del sector)", "")
+      .replaceAll("‘Holder’ (industry term)", "")
+      .replaceAll("termino-holder", "")
+      .replaceAll("\"id\": \"holder\"", "")
+      .replaceAll("\"id\":\"holder\"", "")
+      .replaceAll("holdersNote_en", "")
+      .replaceAll("holdersStatus", "")
+      .replaceAll("holdersNote", "")
+      .replaceAll("otherHolders", "")
+      .replaceAll("\"holders\"", "")
+      .replaceAll("holders:", "")
+      .replaceAll("reserva-real", "")
+      .replaceAll("reserva-virtual", "")
+      .replaceAll("real_token_reserves", "")
+      .replaceAll("real_quote_reserves", "")
+      .replaceAll("virtual_token_reserves", "")
+      .replaceAll("virtual_quote_reserves", "")
+      .replaceAll("Pump.fun lo llama ‘reserves’", "")
+      .replaceAll("Pump.fun calls these ‘reserves’", "")
+      .replaceAll("sin reserva de equipo", "")
+      .replaceAll("Sin reserva de equipo", "")
+      .replaceAll("No team reserve", "")
+      .replaceAll("with no team reserve", "")
+      .replaceAll("no team reserve", "")
+      .replaceAll("ni reservados", "")
+      .replaceAll("not locked or reserved", "")
+      .replaceAll("or reserved", "");
+    if (/\bholders?\b/i.test(stripped)) hits.push(`holder ${rel}`);
+    if (/\breserves?\b/i.test(stripped)) hits.push(`reserve ${rel}`);
+    if (/\breserva\b/i.test(stripped) && !/reservados/.test(stripped)) hits.push(`reserva ${rel}`);
+    for (const sentence of allowedHolder) {
+      if (rel.endsWith("glossary.json") && text.includes(sentence)) continue;
+    }
+  }
+  assert.deepEqual(hits, []);
 });
 
 function redirectCycles(text: string, root: string): string[] {

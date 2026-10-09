@@ -2,8 +2,8 @@
   "kind": "pr14-browser-snapshot",
   "pr": 14,
   "branch": "feat/lab-mision-1",
-  "commit": "b820aa3d3b57aa77de49f2667f0e215aba3b04df",
-  "commitDate": "2026-10-09T17:33:46+00:00",
+  "commit": "86df5760554c65d53dbe022739f620a86c93b684",
+  "commitDate": "2026-10-09T18:08:03+00:00",
   "cardsDate": "2026-10-09",
   "earlierCardsDate": "2026-10-08",
   "liveNetwork": false,
@@ -14,5 +14,5 @@
   "missionBundle": "assets/mission.js",
   "browserApi": "modules/verify/lookup.mjs",
   "cards": "modules/verify/cards.json",
-  "note": "Bundle regenerado desde lab/ en b820aa3d3b57aa77de49f2667f0e215aba3b04df. La ficha oficial incluye la cuenta personal publicada 2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX. merged significa que ese commit está en esta rama, no que se haya fusionado en main ni publicado."
+  "note": "Bundle regenerado desde lab/ en 86df5760554c65d53dbe022739f620a86c93b684. La ficha oficial incluye la cuenta personal publicada 2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX. merged significa que ese commit está en esta rama, no que se haya fusionado en main ni publicado."
 }
