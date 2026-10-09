@@ -672,10 +672,14 @@ describe("studio", () => {
     const home = readFileSync(path.join(repoRoot(), "web/v2/index.html"), "utf8");
     assert.match(home, /href="\/studio\/"/);
     const headers = readFileSync(path.join(repoRoot(), "web/v2/_headers"), "utf8");
-    assert.match(headers, /\/studio\/\*[\s\S]*default-src 'none'/);
-    assert.match(headers, /\/studio\/\*[\s\S]*worker-src 'none'/);
+    const studioHeaders = headers.split(/^\/studio\/\*$/m)[1]?.split(/\n\/assets\/\*/)[0] ?? "";
+    assert.equal(studioHeaders.includes("Content-Security-Policy"), false);
     assert.match(readStudio("index.html"), /default-src 'none'/);
     assert.match(readStudio("index.html"), /worker-src 'none'/);
+    assert.match(readStudio("index.html"), /connect-src 'self'/);
+    assert.equal(readStudio("index.html").includes("frame-ancestors"), false);
+    assert.match(readStudio("reglas/index.html"), /default-src 'none'/);
+    assert.equal(readStudio("reglas/index.html").includes("frame-ancestors"), false);
     const visible = ["index.html", "reglas/index.html", "studio.js", "studio.css", "catalog.json", "templates.json"];
     for (const rel of visible) {
       const text = readStudio(rel);

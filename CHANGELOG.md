@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-09 · Verify y Lab: lectura visible en el móvil
+
+- En menos de 600 px la cabecera deja de quedarse fija. Tras Comprobar, la página se desplaza al veredicto y el foco va al titular.
+- Una dirección válida que no es la oficial y no tiene ficha dice «No es la dirección oficial» y muestra la oficial. Si mide lo mismo, marca los caracteres que cambian. Las fichas conocidas siguen mostrando su ficha. El campo vacío avisa en línea. La dirección no válida incluye un ejemplo.
+- `frame-ancestors` queda solo en `_headers`. El beacon de Cloudflare Web Analytics no se toca aquí: hay que apagarlo en el panel de la zona.
+- Cada pregunta del Lab lleva una frase llana. El número largo de la curva sale en Detalles. El glosario del paso lista sus términos. El avance espera a «Siguiente paso». El pie tiene enlaces de 44 px, la biblioteca va plegada y la pantalla final tiene «Empezar de nuevo».
+
 ## 2026-10-09 · Revisión de seguridad de Verify y Lab (borrador, sin publicar)
 
 - El service worker queda en `/lab/sw.js`, con red primero, y no guarda la portada ni páginas de avisos. El índice de borrador pasa a `indice-borrador.html`.

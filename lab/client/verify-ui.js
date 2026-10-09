@@ -42,12 +42,21 @@ function paintVerify(out, view) {
   var name = verifyEl("span");
   name.textContent = view.lightLabel[lang];
   flag.append(dot, name);
-  var title = verifyEl("h2");
+  var title = verifyEl("h2", { tabindex: "-1" });
   title.textContent = view.title[lang];
   var support = verifyEl("p", { class: "apoyo" });
   support.textContent = view.support[lang];
   out.append(flag, title, support);
-  if (view.mint) {
+  if (view.compare && view.compare.marks) {
+    var compared = verifyEl("p", { class: "mint comparado" });
+    view.compare.marks.forEach(function (mark) {
+      var span = verifyEl("span");
+      if (mark.changed) span.className = "cambia";
+      span.textContent = mark.char;
+      compared.append(span);
+    });
+    out.append(compared);
+  } else if (view.mint) {
     var mint = verifyEl("p", { class: "mint" });
     mint.textContent = view.mint;
     out.append(mint);
@@ -84,30 +93,61 @@ function bootVerify() {
   var source = cards.length > 0 ? "lista" : "caida";
 
   var last = emptyView();
+  var fieldError = document.getElementById("direccion-error");
 
-  function apply(view) {
+  function coverHeight() {
+    var header = document.querySelector("header.site");
+    if (!header) return 0;
+    var pos = window.getComputedStyle(header).position;
+    if (pos !== "fixed" && pos !== "sticky") return 0;
+    return Math.ceil(header.getBoundingClientRect().height);
+  }
+
+  function revealVerdict() {
+    out.style.scrollMarginTop = coverHeight() + "px";
+    out.scrollIntoView({ block: "start", inline: "nearest" });
+    var title = out.querySelector("h2");
+    if (title && title.focus) title.focus({ preventScroll: true });
+  }
+
+  function showFieldError() {
+    if (fieldError) fieldError.hidden = false;
+    input.setAttribute("aria-invalid", "true");
+    input.setAttribute("aria-describedby", "direccion-error");
+    if (input.focus) input.focus();
+  }
+
+  function hideFieldError() {
+    if (fieldError) fieldError.hidden = true;
+    input.removeAttribute("aria-describedby");
+  }
+
+  function apply(view, reveal) {
     last = view;
     paintVerify(out, view);
     input.setAttribute("aria-invalid", view.kind === "invalida" ? "true" : "false");
-    if (view.kind !== "vacio" && view.kind !== "comprobando") {
-      var narrow = window.matchMedia("(max-width: 48rem)").matches;
-      out.scrollIntoView({ block: narrow ? "start" : "nearest", inline: "nearest" });
-    }
+    if (reveal && view.kind !== "vacio" && view.kind !== "comprobando") revealVerdict();
   }
 
   function run() {
+    if (input.value.trim() === "") {
+      apply(emptyView(), false);
+      showFieldError();
+      return;
+    }
+    hideFieldError();
     var value = input.value;
-    apply(pendingView(value));
+    apply(pendingView(value), false);
     window.requestAnimationFrame(function () {
       try {
-        apply(classifyAddress(value, cards, source, evm));
+        apply(classifyAddress(value, cards, source, evm), true);
       } catch (error) {
-        apply(classifyAddress(value, [], "caida", evm));
+        apply(classifyAddress(value, [], "caida", evm), true);
       }
     });
   }
 
-  apply(emptyView());
+  apply(emptyView(), false);
   form.addEventListener("submit", function (event) {
     event.preventDefault();
     run();

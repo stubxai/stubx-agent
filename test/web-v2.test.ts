@@ -44,7 +44,9 @@ type View = {
   light: string;
   mint: string | null;
   title: { es: string; en: string };
+  support: { es: string; en: string };
   partialNote: { es: string; en: string } | null;
+  compare: { official: string; marks: { char: string; changed: boolean }[] } | null;
   rows: { label: { es: string; en: string }; value: { es: string; en: string } }[];
 };
 
@@ -179,6 +181,16 @@ describe("web v2", () => {
     assert.match(shell, /register\("\/lab\/sw\.js", \{ scope: "\/lab\/" \}\)/);
     assert.match(shell, /onLab && "serviceWorker" in navigator/);
     assert.match(read("lab/index.html"), /worker-src 'self'/);
+    assert.equal(read("lab/index.html").includes("frame-ancestors"), false);
+    assert.equal(read("verify/index.html").includes("frame-ancestors"), false);
+    assert.match(read("_headers"), /frame-ancestors 'none'/);
+    assert.match(read("assets/site.css"), /max-width:\s*599px/);
+    assert.match(read("assets/site.css"), /header\.site \{\s*position:\s*static;/);
+    assert.match(read("assets/site.css"), /footer\.site a[\s\S]*min-height:\s*44px/);
+    assert.match(read("verify/index.html"), /id="direccion-error"/);
+    assert.match(read("lab/index.html"), /Para quien quiera más detalle/);
+    assert.match(read("assets/mission.js"), /Siguiente paso/);
+    assert.match(read("assets/mission.js"), /Empezar de nuevo/);
     assert.match(read("index.html"), /worker-src 'none'/);
     assert.match(read("verify/index.html"), /worker-src 'none'/);
     for (const file of htmlFiles(root)) {
@@ -286,7 +298,12 @@ describe("web v2", () => {
       liveNetwork: boolean;
       cardsDate: string;
     };
-    assert.equal(snap.commit, "0cb1633bffffe07383742e75a9ec9435764d1baf");
+    assert.equal(snap.commit, "fa9a500dac16251aa5d3831d59717981fb434be6");
+    const cited = spawnSync("git", ["rev-parse", `${snap.commit}:lab/verify/lookup.ts`], { cwd: repoRoot(), encoding: "utf8" });
+    const headLookup = spawnSync("git", ["rev-parse", "HEAD:lab/verify/lookup.ts"], { cwd: repoRoot(), encoding: "utf8" });
+    assert.equal(cited.status, 0, cited.stderr);
+    assert.equal(headLookup.status, 0, headLookup.stderr);
+    assert.equal(cited.stdout.trim(), headLookup.stdout.trim());
     assert.equal(snap.inBranch, true);
     assert.equal(Object.hasOwn(snap, "merged"), false);
     assert.equal(snap.liveNetwork, false);
@@ -336,6 +353,11 @@ describe("web v2", () => {
     assert.match(otherEvm.title.es, /solo existe en Solana/);
     const missing = lookup.classifyAddress("11111111111111111111111111111111", data.cards, "lista", data.evm);
     assert.equal(missing.kind, "sin_ficha");
+    assert.equal(missing.title.es, "No es la dirección oficial");
+    assert.match(missing.support.es, /Esto no dice quién creó esta dirección ni con qué intención/);
+    const near = lookup.classifyAddress(`${CA.slice(0, -1)}q`, data.cards, "lista", data.evm);
+    assert.equal(near.title.es, "No es la dirección oficial");
+    assert.equal(near.compare?.marks.filter((mark) => mark.changed).length, 1);
     const down = lookup.classifyAddress(CA, data.cards, "caida", data.evm);
     assert.equal(down.kind, "lectura_caida");
     assert.equal(down.light, "neutro");
@@ -413,7 +435,11 @@ describe("web v2", () => {
     assert.equal((read("_headers").match(/^\/studio\/\*$/gm) ?? []).length, 1);
     const studioHeaders = read("_headers").split(/^\/studio\/\*$/m)[1]?.split(/\n\/assets\/\*/)[0] ?? "";
     assert.equal(studioHeaders.includes("X-Robots-Tag"), false);
-    assert.match(studioHeaders, /connect-src 'self'/);
+    assert.equal(studioHeaders.includes("Content-Security-Policy"), false);
+    assert.match(read("studio/index.html"), /connect-src 'self'/);
+    assert.match(read("studio/index.html"), /default-src 'none'/);
+    assert.match(read("studio/reglas/index.html"), /connect-src 'self'/);
+    assert.match(read("studio/reglas/index.html"), /default-src 'none'/);
     assert.equal(read("studio/index.html").includes("noindex"), false);
     assert.equal(read("studio/reglas/index.html").includes("noindex"), false);
     assert.equal(read("sitemap.xml").includes("archivo.html"), false);
@@ -474,6 +500,43 @@ describe("web v2", () => {
     assert.equal(flag.status, 0, flag.stderr);
   });
 
+  test("frame-ancestors 'none' cubre todas las rutas de _headers", () => {
+    const blocks: Array<{ path: string; headers: string[] }> = [];
+    let current: { path: string; headers: string[] } | null = null;
+    for (const line of read("_headers").split("\n")) {
+      if (line.startsWith("#")) continue;
+      if (line.trim() === "") {
+        current = null;
+        continue;
+      }
+      if (!/^\s/.test(line)) {
+        current = { path: line.trim(), headers: [] };
+        blocks.push(current);
+        continue;
+      }
+      assert.ok(current, line);
+      current.headers.push(line.trim());
+    }
+    const policies = blocks.flatMap((block) =>
+      block.headers
+        .filter((header) => header.startsWith("Content-Security-Policy:"))
+        .map((header) => ({ path: block.path, header })),
+    );
+    assert.equal(policies.length, 1);
+    assert.equal(policies[0]?.path, "/*");
+    assert.match(policies[0]?.header ?? "", /frame-ancestors 'none'/);
+    const star = blocks.find((block) => block.path === "/*");
+    assert.ok(star?.headers.some((header) => header === "X-Frame-Options: DENY"));
+    for (const file of htmlFiles(siteRoot())) {
+      const html = readFileSync(file, "utf8");
+      const rel = path.relative(siteRoot(), file);
+      assert.equal(html.includes("frame-ancestors"), false, rel);
+      if (!html.includes("<head>")) continue;
+      assert.match(html, /og-stubx-2026-10b-1200x630\.jpg/, rel);
+      assert.equal(html.includes("og-stubx-2026-10-1200x630.jpg"), false, rel);
+    }
+  });
+
   test("the browser bundle matches lab/", async () => {
     const root = repoRoot();
     const bundlePaths = [
@@ -489,7 +552,7 @@ describe("web v2", () => {
       encoding: "utf8",
     });
     assert.equal(run.status, 0, `${run.stdout}\n${run.stderr}`);
-    assert.match(run.stdout, /0cb1633bffffe07383742e75a9ec9435764d1baf/);
+    assert.match(run.stdout, /fa9a500dac16251aa5d3831d59717981fb434be6/);
     const same = (left: string, right: string) => {
       assert.equal(readFileSync(path.join(root, left), "utf8"), readFileSync(path.join(root, right), "utf8"), left);
     };

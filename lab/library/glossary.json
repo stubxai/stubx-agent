@@ -196,6 +196,38 @@
       }
     },
     {
+      "id": "ficha",
+      "term": { "es": "Ficha", "en": "Card" },
+      "means": {
+        "es": "Una ficha es la lectura fechada de una dirección. No se actualiza sola y no es una auditoría.",
+        "en": "A card is the dated reading of an address. It does not update itself and it is not an audit."
+      },
+      "example": {
+        "es": "Las fichas de esta misión llevan fecha 2026-10-08 o, si se releyeron, 2026-10-09.",
+        "en": "The cards in this mission are dated 2026-10-08 or, if they were read again, 2026-10-09."
+      },
+      "doesNotConclude": {
+        "es": "Una ficha no dice qué hacer con el token ni quién es una persona.",
+        "en": "A card does not say what to do with the token or who a person is."
+      }
+    },
+    {
+      "id": "censo",
+      "term": { "es": "Censo", "en": "Census" },
+      "means": {
+        "es": "Un censo sería la lista de todas las cuentas. Estas fichas no lo son: leen algunas cuentas y no rellenan el resto con un cero.",
+        "en": "A census would be the list of every account. These cards are not that: they read some accounts and do not fill the rest in with a zero."
+      },
+      "example": {
+        "es": "La ficha oficial del 2026-10-09 lee la curva, la creadora y la cuenta personal publicada, y dice que eso no es un censo.",
+        "en": "The official card from 2026-10-09 reads the curve, the creator, and the published personal account, and it says that is not a census."
+      },
+      "doesNotConclude": {
+        "es": "Que no sea un censo no convierte el dato que falta en un cero.",
+        "en": "Not being a census does not turn the missing fact into a zero."
+      }
+    },
+    {
       "id": "comision",
       "term": { "es": "Comisión", "en": "Fee" },
       "means": {

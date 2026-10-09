@@ -136,6 +136,7 @@ function bootLab() {
   progress = withLang(progress, lang);
   var banner = null;
   var focusBanner = false;
+  var focusStep = false;
   var saveError = false;
   var reviewId = null;
 
@@ -217,13 +218,42 @@ function bootLab() {
     return article;
   }
 
-  function helpButton(step) {
-    var id = step.glossary[0];
-    if (!id) return null;
-    var button = el("button", { type: "button", class: "secondary" });
-    button.textContent = lang === "en" ? "What does this word mean?" : "¿Qué significa esta palabra?";
-    button.addEventListener("click", function () { openHelp(id); });
+  function helpButtons(step) {
+    if (!step.glossary.length) return null;
+    var wrap = el("div", { class: "glosario-paso" });
+    step.glossary.forEach(function (id) {
+      var entry = findEntry(id);
+      if (!entry) return;
+      var button = el("button", { type: "button", class: "secondary" });
+      button.textContent = lang === "en"
+        ? "What does “" + entry.term[lang] + "” mean?"
+        : "¿Qué significa «" + entry.term[lang] + "»?";
+      button.addEventListener("click", function () { openHelp(id); });
+      wrap.append(button);
+    });
+    return wrap;
+  }
+
+  function restartButton() {
+    var button = el("button", { type: "button", class: "primary" });
+    button.textContent = lang === "en" ? "Start again" : "Empezar de nuevo";
+    button.addEventListener("click", function () {
+      progress = resetProgress(mission, lang);
+      banner = null;
+      reviewId = null;
+      focusStep = true;
+      save();
+      render();
+    });
     return button;
+  }
+
+  function coverHeight() {
+    var header = document.querySelector("header.site");
+    if (!header) return 0;
+    var pos = window.getComputedStyle(header).position;
+    if (pos !== "fixed" && pos !== "sticky") return 0;
+    return Math.ceil(header.getBoundingClientRect().height);
   }
 
   function resetButton() {
@@ -299,9 +329,20 @@ function bootLab() {
       feedbackBody.textContent = banner.explanation[lang];
       var again = el("p");
       again.textContent = banner.correct
-        ? (lang === "en" ? "You can continue. There is no score and no penalty." : "Puedes seguir. No hay puntuación ni penalización.")
+        ? (lang === "en" ? "When you have read it, press Next step. There is no score and no penalty." : "Cuando lo hayas leído, pulsa Siguiente paso. No hay puntuación ni penalización.")
         : (lang === "en" ? "You can choose another answer. There is no penalty." : "Puedes elegir otra respuesta. No hay penalización.");
       feedback.append(feedbackTitle, feedbackBody, again);
+      if (banner.correct) {
+        var next = el("button", { type: "button", class: "primary siguiente" });
+        next.textContent = lang === "en" ? "Next step" : "Siguiente paso";
+        next.addEventListener("click", function () {
+          reviewId = null;
+          banner = null;
+          focusStep = true;
+          render();
+        });
+        feedback.append(next);
+      }
       root.append(feedback);
     }
 
@@ -326,7 +367,8 @@ function bootLab() {
       dated.textContent = lang === "en"
         ? "The cards are from " + STUBX_LAB.cardDate + ". Unknown is not the same as verified."
         : "Las fichas son del " + STUBX_LAB.cardDate + ". Lo desconocido no es lo mismo que lo comprobado.";
-      done.append(close, dated, resetButton());
+      done.setAttribute("data-live-step", "resultado");
+      done.append(close, dated, restartButton(), resetButton());
       root.append(done);
     } else {
       var stepId = reviewId || (liveStep() ? liveStep().id : mission.steps[0].id);
@@ -335,7 +377,7 @@ function bootLab() {
         if (mission.steps[i].id === stepId) step = mission.steps[i];
       }
       if (!step) return;
-      var section = el("section");
+      var section = el("section", { "data-live-step": step.id });
       var heading = el("h2");
       var position = mission.steps.indexOf(step);
       heading.textContent = lang === "en"
@@ -344,12 +386,12 @@ function bootLab() {
       var guide = el("p", { class: "apoyo" });
       guide.textContent = step.guide[lang];
       section.append(heading, guide);
-      var word = helpButton(step);
-      if (word) section.append(word);
+      var words = helpButtons(step);
+      if (words) section.append(words);
       if (step.cards.length > 0) {
         var fold = el("details", { class: "tecnico" });
         var summary = el("summary");
-        summary.textContent = lang === "en" ? "See the cards" : "Ver las fichas";
+        summary.textContent = lang === "en" ? "Details" : "Detalles";
         fold.append(summary);
         step.cards.forEach(function (mint) {
           var card = STUBX_LAB.cards[mint];
@@ -361,7 +403,8 @@ function bootLab() {
       prompt.textContent = step.prompt[lang];
       section.append(prompt);
       var solved = progress.solved.indexOf(step.id) !== -1;
-      if (solved) {
+      var waiting = Boolean(banner && banner.correct && banner.stepId === step.id);
+      if (solved && !waiting) {
         var lesson = el("p");
         lesson.textContent = step.whyRight[lang];
         var locked = el("p", { class: "muted" });
@@ -369,7 +412,7 @@ function bootLab() {
           ? "This check is already done. To try it again, delete the local progress."
           : "Esta comprobación ya está hecha. Para repetirla, borra el progreso local.";
         section.append(lesson, locked);
-      } else {
+      } else if (!solved) {
         var options = el("div", { class: "opciones", role: "group" });
         options.setAttribute("aria-labelledby", "pregunta-actual");
         prompt.id = "pregunta-actual";
@@ -380,9 +423,9 @@ function bootLab() {
             var grade = answer(mission, progress, step.id, option.id);
             if (!grade.applied) return;
             progress = grade.progress;
-            banner = { correct: grade.correct, explanation: grade.explanation };
+            banner = { correct: grade.correct, explanation: grade.explanation, stepId: step.id };
             focusBanner = true;
-            if (grade.correct) reviewId = null;
+            if (grade.correct) reviewId = step.id;
             save();
             render();
           });
@@ -396,8 +439,25 @@ function bootLab() {
 
     if (focusBanner) {
       var region = root.querySelector(".feedback");
-      if (region) region.focus();
+      if (region) {
+        region.style.scrollMarginTop = coverHeight() + "px";
+        region.scrollIntoView({ block: "start" });
+        region.focus({ preventScroll: true });
+      }
       focusBanner = false;
+    }
+    if (focusStep) {
+      var live = root.querySelector("[data-live-step]");
+      if (live) {
+        live.style.scrollMarginTop = coverHeight() + "px";
+        live.scrollIntoView({ block: "start" });
+        var heading = live.querySelector("h2");
+        if (heading) {
+          heading.setAttribute("tabindex", "-1");
+          heading.focus({ preventScroll: true });
+        }
+      }
+      focusStep = false;
     }
   }
 
