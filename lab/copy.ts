@@ -2,7 +2,7 @@ export const DISCLAIMER =
   "Herramienta educativa con datos públicos. No es consejo de inversión. Cripto de alto riesgo · Puedes perderlo todo.";
 
 export const DISCLAIMER_EN =
-  "Educational tool using public data. Not investment advice. High-risk crypto · You can lose everything.";
+  "Educational tool using public data. Not investment advice. High-risk crypto · You could lose everything.";
 
 export const UNKNOWN_LINE = {
   es: "Lo desconocido no es lo mismo que lo comprobado.",
@@ -21,7 +21,7 @@ export const DRAFT_LINE = {
 
 export const READONLY_LINE = {
   es: "Solo lectura: no conecta carteras ni firma nada. Las fichas no son una auditoría ni una garantía.",
-  en: "Read only: it does not connect accounts or sign anything. The cards are not an audit or a guarantee.",
+  en: "Read-only: it does not connect wallets or sign anything. The cards are not an audit or a guarantee.",
 } as const;
 
 export const HOW_VERIFY = {

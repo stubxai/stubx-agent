@@ -12,7 +12,7 @@
     "actionsUrl": "https://github.com/stubxai/stubx-agent/actions/workflows/ci.yml",
     "whatItRuns": {
       "es": "En cada push y en cada pull request: npm ci, typecheck, tests (incluidos verify/ y lab/), escaneo de firma del componente Verify, logs, ppm:print, npm audit, verify:all y gitleaks. El job de atestación solo corre en main.",
-      "en": "On every push and pull request: npm ci, typecheck, tests (including verify/ and lab/), the Verify sign-and-send scan, logs, ppm:print, npm audit, verify:all, and gitleaks. The attestation job runs only on main."
+      "en": "On every push and pull request: npm ci, typecheck, tests (including verify/ and lab/), a scan of the Verify component for signing code, logs, ppm:print, npm audit, verify:all, and gitleaks. The attestation job runs only on main."
     },
     "limit": {
       "es": "Esta página no consulta GitHub al abrirse. Una ejecución antigua no dice nada de un commit posterior.",
@@ -47,8 +47,8 @@
       "reviewer": "Pendiente de una persona distinta del autor, antes de publicar.",
       "reviewedOn": "2026-10-08",
       "block": {
-        "es": "Sigue en borrador. Publicar en stubxai.com necesita autorización. La muestra de holders de los ejemplos del 2026-10-08 quedó en no disponible por HTTP 429.",
-        "en": "Still a draft. Publishing on stubxai.com needs authorization. The holder sample on the 2026-10-08 examples stayed unavailable because of HTTP 429."
+        "es": "Sigue en borrador. Publicar en stubxai.com necesita autorización. La muestra de cuentas con tokens de los ejemplos del 2026-10-08 quedó en no disponible por HTTP 429.",
+        "en": "Still a draft. Publishing on stubxai.com needs authorization. The token account sample on the 2026-10-08 examples stayed unavailable because of HTTP 429."
       },
       "evidence": [
         {
@@ -59,7 +59,7 @@
         {
           "label": { "es": "CI del 2026-10-08", "en": "CI on 2026-10-08" },
           "href": "https://github.com/stubxai/stubx-agent/actions/runs/37745755560",
-          "note": { "es": "Verde en esa ejecución. No habla de Lab.", "en": "Green on that run. It does not speak for Lab." }
+          "note": { "es": "Verde en esa ejecución. No habla de Lab.", "en": "That run passed. It does not cover Lab." }
         },
         {
           "label": { "es": "Fichas de ejemplo", "en": "Example cards" },
@@ -166,7 +166,7 @@
         {
           "label": { "es": "PR 14 en borrador", "en": "Draft PR 14" },
           "href": "https://github.com/stubxai/stubx-agent/pull/14",
-          "note": { "es": "La página viaja en la PR. No está en la web.", "en": "The page travels in the PR. It is not on the website." }
+          "note": { "es": "La página viaja en la PR. No está en la web.", "en": "The page ships with the PR. It is not on the website." }
         },
         {
           "label": { "es": "Registros", "en": "Records" },
