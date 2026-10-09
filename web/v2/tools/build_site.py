@@ -987,15 +987,10 @@ def headers() -> str:
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
   Cross-Origin-Opener-Policy: same-origin
 
-# Un solo bloque /studio/*, sin Content-Security-Policy: _headers tiene una sola,
-# en /*. La más estricta de Studio (default-src 'none', worker-src 'none',
-# connect-src 'self') vive en el meta del HTML y se cruza con la de /*.
-# connect-src sigue en 'self' porque el editor descarga los PNG de avatar.
-# frame-ancestors queda solo en /*.
-/studio/*
-  X-Frame-Options: DENY
-  X-Content-Type-Options: nosniff
-  Referrer-Policy: no-referrer
+# Studio no repite cabeceras: /* ya trae X-Frame-Options, nosniff y Referrer-Policy.
+# La CSP más estricta (default-src 'none', worker-src 'none', connect-src 'self')
+# vive en el meta del HTML y se cruza con la de /*. connect-src sigue en 'self'
+# porque el editor descarga los PNG de avatar. frame-ancestors queda solo en /*.
 
 /assets/*
   Cache-Control: public, max-age=0, must-revalidate

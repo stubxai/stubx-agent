@@ -437,10 +437,7 @@ describe("web v2", () => {
     assert.match(read("sitemap.xml"), /https:\/\/stubxai.com\/archivo</);
     assert.match(read("sitemap.xml"), /https:\/\/stubxai.com\/studio\/</);
     assert.match(read("sitemap.xml"), /https:\/\/stubxai.com\/studio\/reglas\//);
-    assert.equal((read("_headers").match(/^\/studio\/\*$/gm) ?? []).length, 1);
-    const studioHeaders = read("_headers").split(/^\/studio\/\*$/m)[1]?.split(/\n\/assets\/\*/)[0] ?? "";
-    assert.equal(studioHeaders.includes("X-Robots-Tag"), false);
-    assert.equal(studioHeaders.includes("Content-Security-Policy"), false);
+    assert.equal((read("_headers").match(/^\/studio\/\*$/gm) ?? []).length, 0);
     assert.match(read("studio/index.html"), /connect-src 'self'/);
     assert.match(read("studio/index.html"), /default-src 'none'/);
     assert.match(read("studio/reglas/index.html"), /connect-src 'self'/);

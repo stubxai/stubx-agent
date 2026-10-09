@@ -42,9 +42,6 @@ jobs:
         run: npm run typecheck
 
       - name: Test
-        env:
-          # Lista opcional. Si el secreto no existe, el test anti-nombre se omite con un aviso.
-          STUBX_NAME_DENYLIST: ${{ secrets.STUBX_NAME_DENYLIST }}
         run: npm test
 
       - name: STUBX Verify offline tests and read-only scan

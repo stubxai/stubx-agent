@@ -138,10 +138,11 @@ const ADVICE_VERB = new Set([
 ]);
 const REQUEST = new Set([
   "envia", "enviad", "envialo", "enviala", "enviasela", "enviaselo",
-  "manda", "mandame", "mandad", "pasa", "pasame", "dame",
+  "manda", "mandame", "mandad", "pasa", "pasame", "dame", "damela", "damelo", "damelas", "damelos",
   "conecta", "conectad", "firma", "firmad", "comparte", "compartid", "aprueba",
   "send", "share", "give", "connect", "sign", "approve", "dm",
 ]);
+const DELIVERY = new Set(["dame", "damela", "damelo", "damelas", "damelos"]);
 const SENSITIVE = [
   "frase de recuperacion",
   "recovery phrase",
@@ -168,14 +169,41 @@ const ASK_VERB = new Set(["pide", "piden", "pedir", "pidio", "pedira", "pediran"
 const WARNING_CUE = new Set(["desconfia", "desconfie", "desconfiad", "cuidado", "beware", "alerta", "distrust"]);
 const WARNING_END = new Set(["estafa", "scam", "fraude", "fraud", "phishing", "timo"]);
 const MONEY = new Set([
-  "dinero", "pasta", "plata", "cash", "money", "sol", "sols", "token", "tokens", "cripto", "crypto",
+  "dinero", "pasta", "plata", "lana", "guita", "cash", "money", "sol", "sols", "token", "tokens", "cripto", "crypto",
   "usdc", "usdt", "btc", "eth", "profit", "profits", "beneficio", "beneficios", "ganancia", "ganancias",
   "usd", "eur", "euro", "euros", "dolar", "dolares", "dollar", "dollars",
 ]);
+const QUANTITY = new Set(["mucho", "mucha", "muchos", "muchas", "bastante", "mas", "tanto", "tanta", "tantos", "tantas"]);
 const PRICE = new Set([
   "precio", "price", "valor", "cotizacion", "mercado", "sol", "sols", "token", "tokens", "chart",
   "grafico", "mcap", "capitalizacion",
 ]);
+const ASSET = new Set(["stubx"]);
+const WARNING_SAFE = [
+  "frase de recuperacion",
+  "recovery phrase",
+  "seed phrase",
+  "frase semilla",
+  "clave privada",
+  "private key",
+  "conecta tu billetera",
+  "conecta tu wallet",
+  "connect your wallet",
+  "connect wallet",
+  "12 palabras",
+  "24 palabras",
+  "billetera",
+  "mnemonic",
+  "airdrops",
+  "semillas",
+  "wallets",
+  "seeds",
+  "privkey",
+  "semilla",
+  "airdrop",
+  "wallet",
+  "seed",
+];
 const IMPERATIVE = new Set([
   ...REQUEST,
   "compra", "vende", "entra", "mira", "haz", "ten", "ven", "pon", "sal", "di", "ve", "sube", "baja", "corre", "buy",
@@ -230,14 +258,15 @@ function maskNegatedAdvice(text) {
   return out;
 }
 
-function maskWarnings(text, list) {
-  const keys = (list.terms ?? []).map((term) => termKey(term)).filter((key) => key.length >= 4);
+function maskWarnings(text) {
+  const phrases = [...WARNING_SAFE].sort((a, b) => b.length - a.length);
   return text.split(/(?<=[.!?;:\n])/).map((sentence) => {
-    const words = wordList(sentence);
-    if (!warningSentence(words)) return sentence;
+    if (!warningSentence(wordList(sentence))) return sentence;
     let out = sentence;
-    for (const phrase of SENSITIVE) out = out.replace(new RegExp(phrasePattern(phrase), "g"), " ");
-    return out.replace(/[a-z0-9]+/g, (word) => (keys.some((key) => word.includes(key)) ? " " : word));
+    for (const phrase of phrases) {
+      out = out.replace(new RegExp(`(^|[^a-z0-9])(?:${phrasePattern(phrase)})(?![a-z0-9])`, "g"), "$1 ");
+    }
+    return out;
   }).join("");
 }
 
@@ -257,8 +286,11 @@ function maskShortContext(text) {
     const next = nextContent(words, wordIndex, 1);
     const prev = nextContent(words, wordIndex, -1);
     let drop = false;
-    if (word === "ganar") drop = Boolean(next) && !MONEY.has(next);
-    else if (word === "sube") drop = Boolean(next || prev) && !PRICE.has(next) && !PRICE.has(prev);
+    if (word === "ganar") drop = Boolean(next) && !MONEY.has(next) && !QUANTITY.has(next) && !/^\d+$/.test(next);
+    else if (word === "sube") {
+      const near = [next, prev].filter(Boolean);
+      drop = near.length > 0 && near.every((item) => !PRICE.has(item) && !ASSET.has(item));
+    }
     else if (word === "support") drop = Boolean(next);
     else if (word === "ya") drop = isNonImperativeVerb(next);
     if (drop) parts[indexes[wordIndex]] = " ";
@@ -282,11 +314,21 @@ function hasSolDouble(text) {
   return false;
 }
 
+function hasTypoDouble(text) {
+  const re = /\b(?:envia|enivia)\w{0,8}\b/g;
+  for (const match of text.matchAll(re)) {
+    if (verbIsNegated(text, match.index ?? 0)) continue;
+    const after = text.slice(match.index ?? 0, (match.index ?? 0) + match[0].length + 48);
+    if (/devolv/.test(after) && /\bdoble\b/.test(after)) return true;
+  }
+  return false;
+}
+
 function hasSendSolBack(text) {
   const re = /\bsend\w{0,6}\s+\d+(?:[.,]\d+)?\s+sols?\b/g;
   for (const match of text.matchAll(re)) {
     const after = text.slice(match.index ?? 0, (match.index ?? 0) + match[0].length + 48);
-    if (!/\bget\s+\d+(?:[.,]\d+)?\s+back\b/.test(after)) continue;
+    if (!/\bget\s+\d+(?:[.,]\d+)?\s+(?:sols?\s+)?back\b/.test(after)) continue;
     if (verbIsNegated(text, match.index ?? 0)) continue;
     return true;
   }
@@ -415,7 +457,10 @@ export function analyze(text, list = blocklist) {
   for (const domain of list.domains ?? []) {
     const needle = String(domain).toLowerCase().replace(/\s+/g, "");
     const squashed = compact(needle);
-    if ((needle && urlText.includes(needle)) || (squashed && urlSquash.includes(squashed))) pushHit(hits, seen, "url", domain);
+    const shortSquash = squashed.length > 0 && squashed.length <= 4
+      && new RegExp(`(?:^|[^a-z0-9])${squashed}(?![a-z0-9])`).test(urlSquash);
+    const longSquash = squashed.length > 4 && urlSquash.includes(squashed);
+    if ((needle && urlText.includes(needle)) || shortSquash || longSquash) pushHit(hits, seen, "url", domain);
   }
   if (/[a-z0-9-]+\.(?:com|net|org|io|xyz|fun|me)\b/.test(urlText)) pushHit(hits, seen, "url", "url");
 
@@ -427,8 +472,12 @@ export function analyze(text, list = blocklist) {
     if (re.test(folded)) pushHit(hits, seen, "handle", `@${handle}`);
   }
 
-  const advised = maskWarnings(maskNegatedAdvice(maskExceptions(folded)), list);
-  if (hasSolDouble(advised) || hasSendSolBack(advised)) pushHit(hits, seen, "term", "sol");
+  const plainWords = wordList(folded.replace(/['’]/g, ""));
+  for (const word of plainWords) {
+    if (DELIVERY.has(word)) pushHit(hits, seen, "term", word);
+  }
+  const advised = maskWarnings(maskNegatedAdvice(maskExceptions(folded)));
+  if (hasSolDouble(advised) || hasSendSolBack(advised) || hasTypoDouble(advised)) pushHit(hits, seen, "term", "sol");
   const short = new Set((list.shortWords ?? []).map((word) => termKey(word)));
   const variants = [advised, leet(advised, "i"), leet(advised, "l")];
   for (const variant of variants) {
