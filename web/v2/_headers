@@ -11,7 +11,6 @@
   Referrer-Policy: no-referrer
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
   Cross-Origin-Opener-Policy: same-origin
-  X-Robots-Tag: noindex, nofollow
 
 /studio/*
   Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; manifest-src 'self'; media-src 'none'; frame-src 'none'; worker-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests
@@ -36,3 +35,18 @@
   Cache-Control: public, max-age=3600
 /sitemap.xml
   Content-Type: application/xml; charset=utf-8
+# Lo que no debe salir en buscadores: service worker, datos JSON y la página 404.
+/lab/sw.js
+  X-Robots-Tag: noindex, nofollow
+/modules/*
+  X-Robots-Tag: noindex, nofollow
+/onchain/*
+  X-Robots-Tag: noindex, nofollow
+/token.json
+  X-Robots-Tag: noindex, nofollow
+/site.webmanifest
+  X-Robots-Tag: noindex, nofollow
+/404.html
+  X-Robots-Tag: noindex, nofollow
+/studio/*
+  X-Robots-Tag: noindex, nofollow
