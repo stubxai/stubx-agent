@@ -38,7 +38,7 @@ RISK_ES = (
     "en la curva de Pump.fun: el propio contrato compra y vende sin necesitar a otra "
     "persona, pero cada venta baja el precio y las ventas grandes reciben peor precio. "
     "Si el precio cae, vender puede devolverte muy poco o casi nada. Si el token completa "
-    "la curva, pasa de forma automática e irreversible a un fondo de liquidez de PumpSwap, "
+    "la curva, pasa de forma automática e irreversible a un pool de liquidez de PumpSwap, "
     "con otras comisiones y el mismo riesgo de caída. Pump.fun o la red Solana pueden "
     "fallar, saturarse o limitar el acceso según el país, así que no siempre podrás vender "
     "cuando quieras. No está cubierto por fondos de garantía de depósitos ni de "
