@@ -1,0 +1,359 @@
+{
+  "id": "mision-01",
+  "version": "1.0.0",
+  "updated": "2026-10-09",
+  "cardDate": "2026-10-08",
+  "title": {
+    "es": "Cómo detectar un token clon en 5 comprobaciones",
+    "en": "How to spot a clone token in 5 checks"
+  },
+  "intro": {
+    "es": "Vas a leer fichas reales de STUBX Verify del 2026-10-08. No es una consulta en directo. Una respuesta que no encaja se explica y se puede volver a intentar. No hay penalización. El progreso se guarda solo en este navegador, se puede borrar y no es un certificado.",
+    "en": "You will read real STUBX Verify cards from 2026-10-08. This is not a live query. An answer that does not fit is explained, and you can try again. There is no penalty. Progress is stored only in this browser, it can be deleted, and it is not a certificate."
+  },
+  "closing": {
+    "es": "El progreso queda en este navegador. Se puede borrar o editar y no sale del dispositivo por esta página. No es un certificado ni hace falta una cuenta, una cartera o tener STUBX para leer la misión.",
+    "en": "Progress stays in this browser. It can be deleted or edited, and this page does not send it off the device. It is not a certificate. No account is required, nothing is signed, and holding STUBX is not required to read the mission."
+  },
+  "steps": [
+    {
+      "id": "direccion",
+      "kind": "check",
+      "glossary": ["direccion", "registro", "suplantacion"],
+      "cards": [
+        "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump",
+        "DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ",
+        "Hhq4ffySVX3UQqSowjhP1Lwa8YuJDf7iH2hYWvVHTuEf"
+      ],
+      "fields": ["name", "mint", "inRegistry", "statement"],
+      "prompt": {
+        "es": "Tres fichas del 2026-10-08 muestran nombres parecidos. ¿Cuál es la dirección del mint que está en el registro curado?",
+        "en": "Three cards from 2026-10-08 show similar names. Which address is the mint that is in the curated registry?"
+      },
+      "guide": {
+        "es": "El nombre se puede repetir. La dirección del mint es el dato que hay que comparar con el registro.",
+        "en": "A name can be reused. The mint address is the fact to compare with the registry."
+      },
+      "options": [
+        {
+          "id": "oficial",
+          "mint": "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump",
+          "label": {
+            "es": "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump",
+            "en": "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump"
+          }
+        },
+        {
+          "id": "clon-dj",
+          "mint": "DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ",
+          "label": {
+            "es": "DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ",
+            "en": "DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ"
+          }
+        },
+        {
+          "id": "clon-hh",
+          "mint": "Hhq4ffySVX3UQqSowjhP1Lwa8YuJDf7iH2hYWvVHTuEf",
+          "label": {
+            "es": "Hhq4ffySVX3UQqSowjhP1Lwa8YuJDf7iH2hYWvVHTuEf",
+            "en": "Hhq4ffySVX3UQqSowjhP1Lwa8YuJDf7iH2hYWvVHTuEf"
+          }
+        }
+      ],
+      "correct": "oficial",
+      "whyRight": {
+        "es": "En la ficha del 2026-10-08, solo TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump figura en el registro curado. Los otros dos nombres incluyen STUBX y sus direcciones son otras. Esa coincidencia es una señal de posible suplantación y no atribuye intención.",
+        "en": "On the 2026-10-08 card, only TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump is in the curated registry. The other two names include STUBX and their addresses are different. That match is a possible-impersonation signal and does not attribute intent."
+      },
+      "whyWrong": {
+        "clon-dj": {
+          "es": "DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ se llama Comunidad STUBX, pero la ficha dice que no está en el registro. El nombre no sustituye a la dirección.",
+          "en": "DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ is named Comunidad STUBX, but the card says it is not in the registry. The name does not stand in for the address."
+        },
+        "clon-hh": {
+          "es": "Hhq4ffySVX3UQqSowjhP1Lwa8YuJDf7iH2hYWvVHTuEf se llama Comunidad STUBX · Creador. La ficha marca posible suplantación porque el nombre o un enlace coinciden y el mint es otro.",
+          "en": "Hhq4ffySVX3UQqSowjhP1Lwa8YuJDf7iH2hYWvVHTuEf is named Comunidad STUBX · Creador. The card marks possible impersonation because the name or a link matches and the mint is a different one."
+        }
+      }
+    },
+    {
+      "id": "emision",
+      "kind": "check",
+      "glossary": ["autoridad-emision"],
+      "cards": [
+        "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump",
+        "DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ",
+        "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+      ],
+      "fields": ["name", "mint", "mintAuthority"],
+      "prompt": {
+        "es": "El mint DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ tiene la autoridad de emisión revocada, igual que el mint del registro. ¿Qué se puede afirmar con la ficha?",
+        "en": "Mint DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ has mint authority revoked, the same as the registry mint. What can the card support?"
+      },
+      "guide": {
+        "es": "Revocada significa que ese permiso concreto figura en 0 en esa lectura. No dice qué dirección es la del registro.",
+        "en": "Revoked means that specific permission is recorded as 0 in that reading. It does not say which address is the registry mint."
+      },
+      "options": [
+        {
+          "id": "coincide",
+          "label": {
+            "es": "Es el mint del registro, porque el permiso coincide.",
+            "en": "It is the registry mint, because the permission matches."
+          }
+        },
+        {
+          "id": "solo-permiso",
+          "label": {
+            "es": "Ese permiso figura revocado. No identifica el mint ni demuestra que el proyecto sea legítimo.",
+            "en": "That permission is recorded as revoked. It does not identify the mint or show that the project is legitimate."
+          }
+        },
+        {
+          "id": "no-leido",
+          "label": {
+            "es": "La ficha no pudo leer el permiso y por eso escribe revocada.",
+            "en": "The card could not read the permission, so it writes revoked."
+          }
+        }
+      ],
+      "correct": "solo-permiso",
+      "whyRight": {
+        "es": "En las dos fichas de STUBX y del clon, el estado de la autoridad de emisión es revocada y el estado del campo es verificado. USDC, en la misma tanda, la tiene activa. El permiso no iguala las direcciones.",
+        "en": "On both the STUBX card and the clone card, mint authority state is revoked and the field status is verified. USDC, in the same batch, has it active. The permission does not make the addresses the same."
+      },
+      "whyWrong": {
+        "coincide": {
+          "es": "Dos mints distintos pueden tener el mismo permiso. La dirección de DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ no es la del registro.",
+          "en": "Two different mints can have the same permission. The address DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ is not the registry address."
+        },
+        "no-leido": {
+          "es": "Aquí el campo está verificado, no en no disponible. Si no se hubiera podido leer, la ficha no lo presentaría como revocada.",
+          "en": "Here the field is verified, not unavailable. If it could not be read, the card would not present it as revoked."
+        }
+      }
+    },
+    {
+      "id": "congelacion",
+      "kind": "check",
+      "glossary": ["autoridad-congelacion", "registro"],
+      "cards": [
+        "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump",
+        "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        "Hhq4ffySVX3UQqSowjhP1Lwa8YuJDf7iH2hYWvVHTuEf"
+      ],
+      "fields": ["name", "mint", "freezeAuthority", "inRegistry", "statement"],
+      "prompt": {
+        "es": "USDC tiene la autoridad de congelación activa y no está en el registro de STUBX. ¿Qué lectura encaja con la ficha?",
+        "en": "USDC has freeze authority active and is not in the STUBX registry. Which reading fits the card?"
+      },
+      "guide": {
+        "es": "Una autoridad activa es un permiso de ese mint. No estar en el registro de STUBX no convierte a otro token en clon.",
+        "en": "An active authority is a permission of that mint. Being outside the STUBX registry does not turn another token into a clone."
+      },
+      "options": [
+        {
+          "id": "es-suplantacion",
+          "label": {
+            "es": "USDC es una suplantación de STUBX.",
+            "en": "USDC is an impersonation of STUBX."
+          }
+        },
+        {
+          "id": "permiso-y-registro",
+          "label": {
+            "es": "La autoridad activa es un permiso de ese mint. No estar en el registro no significa que el token sea falso ni una copia.",
+            "en": "The active authority is a permission of that mint. Not being in the registry does not mean the token is false or a copy."
+          }
+        },
+        {
+          "id": "solo-revocada",
+          "label": {
+            "es": "Solo un mint con la congelación revocada puede ser auténtico.",
+            "en": "Only a mint with freeze authority revoked can be authentic."
+          }
+        }
+      ],
+      "correct": "permiso-y-registro",
+      "whyRight": {
+        "es": "La ficha de USDC del 2026-10-08 dice que no está en el registro y que eso no significa que sea falso ni una copia. La autoridad de congelación activa queda como un permiso concreto, con estado verificado.",
+        "en": "The USDC card from 2026-10-08 says it is not in the registry and that this does not mean it is false or a copy. Active freeze authority remains one specific permission, with verified status."
+      },
+      "whyWrong": {
+        "es-suplantacion": {
+          "es": "La señal de posible suplantación sale cuando el nombre, el símbolo, la imagen o un enlace coinciden con el registro y el mint es otro. La ficha de USDC no marca esa señal.",
+          "en": "The possible-impersonation signal appears when the name, symbol, image, or a link matches the registry and the mint is a different one. The USDC card does not mark that signal."
+        },
+        "solo-revocada": {
+          "es": "Que la congelación esté revocada quita ese permiso. No es una prueba de autenticidad. El clon Hhq4ffySVX3UQqSowjhP1Lwa8YuJDf7iH2hYWvVHTuEf también la tiene revocada y no es el mint del registro.",
+          "en": "Revoked freeze authority removes that permission. It is not proof of authenticity. Clone Hhq4ffySVX3UQqSowjhP1Lwa8YuJDf7iH2hYWvVHTuEf also has it revoked and is not the registry mint."
+        }
+      }
+    },
+    {
+      "id": "desconocido",
+      "kind": "check",
+      "glossary": ["metadatos-mutables", "desconocido"],
+      "cards": [
+        "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump",
+        "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+      ],
+      "fields": ["name", "mint", "metadata", "holders"],
+      "prompt": {
+        "es": "En la ficha del mint del registro, los metadatos no son mutables en las fuentes leídas y la muestra de holders está en no disponible. ¿Qué combinación es correcta?",
+        "en": "On the registry mint card, metadata is not mutable in the sources that were read, and the holder sample is unavailable. Which combination is right?"
+      },
+      "guide": {
+        "es": "Un campo verificado no rellena otro campo que no se pudo leer. Lo no disponible no pasa a cero ni a comprobado.",
+        "en": "A verified field does not fill in another field that could not be read. Unavailable does not become zero or verified."
+      },
+      "options": [
+        {
+          "id": "prueba-y-cero",
+          "label": {
+            "es": "Los metadatos no mutables demuestran que es el oficial, y la muestra ausente cuenta como concentración cero.",
+            "en": "Immutable metadata proves it is the official mint, and the missing sample counts as zero concentration."
+          }
+        },
+        {
+          "id": "sigue-desconocido",
+          "label": {
+            "es": "Lo no mutable es lo leído en esa fecha. Lo no disponible sigue desconocido: no pasa a comprobado ni a cero.",
+            "en": "Not mutable describes what was read on that date. Unavailable stays unknown: it does not become verified or zero."
+          }
+        },
+        {
+          "id": "anula-ficha",
+          "label": {
+            "es": "Si falta la muestra, se anulan los campos que sí figuran como verificados.",
+            "en": "If the sample is missing, the fields that are marked verified are cancelled."
+          }
+        }
+      ],
+      "correct": "sigue-desconocido",
+      "whyRight": {
+        "es": "La ficha es parcial por el HTTP 429 de la muestra de holders. Ese hueco no se interpreta como concentración cero. Los metadatos no mutables en las fuentes leídas tampoco identifican el mint: USDC, en la misma fecha, tiene metadatos mutables y no es un clon.",
+        "en": "The card is partial because the holder sample returned HTTP 429. That gap is not read as zero concentration. Metadata that is not mutable in the sources read also does not identify the mint: USDC, on the same date, has mutable metadata and is not a clone."
+      },
+      "whyWrong": {
+        "prueba-y-cero": {
+          "es": "La propia ficha dice que la muestra ausente no es concentración cero. Y unos metadatos no mutables no convierten una dirección en la del registro.",
+          "en": "The card itself says the missing sample is not zero concentration. And metadata that is not mutable does not turn an address into the registry mint."
+        },
+        "anula-ficha": {
+          "es": "Parcial significa que falta lo que la ficha nombra, no que el resto deje de constar. Los campos verificados siguen siendo de esa fecha, y el hueco sigue en no disponible.",
+          "en": "Partial means the card names something missing. It does not erase the rest. Verified fields remain from that date, and the gap stays unavailable."
+        }
+      }
+    },
+    {
+      "id": "curva",
+      "kind": "check",
+      "glossary": ["suplantacion", "curva-pump", "reserva-real", "reserva-virtual"],
+      "cards": [
+        "3Zi6p6wzYZYKyuHdBhsDfb2pRR7XTfTfLKkXL7rwpump",
+        "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump"
+      ],
+      "fields": ["name", "mint", "impersonation", "statement", "curvePresent", "curveProgress"],
+      "prompt": {
+        "es": "El mint 3Zi6p6wzYZYKyuHdBhsDfb2pRR7XTfTfLKkXL7rwpump tiene avance de curva 0,00 % con estado inferido, y la ficha marca posible suplantación. ¿Qué es exacto?",
+        "en": "Mint 3Zi6p6wzYZYKyuHdBhsDfb2pRR7XTfTfLKkXL7rwpump has curve progress 0.00% with inferred status, and the card marks possible impersonation. What is accurate?"
+      },
+      "guide": {
+        "es": "0,00 % inferido no es un dato ausente. La reserva virtual no es la reserva real. La señal de suplantación no atribuye intención.",
+        "en": "An inferred 0.00% is not a missing fact. Virtual reserves are not real reserves. The impersonation signal does not attribute intent."
+      },
+      "options": [
+        {
+          "id": "no-leida",
+          "label": {
+            "es": "0,00 % significa que no se leyó la curva, y la suplantación prueba la intención de quien creó el token.",
+            "en": "0.00% means the curve was not read, and impersonation proves the intent of whoever created the token."
+          }
+        },
+        {
+          "id": "senal-sin-intencion",
+          "label": {
+            "es": "0,00 % sale porque la reserva real leída coincide con la inicial documentada. La suplantación es una señal: el nombre o un enlace coinciden y el mint es otro. No atribuye intención.",
+            "en": "0.00% appears because the real reserve that was read matches the documented initial reserve. Impersonation is a signal: the name or a link matches and the mint is different. It does not attribute intent."
+          }
+        },
+        {
+          "id": "virtual-retirable",
+          "label": {
+            "es": "La reserva virtual es el fondo que se puede retirar.",
+            "en": "The virtual reserve is the balance that can be withdrawn."
+          }
+        }
+      ],
+      "correct": "senal-sin-intencion",
+      "whyRight": {
+        "es": "En los tres clones de la tanda, el avance inferido es 0,00 porque la reserva real coincide con 793100000000000. La cuenta de la curva sí se leyó. En el mint del registro el mismo cálculo sale 1,74, también inferido. La lectura de suplantación de la ficha dice que la coincidencia no atribuye intención.",
+        "en": "On the three clones in the batch, inferred progress is 0.00 because the real reserve matches 793100000000000. The curve account was read. On the registry mint the same calculation is 1.74, also inferred. The card's impersonation statement says the match does not attribute intent."
+      },
+      "whyWrong": {
+        "no-leida": {
+          "es": "El estado es inferido, no no disponible. Un dato que no se pudo leer no se rellena con cero. Y la ficha no afirma la intención de nadie.",
+          "en": "The status is inferred, not unavailable. A fact that could not be read is not filled in with zero. And the card does not assert anyone's intent."
+        },
+        "virtual-retirable": {
+          "es": "La ficha separa la reserva virtual de la reserva real. La virtual no es el fondo retirable.",
+          "en": "The card separates virtual reserves from real reserves. The virtual reserve is not the withdrawable balance."
+        }
+      }
+    },
+    {
+      "id": "caso-nuevo",
+      "kind": "comprehension",
+      "glossary": ["direccion", "autoridad-emision", "desconocido"],
+      "cards": [],
+      "fields": [],
+      "prompt": {
+        "es": "Caso nuevo, hipotético y rotulado. No es una ficha de Verify y no describe un proyecto real. Nombre mostrado: «STUBX Oficial». Dirección: distinta de TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump. Autoridad de emisión: revocada. Muestra de holders: no disponible. Este enunciado no trae curva. ¿Qué haces con esos datos?",
+        "en": "New case, hypothetical and labeled as such. It is not a Verify card and it does not describe a real project. Displayed name: “STUBX Oficial”. Address: different from TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump. Mint authority: revoked. Holder sample: unavailable. This prompt has no curve. What do you do with those facts?"
+      },
+      "guide": {
+        "es": "Aplica las mismas tres distinciones a un caso que no está en las fichas: dirección frente a nombre, permiso frente a identidad, y desconocido frente a comprobado.",
+        "en": "Apply the same three distinctions to a case that is not in the cards: address versus name, permission versus identity, and unknown versus verified."
+      },
+      "options": [
+        {
+          "id": "fiarse-del-nombre",
+          "label": {
+            "es": "Trato el nombre «Oficial» como identidad y la muestra no disponible como concentración cero.",
+            "en": "I treat the name “Oficial” as identity and the unavailable sample as zero concentration."
+          }
+        },
+        {
+          "id": "comparar-direccion",
+          "label": {
+            "es": "Comparo la dirección con el mint del registro. La emisión revocada solo quita ese permiso. «No disponible» no es un dato comprobado.",
+            "en": "I compare the address with the registry mint. Revoked mint authority only removes that permission. “Unavailable” is not a verified fact."
+          }
+        },
+        {
+          "id": "revocada-es-registro",
+          "label": {
+            "es": "Si la emisión está revocada, la dirección es la del registro aunque sea otra cadena.",
+            "en": "If mint authority is revoked, the address is the registry address even if the string is different."
+          }
+        }
+      ],
+      "correct": "comparar-direccion",
+      "whyRight": {
+        "es": "En un caso distinto de las fichas, el criterio no cambia: la dirección se compara con el registro, un permiso revocado no identifica el mint y un hueco no se convierte en un hecho.",
+        "en": "On a case other than the cards, the criterion does not change: the address is compared with the registry, a revoked permission does not identify the mint, and a gap does not become a fact."
+      },
+      "whyWrong": {
+        "fiarse-del-nombre": {
+          "es": "El nombre, aunque lleve la palabra Oficial, no es la dirección. Y no disponible no es una concentración leída.",
+          "en": "The name, even with the word Oficial, is not the address. And unavailable is not a concentration that was read."
+        },
+        "revocada-es-registro": {
+          "es": "La emisión revocada describe un permiso. Si la cadena de la dirección es otra, no es el mint del registro.",
+          "en": "Revoked mint authority describes a permission. If the address string is different, it is not the registry mint."
+        }
+      }
+    }
+  ]
+}

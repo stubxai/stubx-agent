@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-09 · STUBX Lab, misión 1 (borrador, sin publicar)
+
+- `lab/`: misión estática «Cómo detectar un token clon en 5 comprobaciones», sobre las fichas de Verify del 2026-10-08. Progreso solo en el navegador. Glosario y tres guías en español, con inglés pendiente de revisión humana.
+- `site-drafts/`: páginas `/verify`, `/lab` y `/tablero` generadas, autocontenidas y sin publicar. No sustituyen la web existente.
+- Pruebas sin red en `lab/test/`. `npm test` las incluye. `npm run lab:build` regenera los HTML.
+
 ## 2026-10-08 · STUBX Verify (MVP, solo lectura)
 
 - Carpeta nueva `verify/`: CLI `verify <mint> [--format json|md|html] [--out dir]`. Componente aparte del agente. El agente sigue sin contactar la red principal ni ningún RPC, y el PPM no cambia (3 marcadas · 1 no aplica).

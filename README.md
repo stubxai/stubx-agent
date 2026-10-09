@@ -76,7 +76,11 @@ npm ci
 npm run verify:all
 ```
 
-`verify:all` ejecuta en orden `test`, `scan:forbidden`, `drill:killswitch`, `logs:verify` y `logs:status`. No usa red ni secretos y no añade capacidades al agente: solo junta comprobaciones que ya existen.
+`verify:all` ejecuta en orden `test`, `scan:forbidden`, `drill:killswitch`, `logs:verify` y `logs:status`. No usa red ni secretos y no añade capacidades al agente: solo junta comprobaciones que ya existen. `npm test` también ejecuta las pruebas de `lab/` (misión, biblioteca y páginas de `site-drafts/`).
+
+## STUBX Lab (borrador, sin publicar)
+
+[`lab/`](lab/README.md) es la primera misión educativa y la biblioteca mínima en español e inglés. [`site-drafts/`](site-drafts/README.md) tiene las páginas estáticas `/verify`, `/lab` y `/tablero`, generadas desde el repositorio y listas para copiar a la web cuando haya autorización. No están publicadas y no sustituyen las páginas que ya existen. `npm run lab:build` las regenera.
 
 No hace falta red para los tests. No hace falta una clave.
 
@@ -88,7 +92,7 @@ En la pestaña **Actions** del repositorio, workflow `ci`:
 
 `https://github.com/stubxai/stubx-agent/actions/workflows/ci.yml`
 
-Se ejecuta en cada push, en cada pull request y en una ejecución programada semanal (cron `11 7 * * 1`: los lunes a las 07:11 UTC; GitHub puede retrasarla o saltársela), con Node 22.14.0 (la matriz del workflow y `.nvmrc`). Hace `npm ci`, typecheck, tests (incluidos los de `verify/`, sin red), la verificación del log público (`logs:verify` y que solo se añadan líneas), `ppm:print`, `npm run verify:scan` (el componente Verify no firma ni envía), `npm audit --audit-level=high` y un escaneo de secretos con el binario libre de gitleaks (historia completa). El artefacto `test-report` incluye el informe, la salida de `ppm:print` y `SHA256SUMS`. El artefacto `verify-report` guarda el informe de `npm run verify:all` de esa ejecución.
+Se ejecuta en cada push, en cada pull request y en una ejecución programada semanal (cron `11 7 * * 1`: los lunes a las 07:11 UTC; GitHub puede retrasarla o saltársela), con Node 22.14.0 (la matriz del workflow y `.nvmrc`). Hace `npm ci`, typecheck, tests (incluidos los de `verify/` y `lab/`, sin red), la verificación del log público (`logs:verify` y que solo se añadan líneas), `ppm:print`, `npm run verify:scan` (el componente Verify no firma ni envía), `npm audit --audit-level=high` y un escaneo de secretos con el binario libre de gitleaks (historia completa). El artefacto `test-report` incluye el informe, la salida de `ppm:print` y `SHA256SUMS`. El artefacto `verify-report` guarda el informe de `npm run verify:all` de esa ejecución.
 
 En `main`, un job aparte genera la atestación de procedencia de ese informe (`id-token: write` y `attestations: write` solo en ese job). El resto del workflow usa `contents: read`.
 
@@ -118,6 +122,8 @@ Pendiente en el repositorio:
 | --- | --- |
 | `src/` | Agente. Sin red y sin claves. |
 | `verify/` | STUBX Verify, componente aparte de solo lectura. No forma parte del agente. Ver [verify/README.md](verify/README.md). |
+| `lab/` | Misión educativa y biblioteca. Borrador. Ver [lab/README.md](lab/README.md). |
+| `site-drafts/` | Páginas estáticas `/verify`, `/lab` y `/tablero`. Sin publicar. |
 | `policy/limits.json` | Límites v1, versión máquina. |
 | `state/killswitch.json` | Interruptor. Fail-closed si no se puede leer. |
 | `state/public-mint.json` | Mint público, solo lectura local. |

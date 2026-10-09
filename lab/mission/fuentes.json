@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-08",
+  "directory": "verify/examples/2026-10-08",
+  "readme": "verify/examples/2026-10-08/LEEME.md",
+  "cards": [
+    {
+      "mint": "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump",
+      "role": "registro",
+      "roleNote": {
+        "es": "Mint del registro curado de STUBX en esta tanda.",
+        "en": "STUBX mint in the curated registry for this batch."
+      }
+    },
+    {
+      "mint": "Hhq4ffySVX3UQqSowjhP1Lwa8YuJDf7iH2hYWvVHTuEf",
+      "role": "clon",
+      "roleNote": {
+        "es": "Clon conocido en los ejemplos del 2026-10-08. La ficha marca posible suplantación y no atribuye intención.",
+        "en": "Known clone in the 2026-10-08 examples. The card marks possible impersonation and does not attribute intent."
+      }
+    },
+    {
+      "mint": "DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ",
+      "role": "clon",
+      "roleNote": {
+        "es": "Clon conocido en los ejemplos del 2026-10-08. La ficha marca posible suplantación y no atribuye intención.",
+        "en": "Known clone in the 2026-10-08 examples. The card marks possible impersonation and does not attribute intent."
+      }
+    },
+    {
+      "mint": "3Zi6p6wzYZYKyuHdBhsDfb2pRR7XTfTfLKkXL7rwpump",
+      "role": "clon",
+      "roleNote": {
+        "es": "Clon conocido en los ejemplos del 2026-10-08. La ficha marca posible suplantación y no atribuye intención.",
+        "en": "Known clone in the 2026-10-08 examples. The card marks possible impersonation and does not attribute intent."
+      }
+    },
+    {
+      "mint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+      "role": "contraste",
+      "roleNote": {
+        "es": "USDC, usado en los ejemplos como contraste: autoridades activas. No es STUBX y no está presentado como clon.",
+        "en": "USDC, used in the examples as a contrast: active authorities. It is not STUBX and is not presented as a clone."
+      }
+    }
+  ]
+}

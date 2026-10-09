@@ -1,0 +1,382 @@
+{
+  "version": "1.0.0",
+  "updated": "2026-10-09",
+  "editor": "Equipo del repositorio. La revisión por una persona distinta está pendiente.",
+  "note": {
+    "es": "Estados de un registro, no fechas prometidas. Una idea, una implementación en el repositorio y una función publicada en la web son cosas distintas. Nada de esta página está publicado en stubxai.com.",
+    "en": "These are record states, not promised dates. An idea, an implementation in the repository, and a function published on the website are different things. Nothing on this page is published on stubxai.com."
+  },
+  "ci": {
+    "workflow": ".github/workflows/ci.yml",
+    "node": "22.14.0",
+    "actionsUrl": "https://github.com/stubxai/stubx-agent/actions/workflows/ci.yml",
+    "whatItRuns": {
+      "es": "En cada push y en cada pull request: npm ci, typecheck, tests (incluidos verify/ y lab/), escaneo de firma del componente Verify, logs, ppm:print, npm audit, verify:all y gitleaks. El job de atestación solo corre en main.",
+      "en": "On every push and pull request: npm ci, typecheck, tests (including verify/ and lab/), the Verify sign-and-send scan, logs, ppm:print, npm audit, verify:all, and gitleaks. The attestation job runs only on main."
+    },
+    "limit": {
+      "es": "Esta página no consulta GitHub al abrirse. Una ejecución antigua no dice nada de un commit posterior.",
+      "en": "This page does not query GitHub when it opens. An old run says nothing about a later commit."
+    },
+    "recordedRuns": [
+      {
+        "subject": "PR 13, rama feat/verify-mvp",
+        "observedOn": "2026-10-08",
+        "conclusion": "success",
+        "url": "https://github.com/stubxai/stubx-agent/actions/runs/37745755560",
+        "names": ["typecheck, test, audit (22.14.0)", "gitleaks"],
+        "limit": {
+          "es": "Esa ejecución cubre el código de Verify en ese momento. No cubre Lab ni commits posteriores.",
+          "en": "That run covers the Verify code at that time. It does not cover Lab or later commits."
+        }
+      }
+    ]
+  },
+  "tasks": [
+    {
+      "id": "VERIFY",
+      "version": "0.1.0",
+      "title": { "es": "STUBX Verify, MVP de solo lectura", "en": "STUBX Verify, read-only MVP" },
+      "status": "en_revision",
+      "webPublished": false,
+      "scope": {
+        "es": "Fichas de un mint a partir de datos públicos. Implementado en la rama feat/verify-mvp. La PR 13 está en borrador contra main. No está en la web.",
+        "en": "Cards for one mint from public data. Implemented on branch feat/verify-mvp. PR 13 is a draft against main. It is not on the website."
+      },
+      "owner": "Equipo del repositorio",
+      "reviewer": "Pendiente de una persona distinta del autor, antes de publicar.",
+      "reviewedOn": "2026-10-08",
+      "block": {
+        "es": "Sigue en borrador. Publicar en stubxai.com necesita autorización. La muestra de holders de los ejemplos del 2026-10-08 quedó en no disponible por HTTP 429.",
+        "en": "Still a draft. Publishing on stubxai.com needs authorization. The holder sample on the 2026-10-08 examples stayed unavailable because of HTTP 429."
+      },
+      "evidence": [
+        {
+          "label": { "es": "PR 13 en borrador", "en": "Draft PR 13" },
+          "href": "https://github.com/stubxai/stubx-agent/pull/13",
+          "note": { "es": "No está fusionada.", "en": "It is not merged." }
+        },
+        {
+          "label": { "es": "CI del 2026-10-08", "en": "CI on 2026-10-08" },
+          "href": "https://github.com/stubxai/stubx-agent/actions/runs/37745755560",
+          "note": { "es": "Verde en esa ejecución. No habla de Lab.", "en": "Green on that run. It does not speak for Lab." }
+        },
+        {
+          "label": { "es": "Fichas de ejemplo", "en": "Example cards" },
+          "path": "verify/examples/2026-10-08/LEEME.md",
+          "note": { "es": "Fecha de consulta 2026-10-08.", "en": "Query date 2026-10-08." }
+        },
+        {
+          "label": { "es": "Pruebas sin red", "en": "Offline tests" },
+          "path": "verify/test/offline.test.ts",
+          "note": { "es": "No contactan la red.", "en": "They do not contact the network." }
+        }
+      ],
+      "history": [
+        {
+          "on": "2026-10-08",
+          "change": {
+            "es": "MVP en el repositorio y PR 13 abierta en borrador. La CI de esa revisión terminó en verde.",
+            "en": "MVP in the repository and PR 13 opened as a draft. CI for that review finished green."
+          }
+        },
+        {
+          "on": "2026-10-09",
+          "change": {
+            "es": "Sigue sin fusionar y sin publicar en la web. Lab usa las fichas ya guardadas; no las vuelve a consultar.",
+            "en": "Still unmerged and not published on the website. Lab uses the cards already stored; it does not query them again."
+          }
+        }
+      ]
+    },
+    {
+      "id": "U01",
+      "version": "1.0.0",
+      "title": { "es": "STUBX Lab, misión 1", "en": "STUBX Lab, mission 1" },
+      "status": "en_revision",
+      "webPublished": false,
+      "scope": {
+        "es": "Una misión estática: detectar un clon en 5 comprobaciones, más un caso nuevo hipotético. Español e inglés. Progreso solo en el navegador.",
+        "en": "One static mission: spot a clone in 5 checks, plus a new hypothetical case. Spanish and English. Progress only in the browser."
+      },
+      "owner": "Equipo del repositorio",
+      "reviewer": "Pendiente de personas ajenas al equipo, como pide la ficha, y de autorización para publicar.",
+      "reviewedOn": "2026-10-09",
+      "block": {
+        "es": "Preparado en el repositorio. No hay todavía observación de personas externas. No publicar hasta esa revisión y la autorización.",
+        "en": "Prepared in the repository. There is no observation from people outside the team yet. Do not publish until that review and authorization."
+      },
+      "evidence": [
+        {
+          "label": { "es": "Guion", "en": "Script" },
+          "path": "lab/mission/mision-01.json",
+          "note": { "es": "Fuente de los pasos y de las explicaciones.", "en": "Source of the steps and the explanations." }
+        },
+        {
+          "label": { "es": "Pruebas de la misión", "en": "Mission tests" },
+          "path": "lab/test/mission.test.ts",
+          "note": { "es": "Sin red.", "en": "No network." }
+        },
+        {
+          "label": { "es": "Página borrador", "en": "Draft page" },
+          "path": "site-drafts/lab/index.html",
+          "note": { "es": "No está en stubxai.com.", "en": "It is not on stubxai.com." }
+        }
+      ],
+      "history": [
+        {
+          "on": "2026-10-09",
+          "change": {
+            "es": "Primera misión preparada sobre las fichas del 2026-10-08. Estado: en revisión, no publicada.",
+            "en": "First mission prepared on the 2026-10-08 cards. State: in review, not published."
+          }
+        }
+      ]
+    },
+    {
+      "id": "U03",
+      "version": "1.0.0",
+      "title": { "es": "Tablero de construcción", "en": "Construction board" },
+      "status": "en_revision",
+      "webPublished": false,
+      "scope": {
+        "es": "Página estática generada desde registros del repositorio, el changelog, la lista de pruebas y una ejecución de CI ya cerrada. Lista para revisar. No publicada.",
+        "en": "Static page generated from repository records, the changelog, the test list, and one CI run that already finished. Ready for review. Not published."
+      },
+      "owner": "Equipo del repositorio",
+      "reviewer": "El creador, antes de cualquier publicación, como pide la ficha.",
+      "reviewedOn": "2026-10-09",
+      "block": {
+        "es": "Falta la autorización para publicarlo. Esta copia no se actualiza sola.",
+        "en": "Authorization to publish it is missing. This copy does not update itself."
+      },
+      "evidence": [
+        {
+          "label": { "es": "Registros", "en": "Records" },
+          "path": "lab/tablero/registros.json",
+          "note": { "es": "Fuente editable del tablero.", "en": "Editable source of the board." }
+        },
+        {
+          "label": { "es": "Página borrador", "en": "Draft page" },
+          "path": "site-drafts/tablero/index.html",
+          "note": { "es": "Generada. No está en la web.", "en": "Generated. It is not on the website." }
+        }
+      ],
+      "history": [
+        {
+          "on": "2026-10-09",
+          "change": {
+            "es": "Primera versión del tablero, en borrador, sin fechas de entrega.",
+            "en": "First version of the board, as a draft, with no delivery dates."
+          }
+        }
+      ]
+    },
+    {
+      "id": "U06",
+      "version": "1.0.0",
+      "title": { "es": "Biblioteca mínima ES/EN", "en": "Minimal ES/EN library" },
+      "status": "en_revision",
+      "webPublished": false,
+      "scope": {
+        "es": "Glosario y tres guías para la misión: identificar el token, interpretar permisos y comprender la curva. Inglés pendiente de revisión humana.",
+        "en": "Glossary and three guides for the mission: identify the token, read permissions, and understand the curve. English is waiting for human review."
+      },
+      "owner": "Equipo del repositorio",
+      "reviewer": "Revisión lingüística humana pendiente. Hasta entonces, si hay diferencia, manda el español.",
+      "reviewedOn": "2026-10-09",
+      "block": {
+        "es": "El inglés no tiene todavía un revisor distinto. No publicar la biblioteca como texto cerrado.",
+        "en": "English does not yet have a separate reviewer. Do not publish the library as closed text."
+      },
+      "evidence": [
+        {
+          "label": { "es": "Glosario", "en": "Glossary" },
+          "path": "lab/library/glossary.json",
+          "note": { "es": "Términos de la misión.", "en": "Terms used by the mission." }
+        },
+        {
+          "label": { "es": "Registro lingüístico", "en": "Language record" },
+          "path": "lab/library/revision.json",
+          "note": { "es": "El inglés figura como pendiente.", "en": "English is marked pending." }
+        }
+      ],
+      "history": [
+        {
+          "on": "2026-10-09",
+          "change": {
+            "es": "Contenido mínimo junto con la misión 1. Sin publicar.",
+            "en": "Minimum content shipped with mission 1. Not published."
+          }
+        }
+      ]
+    },
+    {
+      "id": "U08",
+      "version": "0.1.0",
+      "title": { "es": "Accesibilidad básica de los borradores", "en": "Basic accessibility of the drafts" },
+      "status": "en_curso",
+      "webPublished": false,
+      "scope": {
+        "es": "Teclado, foco visible, contraste de la paleta, textos alternativos y copia estática sin red en las páginas de site-drafts. No es una certificación de toda la web.",
+        "en": "Keyboard, visible focus, palette contrast, text alternatives, and an offline static copy on the site-drafts pages. It is not a certification of the whole website."
+      },
+      "owner": "Equipo del repositorio",
+      "reviewer": "Pendiente de una prueba con lector de pantalla por otra persona.",
+      "reviewedOn": "2026-10-09",
+      "block": {
+        "es": "Solo cubre estos borradores. La web existente no se ha modificado.",
+        "en": "It only covers these drafts. The existing website has not been changed."
+      },
+      "evidence": [
+        {
+          "label": { "es": "Pruebas de las páginas", "en": "Page tests" },
+          "path": "lab/test/pages.test.ts",
+          "note": { "es": "Recursos locales, contraste y controles con nombre.", "en": "Local resources, contrast, and named controls." }
+        },
+        {
+          "label": { "es": "Service worker del borrador", "en": "Draft service worker" },
+          "path": "site-drafts/sw.js",
+          "note": { "es": "Cachea estas páginas. No toca el progreso local.", "en": "It caches these pages. It does not touch local progress." }
+        }
+      ],
+      "history": [
+        {
+          "on": "2026-10-09",
+          "change": {
+            "es": "Primera pasada en los HTML de site-drafts. Sigue en curso: falta revisión externa.",
+            "en": "First pass on the site-drafts HTML. Still in progress: external review is missing."
+          }
+        }
+      ]
+    },
+    {
+      "id": "U02",
+      "version": "0",
+      "title": { "es": "STUBX Studio", "en": "STUBX Studio" },
+      "status": "propuesta",
+      "webPublished": false,
+      "scope": {
+        "es": "Idea del plan del 2026-10-09: plantillas y exportación local. No hay editor en este repositorio.",
+        "en": "Idea from the 2026-10-09 plan: templates and local export. There is no editor in this repository."
+      },
+      "owner": "Sin asignar",
+      "reviewer": "No aplica todavía.",
+      "reviewedOn": null,
+      "block": {
+        "es": "El plan la deja para después de probar la primera misión.",
+        "en": "The plan leaves it until the first mission has been tried."
+      },
+      "evidence": [],
+      "history": [
+        {
+          "on": "2026-10-09",
+          "change": {
+            "es": "Anotada como propuesta. No se ha empezado.",
+            "en": "Recorded as a proposal. Not started."
+          }
+        }
+      ]
+    },
+    {
+      "id": "U04",
+      "version": "0",
+      "title": { "es": "Contribuciones útiles", "en": "Useful contributions" },
+      "status": "propuesta",
+      "webPublished": false,
+      "scope": {
+        "es": "Idea de un piloto manual, sin entrega de tokens. No hay canal ni plantilla en este repositorio.",
+        "en": "Idea of a manual pilot, with no token payout. There is no channel or template in this repository."
+      },
+      "owner": "Sin asignar",
+      "reviewer": "No aplica todavía.",
+      "reviewedOn": null,
+      "block": {
+        "es": "Hace falta definir el canal antes de pedir aportaciones.",
+        "en": "The channel has to be defined before asking for contributions."
+      },
+      "evidence": [],
+      "history": [
+        {
+          "on": "2026-10-09",
+          "change": { "es": "Anotada como propuesta. No se ha empezado.", "en": "Recorded as a proposal. Not started." }
+        }
+      ]
+    },
+    {
+      "id": "U05",
+      "version": "0",
+      "title": { "es": "Cuaderno personal", "en": "Personal notebook" },
+      "status": "propuesta",
+      "webPublished": false,
+      "scope": {
+        "es": "Idea para guardar consultas en el dispositivo. Lab solo guarda el progreso de la misión, no un cuaderno de fichas.",
+        "en": "Idea for storing queries on the device. Lab only stores mission progress, not a notebook of cards."
+      },
+      "owner": "Sin asignar",
+      "reviewer": "No aplica todavía.",
+      "reviewedOn": null,
+      "block": {
+        "es": "El plan la condiciona a que alguien necesite guardar resultados.",
+        "en": "The plan waits until someone needs to keep results."
+      },
+      "evidence": [],
+      "history": [
+        {
+          "on": "2026-10-09",
+          "change": { "es": "Anotada como propuesta. No se ha empezado.", "en": "Recorded as a proposal. Not started." }
+        }
+      ]
+    },
+    {
+      "id": "U07",
+      "version": "0",
+      "title": { "es": "Comparación y simulación avanzada", "en": "Advanced comparison and simulation" },
+      "status": "propuesta",
+      "webPublished": false,
+      "scope": {
+        "es": "Idea posterior a una base de Verify fiable. No hay simulación ni botón de envío en Lab ni en estas páginas.",
+        "en": "Idea that follows a reliable Verify base. There is no simulation and no send button in Lab or on these pages."
+      },
+      "owner": "Sin asignar",
+      "reviewer": "No aplica todavía.",
+      "reviewedOn": null,
+      "block": {
+        "es": "Verify sigue en borrador. El plan no autoriza esta ficha todavía.",
+        "en": "Verify is still a draft. The plan does not authorize this item yet."
+      },
+      "evidence": [],
+      "history": [
+        {
+          "on": "2026-10-09",
+          "change": { "es": "Anotada como propuesta. No se ha empezado.", "en": "Recorded as a proposal. Not started." }
+        }
+      ]
+    },
+    {
+      "id": "U09",
+      "version": "0",
+      "title": { "es": "Pares de Pump e informes reutilizables", "en": "Pump pairs and reusable reports" },
+      "status": "propuesta",
+      "webPublished": false,
+      "scope": {
+        "es": "Idea de lectura de pares, condicionada. Estas páginas no declaran compatibilidad con pares nuevos.",
+        "en": "An idea for reading pairs, conditional. These pages do not claim compatibility with new pairs."
+      },
+      "owner": "Sin asignar",
+      "reviewer": "No aplica todavía.",
+      "reviewedOn": null,
+      "block": {
+        "es": "Hace falta comprobar la modalidad real antes de decir que está soportada.",
+        "en": "The real mode has to be checked before saying it is supported."
+      },
+      "evidence": [],
+      "history": [
+        {
+          "on": "2026-10-09",
+          "change": { "es": "Anotada como propuesta. No se ha empezado.", "en": "Recorded as a proposal. Not started." }
+        }
+      ]
+    }
+  ]
+}
