@@ -20,6 +20,8 @@ results.sarif
 .DS_Store
 uploads/
 *.zip
+!web/current/kit/*.zip
+!web/v2/kit/*.zip
 drill-report.json
 drill-report.md
 drill-SHA256SUMS

@@ -1,0 +1,24 @@
+# www.stubxai.com lo sirve Cloudflare Pages. Esta primera regla solo la aplica Netlify,
+# en superb-horse-9036f5.netlify.app. Cloudflare Pages ignora reglas con dominio.
+# La dirección está grabada en los metadatos on-chain. El «!» fuerza el 301 aunque el archivo exista.
+https://superb-horse-9036f5.netlify.app/*  https://stubxai.com/:splat  301!
+
+# Cloudflare Pages quita la extensión de un HTML suelto y lo sirve sin ella.
+# Si el archivo es index.html, la URL lleva barra final. No redirigir /archivo
+# hacia ese HTML con extensión: con la regla de Pages eso es un bucle.
+# /docs apunta a la URL que responde 200.
+/canales            /security/   301
+/canales/           /security/   301
+/canales.html       /security/   301
+/riesgos            /risks/      301
+/riesgos/           /risks/      301
+/riesgos.html       /risks/      301
+/pruebas            /proofs/     301
+/pruebas/           /proofs/     301
+/pruebas.html       /proofs/     301
+/marca              /marca/      301
+/marca.html         /marca/      301
+/docs               /archivo     301
+/docs/              /archivo     301
+/docs.html          /archivo     301
+/.well-known/security.txt  /security.txt  200
