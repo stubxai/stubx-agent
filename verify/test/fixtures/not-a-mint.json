@@ -1,0 +1,17 @@
+{
+  "id": "not-a-mint",
+  "mint": "p2Yicb86aZig616Eav2VWG9vuXR5mEqhtzshZYBxzsV",
+  "slot": 108,
+  "mintAccount": {
+    "owner": "11111111111111111111111111111111",
+    "executable": false,
+    "lamports": 1000000,
+    "space": 32,
+    "dataBase64": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+  },
+  "metaplex": null,
+  "curve": null,
+  "supply": null,
+  "largest": null,
+  "metadata": null
+}

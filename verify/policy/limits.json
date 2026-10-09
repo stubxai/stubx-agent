@@ -1,0 +1,23 @@
+{
+  "id": "stubx-verify-limits",
+  "version": "0.1.0",
+  "network": "mainnet-beta",
+  "defaultRpcUrl": "https://api.mainnet-beta.solana.com",
+  "rpcUrlEnv": "RPC_URL",
+  "timeoutMs": 8000,
+  "maxRetries": 2,
+  "backoffBaseMs": 500,
+  "minIntervalMs": 400,
+  "commitment": "confirmed",
+  "holderSampleLimit": 20,
+  "nonTechnicalAttentionBps": 2000,
+  "metadataMaxBytes": 1000000,
+  "imageMaxBytes": 2000000,
+  "allowedRpcMethods": [
+    "getAccountInfo",
+    "getMultipleAccounts",
+    "getTokenSupply",
+    "getTokenLargestAccounts",
+    "getSlot"
+  ]
+}

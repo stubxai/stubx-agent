@@ -1,0 +1,28 @@
+{
+  "id": "name-impersonation",
+  "mint": "QWmroo4YnnMqYW3cnxWkFdaTxGD3P7vMSzwMHGbUzwF",
+  "slot": 103,
+  "mintAccount": {
+    "owner": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+    "executable": false,
+    "lamports": 1000000,
+    "space": 304,
+    "dataBase64": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIDGpH6NAwAGAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARMAhgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHDwAAAENvbXVuaWRhZCBTVFVCWAkAAABDT01VTklEQUQeAAAAaHR0cHM6Ly9leGFtcGxlLmNvbS9jbG9uZS5qc29uAAAAAA=="
+  },
+  "metaplex": null,
+  "curve": null,
+  "supply": {
+    "amount": "1000000000000000",
+    "decimals": 6
+  },
+  "largest": [],
+  "metadata": {
+    "uri": "https://example.com/clone.json",
+    "json": {
+      "name": "Comunidad STUBX",
+      "symbol": "COMUNIDAD",
+      "website": "https://stubxai.com/canales",
+      "image": "https://example.com/other.png"
+    }
+  }
+}

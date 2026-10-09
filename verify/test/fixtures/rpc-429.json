@@ -1,0 +1,12 @@
+{
+  "id": "rpc-429",
+  "mint": "ws91DX9HBAAxGW77BZs5FogRDwpRtcUpiLBpKdPTfWu",
+  "slot": 110,
+  "mintAccount": null,
+  "metaplex": null,
+  "curve": null,
+  "supply": null,
+  "largest": null,
+  "metadata": null,
+  "failAll": "Too many requests for a specific RPC call"
+}

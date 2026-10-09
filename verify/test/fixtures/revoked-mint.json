@@ -1,0 +1,20 @@
+{
+  "id": "revoked-mint",
+  "mint": "CktRuQ2mttgRGkXJtyksdKHjUdc2C4TgDzyB98oEzy8",
+  "slot": 100,
+  "mintAccount": {
+    "owner": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+    "executable": false,
+    "lamports": 1000000,
+    "space": 82,
+    "dataBase64": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIDGpH6NAwAGAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+  },
+  "metaplex": null,
+  "curve": null,
+  "supply": {
+    "amount": "1000000000000000",
+    "decimals": 6
+  },
+  "largest": [],
+  "metadata": null
+}
