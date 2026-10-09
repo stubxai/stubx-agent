@@ -1,17 +1,11 @@
 # Cuentas públicas de token (ATA) en las fichas del 2026-10-09. No son secretos.
-# La huella es la del commit que las introdujo. No abre la clave tokenAccount en otros archivos.
+# La huella es commit + archivo + regla + línea. No abre la clave tokenAccount en otros archivos ni en otros commits.
+# Esta PR se fusiona con un merge commit, sin squash y sin rebase. Un squash cambia estos SHA y gitleaks
+# vuelve a avisar en main: hay que regenerar las huellas con el SHA nuevo antes de dar la CI por verde.
+# Las huellas de feat/web-v2 no van aquí. Las añade la PR #15 en su rama.
 7807038914409521e3ec4733ad4f9b07bb8ea60b:verify/examples/2026-10-09/FMNb4CR8ksibmgY7Ztei6BWcZXi3WHcVeJhYb9TNpump.json:generic-api-key:382
 7807038914409521e3ec4733ad4f9b07bb8ea60b:verify/examples/2026-10-09/ERYyyaE2Y2GuKB28YbC2w1nCuQ5ENQ89LR44kicvpump.json:generic-api-key:382
 7807038914409521e3ec4733ad4f9b07bb8ea60b:verify/examples/2026-10-09/ERYyyaE2Y2GuKB28YbC2w1nCuQ5ENQ89LR44kicvpump.json:generic-api-key:389
 # ATA públicas de la curva y de la creadora en la ficha oficial releída. Tampoco son secretos.
 a093560db97dd73adc9e0193031f1309447c3455:verify/examples/2026-10-09/TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump.json:generic-api-key:382
 a093560db97dd73adc9e0193031f1309447c3455:verify/examples/2026-10-09/TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump.json:generic-api-key:389
-# La CI recorre todas las ramas. En feat/web-v2 estas líneas también son cuentas públicas de token.
-7c50eb517e039c0633ae9e5d8df52c9d6de91f6f:web/current/token.json:generic-api-key:102
-7c50eb517e039c0633ae9e5d8df52c9d6de91f6f:web/current/token.json:generic-api-key:166
-7c50eb517e039c0633ae9e5d8df52c9d6de91f6f:web/current/token.json:generic-api-key:175
-7c50eb517e039c0633ae9e5d8df52c9d6de91f6f:web/current/token.json:generic-api-key:184
-7c50eb517e039c0633ae9e5d8df52c9d6de91f6f:web/v2/token.json:generic-api-key:102
-7c50eb517e039c0633ae9e5d8df52c9d6de91f6f:web/v2/token.json:generic-api-key:166
-7c50eb517e039c0633ae9e5d8df52c9d6de91f6f:web/v2/token.json:generic-api-key:175
-7c50eb517e039c0633ae9e5d8df52c9d6de91f6f:web/v2/token.json:generic-api-key:184

@@ -129,10 +129,16 @@ const HOMOGLYPHS: Record<string, string> = {
   "\u0406": "I",
   "\u0456": "i",
   "5": "S",
+  "8": "B",
   "\uA731": "S",
   "\u1D1B": "T",
   "\u1D1C": "U",
   "\u0299": "B",
+  "\u054D": "U",
+  "\u057D": "u",
+  "\u13DA": "S",
+  "\u13A2": "T",
+  "\u13F4": "B",
 };
 
 export function normalizeToken(value: string): string {
@@ -215,8 +221,23 @@ function editDistance(left: string, right: string): number {
   return score[cols - 1] ?? 3;
 }
 
+function labelsContain(host: string, expected: string): boolean {
+  const hostLabels = host.split(".").filter((label) => label.length > 0);
+  const expectedLabels = expected.split(".").filter((label) => label.length > 0);
+  if (expectedLabels.length === 0 || hostLabels.length < expectedLabels.length) {
+    return false;
+  }
+  for (let start = 0; start <= hostLabels.length - expectedLabels.length; start += 1) {
+    const same = expectedLabels.every((label, index) => hostLabels[start + index] === label);
+    if (same) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function hostClose(host: string, expected: string): boolean {
-  if (host === expected || host.endsWith(`.${expected}`)) {
+  if (host === expected || host.endsWith(`.${expected}`) || labelsContain(host, expected)) {
     return true;
   }
   const limit = Math.max(host.length, expected.length) >= 16 ? 2 : 1;

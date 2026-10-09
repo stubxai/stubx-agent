@@ -167,6 +167,7 @@ export async function buildReport(input: BuildInput): Promise<Report> {
     };
   });
 
+  const published = input.registry.find((token) => token.mint === input.mint)?.publishedAccounts ?? [];
   const known = !largestInfo?.ok && supportedMint && decoded && account && curve
     ? await readKnownHolderAccounts({
         rpc: input.rpc,
@@ -174,6 +175,7 @@ export async function buildReport(input: BuildInput): Promise<Report> {
         program: account.owner,
         curvePda,
         creator: curve?.creator ?? null,
+        published,
         denominator,
         slots,
         fetchedAt: createdAt,
@@ -443,7 +445,9 @@ export async function buildReport(input: BuildInput): Promise<Report> {
             note: largestInfo?.ok
               ? "En la muestra no hay cuentas sin etiqueta técnica, o no hay denominador."
               : usingKnown
-                ? "No se calcula un máximo fuera de la muestra: solo hay saldos de la curva y de la creadora, no un censo."
+                ? knownRows.some((row) => (row.label ?? "").includes("cuenta personal publicada"))
+                  ? "No se calcula un máximo fuera de la muestra: solo hay saldos de cuentas concretas, incluida la cuenta personal publicada, no un censo."
+                  : "No se calcula un máximo fuera de la muestra: solo hay saldos de la curva y de la creadora, no un censo."
                 : NO_RESPONSE,
           }),
     },
@@ -908,18 +912,26 @@ async function readKnownHolderAccounts(input: {
   program: string;
   curvePda: string;
   creator: string | null;
+  published: ReadonlyArray<{ address: string; label: string }>;
   denominator: bigint | null;
   slots: Set<number>;
   fetchedAt: string;
 }): Promise<{ rows: HolderRow[]; source: Source | null; note: string; failure: string | null }> {
-  const targets: Array<{ address: string; label: string }> = [];
+  const targets: Array<{ address: string; label: string; published: boolean }> = [];
   const curveAta = associatedTokenAddress(input.curvePda, input.mint, input.program);
   if (curveAta) {
-    targets.push({ address: curveAta, label: "cuenta de la curva, saldo leído; no es un censo" });
+    targets.push({ address: curveAta, label: "cuenta de la curva, saldo leído; no es un censo", published: false });
   }
   const creatorAta = input.creator ? associatedTokenAddress(input.creator, input.mint, input.program) : null;
   if (creatorAta) {
-    targets.push({ address: creatorAta, label: "cuenta de la creadora, saldo leído; no es un censo" });
+    targets.push({ address: creatorAta, label: "cuenta de la creadora, saldo leído; no es un censo", published: false });
+  }
+  for (const account of input.published) {
+    const ata = associatedTokenAddress(account.address, input.mint, input.program);
+    if (!ata || targets.some((item) => item.address === ata)) {
+      continue;
+    }
+    targets.push({ address: ata, label: account.label, published: true });
   }
   if (targets.length === 0) {
     return { rows: [], source: null, note: "", failure: null };
@@ -927,7 +939,7 @@ async function readKnownHolderAccounts(input: {
   const packed = await input.rpc.getMultipleAccounts(targets.map((item) => item.address));
   remember(packed, input.slots);
   if (!packed.ok) {
-    return { rows: [], source: null, note: "", failure: `getMultipleAccounts de curva y creadora: ${packed.error}` };
+    return { rows: [], source: null, note: "", failure: `getMultipleAccounts de curva, creadora y cuentas publicadas: ${packed.error}` };
   }
   const rows: HolderRow[] = [];
   let covered = 0n;
@@ -957,9 +969,16 @@ async function readKnownHolderAccounts(input: {
   const restPercent = rest !== null && input.denominator !== null && input.denominator > 0n
     ? percentTruncated(rest < 0n ? 0n : rest, input.denominator, 4)
     : null;
+  const readPublished = rows.some((row) => (row.label ?? "").includes("cuenta personal publicada"));
+  const missingPublished = targets.some((item) => item.published && !rows.some((row) => row.tokenAccount === item.address));
+  const who = readPublished ? "la curva, de la creadora y de la cuenta personal publicada" : "la curva y de la creadora";
+  const missing = missingPublished ? " La cuenta personal publicada no apareció en esta lectura." : "";
   const note = restPercent
-    ? `Saldos leídos de la curva y de la creadora. El resto respecto al suministro es ${restPercent} %. No es un censo de holders.`
-    : "Saldos leídos de la curva y de la creadora. No es un censo de holders.";
+    ? `Saldos leídos de ${who}. El resto respecto al suministro es ${restPercent} %.${missing} No es un censo de holders.`
+    : `Saldos leídos de ${who}.${missing} No es un censo de holders.`;
+  const detail = input.published.length > 0
+    ? "ATA de la curva, ATA de la creadora si la curva la trae, y ATA de las cuentas publicadas del registro. No sustituye a getTokenLargestAccounts ni es un censo."
+    : "ATA de la curva y, si la curva trae creadora, ATA de la creadora. No sustituye a getTokenLargestAccounts ni es un censo.";
   return {
     rows,
     source: {
@@ -967,7 +986,7 @@ async function readKnownHolderAccounts(input: {
       account: input.mint,
       slot: packed.slot,
       fetchedAt: packed.fetchedAt || input.fetchedAt,
-      detail: "ATA de la curva y, si la curva trae creadora, ATA de la creadora. No sustituye a getTokenLargestAccounts ni es un censo.",
+      detail,
     },
     note,
     failure: null,

@@ -21,6 +21,12 @@
       "webHosts": [
         "stubxai.com",
         "superb-horse-9036f5.netlify.app"
+      ],
+      "publishedAccounts": [
+        {
+          "address": "2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX",
+          "label": "cuenta personal publicada del creador, saldo leído; no es un censo"
+        }
       ]
     }
   ]

@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, test } from "node:test";
 import { decodePubkey, encodeBase58 } from "../base58.js";
-import { candidateUrls, fetchBytes, isPrivateAddress } from "../http.js";
+import { candidateUrls, fetchBytes, isPrivateAddress, pinnedLookup } from "../http.js";
 import { compareCanonical, normalizeToken, normalizeUrl } from "../impersonation.js";
 import { validateMint } from "../input.js";
 import { cleanText, decodeMint } from "../mint.js";
@@ -79,7 +79,22 @@ describe("detector de suplantación", () => {
     assert.ok(signalsFor([], ["https://x.com/stubx_ai"]).length > 0);
     assert.equal(signalsFor(["Stubborn"]).length, 0);
     assert.equal(signalsFor(["EVILcoin"]).length, 0);
-    assert.equal(signalsFor([], ["https://stubxai.com.evil.io"]).length, 0);
+  });
+
+  test("STU8X, la U armenia y el cherokee se pliegan a stubx", () => {
+    assert.equal(normalizeToken("STU8X"), "stubx");
+    assert.equal(normalizeToken("ST\u054DBX"), "stubx");
+    assert.equal(normalizeToken("\u13DA\u13A2U\u13F4X"), "stubx");
+    assert.ok(signalsFor(["STU8X"]).length > 0);
+    assert.ok(signalsFor(["ST\u054DBX"]).length > 0);
+    assert.ok(signalsFor(["\u13DA\u13A2U\u13F4X"]).length > 0);
+  });
+
+  test("stubxai.com dentro de otro dominio se marca y notstubxai.com no", () => {
+    assert.ok(signalsFor([], ["https://stubxai.com.evil.io"]).length > 0);
+    assert.equal(signalsFor([], ["https://notstubxai.com"]).length, 0);
+    assert.equal(signalsFor(["Stubborn"]).length, 0);
+    assert.equal(signalsFor(["EVILcoin"]).length, 0);
   });
 });
 
@@ -107,6 +122,20 @@ describe("descarga y redacción", () => {
     assert.equal(isPrivateAddress("::ffff:7f00:1"), true);
     assert.equal(isPrivateAddress("::ffff:127.0.0.1"), true);
     assert.equal(isPrivateAddress("::ffff:808:808"), false);
+  });
+
+  test("pinnedLookup conecta a la IP ya validada", () => {
+    const lookup = pinnedLookup(["1.1.1.1", "127.0.0.1"]);
+    lookup("ipfs.io", {}, (err, address, family) => {
+      assert.equal(err, null);
+      assert.equal(address, "1.1.1.1");
+      assert.equal(family, 4);
+    });
+    const onlyPrivate = pinnedLookup(["127.0.0.1"]);
+    onlyPrivate("ipfs.io", {}, (err, address) => {
+      assert.ok(err);
+      assert.equal(address, "");
+    });
   });
 
   test("un CID solo sale por las pasarelas y una redirección privada no se sigue", async () => {
@@ -200,14 +229,23 @@ describe("texto, puntero y holders", () => {
     };
     const curve = bondingCurvePda(fixture.mint);
     const curveAta = associatedTokenAddress(curve, fixture.mint, TOKEN_PROGRAM);
+    const personalOwner = "2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX";
+    const personalAta = associatedTokenAddress(personalOwner, fixture.mint, TOKEN_PROGRAM);
     assert.ok(curveAta);
+    assert.ok(personalAta);
     const mintBytes = decodePubkey(fixture.mint);
     const curveBytes = decodePubkey(curve);
+    const personalBytes = decodePubkey(personalOwner);
     assert.ok(mintBytes && curveBytes);
     const data = new Uint8Array(165);
     data.set(mintBytes, 0);
     data.set(curveBytes, 32);
     data[64] = 100;
+    const personalData = new Uint8Array(165);
+    personalData.set(mintBytes, 0);
+    assert.ok(personalBytes);
+    personalData.set(personalBytes, 32);
+    personalData[64] = 40;
     const transport: RpcTransport = async (_endpoint, body) => {
       const request = JSON.parse(body) as { method: string; params?: unknown[] };
       if (request.method === "getSlot") {
@@ -218,9 +256,12 @@ describe("texto, puntero y holders", () => {
       }
       if (request.method === "getMultipleAccounts") {
         const addresses = Array.isArray(request.params?.[0]) ? request.params[0] : [];
-        const value = addresses.map((address) => address === curveAta
-          ? { data: [Buffer.from(data).toString("base64"), "base64"], executable: false, lamports: 1, owner: TOKEN_PROGRAM, space: data.length }
-          : null);
+        const value = addresses.map((address) => {
+          const body = address === curveAta ? data : address === personalAta ? personalData : null;
+          return body
+            ? { data: [Buffer.from(body).toString("base64"), "base64"], executable: false, lamports: 1, owner: TOKEN_PROGRAM, space: body.length }
+            : null;
+        });
         return { status: 200, body: JSON.stringify({ jsonrpc: "2.0", result: { context: { slot: fixture.slot }, value }, id: 1 }) };
       }
       if (request.method === "getAccountInfo") {
@@ -250,19 +291,29 @@ describe("texto, puntero y holders", () => {
       random: () => 0,
       now: () => new Date("2026-10-09T12:00:00.000Z"),
     });
+    const withPublished = registry.map((token) => token.id === "stubx"
+      ? {
+          ...token,
+          mint: fixture.mint,
+          publishedAccounts: [{ address: personalOwner, label: "cuenta personal publicada del creador, saldo leído; no es un censo" }],
+        }
+      : token);
     const report = await buildReport({
       mint: fixture.mint,
       rpc: client,
       rpcEndpoint: "https://api.mainnet-beta.solana.com",
-      registry,
+      registry: withPublished,
       now: () => new Date("2026-10-09T12:00:00.000Z"),
       loadMetadata: async () => ({ ok: false, url: null, status: null, error: "sin uri", fetchedAt: "2026-10-09T12:00:00.000Z" }),
       loadImage: async () => ({ ok: false, url: null, status: null, error: "sin imagen", fetchedAt: "2026-10-09T12:00:00.000Z" }),
     });
     assert.equal(report.distribution.sample.status, "verificado");
     assert.match(String(report.distribution.sample.note), /no es un censo/i);
+    assert.match(String(report.distribution.sample.note), /cuenta personal publicada/);
+    assert.equal(/\bwallet\b/i.test(String(report.distribution.sample.note)), false);
     const sample = report.distribution.sample.value;
     assert.ok(Array.isArray(sample) && sample.some((row) => row && typeof row === "object" && "tokenAccount" in row && row.tokenAccount === curveAta));
+    assert.ok(Array.isArray(sample) && sample.some((row) => row && typeof row === "object" && "tokenAccount" in row && row.tokenAccount === personalAta));
   });
 
   test("un MetadataPointer que no es el mint no verifica el nombre", async () => {

@@ -4,7 +4,7 @@ Fichas generadas con `npm run verify` contra la RPC pública. No sustituyen las 
 
 | Mint | Papel | Lectura |
 | --- | --- | --- |
-| `TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump` | registro | Releída este día. `getTokenLargestAccounts` dio 429. Constan el saldo de la curva y el de la creadora. No es un censo. Avance inferido 1.74. |
+| `TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump` | registro | Releída este día (19:06 Europe/Madrid). `getTokenLargestAccounts` dio 429. Constan el saldo de la curva, el de la creadora y el de la cuenta personal publicada `2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX`, leído en esa hora. No es un censo. Avance inferido 1.74. |
 | `ERYyyaE2Y2GuKB28YbC2w1nCuQ5ENQ89LR44kicvpump` | ejemplo de clon | Nombre STUBX. Creadora de la curva `fPGkP9M3k9L2UpK1SBnRppaNK77Fc5v4j7KGPxUtc1F`. |
 | `FMNb4CR8ksibmgY7Ztei6BWcZXi3WHcVeJhYb9TNpump` | ejemplo de clon | Nombre STUBX. Creadora de la curva `3KhCByAF8e4mfcuHeLS51dEsUfwHQexhRoEW9m18XvT7`. |
 | `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` | contraste USDC | Nombre «USD Coin». Bytes del mint a las 18:42 Europe/Madrid: 7.442.271.613,512366. getTokenSupply no coincidió en ese minuto. La cifra del 2026-10-08 no se reescribe. |

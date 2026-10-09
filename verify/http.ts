@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { lookup } from "node:dns/promises";
+import { request as httpsRequest } from "node:https";
 
 export type BytesResult = {
   ok: true;
@@ -156,6 +157,29 @@ export function candidateUrls(uri: string): string[] {
   return urls;
 }
 
+/** Lookup de `https.request`: ignora el nombre y devuelve la primera IP pública ya comprobada. */
+export function pinnedLookup(addresses: readonly string[]) {
+  return (
+    _hostname: string,
+    options: { all?: boolean },
+    callback: (err: NodeJS.ErrnoException | null, address: string | Array<{ address: string; family: number }>, family?: number) => void,
+  ): void => {
+    const chosen = addresses.find((item) => item.length > 0 && !isPrivateAddress(item));
+    if (!chosen) {
+      const error = new Error("sin IP pública validada") as NodeJS.ErrnoException;
+      error.code = "EINVAL";
+      callback(error, "", 0);
+      return;
+    }
+    const family = chosen.includes(":") ? 6 : 4;
+    if (options.all) {
+      callback(null, [{ address: chosen, family }]);
+      return;
+    }
+    callback(null, chosen, family);
+  };
+}
+
 export async function resolvePublicHost(hostname: string, timeoutMs = 4000): Promise<string[]> {
   const bare = stripHost(hostname);
   if (isIpLiteral(bare)) {
@@ -182,6 +206,7 @@ export async function fetchBytes(url: string, options: HttpOptions = {}): Promis
   const sleep = options.sleep ?? ((ms: number) => new Promise((resolve) => setTimeout(resolve, ms)));
   const random = options.random ?? Math.random;
   const fetchImpl = options.fetchImpl ?? fetch;
+  const pinConnection = options.fetchImpl === undefined;
   const resolveHost = options.resolveHost ?? (options.fetchImpl ? async (host: string) => [host] : resolvePublicHost);
   const timeoutMs = options.timeoutMs ?? 8000;
   const maxBytes = options.maxBytes ?? 1_000_000;
@@ -205,6 +230,7 @@ export async function fetchBytes(url: string, options: HttpOptions = {}): Promis
         const result = await fetchChecked(candidate, {
           fetchImpl,
           resolveHost,
+          pinConnection,
           timeoutMs,
           maxBytes,
           fetchedAt,
@@ -349,7 +375,7 @@ function directGateway(uri: string, cid: string | null, arweave: string | null):
   return null;
 }
 
-async function destinationAllowed(value: string, resolveHost: HostResolver, initial: boolean): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+async function destinationAllowed(value: string, resolveHost: HostResolver, initial: boolean): Promise<{ ok: true; url: string; addresses: readonly string[] } | { ok: false; error: string }> {
   let url: URL;
   try {
     url = new URL(value);
@@ -378,12 +404,13 @@ async function destinationAllowed(value: string, resolveHost: HostResolver, init
   if (addresses.length === 0 || addresses.some((item) => isPrivateAddress(item))) {
     return { ok: false, error: "El destino resuelve a una IP privada." };
   }
-  return { ok: true, url: url.href };
+  return { ok: true, url: url.href, addresses };
 }
 
 async function fetchChecked(start: string, input: {
   fetchImpl: typeof fetch;
   resolveHost: HostResolver;
+  pinConnection: boolean;
   timeoutMs: number;
   maxBytes: number;
   fetchedAt: string;
@@ -398,12 +425,14 @@ async function fetchChecked(start: string, input: {
         body: { ok: false, url: current, status: null, error: allowed.error, fetchedAt: input.fetchedAt },
       };
     }
-    const response = await input.fetchImpl(allowed.url, {
-      method: "GET",
-      redirect: "manual",
-      headers: { accept: "*/*", "user-agent": "stubx-verify/0.1" },
-      signal: AbortSignal.timeout(input.timeoutMs),
-    });
+    const response = input.pinConnection
+      ? await requestPinned(allowed.url, allowed.addresses, input.timeoutMs, input.maxBytes)
+      : await input.fetchImpl(allowed.url, {
+          method: "GET",
+          redirect: "manual",
+          headers: { accept: "*/*", "user-agent": "stubx-verify/0.1" },
+          signal: AbortSignal.timeout(input.timeoutMs),
+        });
     if (response.status >= 300 && response.status < 400) {
       const location = response.headers.get("location");
       if (!location || hop === MAX_REDIRECTS) {
@@ -438,6 +467,67 @@ async function fetchChecked(start: string, input: {
     retry: false,
     body: { ok: false, url: start, status: null, error: "Demasiadas redirecciones.", fetchedAt: input.fetchedAt },
   };
+}
+
+function requestPinned(url: string, addresses: readonly string[], timeoutMs: number, maxBytes: number): Promise<Response> {
+  return new Promise((resolve, reject) => {
+    const target = new URL(url);
+    const req = httpsRequest(
+      {
+        hostname: target.hostname,
+        port: target.port === "" ? 443 : Number(target.port),
+        path: `${target.pathname}${target.search}`,
+        method: "GET",
+        servername: target.hostname,
+        headers: {
+          accept: "*/*",
+          "user-agent": "stubx-verify/0.1",
+          host: target.host,
+        },
+        lookup: pinnedLookup(addresses),
+        timeout: timeoutMs,
+      },
+      (res) => {
+        const chunks: Buffer[] = [];
+        let total = 0;
+        let failed = false;
+        res.on("data", (chunk: Buffer) => {
+          total += chunk.byteLength;
+          if (total > maxBytes) {
+            failed = true;
+            res.destroy();
+            req.destroy();
+            reject(new Error("Respuesta mayor que el límite."));
+            return;
+          }
+          chunks.push(chunk);
+        });
+        res.on("end", () => {
+          if (failed) {
+            return;
+          }
+          const headers = new Headers();
+          for (const [key, value] of Object.entries(res.headers)) {
+            if (value === undefined) {
+              continue;
+            }
+            headers.set(key, Array.isArray(value) ? value.join(", ") : value);
+          }
+          resolve(new Response(Buffer.concat(chunks), { status: res.statusCode ?? 0, headers }));
+        });
+        res.on("error", (error) => {
+          if (!failed) {
+            reject(error);
+          }
+        });
+      },
+    );
+    req.on("timeout", () => {
+      req.destroy(new Error("timeout"));
+    });
+    req.on("error", reject);
+    req.end();
+  });
 }
 
 async function readLimited(response: Response, maxBytes: number): Promise<Uint8Array> {

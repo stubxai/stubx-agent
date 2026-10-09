@@ -2,21 +2,21 @@
   "tool": "stubx-verify",
   "rulesVersion": "0.1.0",
   "disclaimer": "STUBX Verify muestra datos on-chain públicos. No es consejo de inversión ni garantiza que un token sea seguro.",
-  "id": "406da51c10fa67c9e06bd0f6b67c394e41a3f4287f416401e13249e63414b714",
-  "createdAt": "2026-10-09T16:42:22.605Z",
+  "id": "a9e7f8d9d16fa3113f669afbcb4966123279efed3efa0769a864be484f43d9eb",
+  "createdAt": "2026-10-09T17:06:59.737Z",
   "network": "mainnet-beta",
   "rpcEndpoint": "https://api.mainnet-beta.solana.com",
   "mint": "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump",
   "partial": true,
   "supportedMint": true,
-  "referenceSlot": 454929343,
+  "referenceSlot": 454936120,
   "limitations": [
     "No es una auditoría ni una recomendación. Que no haya autoridad de congelación reduce ese permiso concreto; no demuestra que el proyecto sea legítimo.",
     "La muestra de holders tiene como máximo 20 cuentas. No es un censo ni un recuento de personas. Una cuenta puede ser un custodio.",
     "Si los slots de las consultas no coinciden, no es una instantánea atómica.",
     "STUBX Verify no firma, no envía transacciones y no custodia claves.",
     "Cada consulta nueva produce un id nuevo. Esta ficha no se actualiza sola.",
-    "Slots observados: 454929343, 454929345, 454929346, 454929348, 454929350, 454929369.",
+    "Slots observados: 454936120, 454936121, 454936123, 454936125, 454936127, 454936143.",
     "getTokenLargestAccounts: HTTP 429"
   ],
   "findings": [
@@ -59,8 +59,8 @@
       "source": {
         "method": "getAccountInfo",
         "account": "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump",
-        "slot": 454929345,
-        "fetchedAt": "2026-10-09T16:42:23.005Z",
+        "slot": 454936121,
+        "fetchedAt": "2026-10-09T17:07:00.137Z",
         "detail": "Cuenta del mint, encoding base64, decodificada en local."
       },
       "note": null
@@ -72,8 +72,8 @@
       "source": {
         "method": "getAccountInfo",
         "account": "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump",
-        "slot": 454929345,
-        "fetchedAt": "2026-10-09T16:42:23.005Z",
+        "slot": 454936121,
+        "fetchedAt": "2026-10-09T17:07:00.137Z",
         "detail": "Cuenta del mint, encoding base64, decodificada en local."
       },
       "note": null
@@ -85,8 +85,8 @@
       "source": {
         "method": "getAccountInfo",
         "account": "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump",
-        "slot": 454929345,
-        "fetchedAt": "2026-10-09T16:42:23.005Z",
+        "slot": 454936121,
+        "fetchedAt": "2026-10-09T17:07:00.137Z",
         "detail": "Cuenta del mint, encoding base64, decodificada en local."
       },
       "note": "Suministro leído de los bytes del mint (u64 little-endian en el offset 36). Coincide con getTokenSupply (amount, no uiAmount)."
@@ -98,8 +98,8 @@
       "source": {
         "method": "getAccountInfo",
         "account": "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump",
-        "slot": 454929345,
-        "fetchedAt": "2026-10-09T16:42:23.005Z",
+        "slot": 454936121,
+        "fetchedAt": "2026-10-09T17:07:00.137Z",
         "detail": "Cuenta del mint, encoding base64, decodificada en local."
       },
       "note": "Suministro leído de los bytes del mint (u64 little-endian en el offset 36). Coincide con getTokenSupply (amount, no uiAmount)."
@@ -111,8 +111,8 @@
       "source": {
         "method": "getAccountInfo",
         "account": "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump",
-        "slot": 454929345,
-        "fetchedAt": "2026-10-09T16:42:23.005Z",
+        "slot": 454936121,
+        "fetchedAt": "2026-10-09T17:07:00.137Z",
         "detail": "Cuenta del mint, encoding base64, decodificada en local."
       },
       "note": "Calculado con enteros a partir de las unidades mínimas. No se usa uiAmount."
@@ -124,8 +124,8 @@
       "source": {
         "method": "getAccountInfo",
         "account": "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump",
-        "slot": 454929345,
-        "fetchedAt": "2026-10-09T16:42:23.005Z",
+        "slot": 454936121,
+        "fetchedAt": "2026-10-09T17:07:00.137Z",
         "detail": "Cuenta del mint, encoding base64, decodificada en local."
       },
       "note": null
@@ -137,8 +137,8 @@
       "source": {
         "method": "getAccountInfo",
         "account": "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump",
-        "slot": 454929345,
-        "fetchedAt": "2026-10-09T16:42:23.005Z",
+        "slot": 454936121,
+        "fetchedAt": "2026-10-09T17:07:00.137Z",
         "detail": "Cuenta del mint, encoding base64, decodificada en local."
       },
       "note": null
@@ -150,8 +150,8 @@
       "source": {
         "method": "getAccountInfo",
         "account": "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump",
-        "slot": 454929345,
-        "fetchedAt": "2026-10-09T16:42:23.005Z",
+        "slot": 454936121,
+        "fetchedAt": "2026-10-09T17:07:00.137Z",
         "detail": "Cuenta del mint, encoding base64, decodificada en local."
       },
       "note": null
@@ -164,7 +164,7 @@
         "method": "GET",
         "account": null,
         "slot": null,
-        "fetchedAt": "2026-10-09T16:42:29.880Z",
+        "fetchedAt": "2026-10-09T17:07:07.115Z",
         "detail": "URI on-chain https://ipfs.io/ipfs/bafkreif7vy3etvfskxlszijzqu2ebavqphg7ji6n2wbmnznseti5s2rnc4. Contenido leído en https://gateway.pinata.cloud/ipfs/bafkreif7vy3etvfskxlszijzqu2ebavqphg7ji6n2wbmnznseti5s2rnc4."
       },
       "note": null
@@ -177,7 +177,7 @@
         "method": "GET",
         "account": null,
         "slot": null,
-        "fetchedAt": "2026-10-09T16:42:29.880Z",
+        "fetchedAt": "2026-10-09T17:07:07.115Z",
         "detail": "URI on-chain https://ipfs.io/ipfs/bafkreif7vy3etvfskxlszijzqu2ebavqphg7ji6n2wbmnznseti5s2rnc4. Contenido leído en https://gateway.pinata.cloud/ipfs/bafkreif7vy3etvfskxlszijzqu2ebavqphg7ji6n2wbmnznseti5s2rnc4."
       },
       "note": null
@@ -190,7 +190,7 @@
         "method": "GET",
         "account": null,
         "slot": null,
-        "fetchedAt": "2026-10-09T16:42:29.880Z",
+        "fetchedAt": "2026-10-09T17:07:07.115Z",
         "detail": "URI on-chain https://ipfs.io/ipfs/bafkreif7vy3etvfskxlszijzqu2ebavqphg7ji6n2wbmnznseti5s2rnc4. Contenido leído en https://gateway.pinata.cloud/ipfs/bafkreif7vy3etvfskxlszijzqu2ebavqphg7ji6n2wbmnznseti5s2rnc4."
       },
       "note": null
@@ -203,7 +203,7 @@
         "method": "GET",
         "account": null,
         "slot": null,
-        "fetchedAt": "2026-10-09T16:42:35.888Z",
+        "fetchedAt": "2026-10-09T17:07:15.977Z",
         "detail": "https://gateway.pinata.cloud/ipfs/bafkreiew224xxf6ncagzzew5bfxlc6hejrib6jmxx66kxdrv5pkeoavd5e"
       },
       "note": null
@@ -216,7 +216,7 @@
         "method": "GET",
         "account": null,
         "slot": null,
-        "fetchedAt": "2026-10-09T16:42:29.880Z",
+        "fetchedAt": "2026-10-09T17:07:07.115Z",
         "detail": "URI on-chain https://ipfs.io/ipfs/bafkreif7vy3etvfskxlszijzqu2ebavqphg7ji6n2wbmnznseti5s2rnc4. Contenido leído en https://gateway.pinata.cloud/ipfs/bafkreif7vy3etvfskxlszijzqu2ebavqphg7ji6n2wbmnznseti5s2rnc4."
       },
       "note": null
@@ -229,7 +229,7 @@
         "method": "GET",
         "account": null,
         "slot": null,
-        "fetchedAt": "2026-10-09T16:42:29.880Z",
+        "fetchedAt": "2026-10-09T17:07:07.115Z",
         "detail": "URI on-chain https://ipfs.io/ipfs/bafkreif7vy3etvfskxlszijzqu2ebavqphg7ji6n2wbmnznseti5s2rnc4. Contenido leído en https://gateway.pinata.cloud/ipfs/bafkreif7vy3etvfskxlszijzqu2ebavqphg7ji6n2wbmnznseti5s2rnc4."
       },
       "note": null
@@ -242,7 +242,7 @@
         "method": "GET",
         "account": null,
         "slot": null,
-        "fetchedAt": "2026-10-09T16:42:29.880Z",
+        "fetchedAt": "2026-10-09T17:07:07.115Z",
         "detail": "URI on-chain https://ipfs.io/ipfs/bafkreif7vy3etvfskxlszijzqu2ebavqphg7ji6n2wbmnznseti5s2rnc4. Contenido leído en https://gateway.pinata.cloud/ipfs/bafkreif7vy3etvfskxlszijzqu2ebavqphg7ji6n2wbmnznseti5s2rnc4."
       },
       "note": "El JSON no trae este campo."
@@ -255,7 +255,7 @@
         "method": "GET",
         "account": null,
         "slot": null,
-        "fetchedAt": "2026-10-09T16:42:29.880Z",
+        "fetchedAt": "2026-10-09T17:07:07.115Z",
         "detail": "URI on-chain https://ipfs.io/ipfs/bafkreif7vy3etvfskxlszijzqu2ebavqphg7ji6n2wbmnznseti5s2rnc4. Contenido leído en https://gateway.pinata.cloud/ipfs/bafkreif7vy3etvfskxlszijzqu2ebavqphg7ji6n2wbmnznseti5s2rnc4."
       },
       "note": null
@@ -272,8 +272,8 @@
       "source": {
         "method": "getAccountInfo",
         "account": "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump",
-        "slot": 454929345,
-        "fetchedAt": "2026-10-09T16:42:23.005Z",
+        "slot": 454936121,
+        "fetchedAt": "2026-10-09T17:07:00.137Z",
         "detail": "Cuenta del mint, encoding base64, decodificada en local."
       },
       "note": "COption: 0 revocada, 1 activa. Otro valor no se trata como revocada."
@@ -288,8 +288,8 @@
       "source": {
         "method": "getAccountInfo",
         "account": "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump",
-        "slot": 454929345,
-        "fetchedAt": "2026-10-09T16:42:23.005Z",
+        "slot": 454936121,
+        "fetchedAt": "2026-10-09T17:07:00.137Z",
         "detail": "Cuenta del mint, encoding base64, decodificada en local."
       },
       "note": "COption: 0 revocada, 1 activa. Otro valor no se trata como revocada."
@@ -301,8 +301,8 @@
       "source": {
         "method": "getAccountInfo",
         "account": "2bmy96HyuvCEzYKzXyNw91Ve855XvvYn7yr5RVPUj54p",
-        "slot": 454929346,
-        "fetchedAt": "2026-10-09T16:42:23.405Z",
+        "slot": 454936123,
+        "fetchedAt": "2026-10-09T17:07:00.537Z",
         "detail": "PDA Metaplex: semillas metadata, programa de metadatos y mint."
       },
       "note": "No hay cuenta de metadatos de Metaplex en la PDA derivada."
@@ -314,8 +314,8 @@
       "source": {
         "method": "getAccountInfo",
         "account": "2bmy96HyuvCEzYKzXyNw91Ve855XvvYn7yr5RVPUj54p",
-        "slot": 454929346,
-        "fetchedAt": "2026-10-09T16:42:23.405Z",
+        "slot": 454936123,
+        "fetchedAt": "2026-10-09T17:07:00.537Z",
         "detail": "PDA Metaplex: semillas metadata, programa de metadatos y mint."
       },
       "note": "No hay cuenta Metaplex."
@@ -327,8 +327,8 @@
       "source": {
         "method": "getAccountInfo",
         "account": "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump",
-        "slot": 454929345,
-        "fetchedAt": "2026-10-09T16:42:23.005Z",
+        "slot": 454936121,
+        "fetchedAt": "2026-10-09T17:07:00.137Z",
         "detail": "Cuenta del mint, encoding base64, decodificada en local."
       },
       "note": "32 bytes a cero: no hay autoridad de actualización en la extensión TokenMetadata."
@@ -355,8 +355,8 @@
       "source": {
         "method": "getAccountInfo",
         "account": "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump",
-        "slot": 454929345,
-        "fetchedAt": "2026-10-09T16:42:23.005Z",
+        "slot": 454936121,
+        "fetchedAt": "2026-10-09T17:07:00.137Z",
         "detail": "Cuenta del mint, encoding base64, decodificada en local."
       },
       "note": "TLV a partir del byte 166 (relleno hasta 165, tipo de cuenta en 165). Una extensión que no sale en la lista no está en la cuenta."
@@ -370,8 +370,8 @@
       "source": {
         "method": "getAccountInfo",
         "account": "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump",
-        "slot": 454929345,
-        "fetchedAt": "2026-10-09T16:42:23.005Z",
+        "slot": 454936121,
+        "fetchedAt": "2026-10-09T17:07:00.137Z",
         "detail": "Cuenta del mint, encoding base64, decodificada en local."
       },
       "note": "Denominador común de los porcentajes."
@@ -391,6 +391,13 @@
           "amountRaw": "5272727232064",
           "percent": "0.5272",
           "label": "cuenta de la creadora, saldo leído; no es un censo"
+        },
+        {
+          "tokenAccount": "4qZR4b2pvPzTKkKA8xAfNY3GTm3zNJy782Ky7oKAcKHg",
+          "owner": "2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX",
+          "amountRaw": "8604827670660",
+          "percent": "0.8604",
+          "label": "cuenta personal publicada del creador, saldo leído; no es un censo"
         }
       ],
       "unit": null,
@@ -398,18 +405,18 @@
       "source": {
         "method": "getMultipleAccounts",
         "account": "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump",
-        "slot": 454929369,
-        "fetchedAt": "2026-10-09T16:42:28.161Z",
-        "detail": "ATA de la curva y, si la curva trae creadora, ATA de la creadora. No sustituye a getTokenLargestAccounts ni es un censo."
+        "slot": 454936143,
+        "fetchedAt": "2026-10-09T17:07:05.340Z",
+        "detail": "ATA de la curva, ATA de la creadora si la curva la trae, y ATA de las cuentas publicadas del registro. No sustituye a getTokenLargestAccounts ni es un censo."
       },
-      "note": "Saldos leídos de la curva y de la creadora. El resto respecto al suministro es 0.8604 %. No es un censo de holders."
+      "note": "Saldos leídos de la curva, de la creadora y de la cuenta personal publicada. El resto respecto al suministro es 0.0000 %. No es un censo de holders."
     },
     "largestNonTechnicalPercent": {
       "value": null,
       "unit": null,
       "status": "no_disponible",
       "source": null,
-      "note": "No se calcula un máximo fuera de la muestra: solo hay saldos de la curva y de la creadora, no un censo."
+      "note": "No se calcula un máximo fuera de la muestra: solo hay saldos de cuentas concretas, incluida la cuenta personal publicada, no un censo."
     }
   },
   "market": {
@@ -420,8 +427,8 @@
       "source": {
         "method": "getAccountInfo",
         "account": "3shQFExQ3rpFL6GaXPRQNTMYazVHmTvRfuazfv62toAE",
-        "slot": 454929348,
-        "fetchedAt": "2026-10-09T16:42:23.805Z",
+        "slot": 454936125,
+        "fetchedAt": "2026-10-09T17:07:00.937Z",
         "detail": "PDA derivada con las semillas bonding-curve y el mint, programa Pump.fun."
       },
       "note": "Cuenta con el discriminador público de BondingCurve."
@@ -433,8 +440,8 @@
       "source": {
         "method": "getAccountInfo",
         "account": "3shQFExQ3rpFL6GaXPRQNTMYazVHmTvRfuazfv62toAE",
-        "slot": 454929348,
-        "fetchedAt": "2026-10-09T16:42:23.805Z",
+        "slot": 454936125,
+        "fetchedAt": "2026-10-09T17:07:00.937Z",
         "detail": "PDA derivada con las semillas bonding-curve y el mint, programa Pump.fun."
       },
       "note": null
@@ -446,8 +453,8 @@
       "source": {
         "method": "getAccountInfo",
         "account": "3shQFExQ3rpFL6GaXPRQNTMYazVHmTvRfuazfv62toAE",
-        "slot": 454929348,
-        "fetchedAt": "2026-10-09T16:42:23.805Z",
+        "slot": 454936125,
+        "fetchedAt": "2026-10-09T17:07:00.937Z",
         "detail": "PDA derivada con las semillas bonding-curve y el mint, programa Pump.fun."
       },
       "note": null
@@ -459,8 +466,8 @@
       "source": {
         "method": "getAccountInfo",
         "account": "3shQFExQ3rpFL6GaXPRQNTMYazVHmTvRfuazfv62toAE",
-        "slot": 454929348,
-        "fetchedAt": "2026-10-09T16:42:23.805Z",
+        "slot": 454936125,
+        "fetchedAt": "2026-10-09T17:07:00.937Z",
         "detail": "PDA derivada con las semillas bonding-curve y el mint, programa Pump.fun."
       },
       "note": null
@@ -472,8 +479,8 @@
       "source": {
         "method": "getAccountInfo",
         "account": "3shQFExQ3rpFL6GaXPRQNTMYazVHmTvRfuazfv62toAE",
-        "slot": 454929348,
-        "fetchedAt": "2026-10-09T16:42:23.805Z",
+        "slot": 454936125,
+        "fetchedAt": "2026-10-09T17:07:00.937Z",
         "detail": "PDA derivada con las semillas bonding-curve y el mint, programa Pump.fun."
       },
       "note": "Reserva virtual de tokens, separada de la reserva real."
@@ -485,8 +492,8 @@
       "source": {
         "method": "getAccountInfo",
         "account": "3shQFExQ3rpFL6GaXPRQNTMYazVHmTvRfuazfv62toAE",
-        "slot": 454929348,
-        "fetchedAt": "2026-10-09T16:42:23.805Z",
+        "slot": 454936125,
+        "fetchedAt": "2026-10-09T17:07:00.937Z",
         "detail": "PDA derivada con las semillas bonding-curve y el mint, programa Pump.fun."
       },
       "note": "Unidades mínimas de la reserva quote. En la curva clásica de Pump.fun, y cuando quote_mint es la pubkey por defecto, esa reserva son lamports."
@@ -498,8 +505,8 @@
       "source": {
         "method": "getAccountInfo",
         "account": "3shQFExQ3rpFL6GaXPRQNTMYazVHmTvRfuazfv62toAE",
-        "slot": 454929348,
-        "fetchedAt": "2026-10-09T16:42:23.805Z",
+        "slot": 454936125,
+        "fetchedAt": "2026-10-09T17:07:00.937Z",
         "detail": "PDA derivada con las semillas bonding-curve y el mint, programa Pump.fun."
       },
       "note": "Reserva real de tokens, separada de la virtual."
@@ -511,8 +518,8 @@
       "source": {
         "method": "getAccountInfo",
         "account": "3shQFExQ3rpFL6GaXPRQNTMYazVHmTvRfuazfv62toAE",
-        "slot": 454929348,
-        "fetchedAt": "2026-10-09T16:42:23.805Z",
+        "slot": 454936125,
+        "fetchedAt": "2026-10-09T17:07:00.937Z",
         "detail": "PDA derivada con las semillas bonding-curve y el mint, programa Pump.fun."
       },
       "note": "Unidades mínimas de la reserva quote. En la curva clásica de Pump.fun, y cuando quote_mint es la pubkey por defecto, esa reserva son lamports."
@@ -524,8 +531,8 @@
       "source": {
         "method": "getAccountInfo",
         "account": "3shQFExQ3rpFL6GaXPRQNTMYazVHmTvRfuazfv62toAE",
-        "slot": 454929348,
-        "fetchedAt": "2026-10-09T16:42:23.805Z",
+        "slot": 454936125,
+        "fetchedAt": "2026-10-09T17:07:00.937Z",
         "detail": "PDA derivada con las semillas bonding-curve y el mint, programa Pump.fun."
       },
       "note": "token_total_supply de la cuenta de la curva."
@@ -537,8 +544,8 @@
       "source": {
         "method": "getAccountInfo",
         "account": "3shQFExQ3rpFL6GaXPRQNTMYazVHmTvRfuazfv62toAE",
-        "slot": 454929348,
-        "fetchedAt": "2026-10-09T16:42:23.805Z",
+        "slot": 454936125,
+        "fetchedAt": "2026-10-09T17:07:00.937Z",
         "detail": "PDA derivada con las semillas bonding-curve y el mint, programa Pump.fun."
       },
       "note": "Pubkey guardada en la cuenta. No identifica a una persona."
@@ -550,8 +557,8 @@
       "source": {
         "method": "getAccountInfo",
         "account": "3shQFExQ3rpFL6GaXPRQNTMYazVHmTvRfuazfv62toAE",
-        "slot": 454929348,
-        "fetchedAt": "2026-10-09T16:42:23.805Z",
+        "slot": 454936125,
+        "fetchedAt": "2026-10-09T17:07:00.937Z",
         "detail": "PDA derivada con las semillas bonding-curve y el mint, programa Pump.fun."
       },
       "note": "32 bytes a cero: pubkey por defecto. El IDL público de Pump.fun usa ese valor cuando la quote es SOL, no un mint SPL."
@@ -563,8 +570,8 @@
       "source": {
         "method": "getAccountInfo",
         "account": "3shQFExQ3rpFL6GaXPRQNTMYazVHmTvRfuazfv62toAE",
-        "slot": 454929348,
-        "fetchedAt": "2026-10-09T16:42:23.805Z",
+        "slot": 454936125,
+        "fetchedAt": "2026-10-09T17:07:00.937Z",
         "detail": "PDA derivada con las semillas bonding-curve y el mint, programa Pump.fun."
       },
       "note": "Porcentaje inferido con la reserva real inicial pública de la curva clásica (793100000000000). Truncado a 2 decimales hacia cero."
@@ -579,7 +586,7 @@
         "method": "local",
         "account": null,
         "slot": null,
-        "fetchedAt": "2026-10-09T16:42:22.605Z",
+        "fetchedAt": "2026-10-09T17:06:59.737Z",
         "detail": "Registro curado verify/registry/canonical.json"
       },
       "note": "Comparación local. No consulta una red para decidir el registro."
@@ -592,7 +599,7 @@
         "method": "local",
         "account": null,
         "slot": null,
-        "fetchedAt": "2026-10-09T16:42:22.605Z",
+        "fetchedAt": "2026-10-09T17:06:59.737Z",
         "detail": "Registro curado."
       },
       "note": null
@@ -607,7 +614,7 @@
         "method": "local",
         "account": null,
         "slot": null,
-        "fetchedAt": "2026-10-09T16:42:22.605Z",
+        "fetchedAt": "2026-10-09T17:06:59.737Z",
         "detail": "Nombre, símbolo, imagen y enlaces frente al registro."
       },
       "note": null
@@ -620,7 +627,7 @@
         "method": "local",
         "account": null,
         "slot": null,
-        "fetchedAt": "2026-10-09T16:42:22.605Z",
+        "fetchedAt": "2026-10-09T17:06:59.737Z",
         "detail": "Regla de autenticidad de rulesVersion."
       },
       "note": null

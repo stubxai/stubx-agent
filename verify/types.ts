@@ -81,6 +81,7 @@ export type CanonicalToken = {
   imageCids: string[];
   links: string[];
   webHosts: string[];
+  publishedAccounts?: Array<{ address: string; label: string }>;
 };
 
 export type Report = {

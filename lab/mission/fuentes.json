@@ -8,8 +8,8 @@
       "role": "registro",
       "file": "verify/examples/2026-10-09/TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump.json",
       "roleNote": {
-        "es": "Mint del registro curado. Ficha releída el 2026-10-09: saldos de la curva y de la creadora. No es un censo. La ficha del 2026-10-08 se conserva.",
-        "en": "Curated registry mint. Card reread on 2026-10-09: curve and creator balances. It is not a census. The 2026-10-08 card is kept."
+        "es": "Mint del registro curado. Ficha releída el 2026-10-09: saldos de la curva, de la creadora y de la cuenta personal publicada. No es un censo. La ficha del 2026-10-08 se conserva.",
+        "en": "Curated registry mint. Card reread on 2026-10-09: balances of the curve, the creator, and the published personal account. It is not a census. The 2026-10-08 card is kept."
       }
     },
     {

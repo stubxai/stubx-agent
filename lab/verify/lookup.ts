@@ -223,10 +223,16 @@ const CENSUS = pair(
   "There are balances for the curve and the creator. It is not a census, and the rest is not filled in with a zero.",
 );
 
+const CENSUS_PERSONAL = pair(
+  "Hay saldos de la curva, de la creadora y de la cuenta personal publicada. No es un censo ni se rellena el resto con un cero.",
+  "There are balances for the curve, the creator, and the published personal account. It is not a census, and the rest is not filled in with a zero.",
+);
+
 const SOLANA_ONLY = "El STUBX oficial solo existe en Solana";
 
 function partialNoteFor(card: CardSummary): Localized | null {
   if (!card.partial) return null;
+  if (card.holdersNote && /cuenta personal publicada/i.test(card.holdersNote) && !/no apareció/i.test(card.holdersNote)) return CENSUS_PERSONAL;
   if (card.holdersNote && /no es un censo/i.test(card.holdersNote)) return CENSUS;
   return PARTIAL;
 }
