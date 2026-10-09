@@ -38,10 +38,25 @@ function unnamedButtons(html: string): string[] {
   for (const match of html.matchAll(/<button\b([^>]*)>([\s\S]*?)<\/button>/gi)) {
     const attrs = match[1] ?? "";
     const label = /aria-label\s*=\s*"([^"]+)"/i.exec(attrs)?.[1] ?? "";
-    const text = (match[2] ?? "").replace(/<[^>]+>/g, "").trim();
-    if (label.length === 0 && text.length === 0) hits.push(match[0] ?? "");
+    if (label.length === 0 && !hasVisibleText(match[2] ?? "")) hits.push(match[0] ?? "");
   }
   return hits;
+}
+
+function hasVisibleText(inner: string): boolean {
+  let inTag = false;
+  for (const char of inner) {
+    if (char === "<") {
+      inTag = true;
+      continue;
+    }
+    if (char === ">") {
+      inTag = false;
+      continue;
+    }
+    if (!inTag && char.trim().length > 0) return true;
+  }
+  return false;
 }
 
 describe("páginas estáticas", () => {
