@@ -50,8 +50,8 @@ const COPY = {
         lightLabel: { es: "Sin ficha", en: "No card" },
         title: { es: "No se pudo comprobar", en: "Could not be checked" },
         support: {
-            es: "No está entre las fichas de ejemplo. La lista no es completa y esta página no consulta la red, así que no rellena el hueco.",
-            en: "It is not among the example cards. The list is not complete and this page does not query the network, so it does not fill the gap.",
+            es: "No está entre las fichas de ejemplo. La lista no es completa y no rellena lo que la cadena no haya dicho.",
+            en: "It is not among the example cards. The list is not complete and it does not fill in what the chain has not said.",
         },
     },
     lectura_caida: {
@@ -68,8 +68,8 @@ const COPY = {
         lightLabel: { es: "Comprobando", en: "Checking" },
         title: { es: "Comprobando esta dirección…", en: "Checking this address…" },
         support: {
-            es: "Solo se mira la ficha local. La dirección no se envía a ningún sitio.",
-            en: "Only the local card is read. The address is not sent anywhere.",
+            es: "Se va a leer la red pública de Solana. La dirección no se guarda en este sitio.",
+            en: "The public Solana network is about to be read. The address is not stored on this site.",
         },
     },
 };

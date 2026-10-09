@@ -194,7 +194,28 @@ details.como li { margin: 0.35rem 0; }
 }
 .consulta input[aria-invalid="true"] { border-color: var(--attention); }
 .resultado, .consulta input, .ficha, .tarea { transition: border-color 160ms ease; }
-.mint { margin: 0.85rem 0 0; }
+.mint { margin: 0.85rem 0 0; overflow-wrap: anywhere; }
+.aviso-fijo {
+  margin: 0.9rem 0 0;
+  padding: 0.75rem 0.85rem;
+  border-left: 4px solid var(--attention);
+  background: var(--bg);
+  font-size: 0.98rem;
+}
+.senales { display: grid; gap: 0.65rem; margin-top: 0.9rem; }
+.senal {
+  border: 1px solid var(--line);
+  border-left: 6px solid var(--muted);
+  padding: 0.75rem 0.85rem;
+  background: var(--bg);
+}
+.senal[data-nivel="ok"] { border-left-color: var(--ok); }
+.senal[data-nivel="atencion"] { border-left-color: var(--attention); }
+.senal[data-nivel="riesgo"] { border-left-color: var(--risk); }
+.senal[data-nivel="neutro"] { border-left-color: var(--muted); }
+.senal h3, .senal p, .resultado h2 { overflow-wrap: anywhere; }
+.senal h3 { font-size: 1rem; }
+.senal p { margin: 0; white-space: pre-wrap; }
 details.tecnico { margin-top: 1rem; }
 details.tecnico > summary { width: 100%; }
 .fichas, .tareas { display: grid; gap: 0.85rem; }
@@ -306,6 +327,10 @@ html.js .estatica { display: none; }
   body:has(.consulta) { padding-bottom: calc(8.5rem + env(safe-area-inset-bottom)); }
   .opciones button, .consulta button, .consulta input { min-height: 3.5rem; }
   nav.site a, .langs button, .pasos button, summary { min-height: 44px; }
+}
+@media (max-width: 360px) {
+  .resultado h2 { font-size: 1.35rem; }
+  button, summary, .consulta button, .consulta input { min-height: 44px; }
 }
 
 @font-face {

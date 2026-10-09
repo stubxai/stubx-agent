@@ -138,8 +138,9 @@ describe("páginas estáticas", () => {
     assert.match(lab, /How to spot a clone token in 5 steps/);
     assert.match(lab, /¿Cómo funciona\?/);
     assert.match(verify, /Pega la dirección del token/);
-    assert.match(verify, /Parece el STUBX oficial/);
-    assert.match(verify, /Cuidado: posible copia/);
+    assert.match(verify, /Dirección del registro de STUBX/);
+    assert.match(verify, /Posible copia de STUBX/);
+    assert.match(verify, /Esto no es una auditoría ni una recomendación/);
     assert.match(verify, /No se pudo comprobar/);
     assert.match(verify, /id="direccion-token"/);
     assert.match(verify, /id="resultado"/);
@@ -165,6 +166,10 @@ describe("páginas estáticas", () => {
     assert.match(verify, /partial: yes|partial: no/);
     const headers = page(pages, "_headers");
     assert.match(headers, /Content-Security-Policy: default-src 'none'/);
+    assert.match(headers, /\/verify\/\*[\s\S]*?api\.mainnet-beta\.solana\.com/);
+    assert.match(headers, /solana-rpc\.publicnode\.com/);
+    const labHeaders = headers.split("/lab/*")[1]?.split("\n\n")[0] ?? "";
+    assert.equal(labHeaders.includes("mainnet-beta"), false);
     assert.equal(headers.includes("\n/*\n") || headers.startsWith("/*"), false);
     assert.equal(existsSync(path.join(root, "site-drafts/sw.js")), false);
     assert.equal(existsSync(path.join(root, "site-drafts/index.html")), false);

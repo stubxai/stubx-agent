@@ -262,7 +262,7 @@ describe("web v2", () => {
     }
   });
 
-  test("verify is the dated card demo, not a live reading", () => {
+  test("verify reads any mint live and keeps the dated cards", () => {
     const html = read("verify/index.html");
     assert.match(html, /id="consulta"/);
     assert.match(html, /id="direccion-token"/);
@@ -270,14 +270,29 @@ describe("web v2", () => {
     assert.match(html, /id="ver-lectura-caida"/);
     assert.match(html, /2026-10-09/);
     assert.match(html, /USD Coin/);
+    assert.match(html, /Esto no es una auditoría ni una recomendación/);
+    assert.equal(html.includes("Esta página no consulta la red"), false);
     assert.equal(html.includes("\uFFFD"), false);
     assert.match(html, /assets\/verify\.js/);
+    assert.match(html, /connect-src 'self' https:\/\/api\.mainnet-beta\.solana\.com https:\/\/solana-rpc\.publicnode\.com/);
+    const home = read("index.html");
+    assert.match(home, /connect-src 'self'/);
+    assert.equal(home.includes("api.mainnet-beta.solana.com"), false);
+    const headers = read("_headers");
+    assert.match(headers, /connect-src 'self' https:\/\/api\.mainnet-beta\.solana\.com https:\/\/solana-rpc\.publicnode\.com/);
+    assert.match(headers, /\/verify\/\*/);
     const bundle = read("assets/verify.js");
     assert.match(bundle, /stubx-verify-preview/);
     assert.match(bundle, /ERYyyaE2Y2GuKB28YbC2w1nCuQ5ENQ89LR44kicvpump/);
     assert.match(bundle, /FMNb4CR8ksibmgY7Ztei6BWcZXi3WHcVeJhYb9TNpump/);
     assert.match(bundle, /0xC99056C762F0802e4154E6322bd71ae928857777/);
-    assert.equal(/fetch\(/.test(bundle), false);
+    assert.match(bundle, /function readAnyMint/);
+    assert.match(bundle, /https:\/\/api\.mainnet-beta\.solana\.com/);
+    assert.match(bundle, /https:\/\/solana-rpc\.publicnode\.com/);
+    assert.equal(/fetch\(/.test(bundle), true);
+    assert.equal(bundle.includes("localStorage"), false);
+    assert.equal(bundle.includes("sessionStorage"), false);
+    assert.equal(/gtag|google-analytics|googletagmanager|plausible|posthog/i.test(bundle), false);
     assert.equal(bundle.includes("\uFFFD"), false);
     const snap = JSON.parse(read("modules/snapshot.json")) as {
       commit: string;
@@ -288,7 +303,7 @@ describe("web v2", () => {
     assert.equal(snap.commit, "0cb1633bffffe07383742e75a9ec9435764d1baf");
     assert.equal(snap.inBranch, true);
     assert.equal(Object.hasOwn(snap, "merged"), false);
-    assert.equal(snap.liveNetwork, false);
+    assert.equal(snap.liveNetwork, true);
     assert.equal(snap.cardsDate, "2026-10-09");
   });
 

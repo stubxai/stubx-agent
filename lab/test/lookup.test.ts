@@ -31,7 +31,7 @@ describe("lectura de una dirección", () => {
     assert.equal(pending.kind, "comprobando");
     assert.equal(pending.title.es, "Comprobando esta dirección…");
     assert.equal(pending.mint, official);
-    assert.equal(pending.support.es.includes("no se envía"), true);
+    assert.equal(pending.support.es.includes("no se guarda"), true);
   });
 
   test("la oficial, la copia y otra ficha no se confunden", () => {
@@ -63,7 +63,7 @@ describe("lectura de una dirección", () => {
     const missing = classifyAddress(wrappedSol, cards, "lista");
     assert.equal(missing.kind, "sin_ficha");
     assert.equal(missing.title.es, "No se pudo comprobar");
-    assert.match(missing.support.es, /no consulta la red/);
+    assert.match(missing.support.es, /lista no es completa/);
     assert.equal(missing.rows.length, 0);
     const down = classifyAddress(official, cards, "caida");
     assert.equal(down.kind, "lectura_caida");

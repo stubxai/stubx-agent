@@ -37,7 +37,9 @@ npm run verify -- <mint> --format html --out directorio
 
 Sin `--format` y sin `--out`, escribe JSON por la salida estándar. Con `--out` y sin `--format`, escribe `<mint>.json`, `<mint>.md` y `<mint>.html`.
 
-`RPC_URL` sustituye el endpoint por defecto (`https://api.mainnet-beta.solana.com`). Tiene que ser `https`. Esta versión rechaza un host que contenga `devnet` o `testnet`. Si la URL lleva usuario, contraseña o query, la ficha solo guarda el origen.
+`RPC_URL` sustituye el endpoint por defecto (`https://api.mainnet-beta.solana.com`). `RPC_FALLBACK_URL` sustituye el servicio de respaldo (`https://solana-rpc.publicnode.com` en `verify/policy/limits.json`). Tiene que ser `https`. Esta versión rechaza un host que contenga `devnet` o `testnet`. Si la URL lleva usuario, contraseña o query, la ficha solo guarda el origen.
+
+La página `web/v2/verify/` usa el mismo lector en el navegador, sin backend: solo lectura, con esos dos orígenes en `connect-src` y en ningún otro dominio. No guarda la dirección consultada. `VERIFY_SMOKE=1` lanza un humo opcional contra mainnet; la CI no lo activa.
 
 Límites en `verify/policy/limits.json`: timeout 8 s, 2 reintentos, retroceso exponencial, pausa mínima de 400 ms entre peticiones. Métodos permitidos, y solo estos: `getAccountInfo`, `getMultipleAccounts`, `getTokenSupply`, `getTokenLargestAccounts`, `getSlot`. Cualquier otro se rechaza. No hay telemetría ni datos personales: no se envían cookies, ni se guarda la IP de quien ejecuta el comando.
 

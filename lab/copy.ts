@@ -27,13 +27,13 @@ export const READONLY_LINE = {
 export const HOW_VERIFY = {
   es: [
     "Pega la dirección y pulsa Comprobar.",
-    "El texto grande es la lectura. Los datos técnicos están plegados.",
-    "Si no hay ficha de ejemplo, no se pudo comprobar: esta página no llama a la red.",
+    "Se lee la red pública de Solana, solo lectura. La dirección no se guarda.",
+    "Verás señales con una explicación en lenguaje llano. No es una puntuación.",
   ],
   en: [
     "Paste the address and press Check.",
-    "The large text is the reading. Technical details stay folded.",
-    "If there is no example card, it could not be checked: this page does not call the network.",
+    "The public Solana network is read, read-only. The address is not stored.",
+    "You will see signals with a plain-language explanation. It is not a score.",
   ],
 } as const;
 

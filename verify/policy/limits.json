@@ -4,6 +4,8 @@
   "network": "mainnet-beta",
   "defaultRpcUrl": "https://api.mainnet-beta.solana.com",
   "rpcUrlEnv": "RPC_URL",
+  "fallbackRpcUrl": "https://solana-rpc.publicnode.com",
+  "fallbackRpcUrlEnv": "RPC_FALLBACK_URL",
   "timeoutMs": 8000,
   "maxRetries": 2,
   "backoffBaseMs": 500,

@@ -1,4 +1,4 @@
-import { extractCid } from "./http.js";
+import { extractCid } from "./cid.js";
 import type { CanonicalToken } from "./types.js";
 
 export type ImpersonationInput = {

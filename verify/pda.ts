@@ -1,7 +1,21 @@
-import { createHash } from "node:crypto";
+import { sha256 } from "./sha256.js";
 
 const P = (1n << 255n) - 19n;
 const PDA_MARKER = new TextEncoder().encode("ProgramDerivedAddress");
+
+function concatBytes(parts: readonly Uint8Array[]): Uint8Array {
+  let size = 0;
+  for (const part of parts) {
+    size += part.length;
+  }
+  const out = new Uint8Array(size);
+  let offset = 0;
+  for (const part of parts) {
+    out.set(part, offset);
+    offset += part.length;
+  }
+  return out;
+}
 
 function mod(a: bigint): bigint {
   const r = a % P;
@@ -63,14 +77,7 @@ export function findProgramAddress(seeds: readonly Uint8Array[], programId: Uint
     }
   }
   for (let bump = 255; bump >= 0; bump -= 1) {
-    const hash = createHash("sha256");
-    for (const seed of seeds) {
-      hash.update(seed);
-    }
-    hash.update(Uint8Array.of(bump));
-    hash.update(programId);
-    hash.update(PDA_MARKER);
-    const address = new Uint8Array(hash.digest());
+    const address = sha256(concatBytes([...seeds, Uint8Array.of(bump), programId, PDA_MARKER]));
     if (!isOnCurve(address)) {
       return { address, bump };
     }

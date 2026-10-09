@@ -151,7 +151,7 @@ const snapshot = {
   commitDate: when,
   cardsDate: "2026-10-09",
   earlierCardsDate: "2026-10-08",
-  liveNetwork: false,
+  liveNetwork: true,
   inBranch: true,
   serviceWorker: "lab/sw.js",
   serviceWorkerScope: "/lab/",
@@ -159,7 +159,7 @@ const snapshot = {
   missionBundle: "assets/mission.js",
   browserApi: "modules/verify/lookup.mjs",
   cards: "modules/verify/cards.json",
-  note: `Bundle regenerado desde lab/ en ${commit}. La ficha oficial incluye la cuenta personal publicada ${PERSONAL}. inBranch significa que ese commit está en esta rama, no que se haya fusionado en main ni publicado.`,
+  note: `Bundle regenerado desde lab/ en ${commit}. La página lee en el navegador, solo lectura, con los dos servicios públicos de limits.json. La dirección consultada no se guarda. La ficha oficial incluye la cuenta personal publicada ${PERSONAL}. inBranch significa que ese commit está en esta rama, no que se haya fusionado en main ni publicado.`,
 };
 writeFileSync(path.join(root, "web/v2/modules/snapshot.json"), `${JSON.stringify(snapshot, null, 2)}\n`);
 console.log(`Bundle regenerado desde lab/ ${commit}.`);

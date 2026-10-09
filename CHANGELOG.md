@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-09 · Verify lee cualquier mint, solo lectura, sin publicar
+
+- La página `/verify` lee en el navegador, sin backend, cualquier mint SPL o Token-2022. Servicios públicos: `https://api.mainnet-beta.solana.com` y, si ese llega al límite o se agota el tiempo, `https://solana-rpc.publicnode.com`. Los dos orígenes salen de `verify/policy/limits.json`. `connect-src` no añade otros dominios.
+- El resultado son señales con una explicación en español e inglés. No hay puntuación de seguro, recomendado ni estafa. El aviso fijo dice que esto no es una auditoría ni una recomendación. La dirección consultada no se guarda.
+- Las fichas fechadas siguen. Un nombre o un símbolo parecido a STUBX con otra dirección sale como «Posible copia de STUBX». La muestra de las 20 cuentas mayores se llama «cuentas con tokens». La curva habla de cantidad real y cantidad virtual.
+
 ## 2026-10-09 · Revisión de seguridad de Verify y Lab (borrador, sin publicar)
 
 - El service worker queda en `/lab/sw.js`, con red primero, y no guarda la portada ni páginas de avisos. El índice de borrador pasa a `indice-borrador.html`.

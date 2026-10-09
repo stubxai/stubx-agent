@@ -22,7 +22,7 @@ function paintVerify(out, view) {
   out.replaceChildren();
   out.setAttribute("data-state", view.kind);
   out.setAttribute("data-luz", view.light);
-  out.setAttribute("aria-busy", view.kind === "comprobando" ? "true" : "false");
+  out.setAttribute("aria-busy", view.light === "espera" || view.kind === "comprobando" ? "true" : "false");
   if (view.kind === "vacio") {
     var emptyTitle = verifyEl("h2");
     emptyTitle.textContent = view.title[lang];
@@ -30,8 +30,8 @@ function paintVerify(out, view) {
     emptySupport.textContent = view.support[lang];
     var list = verifyEl("ul", { class: "leyenda" });
     list.append(
-      legendItem("ok", lang === "en" ? "Looks like the official STUBX" : "Parece el STUBX oficial"),
-      legendItem("riesgo", lang === "en" ? "Careful: possible copy" : "Cuidado: posible copia"),
+      legendItem("ok", lang === "en" ? "STUBX registry address" : "Dirección del registro de STUBX"),
+      legendItem("riesgo", lang === "en" ? "Possible STUBX copy" : "Posible copia de STUBX"),
       legendItem("neutro", lang === "en" ? "Could not be checked" : "No se pudo comprobar"),
     );
     out.append(emptyTitle, emptySupport, list);
@@ -57,7 +57,25 @@ function paintVerify(out, view) {
     note.textContent = view.partialNote[lang];
     out.append(note);
   }
-  if (view.rows.length > 0) {
+  if (view.signals && view.signals.length) {
+    var signals = verifyEl("div", { class: "senales" });
+    view.signals.forEach(function (signal) {
+      var card = verifyEl("article", { class: "senal", "data-nivel": signal.level });
+      var heading = verifyEl("h3");
+      heading.textContent = signal.title[lang];
+      var body = verifyEl("p");
+      body.textContent = signal.explain[lang];
+      card.append(heading, body);
+      signals.append(card);
+    });
+    out.append(signals);
+  }
+  if (view.kind !== "vacio" && typeof AUDIT_NOTICE !== "undefined") {
+    var audit = verifyEl("p", { class: "aviso-fijo" });
+    audit.textContent = AUDIT_NOTICE[lang];
+    out.append(audit);
+  }
+  if (view.rows && view.rows.length > 0) {
     var details = verifyEl("details", { class: "tecnico" });
     var summary = verifyEl("summary");
     summary.textContent = lang === "en" ? "Technical details" : "Detalles técnicos";
@@ -95,15 +113,79 @@ function bootVerify() {
     }
   }
 
+  var generation = 0;
+
+  function datedSignal(cardView) {
+    if (cardView.kind === "oficial") {
+      return {
+        id: "ficha",
+        level: "ok",
+        title: { es: "Ficha fechada", en: "Dated card" },
+        explain: {
+          es: "Hay una ficha fechada de esta misma dirección. Es una foto anterior, no esta lectura.",
+          en: "There is a dated card for this same address. It is an earlier snapshot, not this reading.",
+        },
+      };
+    }
+    if (cardView.kind === "copia") {
+      return {
+        id: "ficha",
+        level: "riesgo",
+        title: { es: "La ficha fechada también marca posible copia de STUBX", en: "The dated card also marks a possible STUBX copy" },
+        explain: cardView.support,
+      };
+    }
+    if (cardView.kind === "otra") {
+      return {
+        id: "ficha",
+        level: "neutro",
+        title: { es: "Hay una ficha fechada y no es la del registro", en: "There is a dated card and it is not the registry one" },
+        explain: cardView.support,
+      };
+    }
+    return null;
+  }
+
   function run() {
     var value = input.value;
-    apply(pendingView(value));
-    window.requestAnimationFrame(function () {
-      try {
-        apply(classifyAddress(value, cards, source, evm));
-      } catch (error) {
-        apply(classifyAddress(value, [], "caida", evm));
+    var ticket = ++generation;
+    if (typeof readAnyMint !== "function" || typeof loadingView !== "function") {
+      apply(pendingView(value));
+      window.requestAnimationFrame(function () {
+        try {
+          apply(classifyAddress(value, cards, source, evm));
+        } catch (error) {
+          apply(classifyAddress(value, [], "caida", evm));
+        }
+      });
+      return;
+    }
+    var normalized = normalizeAddress(value);
+    if (!normalized || /^0x/i.test(normalized) || !isAddress(normalized)) {
+      apply(classifyAddress(value, cards, source, evm));
+      return;
+    }
+    apply(loadingView(normalized));
+    var rpc = STUBX_VERIFY.rpc || {};
+    var endpoints = [rpc.primary, rpc.fallback].filter(function (item) { return !!item; });
+    readAnyMint({
+      mint: normalized,
+      registry: STUBX_VERIFY.registry || [],
+      endpoints: endpoints,
+      maxRetries: 0,
+      minIntervalMs: 200,
+      timeoutMs: 8000,
+    }).then(function (reading) {
+      if (ticket !== generation) return;
+      var view = reading;
+      var extra = datedSignal(classifyAddress(normalized, cards, "lista", evm));
+      if (extra && view.ok) {
+        view.signals = view.signals.concat([extra]);
       }
+      apply(view);
+    }).catch(function () {
+      if (ticket !== generation) return;
+      apply(classifyAddress(normalized, cards, "caida", evm));
     });
   }
 
