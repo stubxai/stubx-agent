@@ -134,6 +134,11 @@ const REQUIRED_TERMS = [
   "firma la transacción",
   "sign transaction",
   "sign the transaction",
+  "double your sol",
+  "privkey",
+  "inbox me",
+  "drainer",
+  "approve",
   "equipo stubx",
   "va a subir",
   "semilla",
@@ -427,6 +432,17 @@ describe("studio", () => {
       "sign transaction",
       "sign the transaction",
       "enviamos 2 SOL y te devolvemos 4",
+      "no esperes: envía tu semilla",
+      "No es broma, manda tu frase semilla",
+      "no olvides enviar tu clave privada",
+      "send 1 sol get 2 back",
+      "double your sol",
+      "privkey",
+      "inbox me",
+      "drainer",
+      "approve",
+      "ganar dinero",
+      "el precio sube",
       "x 50",
       "x50",
       "x2",
@@ -482,6 +498,12 @@ describe("studio", () => {
       "la marea sube",
       "support the community",
       "ya veremos",
+      "ganar experiencia",
+      "sube la escalera",
+      "we support learning",
+      "ya lo sabes",
+      "Si alguien te pide la semilla, es una estafa",
+      "Desconfía de los airdrops",
       "Nunca compartas tu frase semilla",
       "No envíes tu semilla a nadie",
       "Nunca des tu clave privada",
@@ -548,8 +570,8 @@ describe("studio", () => {
       aiLabel: (origins: string[], lang: string) => string;
       AI_LABEL: { ai: { es: string; en: string }; mascota: { es: string; en: string } };
     }>("lib/copy.mjs");
-    assert.equal(AI_LABEL.ai.es, "Imagen generada con IA");
-    assert.equal(AI_LABEL.ai.en, "AI-generated image");
+    assert.equal(AI_LABEL.ai.es, "Imagen creada con IA");
+    assert.equal(AI_LABEL.ai.en, "Image created with AI");
     assert.equal(AI_LABEL.mascota.es, "Ilustración con elementos generados con IA.");
     assert.equal(AI_LABEL.mascota.en, "Illustration with AI-generated elements.");
     assert.equal(aiLabel([], "es"), "");
@@ -931,6 +953,8 @@ describe("studio", () => {
     };
     assert.equal(analyze(groups23(wallet)).hits.some((hit) => hit.kind === "base58"), true, "trozos 2-3");
     assert.equal(analyze(groups23(evm[0]?.slice(2) ?? "")).hits.some((hit) => hit.kind === "base58"), true, "hex 2-3");
+    const bare = evm.map((item) => item.slice(2));
+    assert.equal(analyze(`${bare[0]} y ${bare[1]}`).hits.some((hit) => hit.kind === "base58"), true, "dos evm con y");
     const irregular = `${wallet.slice(0, 3)}.${wallet.slice(3, 12)}_${wallet.slice(12, 14)},${wallet.slice(14)}`;
     assert.equal(analyze(irregular).hits.some((hit) => hit.kind === "base58"), true, "trozos irregulares");
     assert.equal(analyze("0".repeat(39)).blocked, false);

@@ -21,8 +21,8 @@ export const PNG_COMMENT = "Community content, unofficial. Not from @stubxai.";
 
 export const AI_LABEL = {
   ai: {
-    es: "Imagen generada con IA",
-    en: "AI-generated image",
+    es: "Imagen creada con IA",
+    en: "Image created with AI",
   },
   mascota: {
     es: "Ilustración con elementos generados con IA.",

@@ -121,6 +121,27 @@ function maskExceptions(text) {
 }
 
 const NEGATION = new Set(["no", "nunca", "jamas", "nadie", "sin", "never", "not", "dont", "without"]);
+const FUNCTION_WORD = new Set([
+  "el", "la", "los", "las", "un", "una", "unos", "unas", "the", "a", "an", "de", "del", "al",
+  "lo", "le", "les", "me", "te", "se", "nos", "os", "mi", "tu", "su", "mis", "tus", "sus",
+  "my", "your", "our", "their", "to", "of", "por", "para", "con", "que",
+]);
+const ADVICE_VERB = new Set([
+  "compartas", "comparta", "compartir", "compartais", "compartan",
+  "envies", "envie", "enviar", "envieis",
+  "des", "deis", "dar",
+  "conectes", "conecte", "conectar",
+  "firmes", "firme", "firmar",
+  "mandes", "mande", "mandar",
+  "pases", "pase",
+  "share", "give", "connect", "sign", "send", "approve",
+]);
+const REQUEST = new Set([
+  "envia", "enviad", "envialo", "enviala", "enviasela", "enviaselo",
+  "manda", "mandame", "mandad", "pasa", "pasame", "dame",
+  "conecta", "conectad", "firma", "firmad", "comparte", "compartid", "aprueba",
+  "send", "share", "give", "connect", "sign", "approve", "dm",
+]);
 const SENSITIVE = [
   "frase de recuperacion",
   "recovery phrase",
@@ -143,28 +164,111 @@ const SENSITIVE = [
   "wallet",
   "seed",
 ];
+const ASK_VERB = new Set(["pide", "piden", "pedir", "pidio", "pedira", "pediran", "ask", "asks", "asking"]);
+const WARNING_CUE = new Set(["desconfia", "desconfie", "desconfiad", "cuidado", "beware", "alerta", "distrust"]);
+const WARNING_END = new Set(["estafa", "scam", "fraude", "fraud", "phishing", "timo"]);
+const MONEY = new Set([
+  "dinero", "pasta", "plata", "cash", "money", "sol", "sols", "token", "tokens", "cripto", "crypto",
+  "usdc", "usdt", "btc", "eth", "profit", "profits", "beneficio", "beneficios", "ganancia", "ganancias",
+  "usd", "eur", "euro", "euros", "dolar", "dolares", "dollar", "dollars",
+]);
+const PRICE = new Set([
+  "precio", "price", "valor", "cotizacion", "mercado", "sol", "sols", "token", "tokens", "chart",
+  "grafico", "mcap", "capitalizacion",
+]);
+const IMPERATIVE = new Set([
+  ...REQUEST,
+  "compra", "vende", "entra", "mira", "haz", "ten", "ven", "pon", "sal", "di", "ve", "sube", "baja", "corre", "buy",
+]);
+
+function wordList(text) {
+  return text.split(/[^a-z0-9]+/).filter(Boolean);
+}
+
+function nextContent(words, index, step) {
+  let i = index + step;
+  while (i >= 0 && i < words.length && FUNCTION_WORD.has(words[i])) i += step;
+  return i >= 0 && i < words.length ? words[i] : "";
+}
+
+function phrasePattern(phrase) {
+  return phrase.replace(/ /g, "[^a-z0-9]+");
+}
+
+function adviceGoverns(words, at, count) {
+  let i = at - 1;
+  while (i >= 0 && FUNCTION_WORD.has(words[i])) i -= 1;
+  if (i < 0 || !ADVICE_VERB.has(words[i])) return false;
+  if (!NEGATION.has(words[i - 1] ?? "")) return false;
+  return !words.slice(at + count).some((word) => REQUEST.has(word));
+}
+
+function warningSentence(words) {
+  if (words.some((word) => REQUEST.has(word))) return false;
+  if (words.some((word) => WARNING_CUE.has(word))) return true;
+  const asks = words.some((word) => ASK_VERB.has(word));
+  const conditional = words.includes("si") || words.includes("if");
+  const conclusion = words.some((word) => WARNING_END.has(word));
+  if (conditional && asks && conclusion) return true;
+  return asks && words.some((word) => NEGATION.has(word));
+}
 
 function maskNegatedAdvice(text) {
   const source = text.replace(/['’]/g, "");
   let out = source;
+  const words = wordList(source);
   for (const phrase of SENSITIVE) {
-    const body = phrase.replace(/ /g, "[^a-z0-9]+");
-    const re = new RegExp(`(^|[^a-z0-9])((?:[a-z0-9]+[^a-z0-9]+){0,6})(${body})(?![a-z0-9])`, "g");
-    out = out.replace(re, (full, lead, before, match) => {
-      const prior = before.split(/[^a-z0-9]+/).filter(Boolean);
-      if (!prior.some((word) => NEGATION.has(word))) return full;
-      return `${lead}${before}${" ".repeat(match.length)}`;
+    const body = phrasePattern(phrase);
+    const re = new RegExp(`(^|[^a-z0-9])(${body})(?![a-z0-9])`, "g");
+    out = out.replace(re, (full, lead, match, offset) => {
+      const at = wordList(source.slice(0, offset + lead.length)).length;
+      const count = wordList(phrase).length;
+      if (!adviceGoverns(words, at, count)) return full;
+      return `${lead}${" ".repeat(match.length)}`;
     });
   }
   return out;
 }
 
-function maskBenign(text) {
-  return text
-    .replace(/\bya veremos\b/g, " ")
-    .replace(/\bganar confianza\b/g, " ")
-    .replace(/\bla marea sube\b/g, " ")
-    .replace(/\bsupport the community\b/g, " ");
+function maskWarnings(text, list) {
+  const keys = (list.terms ?? []).map((term) => termKey(term)).filter((key) => key.length >= 4);
+  return text.split(/(?<=[.!?;:\n])/).map((sentence) => {
+    const words = wordList(sentence);
+    if (!warningSentence(words)) return sentence;
+    let out = sentence;
+    for (const phrase of SENSITIVE) out = out.replace(new RegExp(phrasePattern(phrase), "g"), " ");
+    return out.replace(/[a-z0-9]+/g, (word) => (keys.some((key) => word.includes(key)) ? " " : word));
+  }).join("");
+}
+
+function isNonImperativeVerb(word) {
+  if (!word || IMPERATIVE.has(word) || word.length < 4) return false;
+  return /(amos|emos|imos|aste|iste|aron|ieron|aba|ias|iamos|ria|rias|remos)$/.test(word) || /(as|es)$/.test(word);
+}
+
+function maskShortContext(text) {
+  const parts = text.split(/([a-z0-9]+)/);
+  const words = parts.filter((part) => /^[a-z0-9]+$/.test(part));
+  const indexes = [];
+  parts.forEach((part, index) => {
+    if (/^[a-z0-9]+$/.test(part)) indexes.push(index);
+  });
+  words.forEach((word, wordIndex) => {
+    const next = nextContent(words, wordIndex, 1);
+    const prev = nextContent(words, wordIndex, -1);
+    let drop = false;
+    if (word === "ganar") drop = Boolean(next) && !MONEY.has(next);
+    else if (word === "sube") drop = Boolean(next || prev) && !PRICE.has(next) && !PRICE.has(prev);
+    else if (word === "support") drop = Boolean(next);
+    else if (word === "ya") drop = isNonImperativeVerb(next);
+    if (drop) parts[indexes[wordIndex]] = " ";
+  });
+  return parts.join("");
+}
+
+function verbIsNegated(text, index) {
+  const prior = wordList(text.slice(Math.max(0, index - 24), index));
+  return NEGATION.has(prior[prior.length - 1] ?? "");
 }
 
 function hasSolDouble(text) {
@@ -172,9 +276,18 @@ function hasSolDouble(text) {
   for (const match of text.matchAll(re)) {
     const after = text.slice(match.index ?? 0, (match.index ?? 0) + match[0].length + 40);
     if (!/devolv/.test(after)) continue;
-    const before = text.slice(Math.max(0, (match.index ?? 0) - 80), match.index ?? 0);
-    const prior = before.split(/[^a-z0-9]+/).filter(Boolean).slice(-6);
-    if (prior.some((word) => NEGATION.has(word))) continue;
+    if (verbIsNegated(text, match.index ?? 0)) continue;
+    return true;
+  }
+  return false;
+}
+
+function hasSendSolBack(text) {
+  const re = /\bsend\w{0,6}\s+\d+(?:[.,]\d+)?\s+sols?\b/g;
+  for (const match of text.matchAll(re)) {
+    const after = text.slice(match.index ?? 0, (match.index ?? 0) + match[0].length + 48);
+    if (!/\bget\s+\d+(?:[.,]\d+)?\s+back\b/.test(after)) continue;
+    if (verbIsNegated(text, match.index ?? 0)) continue;
     return true;
   }
   return false;
@@ -246,24 +359,38 @@ function hasBase58Address(text) {
   return found;
 }
 
-function flattenSeparators(text) {
-  let out = "";
-  let piece = "";
-  const flush = () => {
-    if (piece && !JOINERS.has(piece.toLowerCase())) out += piece;
-    piece = "";
+function evmChunks(text) {
+  const chunks = [];
+  let current = "";
+  let word = "";
+  const flushWord = () => {
+    if (!word) return;
+    if (JOINERS.has(word.toLowerCase())) {
+      if (current) chunks.push(current);
+      current = "";
+    } else current += word;
+    word = "";
   };
   for (const ch of softenJoiners(text)) {
-    if (isSplitter(ch)) flush();
-    else piece += ch;
+    if (isSplitter(ch)) flushWord();
+    else word += ch;
   }
-  flush();
-  return out;
+  flushWord();
+  if (current) chunks.push(current);
+  return chunks;
 }
 
-function hasEvmAddress(flat) {
-  if (/0x[0-9a-fA-F]{40}(?![0-9a-fA-F])/i.test(flat)) return true;
-  return /(?:^|[^0-9a-fA-F])[0-9a-fA-F]{40}(?![0-9a-fA-F])/.test(flat);
+function chunkIsEvm(chunk) {
+  return /^0x[0-9a-f]{40}$/i.test(chunk) || /^[0-9a-f]{40}$/i.test(chunk);
+}
+
+function hasEvmAddress(text) {
+  const chunks = evmChunks(text);
+  if (chunks.some(chunkIsEvm)) return true;
+  const joined = chunks.join("");
+  if (chunkIsEvm(joined)) return true;
+  if (/0x[0-9a-f]{40}(?![0-9a-f])/i.test(joined)) return true;
+  return /(?:^|[^0-9a-f])[0-9a-f]{40}(?![0-9a-f])/i.test(joined);
 }
 
 export function analyze(text, list = blocklist) {
@@ -279,7 +406,7 @@ export function analyze(text, list = blocklist) {
   }
 
   if (hasBase58Address(original)) pushHit(hits, seen, "base58", "direccion");
-  if (hasEvmAddress(flattenSeparators(original))) pushHit(hits, seen, "base58", "direccion");
+  if (hasEvmAddress(original)) pushHit(hits, seen, "base58", "direccion");
   if (FOREIGN_LETTER.test(original)) pushHit(hits, seen, "term", "script");
 
   const urlText = folded.replace(/\s+/g, "");
@@ -300,19 +427,19 @@ export function analyze(text, list = blocklist) {
     if (re.test(folded)) pushHit(hits, seen, "handle", `@${handle}`);
   }
 
-  const lexical = maskBenign(maskNegatedAdvice(maskExceptions(folded)));
-  if (hasSolDouble(lexical)) pushHit(hits, seen, "term", "sol");
+  const advised = maskWarnings(maskNegatedAdvice(maskExceptions(folded)), list);
+  if (hasSolDouble(advised) || hasSendSolBack(advised)) pushHit(hits, seen, "term", "sol");
   const short = new Set((list.shortWords ?? []).map((word) => termKey(word)));
-  const variants = [lexical, leet(lexical, "i"), leet(lexical, "l")];
+  const variants = [advised, leet(advised, "i"), leet(advised, "l")];
   for (const variant of variants) {
-    for (const word of joinLooseLetters(wordsOf(variant))) {
+    for (const word of joinLooseLetters(wordsOf(maskShortContext(variant)))) {
       if (short.has(word)) pushHit(hits, seen, "short", word);
       if (handleNames.has(word)) pushHit(hits, seen, "handle", word);
     }
   }
 
   const compactForms = [...new Set(variants.map((variant) => compact(variant)))];
-  const plain = compact(lexical);
+  const plain = compact(advised);
   if (/\d+x/.test(plain) || /x\d+/.test(plain)) pushHit(hits, seen, "term", "Nx");
   for (const term of list.terms ?? []) {
     const key = termKey(term);
