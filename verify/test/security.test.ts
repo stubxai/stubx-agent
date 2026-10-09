@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, test } from "node:test";
 import { decodePubkey, encodeBase58 } from "../base58.js";
-import { candidateUrls, connectPinned, fetchBytes, isPrivateAddress, pinnedLookup } from "../http.js";
+import { candidateUrls, connectPinned, fetchBytes, isPrivateAddress, pinnedLookup, pinnedSocketOptions } from "../http.js";
 import { compareCanonical, normalizeToken, normalizeUrl } from "../impersonation.js";
 import { validateMint } from "../input.js";
 import { cleanText, decodeMint } from "../mint.js";
@@ -174,6 +174,26 @@ describe("descarga y redacción", () => {
       ),
       /ECONNREFUSED/,
     );
+  });
+
+  test("ENETUNREACH en IPv6 se captura y cada intento fija la familia", async () => {
+    assert.deepEqual(pinnedSocketOptions("2001:db8::1"), { family: 6, autoSelectFamily: false });
+    assert.deepEqual(pinnedSocketOptions("203.0.113.10"), { family: 4, autoSelectFamily: false });
+    const tried: string[] = [];
+    await assert.rejects(
+      () => connectPinned(
+        ["2001:db8::1"],
+        async (address) => {
+          tried.push(address);
+          const error = new Error("connect ENETUNREACH 2001:db8::1:443 - Local (:::0)") as NodeJS.ErrnoException;
+          error.code = "ENETUNREACH";
+          throw error;
+        },
+        AbortSignal.timeout(1000),
+      ),
+      (error: unknown) => error instanceof Error && (error as NodeJS.ErrnoException).code === "ENETUNREACH",
+    );
+    assert.deepEqual(tried, ["2001:db8::1"]);
   });
 
   test("AbortSignal.timeout corta toda la descarga", async () => {

@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
+import type { LookupOptions } from "node:dns";
 import { lookup } from "node:dns/promises";
-import { request as httpsRequest } from "node:https";
+import { request as httpsRequest, type RequestOptions } from "node:https";
 
 export type BytesResult = {
   ok: true;
@@ -178,10 +179,15 @@ export function orderPublicAddresses(addresses: readonly string[]): string[] {
 export function pinnedLookup(addresses: readonly string[]) {
   return (
     _hostname: string,
-    options: { all?: boolean },
+    options: LookupOptions,
     callback: (err: NodeJS.ErrnoException | null, address: string | Array<{ address: string; family: number }>, family?: number) => void,
   ): void => {
-    const chosen = orderPublicAddresses(addresses)[0];
+    const ordered = orderPublicAddresses(addresses);
+    const asked = options.family === "IPv6" || options.family === 6 ? 6 : options.family === "IPv4" || options.family === 4 ? 4 : 0;
+    const wanted = asked === 4 || asked === 6
+      ? ordered.filter((item) => (item.includes(":") ? 6 : 4) === asked)
+      : ordered;
+    const chosen = wanted[0];
     if (!chosen) {
       const error = new Error("sin IP pública validada") as NodeJS.ErrnoException;
       error.code = "EINVAL";
@@ -534,6 +540,13 @@ function requestPinned(url: string, addresses: readonly string[], maxBytes: numb
   return connectPinned(addresses, (address) => requestOne(url, address, maxBytes, signal), signal);
 }
 
+export function pinnedSocketOptions(address: string): { family: 4 | 6; autoSelectFamily: false } {
+  return {
+    family: address.includes(":") ? 6 : 4,
+    autoSelectFamily: false,
+  };
+}
+
 function requestOne(url: string, address: string, maxBytes: number, signal: AbortSignal): Promise<Response> {
   return new Promise((resolve, reject) => {
     if (signal.aborted) {
@@ -541,6 +554,7 @@ function requestOne(url: string, address: string, maxBytes: number, signal: Abor
       return;
     }
     let settled = false;
+    let onAbort: () => void = () => {};
     const finish = (fn: () => void) => {
       if (settled) {
         return;
@@ -550,62 +564,72 @@ function requestOne(url: string, address: string, maxBytes: number, signal: Abor
       fn();
     };
     const target = new URL(url);
-    const req = httpsRequest(
-      {
-        hostname: target.hostname,
-        port: target.port === "" ? 443 : Number(target.port),
-        path: `${target.pathname}${target.search}`,
-        method: "GET",
-        servername: target.hostname,
-        headers: {
-          accept: "*/*",
-          "user-agent": "stubx-verify/0.1",
-          host: target.host,
-        },
-        lookup: pinnedLookup([address]),
+    const socketOptions = pinnedSocketOptions(address);
+    let req: ReturnType<typeof httpsRequest>;
+    const requestOptions: RequestOptions & { autoSelectFamily: false } = {
+      hostname: target.hostname,
+      port: target.port === "" ? 443 : Number(target.port),
+      path: `${target.pathname}${target.search}`,
+      method: "GET",
+      servername: target.hostname,
+      headers: {
+        accept: "*/*",
+        "user-agent": "stubx-verify/0.1",
+        host: target.host,
       },
-      (res) => {
-        const chunks: Buffer[] = [];
-        let total = 0;
-        res.on("error", (error) => {
+      family: socketOptions.family,
+      autoSelectFamily: socketOptions.autoSelectFamily,
+      lookup: pinnedLookup([address]),
+    };
+    try {
+      req = httpsRequest(
+        requestOptions,
+        (res) => {
+          const chunks: Buffer[] = [];
+          let total = 0;
+          res.on("error", (error) => {
+            finish(() => reject(error));
+          });
+          res.on("data", (chunk: Buffer) => {
+            total += chunk.byteLength;
+            if (total > maxBytes) {
+              res.destroy();
+              req.destroy();
+              finish(() => reject(new Error("Respuesta mayor que el límite.")));
+              return;
+            }
+            chunks.push(chunk);
+          });
+          res.on("end", () => {
+            const headers = new Headers();
+            for (const [key, value] of Object.entries(res.headers)) {
+              if (value === undefined) {
+                continue;
+              }
+              headers.set(key, Array.isArray(value) ? value.join(", ") : value);
+            }
+            finish(() => resolve(new Response(Buffer.concat(chunks), { status: res.statusCode ?? 0, headers })));
+          });
+        },
+      );
+      onAbort = () => {
+        req.destroy();
+        finish(() => reject(abortError(signal)));
+      };
+      signal.addEventListener("abort", onAbort);
+      req.on("socket", (socket) => {
+        socket.on("error", (error: Error) => {
+          req.destroy();
           finish(() => reject(error));
         });
-        res.on("data", (chunk: Buffer) => {
-          total += chunk.byteLength;
-          if (total > maxBytes) {
-            res.destroy();
-            req.destroy();
-            finish(() => reject(new Error("Respuesta mayor que el límite.")));
-            return;
-          }
-          chunks.push(chunk);
-        });
-        res.on("end", () => {
-          const headers = new Headers();
-          for (const [key, value] of Object.entries(res.headers)) {
-            if (value === undefined) {
-              continue;
-            }
-            headers.set(key, Array.isArray(value) ? value.join(", ") : value);
-          }
-          finish(() => resolve(new Response(Buffer.concat(chunks), { status: res.statusCode ?? 0, headers })));
-        });
-      },
-    );
-    const onAbort = () => {
-      req.destroy();
-      finish(() => reject(abortError(signal)));
-    };
-    signal.addEventListener("abort", onAbort);
-    req.on("socket", (socket) => {
-      socket.on("error", () => {
-        // El 'error' de la petición ya rechaza la promesa. Este listener evita que el socket cierre el proceso.
       });
-    });
-    req.on("error", (error) => {
-      finish(() => reject(error));
-    });
-    req.end();
+      req.on("error", (error) => {
+        finish(() => reject(error));
+      });
+      req.end();
+    } catch (error) {
+      finish(() => reject(error instanceof Error ? error : new Error("error de red")));
+    }
   });
 }
 
