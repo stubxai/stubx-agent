@@ -499,8 +499,8 @@ export function analyze(text, list = blocklist) {
   return { blocked: hits.length > 0, hits };
 }
 
-export function exportAllowed(title, body, list = blocklist) {
-  return !analyze(title, list).blocked && !analyze(body, list).blocked;
+export function exportAllowed(title, body, list = blocklist, token = "") {
+  return !analyze(title, list).blocked && !analyze(body, list).blocked && !analyze(token, list).blocked;
 }
 
 export { blocklist };

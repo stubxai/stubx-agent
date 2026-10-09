@@ -26,7 +26,7 @@
 canvas#vista { display: block; width: 100%; height: auto; background: #071422; }
 .plantillas, .opciones, .tabs, .fila { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .plantillas { margin: 0 0 1rem; }
-.plantillas button, .opciones button, .tabs button, .fila button { min-height: 44px; min-width: 44px; }
+.plantillas button, .opciones button, .tabs button, .fila button, #quitar-logo { min-height: 44px; min-width: 44px; }
 .tabs { margin: 0.75rem 0; }
 .tabs button[aria-selected="true"], .opciones button[aria-pressed="true"], .plantillas button[aria-pressed="true"] {
   background: var(--accent);

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
-<meta name="description" content="Crea una imagen con recursos de STUBX, sin cuenta. / Create an image with STUBX assets, without an account.">
+<meta name="description" content="Crea una imagen para tu token, sin cuenta. Los recursos de STUBX vienen por defecto. / Create an image for your token, without an account. STUBX assets start as the default.">
 <link rel="canonical" href="https://stubxai.com/studio/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="STUBX">
@@ -12,7 +12,7 @@
 <meta property="og:locale:alternate" content="en_US">
 <meta property="og:url" content="https://stubxai.com/studio/">
 <meta property="og:title" content="STUBX · Studio / STUBX · Studio">
-<meta property="og:description" content="Crea una imagen con recursos de STUBX, sin cuenta. / Create an image with STUBX assets, without an account.">
+<meta property="og:description" content="Crea una imagen para tu token, sin cuenta. Los recursos de STUBX vienen por defecto. / Create an image for your token, without an account. STUBX assets start as the default.">
 <meta property="og:image" content="https://stubxai.com/assets/og-stubx-2026-10b-1200x630.jpg">
 <meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1200">
@@ -21,7 +21,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:site" content="@stubxai">
 <meta name="twitter:title" content="STUBX · Studio / STUBX · Studio">
-<meta name="twitter:description" content="Crea una imagen con recursos de STUBX, sin cuenta. / Create an image with STUBX assets, without an account.">
+<meta name="twitter:description" content="Crea una imagen para tu token, sin cuenta. Los recursos de STUBX vienen por defecto. / Create an image for your token, without an account. STUBX assets start as the default.">
 <meta name="twitter:image" content="https://stubxai.com/assets/og-stubx-2026-10b-1200x630.jpg">
 <meta name="twitter:image:alt" content="STUBX: Agente Talón, mascota rosa con forma de ticket, sostiene un recibo junto a un globo terráqueo. Texto: «Un meme que pide pruebas. Qué es, qué funciona hoy y qué falta. CA oficial y pruebas en stubxai.com». Pie: «Cripto de alto riesgo · Puedes perderlo todo · No es consejo de inversión.» · Ilustración con elementos generados con IA. / STUBX: Agente Talón, a pink ticket-shaped mascot, holds a receipt next to a globe. Text: “A meme that asks for proof. What it is, what works today, and what is missing. Official CA and proofs at stubxai.com”. Footer: “High-risk crypto · You could lose everything · Not investment advice.” · Illustration with AI-generated elements.">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; manifest-src 'self'; media-src 'none'; frame-src 'none'; worker-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'">
@@ -53,7 +53,7 @@
 </div></header>
 <main id="contenido" class="wrap studio-app">
 <h1><span class="lang es" lang="es">Studio</span><span class="lang en" lang="en">Studio</span></h1>
-<p class="lede"><span class="lang es" lang="es">Crea en un par de minutos, sin cuenta, una imagen con recursos de STUBX para explicar una idea.</span><span class="lang en" lang="en">Create an image with STUBX assets in a couple of minutes, without an account, to explain an idea.</span></p>
+<p class="lede"><span class="lang es" lang="es">Crea en un par de minutos, sin cuenta, una imagen para explicar una idea. El nombre y los recursos de STUBX vienen elegidos. Puedes poner el nombre de tu token y un logo que se queda en este navegador.</span><span class="lang en" lang="en">Create an image in a couple of minutes, without an account, to explain an idea. The STUBX name and assets start selected. You can set your token’s name and a logo that stays in this browser.</span></p>
 <p id="aviso-navegador" class="aviso" role="alert" hidden><span class="lang es" lang="es">Este navegador no es compatible con Studio.</span><span class="lang en" lang="en">This browser is not compatible with Studio.</span></p>
 <p><a href="/studio/reglas/"><span class="lang es" lang="es">Reglas y recursos</span><span class="lang en" lang="en">Rules and assets</span></a></p>
 <div class="plantillas" role="group" aria-label="Plantillas / Templates">
@@ -74,16 +74,24 @@
 <button type="button" id="tab-formato" role="tab" data-tab="formato" aria-selected="false" aria-controls="panel-formato" tabindex="-1"><span class="lang es" lang="es">Formato</span><span class="lang en" lang="en">Format</span></button>
 </div>
 <div id="panel-texto" role="tabpanel" data-panel="texto" aria-labelledby="tab-texto">
+<label for="token"><span class="lang es" lang="es">Nombre o ticker</span><span class="lang en" lang="en">Name or ticker</span></label>
+<input id="token" maxlength="20" autocomplete="off" value="STUBX">
 <label for="titulo"><span class="lang es" lang="es">Título</span><span class="lang en" lang="en">Title</span></label>
 <input id="titulo" maxlength="72" autocomplete="off" value="El nombre no basta">
 <label for="cuerpo"><span class="lang es" lang="es">Cuerpo</span><span class="lang en" lang="en">Body</span></label>
 <textarea id="cuerpo" maxlength="180">El nombre no sustituye a comprobar la dirección.</textarea>
-<p id="contador" class="contador" aria-live="polite"><span class="lang es" lang="es">Título</span><span class="lang en" lang="en">Title</span> <span id="contador-titulo">0 / 72</span> · <span class="lang es" lang="es">Cuerpo</span><span class="lang en" lang="en">Body</span> <span id="contador-cuerpo">0 / 180</span></p>
+<p id="contador" class="contador" aria-live="polite"><span class="lang es" lang="es">Nombre</span><span class="lang en" lang="en">Name</span> <span id="contador-token">5 / 20</span> · <span class="lang es" lang="es">Título</span><span class="lang en" lang="en">Title</span> <span id="contador-titulo">0 / 72</span> · <span class="lang es" lang="es">Cuerpo</span><span class="lang en" lang="en">Body</span> <span id="contador-cuerpo">0 / 180</span></p>
 </div>
 <div id="panel-fondo" role="tabpanel" data-panel="fondo" aria-labelledby="tab-fondo" hidden>
 <div id="opcion-fondo" class="opciones" role="group" aria-label="Imagen de fondo / Background image"></div>
 </div>
 <div id="panel-avatar" role="tabpanel" data-panel="avatar" aria-labelledby="tab-avatar" hidden>
+<p><span class="lang es" lang="es">Los recursos de STUBX son la opción por defecto. El logo de tu token se queda en este navegador y no se envía a ningún servidor.</span><span class="lang en" lang="en">STUBX assets are the default option. Your token logo stays in this browser and is not sent to any server.</span></p>
+<label for="logo"><span class="lang es" lang="es">Logo de tu token</span><span class="lang en" lang="en">Your token logo</span></label>
+<input id="logo" type="file" accept="image/png">
+<p id="logo-estado" class="contador" role="status"></p>
+<p id="aviso-logo" class="aviso" role="status" hidden><span class="lang es" lang="es">Ese archivo no sirve como logo. Usa un PNG de hasta 2048 px y 1,5 MB.</span><span class="lang en" lang="en">That file cannot be used as a logo. Use a PNG up to 2048 px and 1.5 MB.</span></p>
+<p><button type="button" id="quitar-logo"><span class="lang es" lang="es">Quitar logo</span><span class="lang en" lang="en">Remove logo</span></button></p>
 <div id="avatares" class="opciones" role="group" aria-label="Avatar / Avatar"></div>
 </div>
 <div id="panel-formato" role="tabpanel" data-panel="formato" aria-labelledby="tab-formato" hidden>
@@ -100,14 +108,14 @@
 <button type="button" id="compartir" hidden><span class="lang es" lang="es">Compartir</span><span class="lang en" lang="en">Share</span></button>
 <button type="button" id="borrar"><span class="lang es" lang="es">Borrar</span><span class="lang en" lang="en">Clear</span></button>
 </div>
-<p><span class="lang es" lang="es">No hay subida de archivos ni galería pública. La imagen se crea en este dispositivo y no se envía a ningún servidor.</span><span class="lang en" lang="en">There is no file upload and no public gallery. The image is created on this device and is not sent to any server.</span></p>
+<p><span class="lang es" lang="es">No hay galería pública. El logo que eliges se lee en este navegador y no se envía a ningún servidor. No se guarda con el borrador. La imagen se crea en este dispositivo.</span><span class="lang en" lang="en">There is no public gallery. The logo you choose is read in this browser and is not sent to any server. It is not saved with the draft. The image is created on this device.</span></p>
 </main>
 <footer class="site"><div class="wrap">
 <p><strong><span class="lang es" lang="es">Aviso:</span><span class="lang en" lang="en">Notice:</span></strong> <span class="lang es" lang="es">Cripto de alto riesgo · Puedes perderlo todo · No es consejo de inversión.</span><span class="lang en" lang="en">High-risk crypto · You could lose everything · Not investment advice.</span> <a href="/risks/"><span class="lang es" lang="es">Riesgos</span><span class="lang en" lang="en">Risks</span></a></p>
 <p class="mica"><strong><span class="lang es" lang="es">Aviso MiCA (art. 7.1.e):</span><span class="lang en" lang="en">MiCA notice (art. 7.1.e):</span></strong> <span class="lang es" lang="es">Esta comunicación publicitaria de criptoactivos no ha sido revisada ni aprobada por ninguna autoridad competente de ningún Estado miembro de la Unión Europea. El oferente del criptoactivo es el único responsable del contenido de esta comunicación publicitaria de criptoactivos.</span><span class="lang en" lang="en">This crypto-asset marketing communication has not been reviewed or approved by any competent authority in any Member State of the European Union. The offeror of the crypto-asset is solely responsible for the content of this crypto-asset marketing communication.</span></p>
 <p><span class="lang es" lang="es">La dirección del contrato está en Seguridad.</span><span class="lang en" lang="en">The contract address is on Security.</span> <a href="/security/"><span class="lang es" lang="es">Seguridad</span><span class="lang en" lang="en">Security</span></a></p>
 <p><span class="lang es" lang="es">Canales:</span><span class="lang en" lang="en">Channels:</span> <a href="/community/"><span class="lang es" lang="es">lista en esta web</span><span class="lang en" lang="en">list on this website</span></a></p>
-<p><span class="lang es" lang="es">Sin cookies ni rastreadores. El idioma y el progreso de Lab, si se usa, se quedan en este navegador. El borrador de Studio se guarda en este dispositivo; Borrar lo elimina. El service worker solo se registra en Lab y no guarda la portada ni los avisos.</span><span class="lang en" lang="en">No cookies and no trackers. Language and Lab progress, if used, stay in this browser. The Studio draft is saved on this device; Clear removes it. The service worker registers only on Lab and does not store the home page or the notices.</span></p>
+<p><span class="lang es" lang="es">Sin cookies ni rastreadores. El idioma y el progreso de Lab, si se usa, se quedan en este navegador. El borrador de Studio se guarda en este dispositivo; Borrar lo elimina. El logo no se guarda. El service worker solo se registra en Lab y no guarda la portada ni los avisos.</span><span class="lang en" lang="en">No cookies and no trackers. Language and Lab progress, if used, stay in this browser. The Studio draft is saved on this device; Clear removes it. The logo is not saved. The service worker registers only on Lab and does not store the home page or the notices.</span></p>
 <p>STUBX · 2026 · <span class="lang es" lang="es">Código MIT · Kit con licencia propia · Imágenes de Agente Talón generadas con IA</span><span class="lang en" lang="en">MIT code · Kit under its own license · Agente Talón images generated with AI</span></p>
 </div></footer>
 <script nomodule src="studio-nomodule.js"></script>

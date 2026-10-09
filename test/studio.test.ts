@@ -300,7 +300,7 @@ describe("studio", () => {
     assert.deepEqual(list.handles, ["stubxai", "CreadorSTUBX"]);
     assert.deepEqual(list.domains, ["stubxai.com", "t.me"]);
 
-    const { analyze, exportAllowed } = await load<{ analyze: Analyze; exportAllowed: (title: string, body: string) => boolean }>(
+    const { analyze, exportAllowed } = await load<{ analyze: Analyze; exportAllowed: (title: string, body: string, list?: unknown, token?: string) => boolean }>(
       "lib/filter.mjs",
     );
     const blocked = [
@@ -534,6 +534,11 @@ describe("studio", () => {
     assert.equal(exportAllowed("playa", "comprobar"), true);
     assert.equal(exportAllowed("playa", "moon"), false);
     assert.equal(exportAllowed("correo", "profundo"), true);
+    assert.equal(exportAllowed("playa", "comprobar", undefined, "STUBX"), true);
+    assert.equal(exportAllowed("playa", "comprobar", undefined, "LUNA"), true);
+    assert.equal(exportAllowed("playa", "comprobar", undefined, "moon"), false);
+    assert.equal(exportAllowed("playa", "comprobar", undefined, "1000x"), false);
+    assert.equal(exportAllowed("playa", "comprobar", undefined, "precio x100"), false);
     assert.equal(analyze("correo moon").blocked, true);
     assert.equal(analyze("c o r r e").hits.some((hit) => hit.kind === "short" && hit.term === "corre"), true);
     assert.equal(analyze("f u n d").hits.some((hit) => hit.kind === "short" && hit.term === "fund"), true);
@@ -550,7 +555,7 @@ describe("studio", () => {
   });
 
   test("el filtro no mira la marca ni el pie, y el dibujo sí los incluye", async () => {
-    const { analyze, exportAllowed } = await load<{ analyze: Analyze; exportAllowed: (title: string, body: string) => boolean }>(
+    const { analyze, exportAllowed } = await load<{ analyze: Analyze; exportAllowed: (title: string, body: string, list?: unknown, token?: string) => boolean }>(
       "lib/filter.mjs",
     );
     const { BRAND, FOOTER, WATERMARK } = await load<{
@@ -618,7 +623,7 @@ describe("studio", () => {
     assert.equal(reglas.includes("AI-generated elements.”."), false);
   });
 
-  test("la licencia va literal, sin fondos, y no hay galería ni subidas", () => {
+  test("la licencia va literal y el logo no sale del navegador", () => {
     const editor = readStudio("index.html");
     const reglas = readStudio("reglas/index.html");
     const script = readStudio("studio.js");
@@ -628,11 +633,36 @@ describe("studio", () => {
     assert.equal(editor.includes("fondos"), false);
     for (const html of [editor, reglas]) {
       assert.equal(/<form\b/.test(html), false);
-      assert.equal(/type="file"/.test(html), false);
-      assert.match(html, /No hay subida de archivos ni galería pública/);
-      assert.match(html, /There is no file upload and no public gallery/);
+      assert.match(html, /No hay galería pública/);
+      assert.match(html, /There is no public gallery/);
+      assert.match(html, /El logo que eliges se lee en este navegador y no se envía a ningún servidor/);
+      assert.match(html, /The logo you choose is read in this browser and is not sent to any server/);
+      assert.match(html, /No se guarda con el borrador/);
+      assert.match(html, /It is not saved with the draft/);
     }
-    assert.equal(/type="file"|<form\b|gallery|galería/.test(script), false);
+    assert.equal((editor.match(/type="file"/g) ?? []).length, 1);
+    assert.equal(/type="file"/.test(reglas), false);
+    assert.match(editor, /id="token"/);
+    assert.match(editor, /Nombre o ticker/);
+    assert.match(editor, /Name or ticker/);
+    assert.match(editor, /value="STUBX"/);
+    assert.match(editor, /id="logo"/);
+    assert.match(editor, /accept="image\/png"/);
+    assert.match(editor, /Los recursos de STUBX son la opción por defecto/);
+    assert.match(editor, /STUBX assets are the default option/);
+    assert.match(editor, /Ese archivo no sirve como logo/);
+    assert.match(editor, /That file cannot be used as a logo/);
+    assert.match(reglas, /El nombre del token pasa por el mismo filtro/);
+    assert.match(reglas, /The token name goes through the same filter/);
+    assert.match(reglas, /Los recursos de STUBX siguen como opción por defecto/);
+    assert.match(reglas, /STUBX assets stay the default option/);
+    assert.equal(/type="file"|<form\b|gallery|galería|FormData/.test(script), false);
+    assert.match(script, /readLogoPng/);
+    assert.match(script, /arrayBuffer/);
+    assert.match(script, /link\.download = "studio\.png"/);
+    const persist = script.slice(script.indexOf("function persist"), script.indexOf("async function draw"));
+    assert.match(persist, /token: tokenName\(\)/);
+    assert.equal(/customLogo|rgba|arrayBuffer/.test(persist), false);
     assert.match(script, /canvas\.toBlob/);
     assert.match(script, /injectComment/);
     assert.match(script, /navigator\.share/);
@@ -701,6 +731,88 @@ describe("studio", () => {
       assert.equal(/\breserves?\b/i.test(text), false, rel);
       assert.equal(/\breserva\b/i.test(text), false, rel);
     }
+  });
+
+  test("el nombre del token se dibuja y el logo se queda en un PNG local", async () => {
+    const { renderCard } = await load<{ renderCard: (options: Record<string, unknown>) => Promise<Card> }>("lib/render.mjs");
+    const { encodePng } = await load<{ encodePng: (rgba: Uint8ClampedArray, width: number, height: number) => Promise<Uint8Array> }>("lib/png.mjs");
+    const { clipToken, fitLogo, readLogoPng, DEFAULT_TOKEN, TOKEN_MAX, LOGO_MAX_BYTES, LOGO_DRAW_EDGE } = await load<{
+      clipToken: (value: string) => string;
+      fitLogo: (image: { width: number; height: number; rgba: Uint8ClampedArray }, edge: number) => { width: number; height: number };
+      readLogoPng: (bytes: Uint8Array) => Promise<{ width: number; height: number; rgba: Uint8ClampedArray }>;
+      DEFAULT_TOKEN: string;
+      TOKEN_MAX: number;
+      LOGO_MAX_BYTES: number;
+      LOGO_DRAW_EDGE: number;
+    }>("lib/logo.mjs");
+    assert.equal(DEFAULT_TOKEN, "STUBX");
+    assert.equal(TOKEN_MAX, 20);
+    assert.equal(clipToken("  LUNA  "), "LUNA");
+    assert.equal(clipToken("ABCDEFGHIJKLMNOPQRSTUVWXYZ"), "ABCDEFGHIJKLMNOPQRST");
+    const named = await renderCard({
+      width: 1080,
+      height: 1080,
+      lang: "es",
+      title: "Hola",
+      body: "Texto limpio.",
+      token: "LUNA",
+      watermark: false,
+      origins: [],
+    });
+    assert.equal(named.fits, true);
+    assert.equal(joined(named, "token"), "LUNA");
+    assert.ok(named.texts.includes("LUNA"));
+    const plain = await renderCard({
+      width: 1080,
+      height: 1080,
+      lang: "en",
+      title: "Hello",
+      body: "Clean text.",
+      watermark: false,
+      origins: [],
+    });
+    assert.equal(plain.glyphs.some((glyph) => glyph.role === "token"), false);
+    const templates = JSON.parse(readStudio("templates.json")) as {
+      formats: { id: string; width: number; height: number }[];
+      zones: Record<string, unknown>;
+      templates: { title: { es: string; en: string }; body: { es: string; en: string } }[];
+    };
+    for (const format of templates.formats) {
+      for (const template of templates.templates) {
+        for (const lang of ["es", "en"] as const) {
+          const card = await renderCard({
+            width: format.width,
+            height: format.height,
+            lang,
+            title: template.title[lang],
+            body: template.body[lang],
+            token: "STUBX",
+            watermark: false,
+            origins: ["mascota"],
+            zones: templates.zones,
+          });
+          assert.equal(card.fits, true, `${format.id} ${lang} ${template.title[lang]}`);
+          assert.equal(joined(card, "token"), "STUBX");
+        }
+      }
+    }
+    const rgba = new Uint8ClampedArray(8 * 8 * 4);
+    for (let i = 0; i < rgba.length; i += 4) {
+      rgba[i] = 20;
+      rgba[i + 3] = 255;
+    }
+    const png = await encodePng(rgba, 8, 8);
+    const logo = await readLogoPng(png);
+    assert.equal(logo.width, 8);
+    assert.equal(logo.height, 8);
+    assert.equal(logo.rgba[0], 20);
+    const wide = { width: 4, height: 2, rgba: new Uint8ClampedArray(4 * 2 * 4) };
+    const fitted = fitLogo(wide, 2);
+    assert.equal(fitted.width, 2);
+    assert.equal(fitted.height, 1);
+    await assert.rejects(() => readLogoPng(new Uint8Array([1, 2, 3, 4])));
+    await assert.rejects(() => readLogoPng(new Uint8Array(LOGO_MAX_BYTES + 1)));
+    assert.equal(LOGO_DRAW_EDGE, 512);
   });
 
   test("el borrador se guarda y se borra en local", async () => {

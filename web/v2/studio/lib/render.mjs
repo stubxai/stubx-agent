@@ -172,9 +172,18 @@ function blit(rgba, width, height, zone, image) {
       if (dx < 0 || dy < 0 || dx >= width || dy >= height) continue;
       const si = (sy * image.width + sx) * 4;
       const di = (dy * width + dx) * 4;
-      rgba[di] = image.rgba[si] ?? 0;
-      rgba[di + 1] = image.rgba[si + 1] ?? 0;
-      rgba[di + 2] = image.rgba[si + 2] ?? 0;
+      const alpha = (image.rgba[si + 3] ?? 255) / 255;
+      if (alpha <= 0) continue;
+      if (alpha >= 1) {
+        rgba[di] = image.rgba[si] ?? 0;
+        rgba[di + 1] = image.rgba[si + 1] ?? 0;
+        rgba[di + 2] = image.rgba[si + 2] ?? 0;
+        rgba[di + 3] = 255;
+        continue;
+      }
+      for (let c = 0; c < 3; c += 1) {
+        rgba[di + c] = Math.round((rgba[di + c] ?? 0) * (1 - alpha) + (image.rgba[si + c] ?? 0) * alpha);
+      }
       rgba[di + 3] = 255;
     }
   }
@@ -252,7 +261,15 @@ export async function renderCard(options) {
   const titleZone = zoneOf(zones.title, width, height, contentBottom, topBand);
   const bodyZone = zoneOf(zones.body, width, height, contentBottom, topBand);
   const avatarZone = zoneOf(zones.avatar, width, height, contentBottom, topBand);
-  blit(rgba, width, height, avatarZone, options.avatar ?? null);
+  const tokenText = String(options.token ?? "").trim();
+  const tokenBand = tokenText ? Math.ceil(size * 2.6) : 0;
+  const imageZone = tokenBand > 0 && avatarZone.h > tokenBand + 4
+    ? { x: avatarZone.x, y: avatarZone.y, w: avatarZone.w, h: avatarZone.h - tokenBand }
+    : avatarZone;
+  const tokenZone = imageZone.h < avatarZone.h
+    ? { x: avatarZone.x, y: imageZone.y + imageZone.h, w: avatarZone.w, h: avatarZone.h - imageZone.h }
+    : { x: avatarZone.x, y: avatarZone.y, w: avatarZone.w, h: 0 };
+  blit(rgba, width, height, imageZone, options.avatar ?? null);
 
   const watermarkColor = luma(fill) > 0.45 ? [18, 10, 14] : [255, 243, 245];
   drawWatermark(rgba, width, height, watermarkColor);
@@ -261,9 +278,11 @@ export async function renderCard(options) {
   const maxSize = Math.max(minSize, Math.ceil(height * 0.04));
   const titleFit = fitBlock(options.title ?? "", titleZone, maxSize, minSize);
   const bodyFit = fitBlock(options.body ?? "", bodyZone, maxSize, minSize);
+  const tokenFit = fitBlock(tokenText, tokenZone, size, FONT_H);
   const glyphs = [];
   drawLines(rgba, width, height, titleFit.lines, titleZone.x, titleZone.y, titleFit.size, ink, "title", glyphs);
   drawLines(rgba, width, height, bodyFit.lines, bodyZone.x, bodyZone.y, bodyFit.size, ink, "body", glyphs);
+  drawLines(rgba, width, height, tokenFit.lines, tokenZone.x, tokenZone.y, tokenFit.size, ink, "token", glyphs);
 
   fillRect(rgba, width, height, 0, 0, width, topBand, BRAND_BG);
   fillRect(rgba, width, height, 0, aiTop, width, aiH, FOOTER_BG);
@@ -282,9 +301,9 @@ export async function renderCard(options) {
     width,
     height,
     lang,
-    texts: [brandText, riskText, footerText, WATERMARK, label, options.title ?? "", options.body ?? ""].filter((item) => item !== ""),
+    texts: [brandText, riskText, footerText, WATERMARK, label, options.title ?? "", options.body ?? "", tokenText].filter((item) => item !== ""),
     glyphs,
-    fits: titleFit.fits && bodyFit.fits,
+    fits: titleFit.fits && bodyFit.fits && tokenFit.fits,
     brandFontSize: size,
     brandTop,
     footerTop,
