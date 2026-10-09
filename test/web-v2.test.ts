@@ -297,7 +297,12 @@ describe("web v2", () => {
       liveNetwork: boolean;
       cardsDate: string;
     };
-    assert.match(snap.commit, /^[0-9a-f]{40}$/);
+    assert.equal(snap.commit, "fa9a500dac16251aa5d3831d59717981fb434be6");
+    const cited = spawnSync("git", ["rev-parse", `${snap.commit}:lab/verify/lookup.ts`], { cwd: repoRoot(), encoding: "utf8" });
+    const headLookup = spawnSync("git", ["rev-parse", "HEAD:lab/verify/lookup.ts"], { cwd: repoRoot(), encoding: "utf8" });
+    assert.equal(cited.status, 0, cited.stderr);
+    assert.equal(headLookup.status, 0, headLookup.stderr);
+    assert.equal(cited.stdout.trim(), headLookup.stdout.trim());
     assert.equal(snap.inBranch, true);
     assert.equal(Object.hasOwn(snap, "merged"), false);
     assert.equal(snap.liveNetwork, false);
@@ -534,7 +539,7 @@ describe("web v2", () => {
       encoding: "utf8",
     });
     assert.equal(run.status, 0, `${run.stdout}\n${run.stderr}`);
-    assert.match(run.stdout, /0cb1633bffffe07383742e75a9ec9435764d1baf/);
+    assert.match(run.stdout, /fa9a500dac16251aa5d3831d59717981fb434be6/);
     const same = (left: string, right: string) => {
       assert.equal(readFileSync(path.join(root, left), "utf8"), readFileSync(path.join(root, right), "utf8"), left);
     };
