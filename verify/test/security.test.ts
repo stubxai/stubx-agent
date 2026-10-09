@@ -124,24 +124,18 @@ describe("descarga y redacción", () => {
     assert.equal(isPrivateAddress("::ffff:808:808"), false);
   });
 
-  test("pinnedLookup conecta a la IP ya validada y prefiere IPv4", () => {
-    const lookup = pinnedLookup(["1.1.1.1", "127.0.0.1"]);
-    lookup("ipfs.io", {}, (err, address, family) => {
-      assert.equal(err, null);
-      assert.equal(address, "1.1.1.1");
-      assert.equal(family, 4);
-    });
-    const v6First = pinnedLookup(["2001:db8::1", "203.0.113.10"]);
-    v6First("ipfs.io", {}, (err, address, family) => {
-      assert.equal(err, null);
-      assert.equal(address, "203.0.113.10");
-      assert.equal(family, 4);
-    });
-    const onlyPrivate = pinnedLookup(["127.0.0.1"]);
-    onlyPrivate("ipfs.io", {}, (err, address) => {
-      assert.ok(err);
-      assert.equal(address, "");
-    });
+  test("pinnedLookup conecta a la IP ya validada y prefiere IPv4", async () => {
+    const first = await asked(pinnedLookup(["1.1.1.1", "127.0.0.1"]));
+    assert.equal(first.err, null);
+    assert.equal(first.address, "1.1.1.1");
+    assert.equal(first.family, 4);
+    const v6First = await asked(pinnedLookup(["2001:db8::1", "203.0.113.10"]));
+    assert.equal(v6First.err, null);
+    assert.equal(v6First.address, "203.0.113.10");
+    assert.equal(v6First.family, 4);
+    const onlyPrivate = await asked(pinnedLookup(["127.0.0.1"]));
+    assert.ok(onlyPrivate.err);
+    assert.equal(onlyPrivate.address, "");
   });
 
   test("un error de socket se captura y se prueba la IP siguiente", async () => {
@@ -179,21 +173,20 @@ describe("descarga y redacción", () => {
   test("ENETUNREACH en IPv6 se captura y cada intento fija la familia", async () => {
     assert.deepEqual(pinnedSocketOptions("2001:db8::1"), { family: 6, autoSelectFamily: false });
     assert.deepEqual(pinnedSocketOptions("203.0.113.10"), { family: 4, autoSelectFamily: false });
-    const tried: string[] = [];
-    await assert.rejects(
-      () => connectPinned(
-        ["2001:db8::1"],
-        async (address) => {
-          tried.push(address);
-          const error = new Error("connect ENETUNREACH 2001:db8::1:443 - Local (:::0)") as NodeJS.ErrnoException;
-          error.code = "ENETUNREACH";
-          throw error;
-        },
-        AbortSignal.timeout(1000),
-      ),
-      (error: unknown) => error instanceof Error && (error as NodeJS.ErrnoException).code === "ENETUNREACH",
-    );
-    assert.deepEqual(tried, ["2001:db8::1"]);
+  });
+
+  test("una conexión real a 2001:db8::1 devuelve ENETUNREACH y el proceso sigue", async () => {
+    const result = await fetchBytes(`https://ipfs.io/ipfs/${CID}`, {
+      timeoutMs: 2000,
+      maxRetries: 0,
+      sleep: async () => {},
+      random: () => 0,
+      resolveHost: async () => ["2001:db8::1"],
+    });
+    assert.equal(result.ok, false);
+    if (!result.ok) {
+      assert.match(result.error, /ENETUNREACH/);
+    }
   });
 
   test("AbortSignal.timeout corta toda la descarga", async () => {
@@ -476,6 +469,14 @@ describe("texto, puntero y holders", () => {
     assert.equal(report.findings.some((item) => item.id === "metadata-pointer" && item.level === "atención"), true);
   });
 });
+
+function asked(lookup: ReturnType<typeof pinnedLookup>): Promise<{ err: NodeJS.ErrnoException | null; address: string; family?: number }> {
+  return new Promise((resolve) => {
+    lookup("ipfs.io", {}, (err, address, family) => {
+      resolve({ err, address: typeof address === "string" ? address : "", family });
+    });
+  });
+}
 
 function borshString(value: string): Uint8Array {
   const raw = new TextEncoder().encode(value);
