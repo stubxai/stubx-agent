@@ -189,7 +189,12 @@ ul.clean li, ol.clean li { margin: 0.35rem 0; }
   white-space: nowrap;
   border: 0;
 }
-footer.site a { color: var(--text); }
+footer.site a {
+  color: var(--text);
+  display: inline-block;
+  padding: 12px 4px;
+  min-height: 44px;
+}
 footer.site ul { padding-left: 1.1rem; }
 details.mapa { margin-top: 0.75rem; }
 details.mapa summary { width: auto; display: inline-flex; border-radius: 999px; }
@@ -207,4 +212,7 @@ details.mapa nav ul { padding-top: 0.75rem; }
   .hero-actions a, .ca-actions a, .ca-actions button, .btn-row a { width: 100%; }
   .langs { order: 2; }
   a.brand img { width: 36px; height: 36px; }
+}
+@media (max-width: 599px) {
+  header.site { position: static; }
 }

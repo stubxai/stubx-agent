@@ -44,6 +44,7 @@ type View = {
   mint: string | null;
   title: { es: string; en: string };
   partialNote: { es: string; en: string } | null;
+  compare: { official: string; marks: { char: string; changed: boolean }[] } | null;
   rows: { label: { es: string; en: string }; value: { es: string; en: string } }[];
 };
 
@@ -178,6 +179,16 @@ describe("web v2", () => {
     assert.match(shell, /register\("\/lab\/sw\.js", \{ scope: "\/lab\/" \}\)/);
     assert.match(shell, /onLab && "serviceWorker" in navigator/);
     assert.match(read("lab/index.html"), /worker-src 'self'/);
+    assert.equal(read("lab/index.html").includes("frame-ancestors"), false);
+    assert.equal(read("verify/index.html").includes("frame-ancestors"), false);
+    assert.match(read("_headers"), /frame-ancestors 'none'/);
+    assert.match(read("assets/site.css"), /max-width:\s*599px/);
+    assert.match(read("assets/site.css"), /header\.site \{\s*position:\s*static;/);
+    assert.match(read("assets/site.css"), /footer\.site a[\s\S]*min-height:\s*44px/);
+    assert.match(read("verify/index.html"), /id="direccion-error"/);
+    assert.match(read("lab/index.html"), /Para quien quiera más detalle/);
+    assert.match(read("assets/mission.js"), /Siguiente paso/);
+    assert.match(read("assets/mission.js"), /Empezar de nuevo/);
     assert.match(read("index.html"), /worker-src 'none'/);
     assert.match(read("verify/index.html"), /worker-src 'none'/);
     for (const file of htmlFiles(root)) {
@@ -285,7 +296,7 @@ describe("web v2", () => {
       liveNetwork: boolean;
       cardsDate: string;
     };
-    assert.equal(snap.commit, "0cb1633bffffe07383742e75a9ec9435764d1baf");
+    assert.match(snap.commit, /^[0-9a-f]{40}$/);
     assert.equal(snap.inBranch, true);
     assert.equal(Object.hasOwn(snap, "merged"), false);
     assert.equal(snap.liveNetwork, false);
@@ -335,6 +346,10 @@ describe("web v2", () => {
     assert.match(otherEvm.title.es, /solo existe en Solana/);
     const missing = lookup.classifyAddress("11111111111111111111111111111111", data.cards, "lista", data.evm);
     assert.equal(missing.kind, "sin_ficha");
+    assert.equal(missing.title.es, "No se pudo comprobar");
+    const near = lookup.classifyAddress(`${CA.slice(0, -1)}q`, data.cards, "lista", data.evm);
+    assert.equal(near.title.es, "No es la dirección oficial");
+    assert.equal(near.compare?.marks.filter((mark) => mark.changed).length, 1);
     const down = lookup.classifyAddress(CA, data.cards, "caida", data.evm);
     assert.equal(down.kind, "lectura_caida");
     assert.equal(down.light, "neutro");

@@ -2,6 +2,8 @@
 (() => {
 const STUBX_VERIFY = {"cards":[{"mint":"TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump","role":"registro","roleNote":{"es":"Mint del registro curado. Ficha releída el 2026-10-09: saldos de la curva, de la creadora y de la cuenta personal publicada. No es un censo. La ficha del 2026-10-08 se conserva.","en":"Curated registry mint. Card reread on 2026-10-09: balances of the curve, the creator, and the published personal account. It is not a census. The 2026-10-08 card is kept."},"id":"a9e7f8d9d16fa3113f669afbcb4966123279efed3efa0769a864be484f43d9eb","createdAt":"2026-10-09T17:06:59.737Z","partial":true,"referenceSlot":454936120,"name":"STUBX","nameStatus":"verificado","symbol":"STUBX","inRegistry":true,"inRegistryStatus":"verificado","mintAuthority":{"state":"revocada","status":"verificado"},"freezeAuthority":{"state":"revocada","status":"verificado"},"metadataReading":"no_mutables_en_fuentes","metadataLevel":"ok","holdersStatus":"verificado","holdersNote":"Saldos leídos de la curva, de la creadora y de la cuenta personal publicada (2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX). El resto respecto al suministro es 0.0000 %. No es un censo de cuentas con tokens.","impersonation":false,"authenticityLevel":"ok","signals":["mint en el registro"],"statement":"El mint coincide con el registro curado (stubx). Que esté en el registro no es una auditoría.","statementStatus":"verificado","curvePresent":true,"curvePresentStatus":"verificado","curveProgress":"1.74","curveProgressStatus":"inferido","curveProgressNote":"Porcentaje inferido con la cantidad real inicial pública de la curva clásica (Pump.fun lo llama ‘reserves’) (793100000000000). Truncado a 2 decimales hacia cero.","curveModuleNote":"Cuenta con el discriminador público de BondingCurve.","rulesVersion":"0.1.0","statement_en":"The mint matches the curated registry (stubx). Being in the registry is not an audit.","holdersNote_en":"Balances read from the curve, from the creator, and from the published personal account (2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX). The rest of the supply is 0.0000 %. It is not a census of token accounts.","curveProgressNote_en":"Percentage inferred from the public initial real curve amount of the classic curve (Pump.fun calls these ‘reserves’) (793100000000000). Truncated to 2 decimals toward zero.","curveModuleNote_en":"Account with the public BondingCurve discriminator.","signals_en":["mint in the registry"]},{"mint":"Hhq4ffySVX3UQqSowjhP1Lwa8YuJDf7iH2hYWvVHTuEf","role":"clon","roleNote":{"es":"Clon conocido en los ejemplos del 2026-10-08. La ficha marca posible suplantación y no atribuye intención.","en":"Known clone in the 2026-10-08 examples. The card marks possible impersonation and does not attribute intent."},"id":"2c5de795c4aab2014c94dd6ed2fbda4564256b5e00c6fe929f1b7392639393b0","createdAt":"2026-10-08T07:41:49.581Z","partial":true,"referenceSlot":454480545,"name":"Comunidad STUBX · Creador","nameStatus":"verificado","symbol":"COMUNIDAD","inRegistry":false,"inRegistryStatus":"verificado","mintAuthority":{"state":"revocada","status":"verificado"},"freezeAuthority":{"state":"revocada","status":"verificado"},"metadataReading":"no_mutables_en_fuentes","metadataLevel":"ok","holdersStatus":"no_disponible","holdersNote":"Sin respuesta utilizable. No se interpreta como autoridad revocada, como inmutabilidad ni como cantidad cero.","impersonation":true,"authenticityLevel":"riesgo","signals":["nombre «Comunidad STUBX · Creador» incluye STUBX/STUBX","enlace «https://stubxai.com/canales» coincide con un enlace u host del registro"],"statement":"Posible suplantación: el nombre, el símbolo, la imagen o un enlace coinciden con un token del registro curado, pero el mint es otro. La coincidencia no atribuye intención.","statementStatus":"inferido","curvePresent":true,"curvePresentStatus":"verificado","curveProgress":"0.00","curveProgressStatus":"inferido","curveProgressNote":"Porcentaje inferido con la cantidad real inicial pública de la curva clásica (Pump.fun lo llama ‘reserves’) (793100000000000). Truncado a 2 decimales hacia cero.","curveModuleNote":"Cuenta con el discriminador público de BondingCurve.","rulesVersion":"0.1.0","statement_en":"Possible impersonation: the name, symbol, image, or a link matches a token in the curated registry, but the mint is different. The match does not attribute intent.","holdersNote_en":"No usable response. It is not interpreted as a revoked authority, as immutability, or as a zero balance.","curveProgressNote_en":"Percentage inferred from the public initial real curve amount of the classic curve (Pump.fun calls these ‘reserves’) (793100000000000). Truncated to 2 decimals toward zero.","curveModuleNote_en":"Account with the public BondingCurve discriminator.","signals_en":["name “Comunidad STUBX · Creador” includes STUBX","link “https://stubxai.com/canales” matches a link or host in the registry"]},{"mint":"DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ","role":"clon","roleNote":{"es":"Clon conocido en los ejemplos del 2026-10-08. La ficha marca posible suplantación y no atribuye intención.","en":"Known clone in the 2026-10-08 examples. The card marks possible impersonation and does not attribute intent."},"id":"e19ccb6b9ab284a1349b1c0bd7472c1cbb1f3eb9808c37c752c85418b4239a32","createdAt":"2026-10-08T07:42:08.413Z","partial":true,"referenceSlot":454480614,"name":"Comunidad STUBX","nameStatus":"verificado","symbol":"COMUNIDAD","inRegistry":false,"inRegistryStatus":"verificado","mintAuthority":{"state":"revocada","status":"verificado"},"freezeAuthority":{"state":"revocada","status":"verificado"},"metadataReading":"no_mutables_en_fuentes","metadataLevel":"ok","holdersStatus":"no_disponible","holdersNote":"Sin respuesta utilizable. No se interpreta como autoridad revocada, como inmutabilidad ni como cantidad cero.","impersonation":true,"authenticityLevel":"riesgo","signals":["nombre «Comunidad STUBX» incluye STUBX/STUBX","enlace «https://stubxai.com/canales» coincide con un enlace u host del registro"],"statement":"Posible suplantación: el nombre, el símbolo, la imagen o un enlace coinciden con un token del registro curado, pero el mint es otro. La coincidencia no atribuye intención.","statementStatus":"inferido","curvePresent":true,"curvePresentStatus":"verificado","curveProgress":"0.00","curveProgressStatus":"inferido","curveProgressNote":"Porcentaje inferido con la cantidad real inicial pública de la curva clásica (Pump.fun lo llama ‘reserves’) (793100000000000). Truncado a 2 decimales hacia cero.","curveModuleNote":"Cuenta con el discriminador público de BondingCurve.","rulesVersion":"0.1.0","statement_en":"Possible impersonation: the name, symbol, image, or a link matches a token in the curated registry, but the mint is different. The match does not attribute intent.","holdersNote_en":"No usable response. It is not interpreted as a revoked authority, as immutability, or as a zero balance.","curveProgressNote_en":"Percentage inferred from the public initial real curve amount of the classic curve (Pump.fun calls these ‘reserves’) (793100000000000). Truncated to 2 decimals toward zero.","curveModuleNote_en":"Account with the public BondingCurve discriminator.","signals_en":["name “Comunidad STUBX” includes STUBX","link “https://stubxai.com/canales” matches a link or host in the registry"]},{"mint":"3Zi6p6wzYZYKyuHdBhsDfb2pRR7XTfTfLKkXL7rwpump","role":"clon","roleNote":{"es":"Clon conocido en los ejemplos del 2026-10-08. La ficha marca posible suplantación y no atribuye intención.","en":"Known clone in the 2026-10-08 examples. The card marks possible impersonation and does not attribute intent."},"id":"6da15234e08bd8507731922297162664cf9c16690397d4fbe2777a8f6c32d44c","createdAt":"2026-10-08T07:42:27.686Z","partial":true,"referenceSlot":454480685,"name":"Comunidad STUBX","nameStatus":"verificado","symbol":"COMUNIDAD","inRegistry":false,"inRegistryStatus":"verificado","mintAuthority":{"state":"revocada","status":"verificado"},"freezeAuthority":{"state":"revocada","status":"verificado"},"metadataReading":"no_mutables_en_fuentes","metadataLevel":"ok","holdersStatus":"no_disponible","holdersNote":"Sin respuesta utilizable. No se interpreta como autoridad revocada, como inmutabilidad ni como cantidad cero.","impersonation":true,"authenticityLevel":"riesgo","signals":["nombre «Comunidad STUBX» incluye STUBX/STUBX","enlace «https://stubxai.com/canales» coincide con un enlace u host del registro"],"statement":"Posible suplantación: el nombre, el símbolo, la imagen o un enlace coinciden con un token del registro curado, pero el mint es otro. La coincidencia no atribuye intención.","statementStatus":"inferido","curvePresent":true,"curvePresentStatus":"verificado","curveProgress":"0.00","curveProgressStatus":"inferido","curveProgressNote":"Porcentaje inferido con la cantidad real inicial pública de la curva clásica (Pump.fun lo llama ‘reserves’) (793100000000000). Truncado a 2 decimales hacia cero.","curveModuleNote":"Cuenta con el discriminador público de BondingCurve.","rulesVersion":"0.1.0","statement_en":"Possible impersonation: the name, symbol, image, or a link matches a token in the curated registry, but the mint is different. The match does not attribute intent.","holdersNote_en":"No usable response. It is not interpreted as a revoked authority, as immutability, or as a zero balance.","curveProgressNote_en":"Percentage inferred from the public initial real curve amount of the classic curve (Pump.fun calls these ‘reserves’) (793100000000000). Truncated to 2 decimals toward zero.","curveModuleNote_en":"Account with the public BondingCurve discriminator.","signals_en":["name “Comunidad STUBX” includes STUBX","link “https://stubxai.com/canales” matches a link or host in the registry"]},{"mint":"ERYyyaE2Y2GuKB28YbC2w1nCuQ5ENQ89LR44kicvpump","role":"clon","roleNote":{"es":"Ejemplo añadido el 2026-10-09. Se llama STUBX y no es el mint del registro. No es una lista completa.","en":"Example added on 2026-10-09. It is named STUBX and it is not the registry mint. This is not a complete list."},"id":"efa9c02fbf4a0873c703d200f107c5951109174f0a15a2fcf898eeb5b735206b","createdAt":"2026-10-09T16:16:12.461Z","partial":true,"referenceSlot":454922187,"name":"STUBX","nameStatus":"verificado","symbol":"STUBX","inRegistry":false,"inRegistryStatus":"verificado","mintAuthority":{"state":"revocada","status":"verificado"},"freezeAuthority":{"state":"revocada","status":"verificado"},"metadataReading":"no_mutables_en_fuentes","metadataLevel":"ok","holdersStatus":"verificado","holdersNote":"Saldos leídos de la curva y de la creadora. El resto respecto al suministro es 0.0006 %. No es un censo de cuentas con tokens.","impersonation":true,"authenticityLevel":"riesgo","signals":["nombre «STUBX» incluye STUBX/STUBX","símbolo «STUBX» incluye STUBX/STUBX","enlace «https://.superb-horse-9036f5.netlify.app» coincide con un enlace u host del registro"],"statement":"Posible suplantación: el nombre, el símbolo, la imagen o un enlace coinciden con un token del registro curado, pero el mint es otro. La coincidencia no atribuye intención.","statementStatus":"inferido","curvePresent":true,"curvePresentStatus":"verificado","curveProgress":"0.00","curveProgressStatus":"inferido","curveProgressNote":"Porcentaje inferido con la cantidad real inicial pública de la curva clásica (Pump.fun lo llama ‘reserves’) (793100000000000). Truncado a 2 decimales hacia cero.","curveModuleNote":"Cuenta con el discriminador público de BondingCurve.","rulesVersion":"0.1.0","statement_en":"Possible impersonation: the name, symbol, image, or a link matches a token in the curated registry, but the mint is different. The match does not attribute intent.","holdersNote_en":"Balances read from the curve and from the creator. The rest of the supply is 0.0006 %. It is not a census of token accounts.","curveProgressNote_en":"Percentage inferred from the public initial real curve amount of the classic curve (Pump.fun calls these ‘reserves’) (793100000000000). Truncated to 2 decimals toward zero.","curveModuleNote_en":"Account with the public BondingCurve discriminator.","signals_en":["name “STUBX” includes STUBX","symbol “STUBX” includes STUBX","link “https://.superb-horse-9036f5.netlify.app” matches a link or host in the registry"]},{"mint":"FMNb4CR8ksibmgY7Ztei6BWcZXi3WHcVeJhYb9TNpump","role":"clon","roleNote":{"es":"Ejemplo añadido el 2026-10-09. Se llama STUBX y no es el mint del registro. No es una lista completa.","en":"Example added on 2026-10-09. It is named STUBX and it is not the registry mint. This is not a complete list."},"id":"d0fdaab557d36d442f688e25a71bbc54b3d61b5fffa2bf26c2a02ba1eb7a9c86","createdAt":"2026-10-09T16:16:39.440Z","partial":true,"referenceSlot":454922310,"name":"STUBX","nameStatus":"verificado","symbol":"STUBX","inRegistry":false,"inRegistryStatus":"verificado","mintAuthority":{"state":"revocada","status":"verificado"},"freezeAuthority":{"state":"revocada","status":"verificado"},"metadataReading":"no_mutables_en_fuentes","metadataLevel":"ok","holdersStatus":"verificado","holdersNote":"Saldos leídos de la curva y de la creadora. El resto respecto al suministro es 0.0000 %. No es un censo de cuentas con tokens.","impersonation":true,"authenticityLevel":"riesgo","signals":["nombre «STUBX» incluye STUBX/STUBX","símbolo «STUBX» incluye STUBX/STUBX","enlace «https://superb-horse-9036f5.netlify.app» coincide con un enlace u host del registro"],"statement":"Posible suplantación: el nombre, el símbolo, la imagen o un enlace coinciden con un token del registro curado, pero el mint es otro. La coincidencia no atribuye intención.","statementStatus":"inferido","curvePresent":true,"curvePresentStatus":"verificado","curveProgress":"0.00","curveProgressStatus":"inferido","curveProgressNote":"Porcentaje inferido con la cantidad real inicial pública de la curva clásica (Pump.fun lo llama ‘reserves’) (793100000000000). Truncado a 2 decimales hacia cero.","curveModuleNote":"Cuenta con el discriminador público de BondingCurve.","rulesVersion":"0.1.0","statement_en":"Possible impersonation: the name, symbol, image, or a link matches a token in the curated registry, but the mint is different. The match does not attribute intent.","holdersNote_en":"Balances read from the curve and from the creator. The rest of the supply is 0.0000 %. It is not a census of token accounts.","curveProgressNote_en":"Percentage inferred from the public initial real curve amount of the classic curve (Pump.fun calls these ‘reserves’) (793100000000000). Truncated to 2 decimals toward zero.","curveModuleNote_en":"Account with the public BondingCurve discriminator.","signals_en":["name “STUBX” includes STUBX","symbol “STUBX” includes STUBX","link “https://superb-horse-9036f5.netlify.app” matches a link or host in the registry"]},{"mint":"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v","role":"contraste","roleNote":{"es":"USDC, contraste. Bytes del mint el 2026-10-09 18:42 Europe/Madrid: 7.442.271.613,512366. getTokenSupply en ese minuto no coincidió, así que no hay porcentajes. No es STUBX y no está presentado como clon. La ficha del 2026-10-08 conserva la cifra de aquel día.","en":"USDC, a contrast. Mint bytes on 2026-10-09 18:42 Europe/Madrid: 7,442,271,613.512366. getTokenSupply did not match in that minute, so there are no percentages. It is not STUBX and is not presented as a clone. The 2026-10-08 card keeps that day's figure."},"id":"80671753ebbcdee3317b7b2bbf7ef14eba21f8a58e437bcfdab42da02b15d7a2","createdAt":"2026-10-09T16:42:39.825Z","partial":true,"referenceSlot":454929422,"name":"USD Coin","nameStatus":"verificado","symbol":"USDC","inRegistry":false,"inRegistryStatus":"verificado","mintAuthority":{"state":"activa","status":"verificado"},"freezeAuthority":{"state":"activa","status":"verificado"},"metadataReading":"mutables","metadataLevel":"atención","holdersStatus":"no_disponible","holdersNote":"Sin respuesta utilizable. No se interpreta como autoridad revocada, como inmutabilidad ni como cantidad cero.","impersonation":false,"authenticityLevel":"ok","signals":[],"statement":"Este mint no está en el registro curado. Que no esté no significa que sea falso ni que sea una copia.","statementStatus":"verificado","curvePresent":false,"curvePresentStatus":"verificado","curveProgress":null,"curveProgressStatus":"no_aplica","curveProgressNote":"No hay curva. No se rellena con cero.","curveModuleNote":"La dirección derivada tiene una cuenta cuyo propietario no es el programa de Pump.fun. No es una curva y no se rellenan con cero las cantidades de la curva.","rulesVersion":"0.1.0","statement_en":"This mint is not in the curated registry. That does not mean it is fake or a copy.","holdersNote_en":"No usable response. It is not interpreted as a revoked authority, as immutability, or as a zero balance.","curveProgressNote_en":"There is no curve. It is not filled with zero.","curveModuleNote_en":"The derived address has an account whose owner is not the Pump.fun program. It is not a curve, and the curve amounts are not filled in with zero.","signals_en":[]}],"source":"lista","evm":[{"chain":"eip155:56","address":"0xC99056C762F0802e4154E6322bd71ae928857777","name":"STUBX","symbol":"STUBX","creator":"0x3fDBEEcf583A53eABb59c3Ab2eDdfa8a5dBA503e","notedOn":"2026-10-08","source":"search-v2 de Pump.fun, 08-10 09:14 CEST","verifiedOnChain":false},{"chain":"eip155:5042","address":"0xAEE5212f20cc95370cb3556c4493CFD07721a5a3","name":"STUBX","symbol":"STUBX","creator":"0x37623022B9B42C5F8187eCe013E768a094C1d1e5","notedOn":"2026-10-08","source":"search-v2 de Pump.fun, 08-10 09:14 CEST","verifiedOnChain":false,"note":"La red eip155:5042 no está identificada con certeza."}]};
 const BASE58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+const OFFICIAL_MINT = "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump";
+const SIMILAR_MAX = 4;
 const COPY = {
     vacio: {
         light: "neutro",
@@ -17,8 +19,8 @@ const COPY = {
         lightLabel: { es: "Dirección no válida", en: "Address is not valid" },
         title: { es: "Esta dirección no es válida", en: "This address is not valid" },
         support: {
-            es: "Tiene que ser la dirección completa, sin el nombre del token y sin texto alrededor.",
-            en: "It has to be the full address, without the token name and without surrounding text.",
+            es: `Tiene que ser la dirección completa, sin el nombre del token y sin texto alrededor. Una dirección de Solana es larga: de 32 a 44 letras y números, sin 0, O, I ni l. Por ejemplo: ${OFFICIAL_MINT}.`,
+            en: `It has to be the full address, without the token name and without surrounding text. A Solana address is long: 32 to 44 letters and numbers, with no 0, O, I, or l. For example: ${OFFICIAL_MINT}.`,
         },
     },
     oficial: {
@@ -127,6 +129,43 @@ function viewOf(kind, mint, rows, partialNote) {
         mint,
         rows,
         partialNote,
+        compare: null,
+    };
+}
+function looksLikeOfficial(mint, official) {
+    if (mint === official || mint.length === 0 || mint.length !== official.length)
+        return false;
+    let diff = 0;
+    for (let i = 0; i < mint.length; i += 1) {
+        if (mint[i] !== official[i])
+            diff += 1;
+        if (diff > SIMILAR_MAX)
+            return false;
+    }
+    return diff > 0;
+}
+function addressMarks(mint, official) {
+    const marks = [];
+    for (let i = 0; i < mint.length; i += 1) {
+        const char = mint[i] ?? "";
+        marks.push({ char, changed: char !== (official[i] ?? "") });
+    }
+    return marks;
+}
+function officialMintOf(cards) {
+    return cards.find((card) => card.role === "registro")?.mint ?? OFFICIAL_MINT;
+}
+function notOfficialView(mint, official) {
+    return {
+        kind: "sin_ficha",
+        light: "atencion",
+        lightLabel: pair("No es la oficial", "Not the official one"),
+        title: pair("No es la dirección oficial", "Not the official address"),
+        support: pair(`No es la dirección oficial de STUBX. La oficial es ${official}.`, `This is not the official STUBX address. The official one is ${official}.`),
+        mint,
+        rows: [],
+        partialNote: pair("No hay ficha de ejemplo. La lista no es completa y esta página no consulta la red, así que no rellena el hueco.", "There is no example card. The list is not complete and this page does not query the network, so it does not fill the gap."),
+        compare: { official, marks: addressMarks(mint, official) },
     };
 }
 function pendingView(raw) {
@@ -199,6 +238,7 @@ function evmView(address, evm) {
                 { label: pair("En la cadena", "On-chain"), value: pair("Sin verificar", "Not verified") },
             ],
             partialNote: null,
+            compare: null,
         };
     }
     const shown = /^0x[0-9a-fA-F]{40}$/.test(address) ? address : null;
@@ -211,6 +251,7 @@ function evmView(address, evm) {
         mint: shown,
         rows: [],
         partialNote: null,
+        compare: null,
     };
 }
 function classifyAddress(raw, cards, source, evm = []) {
@@ -221,13 +262,21 @@ function classifyAddress(raw, cards, source, evm = []) {
         return evmView(mint, evm);
     if (!isAddress(mint))
         return viewOf("invalida", null, [], null);
+    const official = officialMintOf(source === "caida" ? [] : cards);
+    const similar = mint !== official && looksLikeOfficial(mint, official);
+    if (similar && (source === "caida" || !cards.some((item) => item.mint === mint))) {
+        return notOfficialView(mint, official);
+    }
     if (source === "caida")
         return viewOf("lectura_caida", mint, [], null);
     const card = cards.find((item) => item.mint === mint);
     if (!card)
         return viewOf("sin_ficha", mint, [], null);
     const kind = card.role === "registro" ? "oficial" : card.role === "clon" ? "copia" : "otra";
-    return viewOf(kind, card.mint, rowsFor(card), partialNoteFor(card));
+    const view = viewOf(kind, card.mint, rowsFor(card), partialNoteFor(card));
+    if (similar)
+        view.compare = { official, marks: addressMarks(mint, official) };
+    return view;
 }
 function verifyEl(tag, attrs) {
   var node = document.createElement(tag);
@@ -273,12 +322,21 @@ function paintVerify(out, view) {
   var name = verifyEl("span");
   name.textContent = view.lightLabel[lang];
   flag.append(dot, name);
-  var title = verifyEl("h2");
+  var title = verifyEl("h2", { tabindex: "-1" });
   title.textContent = view.title[lang];
   var support = verifyEl("p", { class: "apoyo" });
   support.textContent = view.support[lang];
   out.append(flag, title, support);
-  if (view.mint) {
+  if (view.compare && view.compare.marks) {
+    var compared = verifyEl("p", { class: "mint comparado" });
+    view.compare.marks.forEach(function (mark) {
+      var span = verifyEl("span");
+      if (mark.changed) span.className = "cambia";
+      span.textContent = mark.char;
+      compared.append(span);
+    });
+    out.append(compared);
+  } else if (view.mint) {
     var mint = verifyEl("p", { class: "mint" });
     mint.textContent = view.mint;
     out.append(mint);
@@ -315,30 +373,61 @@ function bootVerify() {
   var source = cards.length > 0 ? "lista" : "caida";
 
   var last = emptyView();
+  var fieldError = document.getElementById("direccion-error");
 
-  function apply(view) {
+  function coverHeight() {
+    var header = document.querySelector("header.site");
+    if (!header) return 0;
+    var pos = window.getComputedStyle(header).position;
+    if (pos !== "fixed" && pos !== "sticky") return 0;
+    return Math.ceil(header.getBoundingClientRect().height);
+  }
+
+  function revealVerdict() {
+    out.style.scrollMarginTop = coverHeight() + "px";
+    out.scrollIntoView({ block: "start", inline: "nearest" });
+    var title = out.querySelector("h2");
+    if (title && title.focus) title.focus({ preventScroll: true });
+  }
+
+  function showFieldError() {
+    if (fieldError) fieldError.hidden = false;
+    input.setAttribute("aria-invalid", "true");
+    input.setAttribute("aria-describedby", "direccion-error");
+    if (input.focus) input.focus();
+  }
+
+  function hideFieldError() {
+    if (fieldError) fieldError.hidden = true;
+    input.removeAttribute("aria-describedby");
+  }
+
+  function apply(view, reveal) {
     last = view;
     paintVerify(out, view);
     input.setAttribute("aria-invalid", view.kind === "invalida" ? "true" : "false");
-    if (view.kind !== "vacio" && view.kind !== "comprobando") {
-      var narrow = window.matchMedia("(max-width: 48rem)").matches;
-      out.scrollIntoView({ block: narrow ? "start" : "nearest", inline: "nearest" });
-    }
+    if (reveal && view.kind !== "vacio" && view.kind !== "comprobando") revealVerdict();
   }
 
   function run() {
+    if (input.value.trim() === "") {
+      apply(emptyView(), false);
+      showFieldError();
+      return;
+    }
+    hideFieldError();
     var value = input.value;
-    apply(pendingView(value));
+    apply(pendingView(value), false);
     window.requestAnimationFrame(function () {
       try {
-        apply(classifyAddress(value, cards, source, evm));
+        apply(classifyAddress(value, cards, source, evm), true);
       } catch (error) {
-        apply(classifyAddress(value, [], "caida", evm));
+        apply(classifyAddress(value, [], "caida", evm), true);
       }
     });
   }
 
-  apply(emptyView());
+  apply(emptyView(), false);
   form.addEventListener("submit", function (event) {
     event.preventDefault();
     run();

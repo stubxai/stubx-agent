@@ -24,6 +24,9 @@ describe("lectura de una dirección", () => {
     const invalid = classifyAddress("<script>alert(1)</script>", cards, "lista");
     assert.equal(invalid.kind, "invalida");
     assert.equal(invalid.title.es, "Esta dirección no es válida");
+    assert.match(invalid.support.es, /32 a 44/);
+    assert.match(invalid.support.es, new RegExp(official));
+    assert.match(invalid.support.en, /32 to 44/);
     assert.equal(invalid.mint, null);
     const spaces = classifyAddress("   hola mundo  ", cards, "lista");
     assert.equal(spaces.kind, "invalida");
@@ -57,6 +60,27 @@ describe("lectura de una dirección", () => {
     const curve = other.rows.find((row) => row.label.es === "Avance de la curva");
     assert.equal(curve?.value.es, "No aplica");
     assert.equal(curve?.value.es.includes("0"), false);
+  });
+
+  test("una dirección válida parecida a la oficial no se presenta como comprobación fallida", () => {
+    const near = `${official.slice(0, -1)}q`;
+    const view = classifyAddress(near, cards, "lista", evm);
+    assert.equal(view.kind, "sin_ficha");
+    assert.equal(view.title.es, "No es la dirección oficial");
+    assert.equal(view.title.en, "Not the official address");
+    assert.match(view.support.es, /No es la dirección oficial de STUBX/);
+    assert.match(view.support.es, new RegExp(official));
+    assert.match(view.support.en, /not the official STUBX address/i);
+    assert.match(view.partialNote?.es ?? "", /No hay ficha de ejemplo/);
+    assert.equal(view.compare?.official, official);
+    const changed = view.compare?.marks.filter((mark) => mark.changed) ?? [];
+    assert.equal(changed.length, 1);
+    assert.equal(changed[0]?.char, "q");
+    assert.equal(view.compare?.marks.at(-1)?.changed, true);
+    assert.equal(view.compare?.marks[0]?.changed, false);
+    const down = classifyAddress(near, cards, "caida", evm);
+    assert.equal(down.title.es, "No es la dirección oficial");
+    assert.notEqual(down.kind, "lectura_caida");
   });
 
   test("sin ficha y con la lectura caída se dice que no se pudo comprobar", () => {
@@ -102,6 +126,7 @@ describe("lectura de una dirección", () => {
       classifyAddress("???", cards, "lista"),
       classifyAddress("0xC99056C762F0802e4154E6322bd71ae928857777", cards, "lista", evm),
       classifyAddress("0x1111111111111111111111111111111111111111", cards, "lista", evm),
+      classifyAddress(`${official.slice(0, -1)}q`, cards, "lista", evm),
     ];
     assert.deepEqual(bannedHits(views), []);
   });

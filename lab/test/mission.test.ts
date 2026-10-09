@@ -179,8 +179,29 @@ describe("misión 1", () => {
       .map((mint) => byMint.get(mint))
       .find((card) => card?.role === "clon");
     assert.equal(clone?.curveProgress, "0.00");
-    assert.match(step.whyRight.es, /793100000000000/);
+    assert.equal(step.whyRight.es.includes("793100000000000"), false);
+    assert.equal(step.whyRight.en.includes("793100000000000"), false);
+    assert.equal(step.prompt.es.includes("793100000000000"), false);
     assert.match(step.whyRight.es, /no atribuye intención/i);
+    assert.match(step.whyRight.es, /Detalles/);
+    assert.ok(step.glossary.includes("curva-pump"));
+    assert.ok(step.glossary.includes("reserva-real"));
+    assert.ok(step.glossary.includes("suplantacion"));
+  });
+
+  test("cada pregunta lleva una frase llana y el glosario del paso", () => {
+    const emision = mission.steps.find((item) => item.id === "emision");
+    assert.ok(emision);
+    assert.match(emision.guide.es, /Permiso cerrado/);
+    assert.match(emision.guide.en, /Closed permission/);
+    assert.equal(emision.prompt.es.includes("no dice cuál es la oficial"), false);
+    assert.ok(emision.glossary.includes("autoridad-emision"));
+    assert.ok(emision.glossary.includes("autoridad-congelacion"));
+    for (const step of mission.steps) {
+      assert.ok(step.guide.es.length >= 40, step.id);
+      assert.ok(step.guide.en.length >= 40, step.id);
+      assert.ok(step.glossary.length >= 1, step.id);
+    }
   });
 });
 
@@ -200,6 +221,8 @@ describe("biblioteca", () => {
       "reserva-virtual",
       "suplantacion",
       "titular",
+      "ficha",
+      "censo",
       "comision",
     ];
     const ids = new Set(glossary.entries.map((entry) => entry.id));

@@ -24,9 +24,11 @@ function isAncestor(commit) {
 }
 
 function labCommit() {
-  const origin = git(["rev-parse", "--verify", "origin/feat/lab-mision-1"]);
-  if (isAncestor(origin)) return origin;
   const headBlob = git(["rev-parse", "HEAD:lab/verify/lookup.ts"]);
+  const anchor = "0cb1633bffffe07383742e75a9ec9435764d1baf";
+  if (isAncestor(anchor) && git(["rev-parse", `${anchor}:lab/verify/lookup.ts`]) === headBlob) return anchor;
+  const origin = git(["rev-parse", "--verify", "origin/feat/lab-mision-1"]);
+  if (origin && isAncestor(origin) && git(["rev-parse", `${origin}:lab/verify/lookup.ts`]) === headBlob) return origin;
   const merges = git(["log", "--merges", "--pretty=%H", "HEAD"]).split("\n").filter(Boolean);
   for (const merge of merges) {
     const second = git(["rev-parse", `${merge}^2`]);
@@ -34,6 +36,7 @@ function labCommit() {
     if (git(["rev-parse", `${second}:lab/verify/lookup.ts`]) !== headBlob) continue;
     return second;
   }
+  if (isAncestor(anchor)) return anchor;
   return "";
 }
 
