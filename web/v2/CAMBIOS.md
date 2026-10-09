@@ -34,7 +34,7 @@ Vista previa del 2026-10-09. No está publicada en stubxai.com. La copia recuper
 
 - Canales, contrato y aviso de clones pasan a `/security`. `/community` no repite el aviso legal: enlaza.
 - Riesgos y la frase MiCA del art. 7.1.e viven en `/risks` y en `/legal`. La portada solo deja el resumen y el enlace. El pie repite la frase MiCA en las dos lenguas.
-- El archivo de posts no se ha reescrito en el cuerpo. `web/v2/archivo.html` es la copia del 2026-10-03 11:21 (Madrid), SHA-256 `654f8b25a72bae9d80c83ba3b3aa16ef16a1a531c450fce17d1d806342706897`, con los 18 posts. Solo cambian el canónico y `og:url`, de `https://stubxai.com/archivo.html` a `https://stubxai.com/archivo`, para que coincidan con la URL que Pages sirve. Por eso el archivo publicado ya no tiene esa huella.
+- El archivo de posts no se ha reescrito en el cuerpo. Los 18 posts salen de la copia de origen no publicada del 2026-10-03 11:21 (Madrid). La huella SHA-256 `654f8b25a72bae9d80c83ba3b3aa16ef16a1a531c450fce17d1d806342706897` es la de esa copia, como dice `/proofs`, no la de `archivo.html`. En el archivo servido solo cambian el canónico y `og:url`, de `https://stubxai.com/archivo.html` a `https://stubxai.com/archivo`, para que coincidan con la URL que Pages sirve.
 - Verify, Lab y el tablero entran en el mismo cascarón (ver `modules/README.md`). No son enlaces a otra web.
 - Studio, cuaderno y contribuciones no se simulan.
 
@@ -48,7 +48,7 @@ Las direcciones, los canales y los avisos dicen lo mismo en español y en inglé
 | Portada, acción principal | «Ver las pruebas» hacia `#pruebas` | «Analizar token» hacia `/verify`, con la fecha de las fichas. |
 | Portada, riesgos | Una línea y un enlace al ensayo de la misma página | Dos frases y enlace a `/risks`. El ensayo no se ha acortado allí. |
 | Versiones | «Cerrar la revisión de la PPM» seguía en objetivos aunque el texto ya decía que el 2026-10-05 estaban marcadas Logs, Límites y Kill-switch, y wallet no aplica | Ese punto pasa a «Hecho», con los mismos hechos y la misma fecha. El resto de objetivos no cambia. |
-| Verify, Lab, tablero | No estaban en la web | Interfaz real de la PR 14 (commit `86df576`, 2026-10-09), regenerada desde `lab/` y `site-drafts/`. Fichas del 2026-10-09 (oficial con la cuenta personal publicada, ERYyy, FMNb, USDC) más las del 2026-10-08 y dos ejemplos 0x. Sin red. `snapshot.json` marca `merged` porque ese commit está en esta rama; la PR 14 sigue sin fusionarse en main y esto no está publicado. Los enlaces del tablero a las PR 13 y 14 llevan la fecha (2026-10-08 y 2026-10-09). |
+| Verify, Lab, tablero | No estaban en la web | Interfaz real de la PR 14, regenerada desde `lab/` y `site-drafts/` (commit `0133722`, 2026-10-09). Las fichas siguen siendo la lectura del 2026-10-09 (commit `86df576`): oficial con la cuenta personal publicada, ERYyy, FMNb, USDC, más las del 2026-10-08 y dos ejemplos 0x. Sin red. `snapshot.json` marca `inBranch` porque ese commit está en esta rama; la PR 14 sigue sin fusionarse en main y la web no se ha desplegado. Los enlaces del tablero a las PR 13 y 14 llevan la fecha (2026-10-08 y 2026-10-09). |
 | Studio, cuaderno, contribuir | No estaban | «No construido · 2026-10-09». Sin controles. |
 
 No se han inventado cifras. Suministro, PPM, pruebas y avisos conservan la fecha de la fuente que ya estaba publicada. Esta vista previa no ha vuelto a consultar GitHub ni la red.
@@ -57,7 +57,7 @@ CA oficial, sin traducir: `TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump`.
 
 Canales, sin traducir: `@stubxai`, `github.com/stubxai/stubx-agent`, `stubxai.hq@gmail.com`, `t.me/stubxai`, Farcaster `stubxai`, TikTok `@stubxai`. No hay Discord. `github.com/stubx` no es este proyecto.
 
-El rótulo de borrador es una sola línea, la misma de la PR 14 («Borrador del repositorio. No publicado en stubxai.com.»). Desaparece solo si el generador se ejecuta con `STUBX_PUBLISH=1` y `--publish` a la vez. Las páginas no llevan un nombre de persona.
+Esta copia se ha generado con `STUBX_PUBLISH=1` y `--publish` a la vez, así que el HTML no lleva el rótulo «Borrador del repositorio. No publicado en stubxai.com.». El `noindex` sigue. El rótulo vuelve si el generador corre sin esas dos condiciones. Las páginas no llevan un nombre de persona. El inglés del pie se queda en «could», como decidió Legal.
 
 `token.json` sigue siendo la copia byte a byte de producción. Su `securityNotice` es el del 2026-10-05. La lista ampliada de clones está en `/security`, no dentro de ese archivo.
 

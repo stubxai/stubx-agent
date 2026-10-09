@@ -279,9 +279,15 @@ describe("web v2", () => {
     assert.match(bundle, /0xC99056C762F0802e4154E6322bd71ae928857777/);
     assert.equal(/fetch\(/.test(bundle), false);
     assert.equal(bundle.includes("\uFFFD"), false);
-    const snap = JSON.parse(read("modules/snapshot.json")) as { commit: string; merged: boolean; liveNetwork: boolean; cardsDate: string };
-    assert.equal(snap.commit, "86df5760554c65d53dbe022739f620a86c93b684");
-    assert.equal(snap.merged, true);
+    const snap = JSON.parse(read("modules/snapshot.json")) as {
+      commit: string;
+      inBranch: boolean;
+      liveNetwork: boolean;
+      cardsDate: string;
+    };
+    assert.equal(snap.commit, "0133722f54a527086b296fc74c79baf8913fcc00");
+    assert.equal(snap.inBranch, true);
+    assert.equal(Object.hasOwn(snap, "merged"), false);
     assert.equal(snap.liveNetwork, false);
     assert.equal(snap.cardsDate, "2026-10-09");
   });
@@ -369,8 +375,8 @@ describe("web v2", () => {
     for (const rel of ROUTES) {
       const html = read(rel);
       assert.equal(html.includes("Cristian"), false, rel);
-      assert.equal(html.split('class="draft"').length - 1, 1, rel);
-      assert.match(html, /Borrador del repositorio\. No publicado en stubxai.com\./);
+      assert.equal(html.includes('class="draft"'), false, rel);
+      assert.equal(html.includes("Borrador del repositorio. No publicado en stubxai.com."), false, rel);
       assert.match(html, /rel="canonical" href="https:\/\/stubxai.com\//);
       assert.match(html, /property="og:image"/);
       assert.match(html, /name="twitter:card"/);
@@ -426,7 +432,7 @@ describe("web v2", () => {
     });
     assert.equal(refused.status, 1, refused.stdout);
     assert.match(refused.stderr, /STUBX_PUBLISH=1 y --publish/);
-    assert.match(read("index.html"), /class="draft"/);
+    assert.equal(read("index.html").includes('class="draft"'), false);
     const flag = spawnSync(
       "python3",
       [
@@ -463,7 +469,7 @@ describe("web v2", () => {
       encoding: "utf8",
     });
     assert.equal(run.status, 0, `${run.stdout}\n${run.stderr}`);
-    assert.match(run.stdout, /86df576/);
+    assert.match(run.stdout, /0133722f54a527086b296fc74c79baf8913fcc00/);
     const same = (left: string, right: string) => {
       assert.equal(readFileSync(path.join(root, left), "utf8"), readFileSync(path.join(root, right), "utf8"), left);
     };
