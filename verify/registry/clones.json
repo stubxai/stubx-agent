@@ -1,8 +1,30 @@
 {
   "version": 1,
   "note": "Ejemplos conocidos, no una lista completa de clones. Que una dirección no esté aquí no significa que sea el mint oficial ni que sea falso. La coincidencia no atribuye intención.",
-  "evmNote": "La revisión de seguridad del 09-10-2026 no nombra dos direcciones EVM. No se añaden direcciones inventadas.",
-  "evm": [],
+  "evmNote": "Ejemplos de search-v2 de Pump.fun, 08-10-2026 09:14 CEST. No se han verificado en la cadena. No es una lista completa. La red eip155:5042 no está identificada con certeza.",
+  "evm": [
+    {
+      "chain": "eip155:56",
+      "address": "0xC99056C762F0802e4154E6322bd71ae928857777",
+      "name": "STUBX",
+      "symbol": "STUBX",
+      "creator": "0x3fDBEEcf583A53eABb59c3Ab2eDdfa8a5dBA503e",
+      "notedOn": "2026-10-08",
+      "source": "search-v2 de Pump.fun, 08-10 09:14 CEST",
+      "verifiedOnChain": false
+    },
+    {
+      "chain": "eip155:5042",
+      "address": "0xAEE5212f20cc95370cb3556c4493CFD07721a5a3",
+      "name": "STUBX",
+      "symbol": "STUBX",
+      "creator": "0x37623022B9B42C5F8187eCe013E768a094C1d1e5",
+      "notedOn": "2026-10-08",
+      "source": "search-v2 de Pump.fun, 08-10 09:14 CEST",
+      "verifiedOnChain": false,
+      "note": "La red eip155:5042 no está identificada con certeza."
+    }
+  ],
   "examples": [
     {
       "chain": "solana",

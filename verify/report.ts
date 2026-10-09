@@ -203,7 +203,7 @@ export async function buildReport(input: BuildInput): Promise<Report> {
   const metaplex = metaInfo?.ok && metaInfo.value ? decodeMetaplex(metaInfo.value.owner, metaInfo.value.data, input.mint) : null;
   const metaSource = metaInfo ? accountSource(metaInfo, metaPda, "PDA Metaplex: semillas metadata, programa de metadatos y mint.") : null;
   const onChain = decoded?.tokenMetadata ?? null;
-  const uri = onChain?.uri || metaplex?.uri || null;
+  const uri = presentText(onChain?.uri) || presentText(metaplex?.uri) || null;
   const uriSource = onChain
     ? mintSource
     : metaplex
@@ -799,6 +799,17 @@ function marketBlock(
       ? field({ value: curve.progressPercent, status: "inferido", unit: "porcentaje", source, note: curve.progressNote })
       : field({ value: null, status: "no_disponible", source, note: curve.progressNote }),
   };
+}
+
+function presentText(value: string | null | undefined): string | null {
+  if (value == null) {
+    return null;
+  }
+  const cleaned = value.trim();
+  if (cleaned === "" || cleaned === "\uFFFD") {
+    return null;
+  }
+  return cleaned;
 }
 
 function textField(value: string | null, source: Source | null, skipped: boolean): Field {

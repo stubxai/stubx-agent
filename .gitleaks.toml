@@ -1,7 +1,3 @@
+# Sin lista blanca. Las cuentas públicas de token se ignoran solo por las huellas de .gitleaksignore.
 [extend]
 useDefault = true
-
-[allowlist]
-description = "Cuentas públicas de token en las fichas de ejemplo. El campo se llama tokenAccount y gitleaks lo confunde con una clave. Son direcciones de Solana, no secretos."
-regexTarget = "match"
-regexes = ['''tokenAccount": "[1-9A-HJ-NP-Za-km-z]{32,44}"''']

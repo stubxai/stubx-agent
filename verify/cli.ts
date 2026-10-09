@@ -61,7 +61,8 @@ function main(): void {
     console.error(USAGE);
     process.exit(1);
   }
-  const checked = validateMint(mint);
+  const root = repoRootFrom(import.meta.url);
+  const checked = validateMint(mint, readEvmAddresses(root));
   if (!checked.ok) {
     console.error(checked.message);
     process.exit(1);
@@ -70,7 +71,6 @@ function main(): void {
     console.error("Falta el directorio de --out.");
     process.exit(1);
   }
-  const root = repoRootFrom(import.meta.url);
   const policy = readVerifyPolicy(root);
   const endpoint = process.env[policy.rpcUrlEnv]?.trim() || policy.defaultRpcUrl;
   assertMainnet(endpoint);
@@ -135,6 +135,12 @@ function assertMainnet(endpoint: string): void {
     console.error("Esta versión solo lee mainnet-beta.");
     process.exit(1);
   }
+}
+
+function readEvmAddresses(root: string): string[] {
+  const file = path.join(root, "verify", "registry", "clones.json");
+  const parsed = JSON.parse(readFileSync(file, "utf8")) as { evm?: Array<{ address?: string }> };
+  return (parsed.evm ?? []).flatMap((item) => (typeof item.address === "string" ? [item.address] : []));
 }
 
 function loadRegistry(root: string): CanonicalToken[] {

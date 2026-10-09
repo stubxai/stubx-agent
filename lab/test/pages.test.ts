@@ -166,9 +166,12 @@ describe("páginas estáticas", () => {
     assert.equal(existsSync(path.join(root, "site-drafts/index.html")), false);
     const siteJs = readFileSync(path.join(root, "site-drafts/assets/site.js"), "utf8");
     assert.match(siteJs, /function onLab/);
-    assert.match(siteJs, /register\("\.\/sw\.js"/);
+    assert.match(siteJs, /register\("\/lab\/sw\.js", \{ scope: "\/lab\/" \}\)/);
+    assert.equal(/\/lab\$/.test(siteJs), false);
     assert.match(sw, /fetch\(event\.request\)/);
-    assert.ok(sw.indexOf("fetch(event.request)") < sw.indexOf("caches.match(event.request)"));
+    assert.ok(sw.indexOf("fetch(event.request)") < sw.indexOf("caches.match("));
+    assert.match(sw, /url\.search === ""/);
+    assert.equal(sw.includes("cache.put(event.request"), false);
     assert.match(sw, /path === "\/"/);
     assert.match(sw, /aviso/);
     assert.equal(sw.includes("../index.html"), false);

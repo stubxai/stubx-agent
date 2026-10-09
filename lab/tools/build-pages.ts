@@ -26,9 +26,13 @@ export function buildOutputs(repoRoot: string, options: { publish?: boolean } = 
   }
   const lookupPath = path.join(repoRoot, "dist/lab/verify/lookup.js");
   const verifyUiPath = path.join(repoRoot, "lab/client/verify-ui.js");
+  const clones = JSON.parse(readFileSync(path.join(repoRoot, "verify/registry/clones.json"), "utf8")) as {
+    evm?: unknown[];
+  };
   const verifyJs = bundleVerify(readFileSync(lookupPath, "utf8"), readFileSync(verifyUiPath, "utf8"), {
     cards,
     source: "lista" as const,
+    evm: Array.isArray(clones.evm) ? clones.evm : [],
   });
   const missionJs = bundleMission(readFileSync(enginePath, "utf8"), readFileSync(uiPath, "utf8"), {
     mission,

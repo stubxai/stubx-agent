@@ -80,6 +80,7 @@ function bootVerify() {
   var input = document.getElementById("direccion-token");
   if (!out || !form || !input || typeof STUBX_VERIFY === "undefined") return;
   var cards = STUBX_VERIFY.cards || [];
+  var evm = STUBX_VERIFY.evm || [];
   var source = cards.length > 0 ? "lista" : "caida";
 
   var last = emptyView();
@@ -99,9 +100,9 @@ function bootVerify() {
     apply(pendingView(value));
     window.requestAnimationFrame(function () {
       try {
-        apply(classifyAddress(value, cards, source));
+        apply(classifyAddress(value, cards, source, evm));
       } catch (error) {
-        apply(classifyAddress(value, [], "caida"));
+        apply(classifyAddress(value, [], "caida", evm));
       }
     });
   }

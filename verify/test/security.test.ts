@@ -5,6 +5,7 @@ import { describe, test } from "node:test";
 import { decodePubkey, encodeBase58 } from "../base58.js";
 import { candidateUrls, fetchBytes, isPrivateAddress } from "../http.js";
 import { compareCanonical, normalizeToken, normalizeUrl } from "../impersonation.js";
+import { validateMint } from "../input.js";
 import { cleanText, decodeMint } from "../mint.js";
 import { PUMP_DISCRIMINATOR, PUMP_PROGRAM, TOKEN_2022_PROGRAM, TOKEN_PROGRAM, associatedTokenAddress, bondingCurvePda } from "../programs.js";
 import { buildReport, redactEndpoint } from "../report.js";
@@ -65,6 +66,21 @@ describe("detector de suplantación", () => {
     assert.equal(normalizeToken("\uFF33\uFF34\uFF35\uFF22\uFF38"), "stubx");
     assert.ok(signalsFor(["\uFF33\uFF34\uFF35\uFF22\uFF38"]).length > 0);
   });
+
+  test("la CLI marca S.T.U.B.X, 5TUBX, versalitas y el handle con sufijo", () => {
+    assert.equal(normalizeToken("S.T.U.B.X"), "stubx");
+    assert.equal(normalizeToken("5TUBX"), "stubx");
+    assert.equal(normalizeToken("\uA731\u1D1B\u1D1C\u0299x"), "stubx");
+    assert.ok(signalsFor(["S.T.U.B.X"]).length > 0);
+    assert.ok(signalsFor(["5TUBX"]).length > 0);
+    assert.ok(signalsFor(["\uA731\u1D1B\u1D1C\u0299x"]).length > 0);
+    assert.ok(signalsFor([], ["https://x.com/stubxai_"]).length > 0);
+    assert.ok(signalsFor([], ["https://x.com/stubxai_oficial"]).length > 0);
+    assert.ok(signalsFor([], ["https://x.com/stubx_ai"]).length > 0);
+    assert.equal(signalsFor(["Stubborn"]).length, 0);
+    assert.equal(signalsFor(["EVILcoin"]).length, 0);
+    assert.equal(signalsFor([], ["https://stubxai.com.evil.io"]).length, 0);
+  });
 });
 
 describe("descarga y redacción", () => {
@@ -84,6 +100,13 @@ describe("descarga y redacción", () => {
     assert.equal(isPrivateAddress("fc00::1"), true);
     assert.equal(isPrivateAddress("fe80::1"), true);
     assert.equal(isPrivateAddress("::1"), true);
+    assert.equal(isPrivateAddress("198.18.0.1"), true);
+    assert.equal(isPrivateAddress("198.19.255.1"), true);
+    assert.equal(isPrivateAddress("8.8.8.8"), false);
+    assert.equal(isPrivateAddress("64:ff9b::1"), true);
+    assert.equal(isPrivateAddress("::ffff:7f00:1"), true);
+    assert.equal(isPrivateAddress("::ffff:127.0.0.1"), true);
+    assert.equal(isPrivateAddress("::ffff:808:808"), false);
   });
 
   test("un CID solo sale por las pasarelas y una redirección privada no se sigue", async () => {
@@ -113,11 +136,39 @@ describe("descarga y redacción", () => {
 });
 
 describe("texto, puntero y holders", () => {
-  test("cleanText hace visibles los controles y los bidi", () => {
+  test("cleanText recorta el relleno nulo y marca el bidi", () => {
     assert.equal(cleanText("STUBX"), "STUBX");
+    assert.equal(cleanText("USD Coin\0\0\0"), "USD Coin");
+    assert.equal(cleanText("USDC\0"), "USDC");
+    assert.equal(cleanText("\0\0\0"), "");
     const marked = cleanText("STUB\u202EX");
     assert.equal(marked.includes("\u202E"), false);
     assert.equal(marked.includes("\uFFFD"), true);
+  });
+
+  test("una dirección 0x no consulta la red y nombra la copia si está en la lista", () => {
+    const clones = JSON.parse(readFileSync(path.join(root, "verify/registry/clones.json"), "utf8")) as {
+      evm: Array<{ address: string }>;
+    };
+    const known = clones.evm.map((item) => item.address);
+    const copy = validateMint("0xc99056c762f0802e4154e6322bd71ae928857777", known);
+    assert.equal(copy.ok, false);
+    if (!copy.ok) {
+      assert.match(copy.message, /Copia conocida/);
+      assert.match(copy.message, /El STUBX oficial solo existe en Solana/);
+      assert.match(copy.message, /sin verificar en la cadena/);
+    }
+    const other = validateMint("0x0000000000000000000000000000000000000001", known);
+    assert.equal(other.ok, false);
+    if (!other.ok) {
+      assert.match(other.message, /El STUBX oficial solo existe en Solana/);
+      assert.equal(other.message.includes("Copia conocida"), false);
+    }
+    const loose = validateMint("0xhola", known);
+    assert.equal(loose.ok, false);
+    if (!loose.ok) {
+      assert.match(loose.message, /El STUBX oficial solo existe en Solana/);
+    }
   });
 
   test("getTokenLargestAccounts espera segundos y el 429 lee la curva", async () => {

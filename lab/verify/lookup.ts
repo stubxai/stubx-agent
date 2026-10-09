@@ -5,10 +5,19 @@ export type LookupKind =
   | "invalida"
   | "oficial"
   | "copia"
+  | "evm"
   | "otra"
   | "sin_ficha"
   | "lectura_caida"
   | "comprobando";
+
+export type EvmExample = {
+  chain: string;
+  address: string;
+  creator?: string;
+  source?: string;
+  verifiedOnChain?: boolean;
+};
 
 export type LookupLight = "ok" | "riesgo" | "atencion" | "neutro" | "espera";
 
@@ -56,8 +65,8 @@ const COPY = {
     lightLabel: { es: "Parece oficial", en: "Looks official" },
     title: { es: "Parece el STUBX oficial", en: "Looks like the official STUBX" },
     support: {
-      es: "La dirección coincide con la ficha del registro del 2026-10-08. «Parece» no es una garantía permanente.",
-      en: "The address matches the registry card from 2026-10-08. “Looks like” is not a permanent guarantee.",
+      es: "La dirección coincide con la ficha del registro. La fecha va en los detalles. «Parece» no es una garantía permanente.",
+      en: "The address matches the registry card. The date is in the details. “Looks like” is not a permanent guarantee.",
     },
   },
   copia: {
@@ -209,13 +218,71 @@ const PARTIAL = pair(
   "The card is incomplete: the holder sample is missing. That is not filled in with a zero.",
 );
 
-export function classifyAddress(raw: string, cards: readonly CardSummary[], source: LookupSource): LookupView {
+const CENSUS = pair(
+  "Hay saldos de la curva y de la creadora. No es un censo ni se rellena el resto con un cero.",
+  "There are balances for the curve and the creator. It is not a census, and the rest is not filled in with a zero.",
+);
+
+const SOLANA_ONLY = "El STUBX oficial solo existe en Solana";
+
+function partialNoteFor(card: CardSummary): Localized | null {
+  if (!card.partial) return null;
+  if (card.holdersNote && /no es un censo/i.test(card.holdersNote)) return CENSUS;
+  return PARTIAL;
+}
+
+function evmView(address: string, evm: readonly EvmExample[]): LookupView {
+  const found = evm.find((item) => item.address.toLowerCase() === address.toLowerCase());
+  if (found) {
+    const chain = found.chain || "EVM";
+    const creator = found.creator ?? "";
+    return {
+      kind: "evm",
+      light: "riesgo",
+      lightLabel: pair("Copia conocida", "Known copy"),
+      title: pair("Copia conocida", "Known copy"),
+      support: pair(
+        `${SOLANA_ONLY}. Ejemplo de search-v2 de Pump.fun, 08-10 09:14, sin verificar en la cadena (${chain}).`,
+        `The official STUBX exists only on Solana. Example from Pump.fun search-v2, 2026-10-08 09:14, not verified on-chain (${chain}).`,
+      ),
+      mint: found.address,
+      rows: [
+        { label: pair("Red", "Network"), value: pair(chain, chain) },
+        { label: pair("Creadora anotada", "Noted creator"), value: pair(creator || "No se sabe", creator || "Unknown") },
+        { label: pair("En la cadena", "On-chain"), value: pair("Sin verificar", "Not verified") },
+      ],
+      partialNote: null,
+    };
+  }
+  const shown = /^0x[0-9a-fA-F]{40}$/.test(address) ? address : null;
+  return {
+    kind: "evm",
+    light: "atencion",
+    lightLabel: pair("Otra red", "Another network"),
+    title: pair(SOLANA_ONLY, "The official STUBX exists only on Solana"),
+    support: pair(
+      "Una dirección que empieza por 0x no es el mint de Solana. La lista de ejemplos no es completa y no se ha verificado en la cadena.",
+      "An address that starts with 0x is not the Solana mint. The example list is not complete and it has not been verified on-chain.",
+    ),
+    mint: shown,
+    rows: [],
+    partialNote: null,
+  };
+}
+
+export function classifyAddress(
+  raw: string,
+  cards: readonly CardSummary[],
+  source: LookupSource,
+  evm: readonly EvmExample[] = [],
+): LookupView {
   if (raw.trim() === "") return emptyView();
   const mint = normalizeAddress(raw);
+  if (/^0x/i.test(mint)) return evmView(mint, evm);
   if (!isAddress(mint)) return viewOf("invalida", null, [], null);
   if (source === "caida") return viewOf("lectura_caida", mint, [], null);
   const card = cards.find((item) => item.mint === mint);
   if (!card) return viewOf("sin_ficha", mint, [], null);
   const kind = card.role === "registro" ? "oficial" : card.role === "clon" ? "copia" : "otra";
-  return viewOf(kind, card.mint, rowsFor(card), card.partial ? PARTIAL : null);
+  return viewOf(kind, card.mint, rowsFor(card), partialNoteFor(card));
 }

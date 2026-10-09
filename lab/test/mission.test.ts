@@ -66,14 +66,15 @@ describe("misión 1", () => {
 
   test("lo no disponible no se muestra como cero ni como revocada", () => {
     const batch2026 = new Set([
-      "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump",
       "Hhq4ffySVX3UQqSowjhP1Lwa8YuJDf7iH2hYWvVHTuEf",
       "DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ",
       "3Zi6p6wzYZYKyuHdBhsDfb2pRR7XTfTfLKkXL7rwpump",
-      "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
     ]);
+    const official = cards.find((card) => card.role === "registro");
+    assert.equal(official?.holdersStatus, "verificado");
+    assert.match(official?.holdersNote ?? "", /no es un censo/i);
     for (const card of cards) {
-      if (batch2026.has(card.mint) && card.mint !== "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v") {
+      if (batch2026.has(card.mint)) {
         assert.equal(card.holdersStatus, "no_disponible");
         assert.equal(shownFact(card.holdersStatus, "0"), "no_disponible");
       }

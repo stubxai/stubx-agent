@@ -128,6 +128,11 @@ const HOMOGLYPHS: Record<string, string> = {
   "\u0455": "s",
   "\u0406": "I",
   "\u0456": "i",
+  "5": "S",
+  "\uA731": "S",
+  "\u1D1B": "T",
+  "\u1D1C": "U",
+  "\u0299": "B",
 };
 
 export function normalizeToken(value: string): string {
@@ -136,7 +141,7 @@ export function normalizeToken(value: string): string {
   for (const char of folded) {
     mapped += HOMOGLYPHS[char] ?? char;
   }
-  return mapped.toLowerCase().replace(/\s+/g, "");
+  return mapped.toLowerCase().replace(/[\s.\-_'’]+/g, "");
 }
 
 function containsWord(value: string, words: readonly string[]): boolean {
@@ -232,13 +237,27 @@ function hostMatches(value: string, hosts: ReadonlySet<string>): boolean {
   return false;
 }
 
+function socialHandle(normalized: string): string | null {
+  if (!normalized.startsWith("x.com/")) {
+    return null;
+  }
+  const handle = normalized.slice("x.com/".length).split("/")[0] ?? "";
+  if (!/^[a-z0-9_]{1,32}$/.test(handle)) {
+    return null;
+  }
+  return handle;
+}
+
 function socialMatches(value: string, canonicalLinks: readonly string[]): boolean {
-  const got = normalizeUrl(value);
+  const got = socialHandle(normalizeUrl(value));
+  if (!got) {
+    return false;
+  }
   return canonicalLinks.some((link) => {
-    const expected = normalizeUrl(link);
-    if (!expected.startsWith("x.com/")) {
+    const expected = socialHandle(normalizeUrl(link));
+    if (!expected) {
       return false;
     }
-    return got === expected || got.startsWith(`${expected}/`);
+    return got === expected || got.startsWith(expected) || editDistance(got, expected) <= 1;
   });
 }

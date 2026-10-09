@@ -2,7 +2,23 @@ import { decodePubkey } from "./base58.js";
 
 export type MintCheck = { ok: true; mint: string } | { ok: false; message: string };
 
-export function validateMint(input: string): MintCheck {
+export function evmMessage(input: string, knownEvm: readonly string[] = []): string | null {
+  const trimmed = input.trim();
+  if (!/^0x/i.test(trimmed)) {
+    return null;
+  }
+  const known = knownEvm.some((address) => address.toLowerCase() === trimmed.toLowerCase());
+  if (known) {
+    return "Copia conocida. El STUBX oficial solo existe en Solana. Ejemplo de search-v2 de Pump.fun, 08-10 09:14, sin verificar en la cadena.";
+  }
+  return "El STUBX oficial solo existe en Solana.";
+}
+
+export function validateMint(input: string, knownEvm: readonly string[] = []): MintCheck {
+  const evm = evmMessage(input, knownEvm);
+  if (evm) {
+    return { ok: false, message: evm };
+  }
   if (input.length === 0) {
     return { ok: false, message: "Falta el mint." };
   }

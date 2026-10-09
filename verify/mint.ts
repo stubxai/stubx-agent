@@ -312,7 +312,8 @@ export function readBorshString(data: Uint8Array, offset: number): { text: strin
 }
 
 export function cleanText(value: string): string {
-  return value.replace(/[\0\p{Cc}\p{Cf}]/gu, "\uFFFD").replace(/\uFFFD+/g, "\uFFFD").trim();
+  const withoutPadding = value.replace(/\0+$/u, "");
+  return withoutPadding.replace(/[\0\p{Cc}\p{Cf}]/gu, "\uFFFD").replace(/\uFFFD+/g, "\uFFFD").trim();
 }
 
 export function readTokenAccount(data: Uint8Array): { mint: string; owner: string; amount: bigint } | null {

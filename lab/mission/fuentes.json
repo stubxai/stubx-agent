@@ -6,9 +6,10 @@
     {
       "mint": "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump",
       "role": "registro",
+      "file": "verify/examples/2026-10-09/TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump.json",
       "roleNote": {
-        "es": "Mint del registro curado de STUBX en esta tanda.",
-        "en": "STUBX mint in the curated registry for this batch."
+        "es": "Mint del registro curado. Ficha releída el 2026-10-09: saldos de la curva y de la creadora. No es un censo. La ficha del 2026-10-08 se conserva.",
+        "en": "Curated registry mint. Card reread on 2026-10-09: curve and creator balances. It is not a census. The 2026-10-08 card is kept."
       }
     },
     {
@@ -58,8 +59,8 @@
       "role": "contraste",
       "file": "verify/examples/2026-10-09/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v.json",
       "roleNote": {
-        "es": "USDC, contraste. Suministro leído el 2026-10-09: 7.504.171.067,354175. No es STUBX y no está presentado como clon. La ficha del 2026-10-08 conserva la cifra de aquel día.",
-        "en": "USDC, a contrast. Supply read on 2026-10-09: 7,504,171,067.354175. It is not STUBX and is not presented as a clone. The 2026-10-08 card keeps that day's figure."
+        "es": "USDC, contraste. Bytes del mint el 2026-10-09 18:42 Europe/Madrid: 7.442.271.613,512366. getTokenSupply en ese minuto no coincidió, así que no hay porcentajes. No es STUBX y no está presentado como clon. La ficha del 2026-10-08 conserva la cifra de aquel día.",
+        "en": "USDC, a contrast. Mint bytes on 2026-10-09 18:42 Europe/Madrid: 7,442,271,613.512366. getTokenSupply did not match in that minute, so there are no percentages. It is not STUBX and is not presented as a clone. The 2026-10-08 card keeps that day's figure."
       }
     }
   ]

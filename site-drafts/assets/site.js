@@ -29,13 +29,13 @@
 
   function onLab() {
     var path = location.pathname;
-    return /\/lab\/(?:index\.html)?$/.test(path) || /\/lab$/.test(path);
+    return /\/lab\/(?:index\.html)?$/.test(path);
   }
 
   function register() {
     if (!("serviceWorker" in navigator) || location.protocol === "file:") return;
     if (!onLab()) return;
-    navigator.serviceWorker.register("./sw.js", { scope: "./" }).then(function (registration) {
+    navigator.serviceWorker.register("/lab/sw.js", { scope: "/lab/" }).then(function (registration) {
       registration.addEventListener("updatefound", function () {
         var worker = registration.installing;
         if (!worker) return;

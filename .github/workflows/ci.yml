@@ -152,6 +152,24 @@ jobs:
           echo "${checksum}  ${archive}" | sha256sum -c -
           tar -xzf "${archive}" gitleaks
           ./gitleaks detect --source . --redact --no-banner --exit-code 1
+          probe="$(mktemp -d)"
+          detected=0
+          for _attempt in 1 2 3 4 5; do
+            seed="$(python3 -c 'import random; alphabet="123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"; rng=random.SystemRandom(); print("".join(rng.choice(alphabet) for _ in range(44)))')"
+            printf '{"tokenAccount":"%s"}\n' "$seed" > "${probe}/config.json"
+            set +e
+            ./gitleaks detect --no-git --source "$probe" --redact --no-banner --exit-code 1 > /tmp/gitleaks-probe.txt
+            set -e
+            if grep -q "leaks found: [1-9]" /tmp/gitleaks-probe.txt; then
+              detected=1
+              break
+            fi
+          done
+          rm -rf "$probe"
+          if [ "$detected" -ne 1 ]; then
+            echo "una semilla falsa bajo tokenAccount en otro archivo no se detectó"
+            exit 1
+          fi
 
   attest:
     name: attest test report

@@ -469,8 +469,13 @@ export function renderPages(repoRoot: string, cards: readonly CardSummary[], opt
 }
 
 export function renderLabWorker(): string {
-  return `var CACHE = "stubx-lab-2026-10-09-4";
+  return `var CACHE = "stubx-lab-2026-10-09-5";
 var FILES = ["./index.html", "./sw.js"];
+var ALLOWED = { "/lab/": true, "/lab/index.html": true, "/lab/sw.js": true };
+
+function cacheable(url) {
+  return url.search === "" && ALLOWED[url.pathname] === true;
+}
 
 function blocked(url) {
   var path = url.pathname;
@@ -504,15 +509,15 @@ self.addEventListener("fetch", function (event) {
   if (url.origin !== self.location.origin || event.request.method !== "GET") return;
   if (blocked(url)) return;
   event.respondWith(fetch(event.request).then(function (response) {
-    if (response && response.ok) {
+    if (response && response.ok && cacheable(url)) {
       var copy = response.clone();
       caches.open(CACHE).then(function (cache) {
-        return cache.put(event.request, copy);
+        return cache.put(url.pathname, copy);
       });
     }
     return response;
   }).catch(function () {
-    return caches.match(event.request);
+    return caches.match(url.pathname);
   }));
 });
 `;

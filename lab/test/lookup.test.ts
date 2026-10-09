@@ -1,12 +1,15 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { describe, test } from "node:test";
 import { loadCards, loadFuentes } from "../mission/load.js";
 import { repoRootFromMeta } from "../paths.js";
 import { bannedHits } from "../text.js";
-import { classifyAddress, emptyView, pendingView } from "../verify/lookup.js";
+import { classifyAddress, emptyView, pendingView, type EvmExample } from "../verify/lookup.js";
 
 const root = repoRootFromMeta(import.meta.url);
 const cards = loadCards(root, loadFuentes(root));
+const evm = (JSON.parse(readFileSync(path.join(root, "verify/registry/clones.json"), "utf8")) as { evm: EvmExample[] }).evm;
 const official = "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump";
 const clone = "DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ";
 const usdc = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
@@ -32,11 +35,16 @@ describe("lectura de una dirección", () => {
   });
 
   test("la oficial, la copia y otra ficha no se confunden", () => {
-    const known = classifyAddress(` \n${official}\n `, cards, "lista");
+    const known = classifyAddress(` \n${official}\n `, cards, "lista", evm);
     assert.equal(known.kind, "oficial");
     assert.equal(known.light, "ok");
     assert.equal(known.title.es, "Parece el STUBX oficial");
-    assert.equal(known.partialNote?.es.includes("no se rellena con un cero"), true);
+    const officialCard = cards.find((card) => card.role === "registro");
+    if (officialCard?.holdersNote && /no es un censo/i.test(officialCard.holdersNote)) {
+      assert.match(known.partialNote?.es ?? "", /no es un censo/i);
+    } else {
+      assert.equal(known.partialNote?.es.includes("no se rellena con un cero"), true);
+    }
     const copy = classifyAddress(clone, cards, "lista");
     assert.equal(copy.kind, "copia");
     assert.equal(copy.light, "riesgo");
@@ -66,6 +74,22 @@ describe("lectura de una dirección", () => {
     assert.equal(stillInvalid.kind, "invalida");
   });
 
+  test("cualquier dirección 0x dice que el oficial solo existe en Solana", () => {
+    const known = classifyAddress("0xC99056C762F0802e4154E6322bd71ae928857777", cards, "lista", evm);
+    assert.equal(known.kind, "evm");
+    assert.equal(known.title.es, "Copia conocida");
+    assert.match(known.support.es, /El STUBX oficial solo existe en Solana/);
+    assert.match(known.support.es, /sin verificar en la cadena/);
+    const same = classifyAddress("0xc99056c762f0802e4154e6322bd71ae928857777", cards, "caida", evm);
+    assert.equal(same.title.es, "Copia conocida");
+    const other = classifyAddress("0x0000000000000000000000000000000000000001", cards, "lista", evm);
+    assert.equal(other.kind, "evm");
+    assert.equal(other.title.es, "El STUBX oficial solo existe en Solana");
+    assert.equal(other.title.es.includes("Copia conocida"), false);
+    const loose = classifyAddress("0xhola", cards, "lista", evm);
+    assert.equal(loose.title.es, "El STUBX oficial solo existe en Solana");
+  });
+
   test("el texto de la lectura no promete rentabilidad ni urgencia", () => {
     const views = [
       emptyView(),
@@ -76,6 +100,8 @@ describe("lectura de una dirección", () => {
       classifyAddress(wrappedSol, cards, "lista"),
       classifyAddress(official, cards, "caida"),
       classifyAddress("???", cards, "lista"),
+      classifyAddress("0xC99056C762F0802e4154E6322bd71ae928857777", cards, "lista", evm),
+      classifyAddress("0x1111111111111111111111111111111111111111", cards, "lista", evm),
     ];
     assert.deepEqual(bannedHits(views), []);
   });

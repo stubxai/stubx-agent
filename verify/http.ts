@@ -111,6 +111,9 @@ export function isPrivateAddress(hostname: string): boolean {
   if (a === 100 && b >= 64 && b <= 127) {
     return true;
   }
+  if (a === 198 && (b === 18 || b === 19)) {
+    return true;
+  }
   return false;
 }
 
@@ -259,6 +262,43 @@ function isIpLiteral(hostname: string): boolean {
   return hostname.includes(":") || /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname);
 }
 
+function ipv6Hextets(host: string): number[] | null {
+  const lower = host.toLowerCase();
+  if (lower.includes(".")) {
+    return null;
+  }
+  const halves = lower.split("::");
+  if (halves.length > 2) {
+    return null;
+  }
+  const parse = (part: string): number[] | null => {
+    if (part === "") {
+      return [];
+    }
+    const out: number[] = [];
+    for (const bit of part.split(":")) {
+      if (!/^[0-9a-f]{1,4}$/.test(bit)) {
+        return null;
+      }
+      out.push(Number.parseInt(bit, 16));
+    }
+    return out;
+  };
+  const left = parse(halves[0] ?? "");
+  const right = halves.length === 2 ? parse(halves[1] ?? "") : [];
+  if (!left || !right) {
+    return null;
+  }
+  if (halves.length === 1) {
+    return left.length === 8 ? left : null;
+  }
+  const missing = 8 - left.length - right.length;
+  if (missing < 0) {
+    return null;
+  }
+  return [...left, ...new Array<number>(missing).fill(0), ...right];
+}
+
 function isPrivateIpv6(host: string): boolean {
   if (host === "::" || host === "::1") {
     return true;
@@ -266,6 +306,19 @@ function isPrivateIpv6(host: string): boolean {
   const mapped = /^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/i.exec(host);
   if (mapped?.[1]) {
     return isPrivateAddress(mapped[1]);
+  }
+  const parts = ipv6Hextets(host);
+  if (parts && parts.length === 8) {
+    const nat64 = parts[0] === 0x64 && parts[1] === 0xff9b && parts[2] === 0 && parts[3] === 0 && parts[4] === 0 && parts[5] === 0;
+    if (nat64) {
+      return true;
+    }
+    const v4Mapped = parts[0] === 0 && parts[1] === 0 && parts[2] === 0 && parts[3] === 0 && parts[4] === 0 && parts[5] === 0xffff;
+    if (v4Mapped) {
+      const hi = parts[6] ?? 0;
+      const lo = parts[7] ?? 0;
+      return isPrivateAddress(`${hi >> 8}.${hi & 0xff}.${lo >> 8}.${lo & 0xff}`);
+    }
   }
   const first = host.split(":").find((part) => part.length > 0) ?? "";
   const head = first.toLowerCase();
