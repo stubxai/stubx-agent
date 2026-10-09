@@ -18,21 +18,15 @@ function git(args) {
   return run.stdout.trim();
 }
 
-function isAncestor(commit) {
-  if (!commit) return false;
-  return spawnSync("git", ["merge-base", "--is-ancestor", commit, "HEAD"], { cwd: root }).status === 0;
-}
-
 function labCommit() {
-  const origin = git(["rev-parse", "--verify", "origin/feat/lab-mision-1"]);
-  if (isAncestor(origin)) return origin;
   const headBlob = git(["rev-parse", "HEAD:lab/verify/lookup.ts"]);
-  const merges = git(["log", "--merges", "--pretty=%H", "HEAD"]).split("\n").filter(Boolean);
-  for (const merge of merges) {
-    const second = git(["rev-parse", `${merge}^2`]);
-    if (!isAncestor(second)) continue;
-    if (git(["rev-parse", `${second}:lab/verify/lookup.ts`]) !== headBlob) continue;
-    return second;
+  if (!headBlob) return "";
+  // El commit real es el primero que tiene este lookup.ts. En el checkout
+  // de un pull request HEAD es un merge: su blob coincide, pero el origen
+  // del archivo es el commit de la rama, no el merge.
+  const commits = git(["rev-list", "--reverse", "HEAD"]).split("\n").filter(Boolean);
+  for (const commit of commits) {
+    if (git(["rev-parse", `${commit}:lab/verify/lookup.ts`]) === headBlob) return commit;
   }
   return "";
 }

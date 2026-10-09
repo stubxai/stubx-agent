@@ -28,23 +28,23 @@ export const HOW_VERIFY = {
   es: [
     "Pega la dirección y pulsa Comprobar.",
     "El texto grande es la lectura. Los datos técnicos están plegados.",
-    "Si no hay ficha de ejemplo, no se pudo comprobar: esta página no llama a la red.",
+    "Una dirección válida que no es la oficial lo dice y muestra la oficial. Si mide lo mismo, marca los caracteres que cambian. Si ya hay ficha, muestra esa ficha. Esta página no llama a la red.",
   ],
   en: [
     "Paste the address and press Check.",
     "The large text is the reading. Technical details stay folded.",
-    "If there is no example card, it could not be checked: this page does not call the network.",
+    "A valid address that is not the official one is named as such, and the official address is shown. If the length matches, the characters that change are marked. If there is already a card, that card is shown. This page does not call the network.",
   ],
 } as const;
 
 export const HOW_LAB = {
   es: [
-    "Lee la pregunta y elige una respuesta.",
+    "Lee la pregunta y elige una respuesta. Si encaja, pulsa Siguiente paso.",
     "Si no encaja, verás por qué y puedes probar otra.",
     "El progreso se queda en este navegador. No hay cuenta ni puntuación.",
   ],
   en: [
-    "Read the question and choose an answer.",
+    "Read the question and choose an answer. If it fits, press Next step.",
     "If it does not fit, you will see why and you can try another.",
     "Progress stays in this browser. There is no account and no score.",
   ],
