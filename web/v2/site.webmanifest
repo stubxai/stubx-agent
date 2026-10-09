@@ -1,8 +1,11 @@
 {
+  "id": "/",
   "name": "STUBX",
   "short_name": "STUBX",
+  "description": "Web de STUBX: dirección oficial, canales y pruebas. Cripto de alto riesgo · Puedes perderlo todo · No es consejo de inversión.",
   "lang": "es",
-  "start_url": "./",
+  "start_url": "/",
+  "scope": "./",
   "display": "browser",
   "background_color": "#071422",
   "theme_color": "#071422",

@@ -205,6 +205,7 @@ details.tecnico > summary { width: 100%; }
   padding: 0.95rem 1rem;
 }
 .rol, .muted, footer { color: var(--muted); }
+.sin-senal { color: var(--text); }
 dl { margin: 0.35rem 0 0; }
 dt { font-weight: 650; margin-top: 0.7rem; }
 dd { margin: 0.15rem 0 0; }
@@ -363,28 +364,17 @@ a.brand img {
 }
 a.brand strong { font-size: 1.05rem; letter-spacing: 0.12em; }
 .draft {
-  margin: 0 0 0 auto;
+  margin: 0 0 1.25rem;
   max-width: none;
-  padding: 0.15rem 0.6rem;
+  padding: 0.75rem 0.9rem;
   border: 1px solid var(--attention);
-  border-radius: 999px;
+  border-radius: 8px;
   color: var(--attention);
-  font-size: 0.8rem;
-  line-height: 1.3;
-  white-space: nowrap;
+  background: var(--bg-elev);
+  font-size: 0.95rem;
+  line-height: 1.45;
 }
 .langs { margin-top: 0; }
-.preview {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem 0.8rem;
-  align-items: baseline;
-  margin: 0 0 1.25rem;
-  padding: 0.75rem 0.9rem;
-  border: 1px solid var(--line);
-  background: var(--bg-elev);
-}
-.preview strong { color: var(--attention); }
 nav.site a { border-radius: 999px; }
 main a { text-underline-offset: 0.18em; }
 nav.site a, a.brand, .hero-actions a { text-decoration: none; }
@@ -526,6 +516,5 @@ details.mapa nav ul { padding-top: 0.75rem; }
   .hero-actions, .ca-actions, .btn-row { display: grid; }
   .hero-actions a, .ca-actions a, .ca-actions button, .btn-row a { width: 100%; }
   .langs { order: 2; }
-  .draft { order: 3; flex: 1 0 100%; margin-left: 0; }
   a.brand img { width: 36px; height: 36px; }
 }

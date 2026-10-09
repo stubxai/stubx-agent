@@ -1,0 +1,17 @@
+# Cuentas públicas de token (ATA), no secretos. Huella del commit que las introdujo.
+# No abre la regla generic-api-key en otros archivos.
+7c50eb517e039c0633ae9e5d8df52c9d6de91f6f:web/current/token.json:generic-api-key:102
+7c50eb517e039c0633ae9e5d8df52c9d6de91f6f:web/current/token.json:generic-api-key:166
+7c50eb517e039c0633ae9e5d8df52c9d6de91f6f:web/current/token.json:generic-api-key:175
+7c50eb517e039c0633ae9e5d8df52c9d6de91f6f:web/current/token.json:generic-api-key:184
+7c50eb517e039c0633ae9e5d8df52c9d6de91f6f:web/v2/token.json:generic-api-key:102
+7c50eb517e039c0633ae9e5d8df52c9d6de91f6f:web/v2/token.json:generic-api-key:166
+7c50eb517e039c0633ae9e5d8df52c9d6de91f6f:web/v2/token.json:generic-api-key:175
+7c50eb517e039c0633ae9e5d8df52c9d6de91f6f:web/v2/token.json:generic-api-key:184
+# Las mismas cuentas públicas en commits de feat/lab-mision-1. gitleaks recorre todas las ramas del clon.
+# Huellas exactas, no una lista blanca de la regla.
+7807038914409521e3ec4733ad4f9b07bb8ea60b:verify/examples/2026-10-09/ERYyyaE2Y2GuKB28YbC2w1nCuQ5ENQ89LR44kicvpump.json:generic-api-key:382
+7807038914409521e3ec4733ad4f9b07bb8ea60b:verify/examples/2026-10-09/ERYyyaE2Y2GuKB28YbC2w1nCuQ5ENQ89LR44kicvpump.json:generic-api-key:389
+7807038914409521e3ec4733ad4f9b07bb8ea60b:verify/examples/2026-10-09/FMNb4CR8ksibmgY7Ztei6BWcZXi3WHcVeJhYb9TNpump.json:generic-api-key:382
+a093560db97dd73adc9e0193031f1309447c3455:verify/examples/2026-10-09/TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump.json:generic-api-key:382
+a093560db97dd73adc9e0193031f1309447c3455:verify/examples/2026-10-09/TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump.json:generic-api-key:389

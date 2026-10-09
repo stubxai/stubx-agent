@@ -263,8 +263,8 @@
         },
         {
           "label": { "es": "Service worker del borrador", "en": "Draft service worker" },
-          "path": "site-drafts/sw.js",
-          "note": { "es": "Cachea estas páginas. No toca el progreso local.", "en": "It caches these pages. It does not touch local progress." }
+          "path": "site-drafts/lab/sw.js",
+          "note": { "es": "Solo bajo /lab/, red primero, sin portada ni páginas de avisos.", "en": "Only under /lab/, network first, without the homepage or notice pages." }
         }
       ],
       "history": [

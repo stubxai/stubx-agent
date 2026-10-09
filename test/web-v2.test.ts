@@ -41,16 +41,51 @@ type View = {
   kind: string;
   light: string;
   mint: string | null;
+  title: { es: string; en: string };
   partialNote: { es: string; en: string } | null;
+  rows: { label: { es: string; en: string }; value: { es: string; en: string } }[];
 };
 
 type Lookup = {
-  classifyAddress: (raw: string, cards: readonly object[], source?: string) => View;
+  classifyAddress: (raw: string, cards: readonly object[], source?: string, evm?: readonly object[]) => View;
   emptyView: () => View;
   pendingView: (raw: string) => View;
   isAddress: (value: string) => boolean;
   normalizeAddress: (raw: string) => string;
 };
+
+function redirectMap(root: string): Map<string, string> {
+  const text = readFileSync(path.join(root, "_redirects"), "utf8");
+  const map = new Map<string, string>();
+  for (const line of text.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const parts = trimmed.split(/\s+/);
+    const from = parts[0] ?? "";
+    const to = (parts[1] ?? "").split("#")[0] ?? "";
+    if (from.startsWith("/") && to) map.set(from.replace(/\/+$/, "") || "/", to);
+  }
+  return map;
+}
+
+function localTargetExists(root: string, fromFile: string, url: string): boolean {
+  const clean = (url.split("#")[0] ?? "").replace(/\/+$/, "") || "/";
+  const candidate = clean.startsWith("/")
+    ? path.join(root, clean === "/" ? "index.html" : clean.slice(1))
+    : path.resolve(path.dirname(fromFile), clean);
+  const asFile = candidate.endsWith(".html") || path.extname(candidate) !== "" ? candidate : path.join(candidate, "index.html");
+  if (statSync(asFile, { throwIfNoEntry: false })?.isFile()) return true;
+  if (statSync(candidate, { throwIfNoEntry: false })?.isFile()) return true;
+  const rel = clean.startsWith("/") ? clean : `/${path.relative(root, candidate).split(path.sep).join("/")}`;
+  const dest = redirectMap(root).get(rel.replace(/\/+$/, "") || "/");
+  if (!dest) return false;
+  if (dest.startsWith("http://") || dest.startsWith("https://")) return true;
+  const destPath = path.join(root, dest.replace(/^\//, ""));
+  return (
+    statSync(destPath, { throwIfNoEntry: false })?.isFile() === true ||
+    statSync(path.join(destPath, "index.html"), { throwIfNoEntry: false })?.isFile() === true
+  );
+}
 
 function siteRoot(): string {
   return path.join(repoRoot(), "web", "v2");
@@ -119,16 +154,30 @@ describe("web v2", () => {
     assert.deepEqual(live, current);
   });
 
-  test("pages do not load a CDN, a service worker, or a remote stylesheet", () => {
+  test("pages do not load a CDN or a remote stylesheet, and the worker stays under lab", () => {
     const root = siteRoot();
     for (const file of walk(root)) {
       const rel = path.relative(root, file);
-      assert.equal(path.basename(file) === "sw.js", false, rel);
+      if (path.basename(file) === "sw.js") {
+        assert.equal(rel, path.join("lab", "sw.js"));
+      }
       const text = readFileSync(file, "utf8");
-      assert.equal(/serviceWorker\.register/.test(text), false, rel);
+      if (/serviceWorker\.register/.test(text)) {
+        assert.equal(rel, path.join("assets", "shell.js"));
+      }
       if (!file.endsWith(".html") && !file.endsWith(".css") && !file.endsWith(".js")) continue;
       assert.equal(/url\(\s*['"]?https?:/i.test(text), false, rel);
     }
+    const worker = read("lab/sw.js");
+    assert.match(worker, /\/lab\//);
+    assert.match(worker, /path === "\/"/);
+    assert.match(worker, /aviso|notice/);
+    const shell = read("assets/shell.js");
+    assert.match(shell, /register\("\/lab\/sw\.js", \{ scope: "\/lab\/" \}\)/);
+    assert.match(shell, /onLab && "serviceWorker" in navigator/);
+    assert.match(read("lab/index.html"), /worker-src 'self'/);
+    assert.match(read("index.html"), /worker-src 'none'/);
+    assert.match(read("verify/index.html"), /worker-src 'none'/);
     for (const file of htmlFiles(root)) {
       const html = readFileSync(file, "utf8");
       for (const match of html.matchAll(/\b(?:src|href)="([^"]+)"/g)) {
@@ -136,8 +185,10 @@ describe("web v2", () => {
         if (url.startsWith("https://") || url.startsWith("http://") || url.startsWith("mailto:")) continue;
         assert.equal(url.startsWith("//"), false, url);
       }
-      const linked = [...html.matchAll(/<(?:script|link|img)\b[^>]*(?:src|href)="(https?:\/\/[^"]+)"/g)];
+      const linked = [...html.matchAll(/<(?:script|img)\b[^>]*(?:src|href)="(https?:\/\/[^"]+)"/g)];
+      const styles = [...html.matchAll(/<link\b(?![^>]*rel="canonical")[^>]*href="(https?:\/\/[^"]+)"/g)];
       assert.deepEqual(linked, [], path.relative(root, file));
+      assert.deepEqual(styles, [], path.relative(root, file));
     }
   });
 
@@ -147,14 +198,18 @@ describe("web v2", () => {
       const html = readFileSync(file, "utf8");
       const es = html.match(/class="[^"]*\blang es\b[^"]*"/g)?.length ?? 0;
       const en = html.match(/class="[^"]*\blang en\b[^"]*"/g)?.length ?? 0;
-      assert.equal(es, en, path.relative(root, file));
-      assert.ok(es > 0);
       for (const img of html.matchAll(/<img\b[^>]*>/g)) {
         assert.match(img[0], /\balt="/);
       }
       for (const input of html.matchAll(/<input\b[^>]*\bid="([^"]+)"/g)) {
         const id = input[1] ?? "";
         assert.match(html, new RegExp(`<label[^>]*\\bfor="${id}"`));
+      }
+      if (path.basename(file) === "archivo.html") {
+        assert.equal((html.match(/N\.º \d+ del inventario/g) ?? []).length, 18);
+      } else {
+        assert.equal(es, en, path.relative(root, file));
+        assert.ok(es > 0);
       }
       for (const match of html.matchAll(/\b(?:href|src|srcset)="([^"]+)"/g)) {
         const raw = match[1] ?? "";
@@ -163,10 +218,7 @@ describe("web v2", () => {
           if (!url || url.startsWith("#") || url.startsWith("mailto:") || url.startsWith("https://") || url.startsWith("http://")) {
             continue;
           }
-          const clean = url.split("#")[0] ?? "";
-          if (!clean) continue;
-          const target = path.resolve(path.dirname(file), clean);
-          assert.equal(statSync(target, { throwIfNoEntry: false }) !== undefined, true, `${url} from ${path.relative(root, file)}`);
+          assert.equal(localTargetExists(root, file, url), true, `${url} from ${path.relative(root, file)}`);
         }
       }
     }
@@ -214,41 +266,63 @@ describe("web v2", () => {
     assert.match(html, /id="direccion-token"/);
     assert.match(html, /id="resultado"/);
     assert.match(html, /id="ver-lectura-caida"/);
-    assert.match(html, /2026-10-08/);
+    assert.match(html, /2026-10-09/);
+    assert.match(html, /USD Coin/);
+    assert.equal(html.includes("\uFFFD"), false);
     assert.match(html, /assets\/verify\.js/);
     const bundle = read("assets/verify.js");
     assert.match(bundle, /stubx-verify-preview/);
+    assert.match(bundle, /ERYyyaE2Y2GuKB28YbC2w1nCuQ5ENQ89LR44kicvpump/);
+    assert.match(bundle, /FMNb4CR8ksibmgY7Ztei6BWcZXi3WHcVeJhYb9TNpump/);
+    assert.match(bundle, /0xC99056C762F0802e4154E6322bd71ae928857777/);
     assert.equal(/fetch\(/.test(bundle), false);
+    assert.equal(bundle.includes("\uFFFD"), false);
     const snap = JSON.parse(read("modules/snapshot.json")) as { commit: string; merged: boolean; liveNetwork: boolean; cardsDate: string };
-    assert.equal(snap.commit, "4161ee65fbcdff07f1e55a33e3973362c0592809");
+    assert.equal(snap.commit, "635a1edf39faf8fb68a5b164f79ef948a32e1dc9");
     assert.equal(snap.merged, false);
     assert.equal(snap.liveNetwork, false);
-    assert.equal(snap.cardsDate, "2026-10-08");
+    assert.equal(snap.cardsDate, "2026-10-09");
   });
 
-  test("lookup classifies the real 2026-10-08 cards", async () => {
+  test("lookup classifies the 2026-10-09 cards, the older clones, and 0x addresses", async () => {
     const href = pathToFileURL(path.join(siteRoot(), "modules/verify/lookup.mjs")).href;
     const lookup = (await import(href)) as Lookup;
-    const data = JSON.parse(read("modules/verify/cards.json")) as { cards: object[] };
-    assert.equal(data.cards.length, 5);
+    const data = JSON.parse(read("modules/verify/cards.json")) as { cards: object[]; evm: object[] };
+    assert.equal(data.cards.length, 7);
+    assert.equal(data.evm.length, 2);
     assert.equal(lookup.emptyView().kind, "vacio");
     assert.equal(lookup.pendingView(CA).kind, "comprobando");
-    assert.equal(lookup.classifyAddress("", data.cards).kind, "vacio");
-    assert.equal(lookup.classifyAddress("no es una direccion", data.cards).kind, "invalida");
-    const official = lookup.classifyAddress(`  ${CA.slice(0, 8)} ${CA.slice(8)}  `, data.cards);
+    assert.equal(lookup.classifyAddress("", data.cards, "lista", data.evm).kind, "vacio");
+    assert.equal(lookup.classifyAddress("no es una direccion", data.cards, "lista", data.evm).kind, "invalida");
+    const official = lookup.classifyAddress(`  ${CA.slice(0, 8)} ${CA.slice(8)}  `, data.cards, "lista", data.evm);
     assert.equal(official.kind, "oficial");
     assert.equal(official.light, "ok");
     assert.equal(official.mint, CA);
-    assert.match(official.partialNote?.es ?? "", /incompleta/);
-    const clone = lookup.classifyAddress(CLONE, data.cards);
+    assert.match(official.partialNote?.es ?? "", /censo/);
+    const clone = lookup.classifyAddress(CLONE, data.cards, "lista", data.evm);
     assert.equal(clone.kind, "copia");
     assert.equal(clone.light, "riesgo");
-    const other = lookup.classifyAddress(USDC, data.cards);
+    const ery = lookup.classifyAddress("ERYyyaE2Y2GuKB28YbC2w1nCuQ5ENQ89LR44kicvpump", data.cards, "lista", data.evm);
+    assert.equal(ery.kind, "copia");
+    const fmn = lookup.classifyAddress("FMNb4CR8ksibmgY7Ztei6BWcZXi3WHcVeJhYb9TNpump", data.cards, "lista", data.evm);
+    assert.equal(fmn.kind, "copia");
+    const other = lookup.classifyAddress(USDC, data.cards, "lista", data.evm);
     assert.equal(other.kind, "otra");
     assert.equal(other.light, "atencion");
-    const missing = lookup.classifyAddress("11111111111111111111111111111111", data.cards);
+    const usdcName = other.rows.find((row) => row.label.es === "Nombre");
+    assert.equal(usdcName?.value.es, "USD Coin");
+    assert.equal(usdcName?.value.es.includes("\uFFFD"), false);
+    const knownEvm = lookup.classifyAddress("0xC99056C762F0802e4154E6322bd71ae928857777", data.cards, "lista", data.evm);
+    assert.equal(knownEvm.kind, "evm");
+    assert.equal(knownEvm.light, "riesgo");
+    assert.equal(knownEvm.title.es, "Copia conocida");
+    const otherEvm = lookup.classifyAddress("0x0000000000000000000000000000000000000001", data.cards, "lista", data.evm);
+    assert.equal(otherEvm.kind, "evm");
+    assert.equal(otherEvm.light, "atencion");
+    assert.match(otherEvm.title.es, /solo existe en Solana/);
+    const missing = lookup.classifyAddress("11111111111111111111111111111111", data.cards, "lista", data.evm);
     assert.equal(missing.kind, "sin_ficha");
-    const down = lookup.classifyAddress(CA, data.cards, "caida");
+    const down = lookup.classifyAddress(CA, data.cards, "caida", data.evm);
     assert.equal(down.kind, "lectura_caida");
     assert.equal(down.light, "neutro");
   });
@@ -280,12 +354,85 @@ describe("web v2", () => {
     }
   });
 
+  test("public anchors, the archive, and the publish flag stay intact", () => {
+    const home = read("index.html");
+    for (const id of ["wallets", "transparencia", "reparto", "estado", "ppm"]) {
+      assert.match(home, new RegExp(`id="${id}"`));
+    }
+    for (const rel of ROUTES) {
+      const html = read(rel);
+      assert.equal(html.includes("Cristian"), false, rel);
+      assert.equal(html.split('class="draft"').length - 1, 1, rel);
+      assert.match(html, /Borrador del repositorio\. No publicado en stubxai.com\./);
+      assert.match(html, /rel="canonical" href="https:\/\/stubxai.com\//);
+      assert.match(html, /property="og:image"/);
+      assert.match(html, /name="twitter:card"/);
+    }
+    assert.equal(read("archivo.html").includes("Cristian"), false);
+    assert.match(read("404.html"), /href="\/assets\/site\.css"/);
+    assert.match(read("404.html"), /href="\/"/);
+    assert.equal(/href="assets\//.test(read("404.html")), false);
+    const redirects = read("_redirects");
+    assert.match(redirects, /https:\/\/superb-horse-9036f5\.netlify\.app\/\*  https:\/\/stubxai.com\/:splat  301!/);
+    assert.equal(redirects.includes("/proofs/#archivo"), false);
+    assert.match(read("_headers"), /Strict-Transport-Security: max-age=31536000; includeSubDomains/);
+    assert.match(read("_headers"), /Cloudflare Pages/);
+    const robots = read("robots.txt");
+    for (const bot of ["GPTBot", "Google-Extended", "CCBot", "ClaudeBot", "anthropic-ai", "Applebot-Extended", "Bytespider", "meta-externalagent"]) {
+      assert.match(robots, new RegExp(`User-agent: ${bot}\\nDisallow: /`));
+    }
+    assert.match(read("sitemap.xml"), /https:\/\/stubxai.com\/verify\//);
+    assert.match(read("sitemap.xml"), /https:\/\/stubxai.com\/archivo\.html/);
+    const security = read("security/index.html");
+    assert.match(security, /ERYyyaE2Y2GuKB28YbC2w1nCuQ5ENQ89LR44kicvpump/);
+    assert.match(security, /FMNb4CR8ksibmgY7Ztei6BWcZXi3WHcVeJhYb9TNpump/);
+    assert.match(security, /0xC99056C762F0802e4154E6322bd71ae928857777/);
+    assert.match(security, /0xAEE5212f20cc95370cb3556c4493CFD07721a5a3/);
+    assert.match(security, /Cloudflare Pages/);
+    assert.match(security, /edad mínima de 18 años/);
+    assert.match(security, /de práctica/);
+    assert.match(security, /STUBX no es un exchange/);
+    assert.match(read("tokenomics/index.html"), /se mezcló con su dinero; no se usó por separado para el proyecto/);
+    assert.match(read("marca/index.html"), /ipfs add --only-hash --cid-version=1 --raw-leaves/);
+    assert.match(read("marca/index.html"), /bfae3649d4b255d72ca13985344082b079cdf4a3cdd582c6e5b224d1d96a2d17/);
+    assert.match(read("marca/index.html"), /id="reglas"/);
+    const phrases = spawnSync("python3", ["web/v2/tools/check_legal_phrases.py"], { cwd: repoRoot(), encoding: "utf8" });
+    assert.equal(phrases.status, 0, phrases.stderr);
+    const refused = spawnSync("python3", ["web/v2/tools/build_site.py", "--publish"], {
+      cwd: repoRoot(),
+      encoding: "utf8",
+      env: { ...process.env, STUBX_PUBLISH: "" },
+    });
+    assert.equal(refused.status, 1, refused.stdout);
+    assert.match(refused.stderr, /STUBX_PUBLISH=1 y --publish/);
+    assert.match(read("index.html"), /class="draft"/);
+    const flag = spawnSync(
+      "python3",
+      [
+        "-c",
+        [
+          "import importlib.util",
+          "spec = importlib.util.spec_from_file_location('build_site', 'web/v2/tools/build_site.py')",
+          "mod = importlib.util.module_from_spec(spec)",
+          "spec.loader.exec_module(mod)",
+          "assert mod.draft_html(True) == ''",
+          "draft = mod.draft_html(False)",
+          "assert draft.count('class=\"draft\"') == 1",
+          "assert 'Cristian' not in draft",
+          "assert 'No publicado en stubxai.com' in draft",
+        ].join("\n"),
+      ],
+      { cwd: repoRoot(), encoding: "utf8" },
+    );
+    assert.equal(flag.status, 0, flag.stderr);
+  });
+
   test("the lab bundle hook keeps the snapshot when lab/ is absent", () => {
     const run = spawnSync(process.execPath, ["web/v2/tools/bundle-from-lab.mjs"], {
       cwd: repoRoot(),
       encoding: "utf8",
     });
     assert.equal(run.status, 0, run.stderr);
-    assert.match(run.stdout, /4161ee6/);
+    assert.match(run.stdout, /635a1ed/);
   });
 });

@@ -1,0 +1,46 @@
+[
+  {
+    "current": "Comprueba que la wallet creadora es 77RKUq…wypD.",
+    "v2": "la wallet creadora es la de abajo"
+  },
+  {
+    "current": "Nota: la wallet pública del proyecto (SOL) ( GtYJ…QZoutA) no tiene STUBX, no forma parte del suministro y no es una porción del gráfico.",
+    "v2": "No forma parte del suministro ni del gráfico"
+  },
+  {
+    "current": "Curva pública de Pump.fun (contrato) 3shQFE…toAE",
+    "v2": "Curva pública de Pump.fun"
+  },
+  {
+    "current": "Demuestra: que las copias de esta web son idénticas a las grabadas en el token (misma huella SHA-256).",
+    "v2": "copia de los mismos bytes"
+  },
+  {
+    "current": "Como habla de un criptoactivo, puede considerarse comunicación publicitaria: por eso lleva el aviso MiCA.",
+    "v2": "Hablar de un criptoactivo puede ser comunicación publicitaria: por eso lleva el aviso del art. 7.1.e."
+  },
+  {
+    "current": "No oficiales: no pagues, no conectes tu wallet",
+    "v2": "Nadie de STUBX pedirá tu semilla ni fondos por mensaje directo."
+  },
+  {
+    "current": "Esta web puede considerarse una comunicación publicitaria de criptoactivos; por eso lleva el aviso del art.",
+    "v2": "Hablar de un criptoactivo puede ser comunicación publicitaria: por eso lleva el aviso del art. 7.1.e."
+  },
+  {
+    "current": "El 04-10-2026 a las 12:40 lo repetimos en un clon limpio, con Node.js 22: mismo resultado.",
+    "v2": "A las 12:40 se repitió en un clon limpio con Node.js 22, con el mismo resultado."
+  },
+  {
+    "current": "En el mismo clon, con Python 3 y curl (pasos de LOGS.md):",
+    "v2": "logs:verify dio ok con 9 entradas"
+  },
+  {
+    "current": "En Solscan, pestaña de holders de la CA.",
+    "v2": "getTokenLargestAccounts"
+  },
+  {
+    "current": "Ábrela en Solscan y mira sus tokens y sus transacciones.",
+    "v2": "Pégala en Solscan y mira quién la creó y cuándo"
+  }
+]

@@ -1,8 +1,8 @@
 /**
  * API de navegador de STUBX Verify.
  * Es el mismo criterio que lab/verify/lookup.ts en la PR 14
- * (commit 4161ee65fbcdff07f1e55a33e3973362c0592809).
- * Hasta que esa rama se fusione, las fichas son la tanda del 2026-10-08.
+ * (commit 635a1edf39faf8fb68a5b164f79ef948a32e1dc9).
+ * Las fichas de ejemplo incluyen la tanda del 2026-10-09.
  * No consulta la red.
  */
 
@@ -32,8 +32,8 @@ const COPY = {
     lightLabel: { es: "Parece oficial", en: "Looks official" },
     title: { es: "Parece el STUBX oficial", en: "Looks like the official STUBX" },
     support: {
-      es: "La dirección coincide con la ficha del registro del 2026-10-08. «Parece» no es una garantía permanente.",
-      en: "The address matches the registry card from 2026-10-08. “Looks like” is not a permanent guarantee.",
+      es: "La dirección coincide con la ficha del registro. La fecha va en los detalles. «Parece» no es una garantía permanente.",
+      en: "The address matches the registry card. The date is in the details. “Looks like” is not a permanent guarantee.",
     },
   },
   copia: {
@@ -59,8 +59,8 @@ const COPY = {
     lightLabel: { es: "Sin ficha", en: "No card" },
     title: { es: "No se pudo comprobar", en: "Could not be checked" },
     support: {
-      es: "No está entre las fichas del 2026-10-08. Esta página no consulta la red, así que no rellena el hueco.",
-      en: "It is not among the 2026-10-08 cards. This page does not query the network, so it does not fill the gap.",
+      es: "No está entre las fichas de ejemplo. La lista no es completa y esta página no consulta la red, así que no rellena el hueco.",
+      en: "It is not among the example cards. The list is not complete and this page does not query the network, so it does not fill the gap.",
     },
   },
   lectura_caida: {
@@ -194,13 +194,67 @@ const PARTIAL = pair(
   "The card is incomplete: the holder sample is missing. That is not filled in with a zero.",
 );
 
-export function classifyAddress(raw, cards, source) {
+const CENSUS = pair(
+  "Hay saldos de la curva y de la creadora. No es un censo ni se rellena el resto con un cero.",
+  "There are balances for the curve and the creator. It is not a census, and the rest is not filled in with a zero.",
+);
+
+const SOLANA_ONLY = "El STUBX oficial solo existe en Solana";
+
+function partialNoteFor(card) {
+  if (!card.partial) return null;
+  if (card.holdersNote && /no es un censo/i.test(card.holdersNote)) return CENSUS;
+  return PARTIAL;
+}
+
+function evmView(address, evm) {
+  const found = evm.find((item) => item.address.toLowerCase() === address.toLowerCase());
+  if (found) {
+    const chain = found.chain || "EVM";
+    const creator = found.creator ?? "";
+    return {
+      kind: "evm",
+      light: "riesgo",
+      lightLabel: pair("Copia conocida", "Known copy"),
+      title: pair("Copia conocida", "Known copy"),
+      support: pair(
+        `${SOLANA_ONLY}. Ejemplo de search-v2 de Pump.fun, 08-10 09:14, sin verificar en la cadena (${chain}).`,
+        `The official STUBX exists only on Solana. Example from Pump.fun search-v2, 2026-10-08 09:14, not verified on-chain (${chain}).`,
+      ),
+      mint: found.address,
+      rows: [
+        { label: pair("Red", "Network"), value: pair(chain, chain) },
+        { label: pair("Creadora anotada", "Noted creator"), value: pair(creator || "No se sabe", creator || "Unknown") },
+        { label: pair("En la cadena", "On-chain"), value: pair("Sin verificar", "Not verified") },
+      ],
+      partialNote: null,
+    };
+  }
+  const shown = /^0x[0-9a-fA-F]{40}$/.test(address) ? address : null;
+  return {
+    kind: "evm",
+    light: "atencion",
+    lightLabel: pair("Otra red", "Another network"),
+    title: pair(SOLANA_ONLY, "The official STUBX exists only on Solana"),
+    support: pair(
+      "Una dirección que empieza por 0x no es el mint de Solana. La lista de ejemplos no es completa y no se ha verificado en la cadena.",
+      "An address that starts with 0x is not the Solana mint. The example list is not complete and it has not been verified on-chain.",
+    ),
+    mint: shown,
+    rows: [],
+    partialNote: null,
+  };
+}
+
+export function classifyAddress(raw, cards, source, evm) {
+  const examples = evm ?? [];
   if (raw.trim() === "") return emptyView();
   const mint = normalizeAddress(raw);
+  if (/^0x/i.test(mint)) return evmView(mint, examples);
   if (!isAddress(mint)) return viewOf("invalida", null, [], null);
   if (source === "caida") return viewOf("lectura_caida", mint, [], null);
   const card = cards.find((item) => item.mint === mint);
   if (!card) return viewOf("sin_ficha", mint, [], null);
   const kind = card.role === "registro" ? "oficial" : card.role === "clon" ? "copia" : "otra";
-  return viewOf(kind, card.mint, rowsFor(card), card.partial ? PARTIAL : null);
+  return viewOf(kind, card.mint, rowsFor(card), partialNoteFor(card));
 }

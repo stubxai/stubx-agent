@@ -2,14 +2,17 @@
   "kind": "pr14-browser-snapshot",
   "pr": 14,
   "branch": "feat/lab-mision-1",
-  "commit": "4161ee65fbcdff07f1e55a33e3973362c0592809",
-  "commitDate": "2026-10-09T15:54:12Z",
-  "cardsDate": "2026-10-08",
+  "commit": "635a1edf39faf8fb68a5b164f79ef948a32e1dc9",
+  "commitDate": "2026-10-09T16:46:42Z",
+  "cardsDate": "2026-10-09",
+  "earlierCardsDate": "2026-10-08",
   "liveNetwork": false,
   "merged": false,
+  "serviceWorker": "lab/sw.js",
+  "serviceWorkerScope": "/lab/",
   "uiBundle": "assets/verify.js",
   "missionBundle": "assets/mission.js",
   "browserApi": "modules/verify/lookup.mjs",
   "cards": "modules/verify/cards.json",
-  "note": "La interfaz de la página usa el bundle de navegador de la PR 14. lookup.mjs es la misma regla, importable, para cuando el código de lab/ esté en esta rama. No es una lectura en vivo."
+  "note": "Instantánea del commit 635a1ed. Verify usa las fichas de ejemplo del 2026-10-09 (oficial releída, clones ERYyy y FMNb, USDC) junto con las del 2026-10-08 y dos direcciones 0x sin verificar en la cadena. El service worker solo se registra en /lab/. No es una lectura en vivo."
 }

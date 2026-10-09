@@ -111,5 +111,11 @@
         if (resultado) resultado.focus();
       });
     }
+
+    var path = location.pathname;
+    var onLab = /\/lab\/(?:index\.html)?$/.test(path) || /\/lab$/.test(path);
+    if (onLab && "serviceWorker" in navigator && location.protocol !== "file:") {
+      navigator.serviceWorker.register("/lab/sw.js", { scope: "/lab/" }).catch(function () {});
+    }
   });
 })();
