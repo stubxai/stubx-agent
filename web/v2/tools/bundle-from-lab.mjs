@@ -139,7 +139,10 @@ writeFileSync(
   dateProcessLinks(mainInner(path.join(root, "site-drafts/tablero/index.html"))),
 );
 
-const when = git(["log", "-1", "--format=%cI", commit]);
+// %cI imprime +00:00 en Git 2.43 y Z desde Git 2.45. La fecha sale del
+// instante Unix para que el snapshot no cambie según la versión de Git.
+const unix = Number(git(["log", "-1", "--format=%ct", commit]));
+const when = Number.isFinite(unix) ? new Date(unix * 1000).toISOString().replace(".000Z", "+00:00") : "";
 const snapshot = {
   kind: "pr14-browser-snapshot",
   pr: 14,
