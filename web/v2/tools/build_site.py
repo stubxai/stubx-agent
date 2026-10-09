@@ -205,6 +205,9 @@ def nav(frm: str, current: str, absolute: bool = False) -> str:
     )
 
 
+NOINDEX_PAGES = {"404.html", "studio/index.html"}
+
+
 def shell(frm: str, current: str, title_es: str, title_en: str, desc_es: str, desc_en: str, body: str, scripts: list[str], narrow: bool, worker: bool = False, absolute: bool = False) -> str:
     prefix = "/" if absolute else "../" * frm.count("/")
     wrap = "wrap estrecha" if narrow else "wrap"
@@ -212,14 +215,15 @@ def shell(frm: str, current: str, title_es: str, title_en: str, desc_es: str, de
     worker_src = "'self'" if worker else "'none'"
     url = public_url(frm)
     banner = draft_html(PUBLISH)
+    # Indexable desde 2026-10-09 (AUTORIZO de Cristian). Solo el 404 y el marcador de Studio siguen fuera.
+    robots_meta = '<meta name="robots" content="noindex, nofollow">\n' if frm in NOINDEX_PAGES else ""
     return f"""<!DOCTYPE html>
 <html lang="es" data-lang="es">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
-<meta name="robots" content="noindex, nofollow">
-<meta name="description" content="{html.escape(desc_es + " / " + desc_en)}">
+{robots_meta}<meta name="description" content="{html.escape(desc_es + " / " + desc_en)}">
 <link rel="canonical" href="{url}">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="STUBX">
@@ -981,7 +985,6 @@ def headers() -> str:
   Referrer-Policy: no-referrer
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
   Cross-Origin-Opener-Policy: same-origin
-  X-Robots-Tag: noindex, nofollow
 
 /assets/*
   Cache-Control: public, max-age=0, must-revalidate
@@ -1000,6 +1003,21 @@ def headers() -> str:
   Cache-Control: public, max-age=3600
 /sitemap.xml
   Content-Type: application/xml; charset=utf-8
+# Lo que no debe salir en buscadores: service worker, datos JSON y la página 404.
+/lab/sw.js
+  X-Robots-Tag: noindex, nofollow
+/modules/*
+  X-Robots-Tag: noindex, nofollow
+/onchain/*
+  X-Robots-Tag: noindex, nofollow
+/token.json
+  X-Robots-Tag: noindex, nofollow
+/site.webmanifest
+  X-Robots-Tag: noindex, nofollow
+/404.html
+  X-Robots-Tag: noindex, nofollow
+/studio/*
+  X-Robots-Tag: noindex, nofollow
 """
 
 
@@ -1055,6 +1073,21 @@ def manifest() -> str:
     ) + "\n"
 
 
+def robots() -> str:
+    ai = ["GPTBot", "Google-Extended", "CCBot", "ClaudeBot", "anthropic-ai", "Applebot-Extended", "Bytespider", "meta-externalagent"]
+    blocks = "\n".join(f"User-agent: {bot}\nDisallow: /\n" for bot in ai)
+    return f"""# STUBX · robots.txt · v3 (2026-10-09).
+# Web oficial: https://stubxai.com · Las páginas públicas son indexables.
+# Se pide a los rastreadores de entrenamiento de IA que no usen el contenido.
+
+User-agent: *
+Allow: /
+
+{blocks}
+Sitemap: https://stubxai.com/sitemap.xml
+"""
+
+
 def sitemap() -> str:
     dated = [
         ("https://stubxai.com/", "2026-10-09"),
@@ -1090,12 +1123,13 @@ def main() -> None:
     (ROOT / "_headers").write_text(headers(), encoding="utf-8")
     (ROOT / "_redirects").write_text(redirects(), encoding="utf-8")
     (ROOT / "site.webmanifest").write_text(manifest(), encoding="utf-8")
-    (ROOT / "robots.txt").write_text((REPO / "web/current/robots.txt").read_text(encoding="utf-8"), encoding="utf-8")
+    (ROOT / "robots.txt").write_text(robots(), encoding="utf-8")
     (ROOT / "sitemap.xml").write_text(sitemap(), encoding="utf-8")
     current = REPO / "web/current"
     shutil.copyfile(current / "archivo.html", ROOT / "archivo.html")
     archive = (ROOT / "archivo.html").read_text(encoding="utf-8")
     archive = archive.replace("https://stubxai.com/archivo.html", "https://stubxai.com/archivo")
+    archive = archive.replace('    <meta name="robots" content="noindex, nofollow" />\n', "")
     (ROOT / "archivo.html").write_text(archive, encoding="utf-8")
     shutil.copyfile(current / "styles.css", ROOT / "styles.css")
     shutil.copyfile(current / "app.js", ROOT / "app.js")

@@ -1,5 +1,5 @@
-# STUBX · robots.txt · v2 (2026-10-03).
-# Web oficial: https://stubxai.com · Las páginas llevan «noindex, nofollow» (meta y X-Robots-Tag): Allow deja ver esa etiqueta.
+# STUBX · robots.txt · v3 (2026-10-09).
+# Web oficial: https://stubxai.com · Las páginas públicas son indexables.
 # Se pide a los rastreadores de entrenamiento de IA que no usen el contenido.
 
 User-agent: *
@@ -29,3 +29,4 @@ Disallow: /
 User-agent: meta-externalagent
 Disallow: /
 
+Sitemap: https://stubxai.com/sitemap.xml
