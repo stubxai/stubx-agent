@@ -49,6 +49,24 @@ function wordsOf(text) {
   return text.split(/[^a-z]+/).filter(Boolean);
 }
 
+function joinLooseLetters(words) {
+  const out = [];
+  let run = "";
+  for (const word of words) {
+    if (word.length === 1) {
+      run += word;
+      continue;
+    }
+    if (run) {
+      out.push(run);
+      run = "";
+    }
+    out.push(word);
+  }
+  if (run) out.push(run);
+  return out;
+}
+
 function termKey(term) {
   return compact(stripMarks(foldHomoglyphs(String(term).normalize("NFKC").toLowerCase())));
 }
@@ -111,7 +129,7 @@ export function analyze(text, list = blocklist) {
   const short = new Set((list.shortWords ?? []).map((word) => termKey(word)));
   const variants = [folded, leet(folded, "i"), leet(folded, "l")];
   for (const variant of variants) {
-    for (const word of wordsOf(variant)) {
+    for (const word of joinLooseLetters(wordsOf(variant))) {
       if (short.has(word)) pushHit(hits, seen, "short", word);
     }
   }

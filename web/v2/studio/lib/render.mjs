@@ -246,7 +246,7 @@ export async function renderCard(options) {
   blit(rgba, width, height, avatarZone, options.avatar ?? null);
 
   const watermarkColor = luma(fill) > 0.45 ? [18, 10, 14] : [255, 243, 245];
-  if (options.watermark !== false) drawWatermark(rgba, width, height, watermarkColor);
+  drawWatermark(rgba, width, height, watermarkColor);
 
   const minSize = size;
   const maxSize = Math.max(minSize, Math.ceil(height * 0.04));
