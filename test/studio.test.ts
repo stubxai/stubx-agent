@@ -134,9 +134,6 @@ const REQUIRED_TERMS = [
   "mándame un DM",
   "por privado",
   "soporte",
-  "support",
-  "ganar",
-  "sube",
   "STUBX team",
   "team STUBX",
 ];
@@ -247,6 +244,9 @@ describe("studio", () => {
       "dm",
       "claim",
       "claims",
+      "ganar",
+      "sube",
+      "support",
     ]);
     for (const term of REQUIRED_TERMS) assert.ok(list.terms.includes(term), term);
     for (const word of list.shortWords) assert.equal(list.terms.includes(word), false, word);
@@ -410,6 +410,9 @@ describe("studio", () => {
       "freeze",
       "disclaimer",
       "x2",
+      "engañar",
+      "subestimado",
+      "unsupported",
     ];
     for (const sample of allowed) {
       assert.equal(analyze(sample).blocked, false, sample);
@@ -424,6 +427,12 @@ describe("studio", () => {
     assert.equal(analyze("leopardo").blocked, false);
     assert.equal(analyze("@CreadorSTUBX").hits.some((hit) => hit.kind === "handle"), true);
     assert.equal(analyze("equipo de STUBX").hits.some((hit) => hit.kind === "term"), true);
+    assert.equal(analyze("ganar").hits.some((hit) => hit.kind === "short" && hit.term === "ganar"), true);
+    assert.equal(analyze("sube").hits.some((hit) => hit.kind === "short" && hit.term === "sube"), true);
+    assert.equal(analyze("support").hits.some((hit) => hit.kind === "short" && hit.term === "support"), true);
+    assert.equal(analyze("engañar").blocked, false);
+    assert.equal(analyze("subestimado").blocked, false);
+    assert.equal(analyze("unsupported").blocked, false);
   });
 
   test("el filtro no mira la marca ni el pie, y el dibujo sí los incluye", async () => {
