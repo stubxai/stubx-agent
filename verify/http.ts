@@ -175,31 +175,38 @@ export function orderPublicAddresses(addresses: readonly string[]): string[] {
   return [...v4, ...v6];
 }
 
-/** Lookup de `https.request`: ignora el nombre y devuelve la primera IPv4 pública, o la siguiente IP pública. */
+/** Lookup de `https.request`: ignora el nombre y devuelve la primera IPv4 pública, o la siguiente IP pública. El callback va en la siguiente vuelta para que el `error` del socket tenga listener. */
 export function pinnedLookup(addresses: readonly string[]) {
   return (
     _hostname: string,
     options: LookupOptions,
     callback: (err: NodeJS.ErrnoException | null, address: string | Array<{ address: string; family: number }>, family?: number) => void,
   ): void => {
-    const ordered = orderPublicAddresses(addresses);
-    const asked = options.family === "IPv6" || options.family === 6 ? 6 : options.family === "IPv4" || options.family === 4 ? 4 : 0;
-    const wanted = asked === 4 || asked === 6
-      ? ordered.filter((item) => (item.includes(":") ? 6 : 4) === asked)
-      : ordered;
-    const chosen = wanted[0];
-    if (!chosen) {
-      const error = new Error("sin IP pública validada") as NodeJS.ErrnoException;
-      error.code = "EINVAL";
-      callback(error, "", 0);
-      return;
-    }
-    const family = chosen.includes(":") ? 6 : 4;
-    if (options.all) {
-      callback(null, [{ address: chosen, family }]);
-      return;
-    }
-    callback(null, chosen, family);
+    process.nextTick(() => {
+      try {
+        const ordered = orderPublicAddresses(addresses);
+        const asked = options.family === "IPv6" || options.family === 6 ? 6 : options.family === "IPv4" || options.family === 4 ? 4 : 0;
+        const wanted = asked === 4 || asked === 6
+          ? ordered.filter((item) => (item.includes(":") ? 6 : 4) === asked)
+          : ordered;
+        const chosen = wanted[0];
+        if (!chosen) {
+          const error = new Error("sin IP pública validada") as NodeJS.ErrnoException;
+          error.code = "EINVAL";
+          callback(error, "", 0);
+          return;
+        }
+        const family = chosen.includes(":") ? 6 : 4;
+        if (options.all) {
+          callback(null, [{ address: chosen, family }]);
+          return;
+        }
+        callback(null, chosen, family);
+      } catch (error) {
+        const wrapped = error instanceof Error ? error : new Error("error de red");
+        callback(wrapped as NodeJS.ErrnoException, "", 0);
+      }
+    });
   };
 }
 
@@ -617,15 +624,16 @@ function requestOne(url: string, address: string, maxBytes: number, signal: Abor
         finish(() => reject(abortError(signal)));
       };
       signal.addEventListener("abort", onAbort);
-      req.on("socket", (socket) => {
-        socket.on("error", (error: Error) => {
-          req.destroy();
-          finish(() => reject(error));
-        });
-      });
-      req.on("error", (error) => {
+      const onFail = (error: Error) => {
         finish(() => reject(error));
+      };
+      req.on("error", onFail);
+      req.on("socket", (socket) => {
+        socket.on("error", onFail);
       });
+      if (req.socket) {
+        req.socket.on("error", onFail);
+      }
       req.end();
     } catch (error) {
       finish(() => reject(error instanceof Error ? error : new Error("error de red")));
