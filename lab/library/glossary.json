@@ -143,7 +143,7 @@
         "en": "The registry mint card, on 2026-10-08, shows the virtual and the real curve amounts of tokens as different numbers, each with its own status."
       },
       "doesNotConclude": {
-        "es": "La cantidad virtual de la curva no es el fondo retirable. Sumarla con la real no crea un único fondo disponible.",
+        "es": "La cantidad virtual de la curva no es una cantidad retirable. Sumarla con la real no crea una única cantidad disponible.",
         "en": "The virtual curve amount is not the withdrawable balance. Adding it to the real curve amount does not create one available pool."
       }
     },
@@ -207,8 +207,8 @@
         "en": "The cards used here read public curve fields. They do not include a fee calculation, and this page does not add one."
       },
       "doesNotConclude": {
-        "es": "Una comisión no identifica el mint, no convierte la cantidad virtual de la curva en fondos retirables y no es un resultado prometido.",
-        "en": "A fee does not identify the mint, does not turn the virtual curve amount into withdrawable funds, and is not a promised result."
+        "es": "Una comisión no identifica el mint, no convierte la cantidad virtual de la curva en un saldo retirable y no es un resultado prometido.",
+        "en": "A fee does not identify the mint, does not turn the virtual curve amount into a withdrawable balance, and is not a promised result."
       }
     }
   ]

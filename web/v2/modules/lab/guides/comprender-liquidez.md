@@ -4,7 +4,7 @@
 
 En estas fichas, la curva de Pump.fun es una cuenta derivada. Si el propietario es el programa de la curva, Verify lee campos públicos: cantidades virtuales y reales de la curva, suministro de esa cuenta y si `complete` es verdadero o falso.
 
-La cantidad virtual de la curva no es la cantidad real. No se suman como si fueran un único fondo retirable. La ficha las muestra por separado.
+La cantidad virtual de la curva no es la cantidad real. No se suman como si fueran una única cantidad retirable. La ficha las muestra por separado.
 
 El avance de la curva clásica es un cálculo inferido: parte de la cantidad real inicial documentada de la curva, `793100000000000`, y trunca a dos decimales hacia cero. No es un campo guardado en la cuenta. El 2026-10-08, el mint del registro sale `1.74` inferido. En los tres clones la cantidad real coincide con esa inicial, la resta es cero y el avance sale `0.00` inferido. La cuenta sí se leyó. Cero inferido no es un dato ausente.
 

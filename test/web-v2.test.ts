@@ -286,7 +286,7 @@ describe("web v2", () => {
       liveNetwork: boolean;
       cardsDate: string;
     };
-    assert.equal(snap.commit, "0133722f54a527086b296fc74c79baf8913fcc00");
+    assert.equal(snap.commit, "0cb1633bffffe07383742e75a9ec9435764d1baf");
     assert.equal(snap.inBranch, true);
     assert.equal(Object.hasOwn(snap, "merged"), false);
     assert.equal(snap.liveNetwork, false);
@@ -470,7 +470,7 @@ describe("web v2", () => {
       encoding: "utf8",
     });
     assert.equal(run.status, 0, `${run.stdout}\n${run.stderr}`);
-    assert.match(run.stdout, /0133722f54a527086b296fc74c79baf8913fcc00/);
+    assert.match(run.stdout, /0cb1633bffffe07383742e75a9ec9435764d1baf/);
     const same = (left: string, right: string) => {
       assert.equal(readFileSync(path.join(root, left), "utf8"), readFileSync(path.join(root, right), "utf8"), left);
     };
@@ -615,11 +615,27 @@ test("las palabras prohibidas no salen en el texto visible, y token.json queda f
     if (/\bholders?\b/i.test(stripped)) hits.push(`holder ${rel}`);
     if (/\breserves?\b/i.test(stripped)) hits.push(`reserve ${rel}`);
     if (/\breserva\b/i.test(stripped) && !/reservados/.test(stripped)) hits.push(`reserva ${rel}`);
+    for (const phrase of [
+      "fondo de liquidez",
+      "el fondo que se puede retirar",
+      "el fondo retirable",
+      "único fondo",
+      "fondos retirables",
+      "withdrawable funds",
+    ]) {
+      if (text.includes(phrase)) hits.push(`${phrase} ${rel}`);
+    }
     for (const sentence of allowedHolder) {
       if (rel.endsWith("glossary.json") && text.includes(sentence)) continue;
     }
   }
   assert.deepEqual(hits, []);
+  const legal = readFileSync(path.join(root, "legal/index.html"), "utf8");
+  const risks = readFileSync(path.join(root, "risks/index.html"), "utf8");
+  const glossary = readFileSync(path.join(root, "modules/lab/glossary.json"), "utf8");
+  assert.match(legal, /fondos de garantía de depósitos/);
+  assert.match(risks, /fondos de garantía de depósitos/);
+  assert.match(glossary, /No es una auditoría de fondos/);
 });
 
 function redirectCycles(text: string, root: string): string[] {

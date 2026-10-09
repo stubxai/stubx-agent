@@ -7,7 +7,7 @@ Una sola web estática. Verify, Lab y el tablero no son sitios aparte: el genera
 | Pieza | Dónde | Qué hace ahora |
 | --- | --- | --- |
 | Cascarón | `assets/shell.js`, `assets/site.css` | Idioma (`stubx-lab-lang`), títulos, copiar solo la CA oficial, menú. El service worker solo se registra en `/lab/`. |
-| Verify en el navegador | `assets/verify.js` | Bundle de la PR 14, commit `0133722`. Pega una dirección y pinta el semáforo con las fichas del 2026-10-09 y las anteriores. La ficha oficial incluye la cuenta personal publicada y el resto 0,0000 %. |
+| Verify en el navegador | `assets/verify.js` | Bundle de la PR 14, commit `0cb1633`. Pega una dirección y pinta el semáforo con las fichas del 2026-10-09 y las anteriores. La ficha oficial incluye la cuenta personal publicada y el resto 0,0000 %. |
 | Misma regla, importable | `modules/verify/lookup.mjs` | Salida de `tsc` sobre `lab/verify/lookup.ts`, sin source map. Lo usan las pruebas. No llama a la red. Responde a direcciones `0x`. |
 | Fichas | `modules/verify/cards.json` | Las fichas de `loadCards`, con textos de presentación añadidos (`statement_en`, `holdersNote_en` y las notas de la curva) sin cambiar los nombres de la API, más los ejemplos EVM. `snapshot.json` dice que el commit está en esta rama (`inBranch`) y que no hay lectura en vivo. `inBranch` no significa fusionado en main ni publicado. |
 | Lab | `assets/mission.js` + `modules/lab/` | Misión de cinco pasos, glosario y tres guías. El progreso se queda en el navegador. |
@@ -18,7 +18,7 @@ Una sola web estática. Verify, Lab y el tablero no son sitios aparte: el genera
 
 ## Cuando la PR 14 se fusione
 
-1. `lab/` y `site-drafts/` ya están en esta rama, por el merge de `feat/lab-mision-1` (`0133722`).
+1. `lab/` y `site-drafts/` ya están en esta rama, por el merge de `feat/lab-mision-1` (`0cb1633`).
 2. `node web/v2/tools/bundle-from-lab.mjs` regenera `verify.js`, `mission.js`, `lookup.mjs`, `cards.json`, la misión, el tablero y `snapshot.json` desde ese árbol. Si `lab/` no está, sale con error. No inventa un build.
 3. Volver a ejecutar `python3 web/v2/tools/build_site.py`.
 4. `snapshot.json` `inBranch` significa que el commit citado es ancestro de esta rama. No significa que la PR 14 esté en main ni que la web esté publicada. El aviso de demo sigue visible.
