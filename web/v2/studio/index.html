@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
-<meta name="robots" content="noindex, nofollow">
 <meta name="description" content="Crea una imagen con recursos de STUBX, sin cuenta. / Create an image with STUBX assets, without an account.">
 <link rel="canonical" href="https://stubxai.com/studio/">
 <meta property="og:type" content="website">
@@ -55,6 +54,7 @@
 <main id="contenido" class="wrap studio-app">
 <h1><span class="lang es" lang="es">Studio</span><span class="lang en" lang="en">Studio</span></h1>
 <p class="lede"><span class="lang es" lang="es">Crea en un par de minutos, sin cuenta, una imagen con recursos de STUBX para explicar una idea.</span><span class="lang en" lang="en">Create an image with STUBX assets in a couple of minutes, without an account, to explain an idea.</span></p>
+<p id="aviso-navegador" class="aviso" role="alert" hidden><span class="lang es" lang="es">Este navegador no es compatible con Studio.</span><span class="lang en" lang="en">This browser is not compatible with Studio.</span></p>
 <p><a href="/studio/reglas/"><span class="lang es" lang="es">Reglas y recursos</span><span class="lang en" lang="en">Rules and assets</span></a></p>
 <div class="plantillas" role="group" aria-label="Plantillas / Templates">
 <button type="button" data-template="aprendizaje" aria-pressed="true"><span class="lang es" lang="es">Aprendizaje</span><span class="lang en" lang="en">Learning</span></button>
@@ -110,6 +110,7 @@
 <p><span class="lang es" lang="es">Sin cookies ni rastreadores. El idioma y el progreso de Lab, si se usa, se quedan en este navegador. El borrador de Studio se guarda en este dispositivo; Borrar lo elimina. El service worker solo se registra en Lab y no guarda la portada ni los avisos.</span><span class="lang en" lang="en">No cookies and no trackers. Language and Lab progress, if used, stay in this browser. The Studio draft is saved on this device; Clear removes it. The service worker registers only on Lab and does not store the home page or the notices.</span></p>
 <p>STUBX · 2026 · <span class="lang es" lang="es">Código MIT · Kit con licencia propia · Imágenes de Agente Talón generadas con IA</span><span class="lang en" lang="en">MIT code · Kit under its own license · Agente Talón images generated with AI</span></p>
 </div></footer>
-<script type="module" src="studio.js"></script>
+<script nomodule src="studio-nomodule.js"></script>
+<script type="module" src="studio-boot.js"></script>
 </body>
 </html>

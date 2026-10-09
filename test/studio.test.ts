@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
@@ -118,6 +119,26 @@ const REQUIRED_TERMS = [
   "verified",
   "partner",
   "anuncio oficial",
+  "frase semilla",
+  "semilla",
+  "seed phrase",
+  "seed",
+  "clave privada",
+  "private key",
+  "conecta tu wallet",
+  "connect wallet",
+  "connect your wallet",
+  "wallet",
+  "reclama",
+  "gratis",
+  "mándame un DM",
+  "por privado",
+  "soporte",
+  "support",
+  "ganar",
+  "sube",
+  "STUBX team",
+  "team STUBX",
 ];
 
 type Hit = { kind: string; term: string };
@@ -205,7 +226,6 @@ describe("studio", () => {
       emojiSequences: string[];
       handles: string[];
       domains: string[];
-      nameHashes: string[];
     };
     assert.deepEqual(list.shortWords, [
       "ya",
@@ -223,15 +243,15 @@ describe("studio", () => {
       "cex",
       "corre",
       "chart",
+      "free",
+      "dm",
+      "claim",
+      "claims",
     ]);
     for (const term of REQUIRED_TERMS) assert.ok(list.terms.includes(term), term);
     for (const word of list.shortWords) assert.equal(list.terms.includes(word), false, word);
     assert.deepEqual(list.emojis, ["🚀", "🌕", "📈", "💎", "🙌", "🤑", "💰", "🔥", "🌙", "💸", "📊", "💲"]);
-    const hiddenNames = ["cristian", "pardo", "camacho"];
-    assert.deepEqual(
-      [...list.nameHashes].sort(),
-      hiddenNames.map((name) => createHash("sha256").update(name).digest("hex")).sort(),
-    );
+    assert.equal(Object.hasOwn(list, "nameHashes"), false);
     assert.deepEqual(list.emojiSequences, ["💎🙌"]);
     assert.deepEqual(list.handles, ["stubxai", "CreadorSTUBX"]);
     assert.deepEqual(list.domains, ["stubxai.com", "t.me"]);
@@ -269,12 +289,6 @@ describe("studio", () => {
       "inversión",
       "roi",
       "r o i",
-      "pardo",
-      "Pardo",
-      "p4rd0",
-      "cr1stian",
-      "c4m4ch0",
-      "p a r d o",
       "cex",
       "chart",
       "🚀",
@@ -335,6 +349,30 @@ describe("studio", () => {
       "$STUBX a la luna",
       "oficial",
       "anuncio oficial",
+      "envíame tu frase semilla",
+      "seed phrase",
+      "clave privada",
+      "private key",
+      "conecta tu wallet",
+      "connect wallet",
+      "claim",
+      "reclama tus tokens",
+      "gratis",
+      "free",
+      "airdrop",
+      "mándame un DM",
+      "DM",
+      "por privado",
+      "soporte",
+      "support",
+      "ganar",
+      "sube",
+      "50x",
+      "2x",
+      "STUBX team",
+      "team STUBX",
+      "p\u0433ecio",
+      "pre\u3164cio",
     ];
     for (const sample of blocked) {
       assert.equal(analyze(sample).blocked, true, sample);
@@ -368,6 +406,10 @@ describe("studio", () => {
       `${"1".repeat(20)}0${"1".repeat(20)}`,
       "😀",
       "Una nota sin enlace.",
+      "freedom",
+      "freeze",
+      "disclaimer",
+      "x2",
     ];
     for (const sample of allowed) {
       assert.equal(analyze(sample).blocked, false, sample);
@@ -379,10 +421,9 @@ describe("studio", () => {
     assert.equal(analyze("c o r r e").hits.some((hit) => hit.kind === "short" && hit.term === "corre"), true);
     assert.equal(analyze("f u n d").hits.some((hit) => hit.kind === "short" && hit.term === "fund"), true);
     assert.equal(analyze("fondos").hits.some((hit) => hit.kind === "short" && hit.term === "fondos"), true);
-    const named = analyze("pardo");
-    assert.equal(named.hits.some((hit) => hit.kind === "name" && hit.term === "nombre"), true);
-    assert.equal(JSON.stringify(named).toLowerCase().includes("pardo"), false);
     assert.equal(analyze("leopardo").blocked, false);
+    assert.equal(analyze("@CreadorSTUBX").hits.some((hit) => hit.kind === "handle"), true);
+    assert.equal(analyze("equipo de STUBX").hits.some((hit) => hit.kind === "term"), true);
   });
 
   test("el filtro no mira la marca ni el pie, y el dibujo sí los incluye", async () => {
@@ -486,6 +527,17 @@ describe("studio", () => {
     assert.match(editor, /id="descargar"[^>]*disabled/);
     assert.match(editor, /id="borrar"/);
     assert.match(readStudio("studio.css"), /min-height:\s*44px/);
+    assert.match(editor, /id="aviso-navegador"/);
+    assert.match(editor, /Este navegador no es compatible con Studio/);
+    assert.match(editor, /This browser is not compatible with Studio/);
+    assert.match(editor, /<script nomodule src="studio-nomodule\.js"><\/script>/);
+    assert.match(editor, /<script type="module" src="studio-boot\.js"><\/script>/);
+    assert.equal(/<script\b(?![^>]*\bsrc=)/.test(editor), false);
+    assert.match(readStudio("studio-nomodule.js"), /aviso-navegador/);
+    assert.match(readStudio("studio-nomodule.js"), /hidden = false/);
+    assert.match(readStudio("studio-boot.js"), /import\("\.\/studio\.js"\)/);
+    assert.equal(editor.includes("noindex"), false);
+    assert.equal(reglas.includes("noindex"), false);
   });
 
   test("no hay hosts externos en el editor y la navegación y el CSP de Studio están puestos", () => {
@@ -554,9 +606,10 @@ describe("studio", () => {
       BRAND_FG: number[];
       contrastHex: (a: string, b: string) => number;
     }>("lib/render.mjs");
-    const { BRAND, FOOTER, PNG_COMMENT, AI_LABEL } = await load<{
+    const { BRAND, FOOTER, PNG_COMMENT, RISK, AI_LABEL } = await load<{
       BRAND: { es: string; en: string };
       FOOTER: { es: string; en: string };
+      RISK: { es: string; en: string };
       PNG_COMMENT: string;
       AI_LABEL: { mascota: { es: string } };
     }>("lib/copy.mjs");
@@ -589,6 +642,7 @@ describe("studio", () => {
     assert.equal(marked.label, AI_LABEL.mascota.es);
     assert.equal(joined(marked, "brand"), BRAND.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
     assert.equal(joined(marked, "brandTop"), BRAND.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
+    assert.equal(joined(marked, "riskTop"), RISK.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
     assert.equal(joined(marked, "footer"), FOOTER.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
     assert.equal(joined(marked, "ai"), AI_LABEL.mascota.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
     assert.equal(marked.watermarkAlpha, 0.15);
@@ -608,6 +662,9 @@ describe("studio", () => {
     const topBrand = marked.glyphs.find((glyph) => glyph.role === "brandTop" && glyph.ch === "C");
     assert.ok(topBrand);
     assert.ok(topBrand.y < marked.topBand);
+    const topRisk = marked.glyphs.find((glyph) => glyph.role === "riskTop" && glyph.ch === "C");
+    assert.ok(topRisk);
+    assert.ok(topRisk.y > topBrand.y && topRisk.y < marked.topBand);
 
     const fill = marked.fill;
     const wm = [255, 243, 245];
@@ -632,6 +689,7 @@ describe("studio", () => {
     const english = await renderCard({ ...base, lang: "en", origins: ["ninguno"], watermark: false });
     assert.equal(joined(english, "brand"), BRAND.en.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
     assert.equal(joined(english, "brandTop"), BRAND.en.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
+    assert.equal(joined(english, "riskTop"), RISK.en.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
     assert.equal(joined(english, "footer"), FOOTER.en.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
 
     for (const format of templates.formats) {
@@ -650,6 +708,7 @@ describe("studio", () => {
           assert.equal(card.fits, true, `${format.id} ${lang} ${template.title[lang]}`);
           assert.ok(card.brandFontSize >= format.height * 0.025);
           assert.ok(joined(card, "footer").includes(lang === "es" ? "CRIPTO" : "HIGH-RISK"));
+          assert.ok(joined(card, "riskTop").includes(lang === "es" ? "CRIPTO" : "HIGH-RISK"));
         }
       }
     }
@@ -691,20 +750,45 @@ describe("studio", () => {
     assert.equal(joined(story, "brandTop"), BRAND.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
   });
 
-  test("el nombre no aparece en ningún archivo de web/v2", () => {
-    const names = ["cristian", "pardo", "camacho"];
-    const root = path.join(repoRoot(), "web/v2");
-    const walk = (dir: string, out: string[] = []): string[] => {
-      for (const name of readdirSync(dir)) {
-        const full = path.join(dir, name);
-        if (statSync(full).isDirectory()) walk(full, out);
-        else out.push(full);
+  test("los archivos nuevos de la PR no contienen nombres personales", () => {
+    const needles = [
+      String.fromCharCode(99, 114, 105, 115, 116, 105, 97, 110),
+      String.fromCharCode(112, 97, 114, 100, 111),
+      String.fromCharCode(99, 97, 109, 97, 99, 104, 111),
+    ];
+    const root = repoRoot();
+    const baseRef = ["origin/main", "main"].find((ref) => {
+      try {
+        execFileSync("git", ["rev-parse", "--verify", "--quiet", ref], { cwd: root, stdio: "ignore" });
+        return true;
+      } catch {
+        return false;
       }
-      return out;
-    };
-    for (const file of walk(root)) {
-      const text = readFileSync(file).toString("latin1").toLowerCase();
-      for (const name of names) assert.equal(text.includes(name), false, `${name} en ${path.relative(root, file)}`);
+    });
+    let base = "";
+    if (baseRef) {
+      base = execFileSync("git", ["merge-base", "HEAD", baseRef], { cwd: root, encoding: "utf8" }).trim();
+    } else {
+      const line = execFileSync("git", ["log", "--merges", "--format=%H %P", "--grep=incorpora main", "-n", "1", "HEAD"], {
+        cwd: root,
+        encoding: "utf8",
+      }).trim();
+      base = line.split(" ")[2] ?? "";
+    }
+    assert.ok(base, "falta la base main");
+    const added = execFileSync("git", ["diff", "--name-only", "--diff-filter=A", base, "HEAD"], { cwd: root, encoding: "utf8" })
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+    assert.ok(added.length > 0);
+    for (const rel of added) {
+      const full = path.join(root, rel);
+      if (!statSync(full).isFile()) continue;
+      const text = readFileSync(full).toString("latin1").toLowerCase();
+      for (const needle of needles) {
+        const marked = new RegExp(`(?:^|[^a-z])${needle}(?![a-z])`);
+        assert.equal(marked.test(text), false, rel);
+      }
     }
   });
 
@@ -726,12 +810,30 @@ describe("studio", () => {
     for (const value of [wallet, ca, ...evm]) {
       assert.equal(analyze(value).hits.some((hit) => hit.kind === "base58"), true, value.slice(0, 6));
       const mid = Math.floor(value.length / 2);
-      for (const sep of [" ", "/", "-", "·"]) {
+      for (const sep of [" ", "/", "-", "·", ".", "_", ",", "|", "+", " y "]) {
         const split = value.slice(0, mid) + sep + value.slice(mid);
         const parted = `${value.slice(0, 8)}${sep}${value.slice(8, 16)}${sep}${value.slice(16)}`;
         assert.equal(analyze(split).hits.some((hit) => hit.kind === "base58"), true, `${sep} ${value.slice(0, 6)}`);
         assert.equal(analyze(parted).hits.some((hit) => hit.kind === "base58"), true, `partes ${sep}`);
       }
     }
+    for (const address of evm) {
+      const hex = address.slice(2);
+      assert.equal(analyze(hex).hits.some((hit) => hit.kind === "base58"), true, "sin 0x");
+      assert.equal(analyze(`0.${hex}`).blocked, false);
+      const dotted = `0x${hex.replace(/(.{4})(?!$)/g, "$1.")}`;
+      const underscored = `0_x_${hex}`;
+      const comma = `0x${hex.slice(0, 8)},${hex.slice(8)}`;
+      assert.equal(analyze(dotted).hits.some((hit) => hit.kind === "base58"), true, "0x con puntos");
+      assert.equal(analyze(underscored).hits.some((hit) => hit.kind === "base58"), true, "0x partido");
+      assert.equal(analyze(comma).hits.some((hit) => hit.kind === "base58"), true, "0x con coma");
+      assert.equal(analyze(hex.slice(0, 39)).hits.some((hit) => hit.kind === "base58"), false, "39 hex");
+      assert.equal(analyze(`${hex}a`).hits.some((hit) => hit.kind === "base58"), false, "41 hex");
+    }
+    const irregular = `${wallet.slice(0, 3)}.${wallet.slice(3, 12)}_${wallet.slice(12, 14)},${wallet.slice(14)}`;
+    assert.equal(analyze(irregular).hits.some((hit) => hit.kind === "base58"), true, "trozos irregulares");
+    assert.equal(analyze("0".repeat(39)).blocked, false);
+    assert.equal(analyze("0".repeat(40)).hits.some((hit) => hit.kind === "base58"), true);
+    assert.equal(analyze("0".repeat(41)).blocked, false);
   });
 });

@@ -408,6 +408,14 @@ describe("web v2", () => {
     }
     assert.match(read("sitemap.xml"), /https:\/\/stubxai.com\/verify\//);
     assert.match(read("sitemap.xml"), /https:\/\/stubxai.com\/archivo</);
+    assert.match(read("sitemap.xml"), /https:\/\/stubxai.com\/studio\/</);
+    assert.match(read("sitemap.xml"), /https:\/\/stubxai.com\/studio\/reglas\//);
+    assert.equal((read("_headers").match(/^\/studio\/\*$/gm) ?? []).length, 1);
+    const studioHeaders = read("_headers").split(/^\/studio\/\*$/m)[1]?.split(/\n\/assets\/\*/)[0] ?? "";
+    assert.equal(studioHeaders.includes("X-Robots-Tag"), false);
+    assert.match(studioHeaders, /connect-src 'self'/);
+    assert.equal(read("studio/index.html").includes("noindex"), false);
+    assert.equal(read("studio/reglas/index.html").includes("noindex"), false);
     assert.equal(read("sitemap.xml").includes("archivo.html"), false);
     assert.match(read("_headers"), /\/assets\/\*[\s\S]*max-age=0, must-revalidate/);
     assert.equal(redirects.includes("/archivo.html"), false);

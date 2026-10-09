@@ -5,6 +5,11 @@ export const BRAND = {
   en: "Community content · unofficial",
 };
 
+export const RISK = {
+  es: "Cripto de alto riesgo",
+  en: "High-risk crypto",
+};
+
 export const FOOTER = {
   es: "Cripto de alto riesgo · Puedes perderlo todo · No es consejo de inversión.",
   en: "High-risk crypto · You could lose everything · Not investment advice.",

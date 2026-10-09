@@ -206,7 +206,7 @@ def nav(frm: str, current: str, absolute: bool = False) -> str:
     )
 
 
-NOINDEX_PAGES = {"404.html", "studio/index.html"}
+NOINDEX_PAGES = {"404.html"}
 
 
 def shell(frm: str, current: str, title_es: str, title_en: str, desc_es: str, desc_en: str, body: str, scripts: list[str], narrow: bool, worker: bool = False, absolute: bool = False) -> str:
@@ -216,7 +216,7 @@ def shell(frm: str, current: str, title_es: str, title_en: str, desc_es: str, de
     worker_src = "'self'" if worker else "'none'"
     url = public_url(frm)
     banner = draft_html(PUBLISH)
-    # Indexable desde 2026-10-09 (AUTORIZO de Cristian). Solo el 404 y el marcador de Studio siguen fuera.
+    # Indexable desde 2026-10-09 (AUTORIZO de Cristian). Solo el 404 sigue fuera. Studio se indexa.
     robots_meta = '<meta name="robots" content="noindex, nofollow">\n' if frm in NOINDEX_PAGES else ""
     return f"""<!DOCTYPE html>
 <html lang="es" data-lang="es">
@@ -987,6 +987,8 @@ def headers() -> str:
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
   Cross-Origin-Opener-Policy: same-origin
 
+# Un solo bloque /studio/*. connect-src sigue en 'self': el editor descarga los PNG
+# de avatar. Incrustarlos no deja la política en 'none' y duplicaría el peso.
 /studio/*
   Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; manifest-src 'self'; media-src 'none'; frame-src 'none'; worker-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests
   X-Frame-Options: DENY
@@ -1022,8 +1024,6 @@ def headers() -> str:
 /site.webmanifest
   X-Robots-Tag: noindex, nofollow
 /404.html
-  X-Robots-Tag: noindex, nofollow
-/studio/*
   X-Robots-Tag: noindex, nofollow
 """
 
@@ -1101,6 +1101,8 @@ def sitemap() -> str:
         ("https://stubxai.com/verify/", "2026-10-09"),
         ("https://stubxai.com/lab/", "2026-10-09"),
         ("https://stubxai.com/tablero/", "2026-10-09"),
+        ("https://stubxai.com/studio/", "2026-10-09"),
+        ("https://stubxai.com/studio/reglas/", "2026-10-09"),
         ("https://stubxai.com/methodology/", "2026-10-09"),
         ("https://stubxai.com/security/", "2026-10-09"),
         ("https://stubxai.com/risks/", "2026-10-09"),

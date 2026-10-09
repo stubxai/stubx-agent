@@ -115,7 +115,6 @@ function paintChoices() {
 
 function hitLabel(hit, code) {
   if (hit.kind === "base58") return code === "en" ? "address" : "dirección";
-  if (hit.kind === "name") return code === "en" ? "name" : "nombre";
   if (hit.kind === "url") return code === "en" ? "link" : "enlace";
   if (hit.kind === "handle") return hit.term;
   return hit.term;

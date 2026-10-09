@@ -1,4 +1,4 @@
-import { BRAND, FOOTER, PNG_COMMENT, WATERMARK, aiLabel } from "./copy.mjs";
+import { BRAND, FOOTER, PNG_COMMENT, RISK, WATERMARK, aiLabel } from "./copy.mjs";
 import { FONT_H, bitAt, glyphOf, measureText, wrapText } from "./font.mjs";
 import { encodePng } from "./png.mjs";
 
@@ -226,16 +226,19 @@ export async function renderCard(options) {
   const pad = Math.round(width * 0.05);
   const inner = Math.max(8, width - pad * 2);
   const brandText = BRAND[lang];
+  const riskText = RISK[lang];
   const footerText = FOOTER[lang];
   const label = aiLabel(options.origins ?? [], lang);
   const footerLines = wrapText(footerText, inner, size);
   const brandLines = wrapText(brandText, inner, size);
+  const riskLines = wrapText(riskText, inner, size);
   const aiLines = label ? wrapText(label, inner, size) : [];
   const lineH = size * 1.2;
   const footerH = Math.ceil(footerLines.length * lineH + size * 0.8);
   const brandH = Math.ceil(brandLines.length * lineH + size * 0.6);
+  const riskH = Math.ceil(riskLines.length * lineH + size * 0.35);
   const aiH = aiLines.length ? Math.ceil(aiLines.length * lineH + size * 0.45) : 0;
-  const topBand = brandH;
+  const topBand = brandH + riskH;
   const footerTop = height - footerH;
   const brandTop = footerTop - brandH;
   const aiTop = brandTop - aiH;
@@ -267,6 +270,7 @@ export async function renderCard(options) {
   fillRect(rgba, width, height, 0, brandTop, width, brandH, BRAND_BG);
   fillRect(rgba, width, height, 0, footerTop, width, footerH, FOOTER_BG);
   drawLines(rgba, width, height, brandLines, pad, size * 0.25, size, BRAND_FG, "brandTop", glyphs);
+  drawLines(rgba, width, height, riskLines, pad, brandH + size * 0.12, size, BRAND_FG, "riskTop", glyphs);
   if (aiLines.length) drawLines(rgba, width, height, aiLines, pad, aiTop + size * 0.2, size, FOOTER_FG, "ai", glyphs);
   drawLines(rgba, width, height, brandLines, pad, brandTop + size * 0.25, size, BRAND_FG, "brand", glyphs);
   drawLines(rgba, width, height, footerLines, pad, footerTop + size * 0.3, size, FOOTER_FG, "footer", glyphs);
@@ -278,7 +282,7 @@ export async function renderCard(options) {
     width,
     height,
     lang,
-    texts: [brandText, footerText, WATERMARK, label, options.title ?? "", options.body ?? ""].filter((item) => item !== ""),
+    texts: [brandText, riskText, footerText, WATERMARK, label, options.title ?? "", options.body ?? ""].filter((item) => item !== ""),
     glyphs,
     fits: titleFit.fits && bodyFit.fits,
     brandFontSize: size,
