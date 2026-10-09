@@ -258,6 +258,11 @@ describe("web v2", () => {
     assert.match(home, /href="\/verify\/"/);
     assert.match(home, /Analizar token/);
     assert.match(home, /Analyze token/);
+    assert.match(home, /<article class="card"><p class="estado-pill">[\s\S]*?<h3>Studio<\/h3>/);
+    assert.equal(/<article class="slot">[\s\S]*?<h3>Studio<\/h3>/.test(home), false);
+    assert.match(home, /Crea una imagen con recursos de STUBX, sin cuenta/);
+    assert.match(home, /Create an image with STUBX assets, without an account/);
+    assert.match(home, /<a href="\/studio\/"><span class="lang es" lang="es">Abrir Studio<\/span><span class="lang en" lang="en">Open Studio<\/span><\/a>/);
     assert.match(security, /Comunidad STUBX/);
     assert.match(security, /COMUNIDAD/);
     assert.match(risks, /puedes perder todo lo que aportes/);
