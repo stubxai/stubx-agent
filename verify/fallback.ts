@@ -5,7 +5,8 @@ export function isRetryableFailure(result: { ok: boolean; error?: string; httpSt
     return false;
   }
   const status = result.httpStatus ?? null;
-  if (status === 429 || status === 408 || status === 403 || (status !== null && status >= 500)) {
+  // Un 403 es un rechazo, no un fallo pasajero: no se prueba el servicio siguiente.
+  if (status === 429 || status === 408 || (status !== null && status >= 500)) {
     return true;
   }
   return /429|too many|rate limit|timeout|timed out|tiempo de espera|network|fetch failed|ECONN|ENET|ENOTFOUND|socket/i.test(
@@ -27,6 +28,7 @@ export function classifyRpcFailure(error: string, httpStatus: number | null): "l
 export class FallbackRpc implements ChainReader {
   lastEndpoint: string;
   usedFallback = false;
+  readonly reads: { method: string; endpoint: string }[] = [];
 
   constructor(
     private readonly readers: readonly ChainReader[],
@@ -36,26 +38,26 @@ export class FallbackRpc implements ChainReader {
   }
 
   getSlot(): Promise<RpcResult<number>> {
-    return this.first((reader) => reader.getSlot());
+    return this.first("getSlot", (reader) => reader.getSlot());
   }
 
   getAccountInfo(address: string): Promise<RpcResult<AccountInfo | null>> {
-    return this.first((reader) => reader.getAccountInfo(address));
+    return this.first("getAccountInfo", (reader) => reader.getAccountInfo(address));
   }
 
   getMultipleAccounts(addresses: readonly string[]): Promise<RpcResult<(AccountInfo | null)[]>> {
-    return this.first((reader) => reader.getMultipleAccounts(addresses));
+    return this.first("getMultipleAccounts", (reader) => reader.getMultipleAccounts(addresses));
   }
 
   getTokenSupply(mint: string): Promise<RpcResult<TokenAmount>> {
-    return this.first((reader) => reader.getTokenSupply(mint));
+    return this.first("getTokenSupply", (reader) => reader.getTokenSupply(mint));
   }
 
   getTokenLargestAccounts(mint: string): Promise<RpcResult<LargestAccount[]>> {
-    return this.first((reader) => reader.getTokenLargestAccounts(mint));
+    return this.first("getTokenLargestAccounts", (reader) => reader.getTokenLargestAccounts(mint));
   }
 
-  private async first<T>(run: (reader: ChainReader) => Promise<RpcResult<T>>): Promise<RpcResult<T>> {
+  private async first<T>(method: string, run: (reader: ChainReader) => Promise<RpcResult<T>>): Promise<RpcResult<T>> {
     let last: RpcResult<T> | null = null;
     for (let index = 0; index < this.readers.length; index += 1) {
       const reader = this.readers[index];
@@ -66,6 +68,7 @@ export class FallbackRpc implements ChainReader {
       last = result;
       this.lastEndpoint = this.endpoints[index] ?? this.lastEndpoint;
       if (result.ok || !isRetryableFailure(result) || index === this.readers.length - 1) {
+        this.reads.push({ method, endpoint: this.lastEndpoint });
         if (index > 0) {
           this.usedFallback = true;
         }

@@ -102,8 +102,10 @@ const HOMOGLYPHS: Record<string, string> = {
   "\u03A1": "P",
   "\u03A4": "T",
   "\u03A5": "Y",
+  "\u03A3": "S",
   "\u03A7": "X",
   "\u03B1": "a",
+  "\u03C3": "s",
   "\u03BF": "o",
   "\u03C4": "t",
   "\u0410": "A",
@@ -142,7 +144,7 @@ const HOMOGLYPHS: Record<string, string> = {
 };
 
 export function normalizeToken(value: string): string {
-  const folded = value.normalize("NFKC").replace(/[\p{Cc}\p{Cf}]/gu, "");
+  const folded = value.normalize("NFKC").replace(/[\p{Cc}\p{Cf}\uFFFD]/gu, "");
   let mapped = "";
   for (const char of folded) {
     mapped += HOMOGLYPHS[char] ?? char;

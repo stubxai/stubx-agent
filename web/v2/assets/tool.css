@@ -235,6 +235,20 @@ code, .mint {
   font-size: 0.95rem;
   overflow-wrap: anywhere;
 }
+.comparado .cambia {
+  background: var(--attention);
+  color: var(--accent-ink);
+  font-weight: 700;
+}
+.campo-error { margin: 0.35rem 0 0; }
+.consulta .campo-error { grid-column: 1 / -1; }
+.glosario-paso { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+.siguiente { min-height: 44px; }
+footer.site a {
+  display: inline-block;
+  padding: 12px 4px;
+  min-height: 44px;
+}
 #mision-app { display: grid; gap: 0.85rem; }
 .opciones { display: grid; gap: 0.65rem; margin: 0.35rem 0 0; }
 #mision-app section > button { width: 100%; min-height: 3rem; }
@@ -327,6 +341,11 @@ html.js .estatica { display: none; }
   body:has(.consulta) { padding-bottom: calc(8.5rem + env(safe-area-inset-bottom)); }
   .opciones button, .consulta button, .consulta input { min-height: 3.5rem; }
   nav.site a, .langs button, .pasos button, summary { min-height: 44px; }
+}
+.ajeno { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.95rem; }
+@media (max-width: 599px) {
+  header.site { position: static; }
+  #resultado, #mision-app section, #mision-app .feedback { scroll-margin-top: 0.75rem; }
 }
 @media (max-width: 360px) {
   .resultado h2 { font-size: 1.35rem; }

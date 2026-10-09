@@ -28,6 +28,16 @@ export type LookupRow = {
   value: Localized;
 };
 
+export type AddressMark = {
+  char: string;
+  changed: boolean;
+};
+
+export type AddressCompare = {
+  official: string;
+  marks: AddressMark[];
+};
+
 export type LookupView = {
   kind: LookupKind;
   light: LookupLight;
@@ -37,9 +47,12 @@ export type LookupView = {
   mint: string | null;
   rows: LookupRow[];
   partialNote: Localized | null;
+  compare: AddressCompare | null;
 };
 
 const BASE58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
+export const OFFICIAL_MINT = "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump";
 
 const COPY = {
   vacio: {
@@ -56,8 +69,8 @@ const COPY = {
     lightLabel: { es: "Dirección no válida", en: "Address is not valid" },
     title: { es: "Esta dirección no es válida", en: "This address is not valid" },
     support: {
-      es: "Tiene que ser la dirección completa, sin el nombre del token y sin texto alrededor.",
-      en: "It has to be the full address, without the token name and without surrounding text.",
+      es: `Tiene que ser la dirección completa, sin el nombre del token y sin texto alrededor. Una dirección de Solana es larga: de 32 a 44 letras y números, sin 0, O, I ni l. Por ejemplo: ${OFFICIAL_MINT}.`,
+      en: `It has to be the full address, without the token name and without surrounding text. A Solana address is long: 32 to 44 letters and numbers, with no 0, O, I, or l. For example: ${OFFICIAL_MINT}.`,
     },
   },
   oficial: {
@@ -92,8 +105,8 @@ const COPY = {
     lightLabel: { es: "Sin ficha", en: "No card" },
     title: { es: "No se pudo comprobar", en: "Could not be checked" },
     support: {
-      es: "No está entre las fichas de ejemplo. La lista no es completa y no rellena lo que la cadena no haya dicho.",
-      en: "It is not among the example cards. The list is not complete and it does not fill in what the chain has not said.",
+      es: "No está entre las fichas de ejemplo. La lista no es completa y esta página no consulta la red, así que no rellena el hueco.",
+      en: "It is not among the example cards. The list is not complete and this page does not query the network, so it does not fill the gap.",
     },
   },
   lectura_caida: {
@@ -110,8 +123,8 @@ const COPY = {
     lightLabel: { es: "Comprobando", en: "Checking" },
     title: { es: "Comprobando esta dirección…", en: "Checking this address…" },
     support: {
-      es: "Se va a leer la red pública de Solana. La dirección no se guarda en este sitio.",
-      en: "The public Solana network is about to be read. The address is not stored on this site.",
+      es: "Solo se mira la ficha local. La dirección no se envía a ningún sitio.",
+      en: "Only the local card is read. The address is not sent anywhere.",
     },
   },
 };
@@ -165,6 +178,58 @@ function viewOf(kind: keyof typeof COPY, mint: string | null, rows: LookupRow[],
     mint,
     rows,
     partialNote,
+    compare: null,
+  };
+}
+
+export function looksLikeOfficial(mint: string, official: string): boolean {
+  if (mint.length === 0 || mint.length !== official.length || mint === official) return false;
+  for (let i = 0; i < mint.length; i += 1) {
+    if (mint[i] !== official[i]) return true;
+  }
+  return false;
+}
+
+export function addressMarks(mint: string, official: string): AddressMark[] {
+  const marks: AddressMark[] = [];
+  for (let i = 0; i < mint.length; i += 1) {
+    const char = mint[i] ?? "";
+    marks.push({ char, changed: char !== (official[i] ?? "") });
+  }
+  return marks;
+}
+
+function officialMintOf(cards: readonly CardSummary[]): string {
+  return cards.find((card) => card.role === "registro")?.mint ?? OFFICIAL_MINT;
+}
+
+const NOT_OFFICIAL_GAP = {
+  es: "No hay ficha de ejemplo. La lista no es completa y esta página no consulta la red, así que no rellena el hueco.",
+  en: "There is no example card. The list is not complete and this page does not query the network, so it does not fill the gap.",
+};
+
+function notOfficialView(mint: string, official: string): LookupView {
+  const caseOnly = mint !== official && mint.toLowerCase() === official.toLowerCase();
+  const caseNote = {
+    es: "Las direcciones distinguen mayúsculas. Esta coincide con la oficial salvo por las mayúsculas.",
+    en: "Addresses are case-sensitive. This one matches the official address except for the letter case.",
+  };
+  return {
+    kind: "sin_ficha",
+    light: "atencion",
+    lightLabel: pair("No es la oficial", "Not the official one"),
+    title: pair("No es la dirección oficial", "Not the official address"),
+    support: pair(
+      `No es la dirección oficial de STUBX. La oficial es ${official}. Esto no dice quién creó esta dirección ni con qué intención.`,
+      `This is not the official STUBX address. The official one is ${official}. This does not say who created this address or why.`,
+    ),
+    mint,
+    rows: [],
+    partialNote: pair(
+      caseOnly ? `${caseNote.es} ${NOT_OFFICIAL_GAP.es}` : NOT_OFFICIAL_GAP.es,
+      caseOnly ? `${caseNote.en} ${NOT_OFFICIAL_GAP.en}` : NOT_OFFICIAL_GAP.en,
+    ),
+    compare: looksLikeOfficial(mint, official) ? { official, marks: addressMarks(mint, official) } : null,
   };
 }
 
@@ -258,6 +323,7 @@ function evmView(address: string, evm: readonly EvmExample[]): LookupView {
         { label: pair("En la cadena", "On-chain"), value: pair("Sin verificar", "Not verified") },
       ],
       partialNote: null,
+      compare: null,
     };
   }
   const shown = /^0x[0-9a-fA-F]{40}$/.test(address) ? address : null;
@@ -273,6 +339,7 @@ function evmView(address: string, evm: readonly EvmExample[]): LookupView {
     mint: shown,
     rows: [],
     partialNote: null,
+    compare: null,
   };
 }
 
@@ -286,9 +353,20 @@ export function classifyAddress(
   const mint = normalizeAddress(raw);
   if (/^0x/i.test(mint)) return evmView(mint, evm);
   if (!isAddress(mint)) return viewOf("invalida", null, [], null);
-  if (source === "caida") return viewOf("lectura_caida", mint, [], null);
-  const card = cards.find((item) => item.mint === mint);
-  if (!card) return viewOf("sin_ficha", mint, [], null);
-  const kind = card.role === "registro" ? "oficial" : card.role === "clon" ? "copia" : "otra";
-  return viewOf(kind, card.mint, rowsFor(card), partialNoteFor(card));
+  const official = officialMintOf(source === "caida" ? [] : cards);
+  if (mint === official) {
+    if (source === "caida") return viewOf("lectura_caida", mint, [], null);
+    const registry = cards.find((item) => item.mint === mint);
+    if (!registry) return viewOf("lectura_caida", mint, [], null);
+    const kind = registry.role === "registro" ? "oficial" : registry.role === "clon" ? "copia" : "otra";
+    return viewOf(kind, registry.mint, rowsFor(registry), partialNoteFor(registry));
+  }
+  if (source !== "caida") {
+    const card = cards.find((item) => item.mint === mint);
+    if (card) {
+      const kind = card.role === "registro" ? "oficial" : card.role === "clon" ? "copia" : "otra";
+      return viewOf(kind, card.mint, rowsFor(card), partialNoteFor(card));
+    }
+  }
+  return notOfficialView(mint, official);
 }

@@ -12,6 +12,18 @@ import { loadCards, loadFuentes } from "../mission/load.js";
 
 const root = repoRootFromMeta(import.meta.url);
 
+function cspHosts(policy: string): string[] {
+  const connect = policy
+    .split(";")
+    .map((part) => part.trim())
+    .find((part) => /(^|\s)connect-src\b/.test(part));
+  if (!connect) return [];
+  return connect
+    .split(/\s+/)
+    .filter((token) => token.startsWith("https://"))
+    .map((token) => new URL(token).host);
+}
+
 function page(pages: Array<{ rel: string; body: string }>, suffix: string): string {
   const found = pages.find((item) => item.rel.endsWith(suffix));
   assert.ok(found, suffix);
@@ -124,6 +136,10 @@ describe("páginas estáticas", () => {
     assert.match(css, /prefers-reduced-motion/);
     assert.match(css, /overflow-wrap: anywhere/);
     assert.match(css, /min-height: 3\.5rem/);
+    assert.match(css, /footer\.site a/);
+    assert.match(css, /min-height:\s*44px/);
+    assert.match(css, /max-width:\s*599px/);
+    assert.match(css, /position:\s*static/);
     assert.ok(contrast(PALETTE.ok, PALETTE.bgElev) >= 4.5);
     assert.ok(contrast(PALETTE.risk, PALETTE.bgElev) >= 4.5);
     assert.ok(contrast(PALETTE.attention, PALETTE.bgElev) >= 4.5);
@@ -137,16 +153,28 @@ describe("páginas estáticas", () => {
     assert.match(lab, /Cómo detectar un token clon en 5 pasos/);
     assert.match(lab, /How to spot a clone token in 5 steps/);
     assert.match(lab, /¿Cómo funciona\?/);
+    assert.match(lab, /Para quien quiera más detalle/);
+    assert.match(lab, /For anyone who wants more detail/);
+    assert.match(lab, /id="biblioteca"/);
     assert.match(verify, /Pega la dirección del token/);
     assert.match(verify, /Dirección del registro de STUBX/);
-    assert.match(verify, /Posible copia de STUBX/);
-    assert.match(verify, /Esto no es una auditoría ni una recomendación/);
+    assert.match(verify, /Se parece a STUBX, pero no es la CA oficial/);
+    assert.match(verify, /No es una auditoría, ni una recomendación, ni un aval/);
+    assert.match(verify, /ese servicio recibe la dirección y tu IP/);
     assert.match(verify, /No se pudo comprobar/);
     assert.match(verify, /id="direccion-token"/);
+    assert.match(verify, /id="direccion-error"/);
+    assert.match(verify, /Pega primero una dirección/);
+    assert.match(verify, /Paste an address first/);
     assert.match(verify, /id="resultado"/);
     assert.match(missionJs, /Paso /);
     assert.match(lab, /TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump/);
     assert.match(missionJs, /function answer/);
+    assert.match(missionJs, /Siguiente paso/);
+    assert.match(missionJs, /Next step/);
+    assert.match(missionJs, /Empezar de nuevo/);
+    assert.match(missionJs, /Start again/);
+    assert.match(missionJs, /step\.glossary\.forEach/);
     assert.match(missionJs, /function initialProgress/);
     assert.match(verify, /EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/);
     assert.match(verify, /no disponible/);
@@ -166,10 +194,11 @@ describe("páginas estáticas", () => {
     assert.match(verify, /partial: yes|partial: no/);
     const headers = page(pages, "_headers");
     assert.match(headers, /Content-Security-Policy: default-src 'none'/);
-    assert.match(headers, /\/verify\/\*[\s\S]*?api\.mainnet-beta\.solana\.com/);
-    assert.match(headers, /solana-rpc\.publicnode\.com/);
+    const verifyHeaders = headers.split("/verify/*")[1]?.split("\n\n")[0] ?? "";
+    assert.deepEqual(cspHosts(verifyHeaders), ["api.mainnet-beta.solana.com", "solana-rpc.publicnode.com"]);
+    assert.match(verifyHeaders, /! Content-Security-Policy/);
     const labHeaders = headers.split("/lab/*")[1]?.split("\n\n")[0] ?? "";
-    assert.equal(labHeaders.includes("mainnet-beta"), false);
+    assert.deepEqual(cspHosts(labHeaders), []);
     assert.equal(headers.includes("\n/*\n") || headers.startsWith("/*"), false);
     assert.equal(existsSync(path.join(root, "site-drafts/sw.js")), false);
     assert.equal(existsSync(path.join(root, "site-drafts/index.html")), false);
@@ -190,6 +219,10 @@ describe("páginas estáticas", () => {
     assert.match(verifyJs, /function pendingView/);
     assert.match(verifyJs, /lectura_caida/);
     assert.match(verifyJs, /Esta dirección no es válida/);
+    assert.match(verifyJs, /No es la dirección oficial/);
+    assert.match(verifyJs, /scrollIntoView/);
+    assert.match(verifyJs, /direccion-error/);
+    assert.equal(verify.includes("frame-ancestors"), false);
     assert.match(verifyJs, /Comprobando esta dirección/);
     for (const html of [lab, verify]) {
       const start = html.indexOf('<details class="como">');

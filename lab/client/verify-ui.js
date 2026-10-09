@@ -31,7 +31,7 @@ function paintVerify(out, view) {
     var list = verifyEl("ul", { class: "leyenda" });
     list.append(
       legendItem("ok", lang === "en" ? "STUBX registry address" : "Dirección del registro de STUBX"),
-      legendItem("riesgo", lang === "en" ? "Possible STUBX copy" : "Posible copia de STUBX"),
+      legendItem("atencion", lang === "en" ? "Looks like STUBX, but it is not the official CA" : "Se parece a STUBX, pero no es la CA oficial"),
       legendItem("neutro", lang === "en" ? "Could not be checked" : "No se pudo comprobar"),
     );
     out.append(emptyTitle, emptySupport, list);
@@ -42,12 +42,21 @@ function paintVerify(out, view) {
   var name = verifyEl("span");
   name.textContent = view.lightLabel[lang];
   flag.append(dot, name);
-  var title = verifyEl("h2");
+  var title = verifyEl("h2", { tabindex: "-1" });
   title.textContent = view.title[lang];
   var support = verifyEl("p", { class: "apoyo" });
   support.textContent = view.support[lang];
   out.append(flag, title, support);
-  if (view.mint) {
+  if (view.compare && view.compare.marks) {
+    var compared = verifyEl("p", { class: "mint comparado" });
+    view.compare.marks.forEach(function (mark) {
+      var span = verifyEl("span");
+      if (mark.changed) span.className = "cambia";
+      span.textContent = mark.char;
+      compared.append(span);
+    });
+    out.append(compared);
+  } else if (view.mint) {
     var mint = verifyEl("p", { class: "mint" });
     mint.textContent = view.mint;
     out.append(mint);
@@ -60,7 +69,7 @@ function paintVerify(out, view) {
   if (view.signals && view.signals.length) {
     var signals = verifyEl("div", { class: "senales" });
     view.signals.forEach(function (signal) {
-      var card = verifyEl("article", { class: "senal", "data-nivel": signal.level });
+      var card = verifyEl("article", { class: signal.tone ? "senal " + signal.tone : "senal", "data-nivel": signal.level });
       var heading = verifyEl("h3");
       heading.textContent = signal.title[lang];
       var body = verifyEl("p");
@@ -69,6 +78,11 @@ function paintVerify(out, view) {
       signals.append(card);
     });
     out.append(signals);
+  }
+  if (view.canSample) {
+    var sampleBtn = verifyEl("button", { type: "button", id: "leer-cuentas" });
+    sampleBtn.textContent = lang === "en" ? "Try to read the largest accounts" : "Intentar leer las cuentas más grandes";
+    out.append(sampleBtn);
   }
   if (view.kind !== "vacio" && typeof AUDIT_NOTICE !== "undefined") {
     var audit = verifyEl("p", { class: "aviso-fijo" });
@@ -84,6 +98,7 @@ function paintVerify(out, view) {
       var term = verifyEl("dt");
       term.textContent = row.label[lang];
       var detail = verifyEl("dd");
+      if ((row.value[lang] || "").charAt(0) === "«") detail.className = "ajeno";
       detail.textContent = row.value[lang];
       rows.append(term, detail);
     });
@@ -102,15 +117,40 @@ function bootVerify() {
   var source = cards.length > 0 ? "lista" : "caida";
 
   var last = emptyView();
+  var fieldError = document.getElementById("direccion-error");
 
-  function apply(view) {
+  function coverHeight() {
+    var header = document.querySelector("header.site");
+    if (!header) return 0;
+    var pos = window.getComputedStyle(header).position;
+    if (pos !== "fixed" && pos !== "sticky") return 0;
+    return Math.ceil(header.getBoundingClientRect().height);
+  }
+
+  function revealVerdict() {
+    out.style.scrollMarginTop = coverHeight() + "px";
+    out.scrollIntoView({ block: "start", inline: "nearest" });
+    var title = out.querySelector("h2");
+    if (title && title.focus) title.focus({ preventScroll: true });
+  }
+
+  function showFieldError() {
+    if (fieldError) fieldError.hidden = false;
+    input.setAttribute("aria-invalid", "true");
+    input.setAttribute("aria-describedby", "direccion-error");
+    if (input.focus) input.focus();
+  }
+
+  function hideFieldError() {
+    if (fieldError) fieldError.hidden = true;
+    input.removeAttribute("aria-describedby");
+  }
+
+  function apply(view, reveal) {
     last = view;
     paintVerify(out, view);
     input.setAttribute("aria-invalid", view.kind === "invalida" ? "true" : "false");
-    if (view.kind !== "vacio" && view.kind !== "comprobando") {
-      var narrow = window.matchMedia("(max-width: 48rem)").matches;
-      out.scrollIntoView({ block: narrow ? "start" : "nearest", inline: "nearest" });
-    }
+    if (reveal && view.kind !== "vacio" && view.kind !== "comprobando") revealVerdict();
   }
 
   var generation = 0;
@@ -130,8 +170,11 @@ function bootVerify() {
     if (cardView.kind === "copia") {
       return {
         id: "ficha",
-        level: "riesgo",
-        title: { es: "La ficha fechada también marca posible copia de STUBX", en: "The dated card also marks a possible STUBX copy" },
+        level: "atencion",
+        title: {
+          es: "La ficha fechada también dice que se parece a STUBX y no es la CA oficial",
+          en: "The dated card also says it looks like STUBX and is not the official CA",
+        },
         explain: cardView.support,
       };
     }
@@ -146,28 +189,103 @@ function bootVerify() {
     return null;
   }
 
+  var stamps = [];
+  var memory = new Map();
+  var currentAbort = null;
+  var inFlight = false;
+
+  function submitButton() {
+    return form.querySelector("button[type='submit']");
+  }
+
+  function setBusy(busy) {
+    inFlight = busy;
+    var submit = submitButton();
+    if (submit) submit.disabled = busy;
+    var extra = out.querySelector("#leer-cuentas");
+    if (extra) extra.disabled = busy;
+  }
+
+  function pauseView(mint) {
+    return {
+      ok: false,
+      kind: "limite",
+      mint: mint,
+      light: "neutro",
+      lightLabel: { es: "No se pudo comprobar", en: "Could not be checked" },
+      title: { es: "No se pudo comprobar", en: "Could not be checked" },
+      support: {
+        es: "Se han hecho 6 lecturas en un minuto. Espera un momento antes de comprobar otra. No se ha inventado un resultado.",
+        en: "6 readings were made in one minute. Wait a moment before checking another. No result was invented.",
+      },
+      signals: [],
+      rows: [],
+      endpointHost: null,
+      usedFallback: false,
+      slot: null,
+      fetchedAt: null,
+      sources: [],
+      canSample: false,
+    };
+  }
+
+  function endpointsOf() {
+    var rpc = STUBX_VERIFY.rpc || {};
+    return [rpc.primary, rpc.fallback].filter(function (item) { return !!item; });
+  }
+
+  function decorate(view, normalized) {
+    var cardView = classifyAddress(normalized, cards, "lista", evm);
+    if (cardView.compare) view.compare = cardView.compare;
+    var extra = datedSignal(cardView);
+    if (extra && view.ok && view.signals) view.signals = view.signals.concat([extra]);
+    return view;
+  }
+
   function run() {
+    if (inFlight) return;
+    if (input.value.trim() === "") {
+      apply(emptyView(), false);
+      showFieldError();
+      return;
+    }
+    hideFieldError();
     var value = input.value;
     var ticket = ++generation;
     if (typeof readAnyMint !== "function" || typeof loadingView !== "function") {
-      apply(pendingView(value));
+      apply(pendingView(value), false);
       window.requestAnimationFrame(function () {
         try {
-          apply(classifyAddress(value, cards, source, evm));
+          apply(classifyAddress(value, cards, source, evm), true);
         } catch (error) {
-          apply(classifyAddress(value, [], "caida", evm));
+          apply(classifyAddress(value, [], "caida", evm), true);
         }
       });
       return;
     }
     var normalized = normalizeAddress(value);
     if (!normalized || /^0x/i.test(normalized) || !isAddress(normalized)) {
-      apply(classifyAddress(value, cards, source, evm));
+      apply(classifyAddress(value, cards, source, evm), true);
       return;
     }
-    apply(loadingView(normalized));
-    var rpc = STUBX_VERIFY.rpc || {};
-    var endpoints = [rpc.primary, rpc.fallback].filter(function (item) { return !!item; });
+    var now = Date.now();
+    var cached = typeof readCache === "function" ? readCache(memory, normalized, now, 60000) : null;
+    if (cached) {
+      apply(cached, true);
+      return;
+    }
+    var slot = typeof takeQuerySlot === "function" ? takeQuerySlot(stamps, now, 6, 60000) : { allowed: true, stamps: stamps };
+    stamps = slot.stamps;
+    if (!slot.allowed) {
+      apply(pauseView(normalized), true);
+      return;
+    }
+    if (currentAbort) currentAbort.abort();
+    var controller = new AbortController();
+    currentAbort = controller;
+    setBusy(true);
+    apply(loadingView(normalized), true);
+    var endpoints = endpointsOf();
     readAnyMint({
       mint: normalized,
       registry: STUBX_VERIFY.registry || [],
@@ -175,21 +293,100 @@ function bootVerify() {
       maxRetries: 0,
       minIntervalMs: 200,
       timeoutMs: 8000,
+      signal: controller.signal,
     }).then(function (reading) {
-      if (ticket !== generation) return;
-      var view = reading;
-      var extra = datedSignal(classifyAddress(normalized, cards, "lista", evm));
-      if (extra && view.ok) {
-        view.signals = view.signals.concat([extra]);
-      }
-      apply(view);
+      if (ticket !== generation || controller.signal.aborted) return;
+      var view = decorate(reading, normalized);
+      if (view.ok) memory.set(normalized, { at: Date.now(), value: view });
+      apply(view, true);
     }).catch(function () {
-      if (ticket !== generation) return;
-      apply(classifyAddress(normalized, cards, "caida", evm));
+      if (ticket !== generation || controller.signal.aborted) return;
+      apply({
+        ok: false,
+        kind: "red",
+        mint: normalized,
+        light: "neutro",
+        lightLabel: { es: "No se pudo comprobar", en: "Could not be checked" },
+        title: { es: "No se pudo comprobar", en: "Could not be checked" },
+        support: {
+          es: "No se pudo comprobar: el servicio no respondió o rechazó la petición. No se ha inventado un resultado.",
+          en: "It could not be checked: the service did not respond or refused the request. No result was invented.",
+        },
+        signals: [],
+        rows: [],
+        endpointHost: null,
+        usedFallback: false,
+        slot: null,
+        fetchedAt: null,
+        sources: [],
+        canSample: false,
+      }, true);
+    }).then(function () {
+      if (ticket === generation) setBusy(false);
     });
   }
 
-  apply(emptyView());
+  function readSample() {
+    if (inFlight || !last || !last.canSample || !last.mint) return;
+    var now = Date.now();
+    var slot = typeof takeQuerySlot === "function" ? takeQuerySlot(stamps, now, 6, 60000) : { allowed: true, stamps: stamps };
+    stamps = slot.stamps;
+    if (!slot.allowed) {
+      apply(pauseView(last.mint), true);
+      return;
+    }
+    if (typeof readLargestAccounts !== "function") return;
+    var ticket = ++generation;
+    if (currentAbort) currentAbort.abort();
+    var controller = new AbortController();
+    currentAbort = controller;
+    setBusy(true);
+    var mint = last.mint;
+    readLargestAccounts({
+      mint: mint,
+      registry: STUBX_VERIFY.registry || [],
+      endpoints: endpointsOf(),
+      maxRetries: 0,
+      minIntervalMs: 200,
+      timeoutMs: 6000,
+      signal: controller.signal,
+    }).then(function (signal) {
+      if (ticket !== generation || controller.signal.aborted) return;
+      var view = last;
+      view.signals = (view.signals || []).map(function (item) {
+        return item.id === "cuentas" ? signal : item;
+      });
+      view.canSample = false;
+      memory.set(mint, { at: Date.now(), value: view });
+      apply(view, true);
+    }).catch(function () {
+      if (ticket !== generation || controller.signal.aborted) return;
+      var view = last;
+      var failed = {
+        id: "cuentas",
+        level: "atencion",
+        title: { es: "No se pudo comprobar", en: "Could not be checked" },
+        explain: {
+          es: "No se pudo comprobar. El servicio no devolvió las cuentas más grandes. No es una concentración de cero.",
+          en: "It could not be checked. The service did not return the largest accounts. It is not zero concentration.",
+        },
+      };
+      view.signals = (view.signals || []).map(function (item) {
+        return item.id === "cuentas" ? failed : item;
+      });
+      view.canSample = false;
+      apply(view, true);
+    }).then(function () {
+      if (ticket === generation) setBusy(false);
+    });
+  }
+
+  out.addEventListener("click", function (event) {
+    var target = event.target;
+    if (target && target.id === "leer-cuentas") readSample();
+  });
+
+  apply(emptyView(), false);
   form.addEventListener("submit", function (event) {
     event.preventDefault();
     run();

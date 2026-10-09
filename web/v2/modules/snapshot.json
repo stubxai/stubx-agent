@@ -2,8 +2,8 @@
   "kind": "pr14-browser-snapshot",
   "pr": 14,
   "branch": "feat/lab-mision-1",
-  "commit": "0cb1633bffffe07383742e75a9ec9435764d1baf",
-  "commitDate": "2026-10-09T19:19:53+00:00",
+  "commit": "0ad1d275e040267f91c21ce735ff71ebee2429c9",
+  "commitDate": "2026-10-09T22:43:20+00:00",
   "cardsDate": "2026-10-09",
   "earlierCardsDate": "2026-10-08",
   "liveNetwork": true,
@@ -14,5 +14,5 @@
   "missionBundle": "assets/mission.js",
   "browserApi": "modules/verify/lookup.mjs",
   "cards": "modules/verify/cards.json",
-  "note": "Bundle regenerado desde lab/ en 0cb1633bffffe07383742e75a9ec9435764d1baf. La página lee en el navegador, solo lectura, con los dos servicios públicos de limits.json. La dirección consultada no se guarda. La ficha oficial incluye la cuenta personal publicada 2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX. inBranch significa que ese commit está en esta rama, no que se haya fusionado en main ni publicado."
+  "note": "Bundle regenerado desde lab/ en 0ad1d275e040267f91c21ce735ff71ebee2429c9. La página lee en el navegador, solo lectura, con los dos servicios públicos de limits.json. Este sitio no guarda la dirección, pero ese servicio recibe la dirección y la IP según sus propias condiciones. La ficha oficial incluye la cuenta personal publicada 2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX. inBranch significa que ese commit está en esta rama. La PR 14 se fusionó en main el 2026-10-09. Esta copia no está publicada."
 }

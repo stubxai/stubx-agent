@@ -18,21 +18,15 @@ function git(args) {
   return run.stdout.trim();
 }
 
-function isAncestor(commit) {
-  if (!commit) return false;
-  return spawnSync("git", ["merge-base", "--is-ancestor", commit, "HEAD"], { cwd: root }).status === 0;
-}
-
 function labCommit() {
-  const origin = git(["rev-parse", "--verify", "origin/feat/lab-mision-1"]);
-  if (isAncestor(origin)) return origin;
   const headBlob = git(["rev-parse", "HEAD:lab/verify/lookup.ts"]);
-  const merges = git(["log", "--merges", "--pretty=%H", "HEAD"]).split("\n").filter(Boolean);
-  for (const merge of merges) {
-    const second = git(["rev-parse", `${merge}^2`]);
-    if (!isAncestor(second)) continue;
-    if (git(["rev-parse", `${second}:lab/verify/lookup.ts`]) !== headBlob) continue;
-    return second;
+  if (!headBlob) return "";
+  // El commit real es el primero que tiene este lookup.ts. En el checkout
+  // de un pull request HEAD es un merge: su blob coincide, pero el origen
+  // del archivo es el commit de la rama, no el merge.
+  const commits = git(["rev-list", "--reverse", "HEAD"]).split("\n").filter(Boolean);
+  for (const commit of commits) {
+    if (git(["rev-parse", `${commit}:lab/verify/lookup.ts`]) === headBlob) return commit;
   }
   return "";
 }
@@ -159,7 +153,7 @@ const snapshot = {
   missionBundle: "assets/mission.js",
   browserApi: "modules/verify/lookup.mjs",
   cards: "modules/verify/cards.json",
-  note: `Bundle regenerado desde lab/ en ${commit}. La página lee en el navegador, solo lectura, con los dos servicios públicos de limits.json. La dirección consultada no se guarda. La ficha oficial incluye la cuenta personal publicada ${PERSONAL}. inBranch significa que ese commit está en esta rama, no que se haya fusionado en main ni publicado.`,
+  note: `Bundle regenerado desde lab/ en ${commit}. La página lee en el navegador, solo lectura, con los dos servicios públicos de limits.json. Este sitio no guarda la dirección, pero ese servicio recibe la dirección y la IP según sus propias condiciones. La ficha oficial incluye la cuenta personal publicada ${PERSONAL}. inBranch significa que ese commit está en esta rama. La PR 14 se fusionó en main el 2026-10-09. Esta copia no está publicada.`,
 };
 writeFileSync(path.join(root, "web/v2/modules/snapshot.json"), `${JSON.stringify(snapshot, null, 2)}\n`);
 console.log(`Bundle regenerado desde lab/ ${commit}.`);

@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, test } from "node:test";
 import { TOKEN_2022_PROGRAM, PUMP_PROGRAM, bondingCurvePda, metadataPda } from "../programs.js";
-import { readAnyMint, type LiveReading } from "../signals.js";
+import { clipForeign, readAnyMint, readLargestAccounts, takeQuerySlot, type LiveReading } from "../signals.js";
 import { repoRootFrom } from "../root.js";
 import type { CanonicalToken } from "../types.js";
 import type { RpcTransport } from "../rpc.js";
@@ -152,7 +152,7 @@ describe("lectura universal con RPC simulado", () => {
     const reading = await readFixture(fixture("revoked-mint"));
     assert.equal(reading.ok, true);
     assert.equal(reading.title.es, "Lectura de este token");
-    assert.equal(reading.signals.find((item) => item.id === "emision")?.level, "ok");
+    assert.equal(reading.signals.find((item) => item.id === "emision")?.level, "neutro");
     assert.equal(reading.signals.find((item) => item.id === "congelacion")?.level, "ok");
     assert.match(textOf(reading), /Cuentas con tokens/);
     assert.equal(/\bholders?\b|reserva|\breserve\b|scam|recomendado|\bseguro\b/i.test(textOf(reading)), false);
@@ -163,15 +163,18 @@ describe("lectura universal con RPC simulado", () => {
     assert.equal(reading.title.es, "Lectura de este token");
     assert.equal(reading.signals.find((item) => item.id === "congelacion")?.level, "riesgo");
     assert.equal(reading.signals.find((item) => item.id === "emision")?.level, "atencion");
-    assert.match(reading.signals.find((item) => item.id === "cuentas")?.explain.es ?? "", /cuenta con tokens/);
+    assert.match(reading.signals.find((item) => item.id === "cuentas")?.explain.es ?? "", /no se pide sola/);
+    assert.match(reading.signals.find((item) => item.id === "cuentas")?.explain.es ?? "", /concentración de cero/);
     assert.equal(/scam|recomendado|\bseguro\b/i.test(textOf(reading)), false);
   });
 
   test("un nombre parecido a STUBX con otra dirección es posible copia", async () => {
     const reading = await readFixture(fixture("name-impersonation"));
-    assert.equal(reading.title.es, "Posible copia de STUBX");
-    assert.equal(reading.title.en, "Possible STUBX copy");
-    assert.equal(reading.light, "riesgo");
+    assert.equal(reading.title.es, "Lectura de este token");
+    assert.match(reading.support.es, /No es la dirección oficial de STUBX/);
+    assert.equal(reading.signals.find((item) => item.id === "copia")?.title.es, "Se parece a STUBX, pero no es la CA oficial");
+    assert.equal(reading.signals.find((item) => item.id === "copia")?.level, "atencion");
+    assert.equal(reading.light, "atencion");
     assert.equal(reading.mint === registry[0]?.mint, false);
   });
 
@@ -198,6 +201,10 @@ describe("lectura universal con RPC simulado", () => {
     });
     assert.equal(reading.title.es, "Esta dirección es la del registro de STUBX");
     assert.equal(reading.light, "ok");
+    assert.equal(reading.signals.find((item) => item.id === "emision")?.level, "ok");
+    assert.match(reading.rows.map((row) => row.label.es).join(" "), /Momento/);
+    assert.match(reading.rows.map((row) => row.value.es).join(" "), /slot 1/);
+    assert.equal(reading.canSample, true);
   });
 
   test("una cuenta ausente y una que no es mint no se rellenan", async () => {
@@ -259,8 +266,54 @@ describe("lectura universal con RPC simulado", () => {
       minIntervalMs: 0,
       sleep: async () => {},
     });
-    assert.equal(refused.ok, true);
-    assert.equal(refused.usedFallback, true);
+    assert.equal(refused.ok, false);
+    assert.equal(refused.usedFallback, false);
+    assert.equal(refused.title.es, "No se pudo comprobar");
+  });
+
+  test("la lectura automática no pide las cuentas más grandes", async () => {
+    const sample = fixture("revoked-mint");
+    const methods: string[] = [];
+    const accounts = new Map<string, AccountFixture | null>([
+      [sample.mint, sample.mintAccount],
+      [metadataPda(sample.mint), null],
+      [bondingCurvePda(sample.mint), null],
+    ]);
+    const base = transportFor({
+      slot: sample.slot,
+      accounts,
+      supply: { amount: "1000000000000000", decimals: 6 },
+      largest: [],
+    });
+    await readAnyMint({
+      mint: sample.mint,
+      registry,
+      endpoints: ["https://rpc-a.invalid"],
+      transport: async (endpoint, body, timeoutMs) => {
+        methods.push((JSON.parse(body) as { method: string }).method);
+        return base(endpoint, body, timeoutMs);
+      },
+      maxRetries: 0,
+      minIntervalMs: 0,
+      sleep: async () => {},
+    });
+    assert.equal(methods.includes("getTokenLargestAccounts"), false);
+    assert.equal(methods.includes("getTokenSupply"), true);
+    const sampleRead = await readLargestAccounts({
+      mint: sample.mint,
+      registry,
+      endpoints: ["https://rpc-a.invalid"],
+      transport: async () => ({ status: 429, body: "" }),
+      maxRetries: 0,
+      minIntervalMs: 0,
+      sleep: async () => {},
+      timeoutMs: 6000,
+    });
+    assert.equal(sampleRead.title.es, "No se pudo comprobar");
+    assert.match(sampleRead.explain.es, /No es una concentración de cero/);
+    assert.equal(clipForeign("N".repeat(80), false).length, 67);
+    assert.equal(takeQuerySlot([0, 1, 2, 3, 4, 5], 10, 6, 60_000).allowed, false);
+    assert.equal(takeQuerySlot([0], 70_000, 6, 60_000).allowed, true);
   });
 
   test("el límite y el tiempo agotado se dicen en claro", async () => {

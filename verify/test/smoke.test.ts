@@ -33,7 +33,7 @@ describe("humo opcional contra mainnet", { skip: enabled ? false : "VERIFY_SMOKE
     assert.equal(reading.ok, true, reading.support.es);
     assert.equal(reading.title.es, "Lectura de este token");
     assert.equal(
-      reading.signals.some((item) => item.title.es === "Posible copia de STUBX"),
+      reading.signals.some((item) => item.title.es === "Se parece a STUBX, pero no es la CA oficial"),
       false,
     );
     assert.match(reading.signals.find((item) => item.id === "programa")?.explain.es ?? "", /SPL Token/);

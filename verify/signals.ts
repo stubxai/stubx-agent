@@ -27,13 +27,23 @@ export type Signal = {
   level: SignalLevel;
   title: Localized;
   explain: Localized;
+  tone?: "ajeno";
 };
+
+export type ReadSource = { dato: Localized; host: string };
+
+export const OFFICIAL_CA = "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump";
 
 export type LiveRow = { label: Localized; value: Localized };
 
 export const AUDIT_NOTICE: Localized = {
-  es: "Esto no es una auditoría ni una recomendación. Un token sin señales de riesgo puede seguir siendo una mala inversión.",
-  en: "This is not an audit or a recommendation. A token with no risk signals can still be a bad investment.",
+  es: "Lectura en directo de datos públicos de la blockchain. No es una auditoría, ni una recomendación, ni un aval. STUBX no tiene relación con este token salvo que sea la CA oficial. Que no aparezcan señales no significa que no haya riesgo.",
+  en: "Live reading of public blockchain data. It is not an audit, a recommendation, or an endorsement. STUBX has no relationship with this token unless it is the official CA. No signals showing does not mean there is no risk.",
+};
+
+export const PRIVACY_NOTICE: Localized = {
+  es: "Tu navegador consulta directamente un servicio público de Solana (api.mainnet-beta.solana.com o solana-rpc.publicnode.com), solo en lectura. Este sitio no guarda la dirección, pero ese servicio recibe la dirección y tu IP según sus propias condiciones.",
+  en: "Your browser queries a public Solana service directly (api.mainnet-beta.solana.com or solana-rpc.publicnode.com), read-only. This site does not store the address, but that service receives the address and your IP under its own terms.",
 };
 
 export type LiveReading = {
@@ -49,6 +59,9 @@ export type LiveReading = {
   endpointHost: string | null;
   usedFallback: boolean;
   slot: number | null;
+  fetchedAt: string | null;
+  sources: ReadSource[];
+  canSample: boolean;
 };
 
 export type ReadMintInput = {
@@ -62,6 +75,7 @@ export type ReadMintInput = {
   now?: () => Date;
   sleep?: (ms: number) => Promise<void>;
   random?: () => number;
+  signal?: AbortSignal;
 };
 
 export function loadingView(mint: string | null): LiveReading {
@@ -72,15 +86,15 @@ export function loadingView(mint: string | null): LiveReading {
     light: "espera",
     lightLabel: { es: "Leyendo", en: "Reading" },
     title: { es: "Leyendo la cadena…", en: "Reading the chain…" },
-    support: {
-      es: "Se consulta un servicio público de Solana, solo lectura. La dirección no se guarda en este sitio.",
-      en: "A public Solana service is queried, read-only. The address is not stored on this site.",
-    },
+    support: PRIVACY_NOTICE,
     signals: [],
     rows: [],
     endpointHost: null,
     usedFallback: false,
     slot: null,
+    fetchedAt: null,
+    sources: [],
+    canSample: false,
   };
 }
 
@@ -102,35 +116,66 @@ function blank(kind: LiveReading["kind"], mint: string | null, title: Localized,
     endpointHost: null,
     usedFallback: false,
     slot: null,
+    fetchedAt: null,
+    sources: [],
+    canSample: false,
   };
 }
 
+export function takeQuerySlot(
+  stamps: readonly number[],
+  now: number,
+  limit = 6,
+  windowMs = 60_000,
+): { allowed: boolean; stamps: number[] } {
+  const fresh = stamps.filter((stamp) => now - stamp < windowMs);
+  if (fresh.length >= limit) {
+    return { allowed: false, stamps: fresh };
+  }
+  return { allowed: true, stamps: [...fresh, now] };
+}
+
+export function readCache<T>(
+  cache: ReadonlyMap<string, { at: number; value: T }>,
+  key: string,
+  now: number,
+  ttlMs = 60_000,
+): T | null {
+  const hit = cache.get(key);
+  if (!hit || now - hit.at >= ttlMs) {
+    return null;
+  }
+  return hit.value;
+}
+
 function failureReading(kind: "limite" | "tiempo" | "red", mint: string, host: string | null, usedFallback: boolean): LiveReading {
+  const checked = loc("No se pudo comprobar", "Could not be checked");
   const copy = {
     limite: {
-      title: loc("Límite de peticiones", "Request limit"),
+      title: checked,
       support: loc(
         "El servicio público de lectura ha llegado al límite de peticiones. Prueba otra vez dentro de un momento. No se ha inventado un resultado.",
         "The public read service has hit its request limit. Try again in a moment. No result was invented.",
       ),
     },
     tiempo: {
-      title: loc("Tiempo de espera agotado", "Timed out"),
+      title: checked,
       support: loc(
         "Se agotó el tiempo de espera del servicio de lectura. No se ha inventado un resultado.",
         "The read service timed out. No result was invented.",
       ),
     },
     red: {
-      title: loc("No se pudo leer la cadena", "The chain could not be read"),
+      title: checked,
       support: loc(
-        "No se pudo leer la cadena: el servicio no respondió o rechazó la petición. No se ha inventado un resultado.",
-        "The chain could not be read: the service did not respond or refused the request. No result was invented.",
+        "No se pudo comprobar: el servicio no respondió o rechazó la petición. No se ha inventado un resultado.",
+        "It could not be checked: the service did not respond or refused the request. No result was invented.",
       ),
     },
   }[kind];
   return {
     ...blank(kind, mint, copy.title, copy.support),
+    lightLabel: loc("No se pudo comprobar", "Could not be checked"),
     endpointHost: host,
     usedFallback,
   };
@@ -142,6 +187,67 @@ function hostOf(endpoint: string): string | null {
   } catch {
     return null;
   }
+}
+
+function sourceRows(rpc: FallbackRpc): ReadSource[] {
+  const labels: Record<string, Localized> = {
+    getMultipleAccounts: loc("Cuentas leídas", "Accounts read"),
+    getTokenSupply: loc("Suministro leído", "Supply read"),
+    getTokenLargestAccounts: loc("Muestra de cuentas", "Account sample"),
+    getAccountInfo: loc("Cuenta leída", "Account read"),
+    getSlot: loc("Slot", "Slot"),
+  };
+  return rpc.reads.map((read) => ({
+    dato: labels[read.method] ?? loc(read.method, read.method),
+    host: hostOf(read.endpoint) ?? read.endpoint,
+  }));
+}
+
+function madridClock(iso: string): Localized {
+  const date = new Date(iso);
+  const format = (lang: "es" | "en") =>
+    new Intl.DateTimeFormat(lang === "en" ? "en-GB" : "es-ES", {
+      timeZone: "Europe/Madrid",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).format(date);
+  return loc(format("es"), format("en"));
+}
+
+function sourceClock(iso: string, slot: number | null, rpc: FallbackRpc): LiveRow[] {
+  const sources = sourceRows(rpc);
+  const hosts = [...new Set(sources.map((item) => item.host))];
+  const when = madridClock(iso);
+  const rows: LiveRow[] = [
+    {
+      label: loc("Momento", "Time"),
+      value: loc(
+        slot === null ? `Leído a las ${when.es} (Madrid).` : `Leído en el slot ${slot}, a las ${when.es} (Madrid).`,
+        slot === null ? `Read at ${when.en} (Madrid).` : `Read at slot ${slot}, at ${when.en} (Madrid).`,
+      ),
+    },
+  ];
+  for (const source of sources) {
+    rows.push({ label: source.dato, value: loc(source.host, source.host) });
+  }
+  if (hosts.length > 1) {
+    rows.push({
+      label: loc("Servicios", "Services"),
+      value: loc("Esta lectura junta más de un servicio.", "This reading combines more than one service."),
+    });
+  }
+  return rows;
+}
+
+export function clipForeign(value: string, official: boolean): string {
+  const missing = "Sin nombre en las fuentes leídas";
+  if (official) {
+    return value || missing;
+  }
+  const raw = value || missing;
+  const cut = raw.length > 64 ? `${raw.slice(0, 64)}…` : raw;
+  return `«${cut}»`;
 }
 
 function isMintAccount(owner: string, data: Uint8Array): boolean {
@@ -191,10 +297,68 @@ export async function readAnyMint(input: ReadMintInput): Promise<LiveReading> {
         now: input.now,
         sleep: input.sleep,
         random: input.random,
+        signal: input.signal,
       }),
   );
   const rpc = new FallbackRpc(readers, endpoints);
   return readWith(checked.mint, input.registry, rpc);
+}
+
+export async function readLargestAccounts(input: ReadMintInput): Promise<Signal> {
+  const checked = validateMint(input.mint.trim());
+  if (!checked.ok) {
+    return {
+      id: "cuentas",
+      level: "atencion",
+      title: loc("No se pudo comprobar", "Could not be checked"),
+      explain: loc(
+        "La dirección no es un mint válido. No se ha pedido la muestra.",
+        "The address is not a valid mint. The sample was not requested.",
+      ),
+    };
+  }
+  const endpoints = input.endpoints.map((item) => item.trim()).filter((item) => item.length > 0);
+  if (endpoints.length === 0) {
+    return emptySample();
+  }
+  const readers = endpoints.map(
+    (endpoint) =>
+      new RpcClient({
+        endpoint,
+        transport: input.transport,
+        timeoutMs: input.timeoutMs ?? 6000,
+        maxRetries: 0,
+        minIntervalMs: input.minIntervalMs ?? 200,
+        now: input.now,
+        sleep: input.sleep,
+        random: input.random,
+        signal: input.signal,
+      }),
+  );
+  const rpc = new FallbackRpc(readers, endpoints);
+  const largest = await rpc.getTokenLargestAccounts(checked.mint);
+  if (!largest.ok) {
+    const kind = classifyRpcFailure(largest.error, largest.httpStatus);
+    const text = {
+      limite: loc(
+        "No se pudo comprobar. El servicio llegó al límite al pedir las cuentas más grandes. No es una concentración de cero.",
+        "It could not be checked. The service hit its limit while asking for the largest accounts. It is not zero concentration.",
+      ),
+      tiempo: loc(
+        "No se pudo comprobar. Se agotó el tiempo de 6 segundos al pedir las cuentas más grandes. No es una concentración de cero.",
+        "It could not be checked. The 6 second wait ran out while asking for the largest accounts. It is not zero concentration.",
+      ),
+      red: loc(
+        "No se pudo comprobar. El servicio no devolvió las cuentas más grandes. No es una concentración de cero.",
+        "It could not be checked. The service did not return the largest accounts. It is not zero concentration.",
+      ),
+    }[kind];
+    return { id: "cuentas", level: "atencion", title: loc("No se pudo comprobar", "Could not be checked"), explain: text };
+  }
+  const info = await rpc.getAccountInfo(checked.mint);
+  const program = info.ok && info.value ? info.value.owner : TOKEN_PROGRAM;
+  const sample = await accountSample(rpc, checked.mint, program, bondingCurvePda(checked.mint), largest, null);
+  return sample.signal;
 }
 
 async function readWith(mint: string, registry: readonly CanonicalToken[], rpc: FallbackRpc): Promise<LiveReading> {
@@ -232,10 +396,13 @@ async function readWith(mint: string, registry: readonly CanonicalToken[], rpc: 
           ),
         },
       ],
-      rows: [],
+      rows: sourceClock(packed.fetchedAt, packed.slot, rpc),
       endpointHost: hostOf(rpc.lastEndpoint),
       usedFallback: rpc.usedFallback,
       slot: packed.slot,
+      fetchedAt: packed.fetchedAt,
+      sources: sourceRows(rpc),
+      canSample: false,
     };
   }
   if (!isMintAccount(mintInfo.owner, mintInfo.data)) {
@@ -262,10 +429,16 @@ async function readWith(mint: string, registry: readonly CanonicalToken[], rpc: 
           ),
         },
       ],
-      rows: [{ label: loc("Programa", "Program"), value: loc(owner, owner) }],
+      rows: [
+        { label: loc("Programa", "Program"), value: loc(owner, owner) },
+        ...sourceClock(packed.fetchedAt, packed.slot, rpc),
+      ],
       endpointHost: hostOf(rpc.lastEndpoint),
       usedFallback: rpc.usedFallback,
       slot: packed.slot,
+      fetchedAt: packed.fetchedAt,
+      sources: sourceRows(rpc),
+      canSample: false,
     };
   }
   const decoded = decodeMint(mintInfo.owner, mintInfo.data);
@@ -283,8 +456,6 @@ async function readWith(mint: string, registry: readonly CanonicalToken[], rpc: 
   }
   const supply = await rpc.getTokenSupply(mint);
   rememberSlot(supply, slots);
-  const largest = await rpc.getTokenLargestAccounts(mint);
-  rememberSlot(largest, slots);
   const metaplex = metaInfo ? decodeMetaplex(metaInfo.owner, metaInfo.data, mint) : null;
   const bonding = curveInfo && curveInfo.owner === PUMP_PROGRAM ? decodeBondingCurve(curveInfo.owner, curveInfo.data) : null;
   const names = [decoded.tokenMetadata?.name, metaplex?.name].filter((item): item is string => Boolean(item));
@@ -328,36 +499,30 @@ async function readWith(mint: string, registry: readonly CanonicalToken[], rpc: 
         : `The mint bytes say ${formatUnits(decoded.supplyRaw, decoded.decimals)} with ${decoded.decimals} decimals. The other supply read did not respond, so there are no percentages.`,
     ),
   });
-  signals.push(authoritySignal("emision", decoded.mintAuthority));
-  signals.push(authoritySignal("congelacion", decoded.freezeAuthority));
+  signals.push(authoritySignal("emision", decoded.mintAuthority, likeness.inRegistry));
+  signals.push(authoritySignal("congelacion", decoded.freezeAuthority, true));
   signals.push(...extensionSignals(decoded.extensions, decoded.extensionsParsed));
-  signals.push(...metadataSignals(decoded.tokenMetadata, metaplex));
-  const sample = await accountSample(rpc, mint, mintInfo.owner, curve, largest, supplyMatches ? decoded.supplyRaw : null);
-  if (sample.failure) {
-    const kind = classifyRpcFailure(sample.failure, sample.httpStatus);
-    const text = {
-      limite: loc(
-        "No se pudo leer la muestra de cuentas con tokens: el servicio llegó al límite de peticiones. No es una concentración de cero.",
-        "The token-account sample could not be read: the service hit its request limit. It is not zero concentration.",
-      ),
-      tiempo: loc(
-        "No se pudo leer la muestra de cuentas con tokens: se agotó el tiempo de espera. No es una concentración de cero.",
-        "The token-account sample could not be read: the wait timed out. It is not zero concentration.",
-      ),
-      red: loc(
-        "No se pudo leer la muestra de cuentas con tokens. No es una concentración de cero.",
-        "The token-account sample could not be read. It is not zero concentration.",
-      ),
-    }[kind];
+  signals.push(...metadataSignals(decoded.tokenMetadata, metaplex, likeness.inRegistry));
+  if ([...names, ...symbols].some((item) => item.includes("\uFFFD"))) {
     signals.push({
-      id: "cuentas",
+      id: "invisibles",
       level: "atencion",
-      title: loc("Cuentas con tokens", "Token accounts"),
-      explain: text,
+      title: loc("Hay caracteres invisibles en el nombre", "There are invisible characters in the name"),
+      explain: loc(
+        "Al mostrar el nombre se marcaron caracteres de control o invisibles. La comparación con STUBX los quita antes de mirar.",
+        "When showing the name, control or invisible characters were marked. The comparison with STUBX removes them first.",
+      ),
     });
-  } else {
-    signals.push(sample.signal);
   }
+  signals.push({
+    id: "cuentas",
+    level: "neutro",
+    title: loc("Cuentas con tokens", "Token accounts"),
+    explain: loc(
+      "La muestra de las 20 cuentas con más tokens no se pide sola: los servicios públicos suelen rechazarla. Se puede intentar aparte. Si falla, no es una concentración de cero.",
+      "The sample of the 20 largest token accounts is not requested on its own: public services often refuse it. It can be tried separately. If it fails, it is not zero concentration.",
+    ),
+  });
   signals.push(curveSignal(curveInfo, bonding));
   const copyByName = !likeness.inRegistry && likeness.signals.some((item) => /^nombre |^símbolo /.test(item));
   if (likeness.inRegistry) {
@@ -373,11 +538,11 @@ async function readWith(mint: string, registry: readonly CanonicalToken[], rpc: 
   } else if (copyByName) {
     signals.push({
       id: "copia",
-      level: "riesgo",
-      title: loc("Posible copia de STUBX", "Possible STUBX copy"),
+      level: "atencion",
+      title: loc("Se parece a STUBX, pero no es la CA oficial", "Looks like STUBX, but it is not the official CA"),
       explain: loc(
-        "El nombre o el símbolo se parece a STUBX y la dirección es otra. La coincidencia no dice quién lo hizo.",
-        "The name or the symbol looks like STUBX and the address is different. The match does not say who did it.",
+        `El nombre o el símbolo se parece a STUBX y la dirección es otra. Esto no dice quién lo creó ni con qué intención. La única CA oficial es ${OFFICIAL_CA}.`,
+        `The name or the symbol looks like STUBX and the address is different. This does not say who created it or why. The only official CA is ${OFFICIAL_CA}.`,
       ),
     });
   } else {
@@ -402,6 +567,18 @@ async function readWith(mint: string, registry: readonly CanonicalToken[], rpc: 
       });
     }
   }
+  const hosts = new Set(sourceRows(rpc).map((item) => item.host));
+  if (hosts.size > 1) {
+    signals.push({
+      id: "fuentes",
+      level: "atencion",
+      title: loc("Esta lectura junta más de un servicio", "This reading combines more than one service"),
+      explain: loc(
+        `No todos los datos salieron del mismo servicio: ${[...hosts].join(", ")}.`,
+        `Not every fact came from the same service: ${[...hosts].join(", ")}.`,
+      ),
+    });
+  }
   const risky = signals.some((item) => item.level === "riesgo");
   const attention = signals.some((item) => item.level === "atencion");
   const headline = likeness.inRegistry
@@ -414,27 +591,24 @@ async function readWith(mint: string, registry: readonly CanonicalToken[], rpc: 
           "This reading matches the curated mint. The dated cards remain below, as an earlier snapshot.",
         ),
       }
-    : copyByName
-      ? {
-          light: "riesgo" as const,
-          lightLabel: loc("Posible copia de STUBX", "Possible STUBX copy"),
-          title: loc("Posible copia de STUBX", "Possible STUBX copy"),
-          support: loc(
-            "El nombre o el símbolo se parece a STUBX y la dirección es otra. Mira las señales, no solo el nombre.",
-            "The name or the symbol looks like STUBX and the address is different. Read the signals, not only the name.",
-          ),
-        }
-      : {
-          light: risky || attention ? ("atencion" as const) : ("neutro" as const),
-          lightLabel: loc(risky || attention ? "Hay señales" : "Sin esas señales", risky || attention ? "Signals found" : "Without those signals"),
-          title: loc("Lectura de este token", "Reading for this token"),
-          support: loc(
-            "Cada señal describe un hecho leído ahora. No es una puntuación.",
-            "Each signal describes a fact read just now. It is not a score.",
-          ),
-        };
-  const displayName = names[0] || "Sin nombre en las fuentes leídas";
-  const displaySymbol = symbols[0] || "Sin símbolo en las fuentes leídas";
+    : {
+        light: (risky ? "riesgo" : copyByName || attention ? "atencion" : "neutro") as "riesgo" | "atencion" | "neutro",
+        lightLabel: copyByName
+          ? loc("Se parece a STUBX, pero no es la CA oficial", "Looks like STUBX, but it is not the official CA")
+          : loc(risky || attention ? "Hay señales" : "Sin esas señales", risky || attention ? "Signals found" : "Without those signals"),
+        title: loc("Lectura de este token", "Reading for this token"),
+        support: copyByName
+          ? loc(
+              "No es la dirección oficial de STUBX. Cada señal describe un hecho leído ahora. No es una puntuación.",
+              "This is not the official STUBX address. Each signal describes a fact read just now. It is not a score.",
+            )
+          : loc(
+              "Cada señal describe un hecho leído ahora. No es una puntuación.",
+              "Each signal describes a fact read just now. It is not a score.",
+            ),
+      };
+  const displayName = clipForeign(names[0] || "", likeness.inRegistry);
+  const displaySymbol = clipForeign(symbols[0] || "", likeness.inRegistry);
   return {
     ok: true,
     kind: "lectura",
@@ -453,26 +627,27 @@ async function readWith(mint: string, registry: readonly CanonicalToken[], rpc: 
         value: loc(formatUnits(decoded.supplyRaw, decoded.decimals), formatUnits(decoded.supplyRaw, decoded.decimals)),
       },
       { label: loc("Decimales", "Decimals"), value: loc(String(decoded.decimals), String(decoded.decimals)) },
-      {
-        label: loc("Servicio de lectura", "Read service"),
-        value: loc(
-          rpc.usedFallback ? `${hostOf(rpc.lastEndpoint) ?? "público"} · segundo servicio` : (hostOf(rpc.lastEndpoint) ?? "público"),
-          rpc.usedFallback ? `${hostOf(rpc.lastEndpoint) ?? "public"} · second service` : (hostOf(rpc.lastEndpoint) ?? "public"),
-        ),
-      },
+      ...sourceClock(packed.fetchedAt, slots.size === 1 ? ([...slots][0] ?? packed.slot) : null, rpc),
     ],
     endpointHost: hostOf(rpc.lastEndpoint),
     usedFallback: rpc.usedFallback,
     slot: slots.size === 1 ? [...slots][0] ?? packed.slot : packed.slot,
+    fetchedAt: packed.fetchedAt,
+    sources: sourceRows(rpc),
+    canSample: true,
   };
 }
 
-function authoritySignal(kind: "emision" | "congelacion", authority: { state: string; address: string | null }): Signal {
+function authoritySignal(
+  kind: "emision" | "congelacion",
+  authority: { state: string; address: string | null },
+  official: boolean,
+): Signal {
   const minting = kind === "emision";
   if (authority.state === "revocada") {
     return {
       id: kind,
-      level: "ok",
+      level: minting && !official ? "neutro" : "ok",
       title: loc(
         minting ? "Nadie puede crear más tokens con ese permiso" : "Nadie puede congelar cuentas con ese permiso",
         minting ? "Nobody can create more tokens with that permission" : "Nobody can freeze accounts with that permission",
@@ -651,6 +826,7 @@ function oneExtension(item: ExtensionReport): Signal | null {
 function metadataSignals(
   tokenMeta: { updateAuthority: string | null; name: string; symbol: string; uri: string } | null,
   metaplex: { updateAuthority: string; name: string; symbol: string; uri: string; mutable: boolean | null } | null,
+  official: boolean,
 ): Signal[] {
   if (!tokenMeta && !metaplex) {
     return [
@@ -669,13 +845,15 @@ function metadataSignals(
   const name = tokenMeta?.name || metaplex?.name || "";
   const symbol = tokenMeta?.symbol || metaplex?.symbol || "";
   const uri = tokenMeta?.uri || metaplex?.uri || "";
+  const visibleName = clipForeign(name, official);
   out.push({
     id: "metadatos",
     level: "neutro",
-    title: loc(name ? `Nombre: ${name}` : "Nombre no leído", name ? `Name: ${name}` : "Name not read"),
+    tone: official ? undefined : "ajeno",
+    title: loc(name ? `Nombre: ${visibleName}` : "Nombre no leído", name ? `Name: ${visibleName}` : "Name not read"),
     explain: loc(
-      `Símbolo: ${symbol || "no leído"}. URI: ${uri || "no leída"}. El nombre es un texto. La dirección es otra cosa.`,
-      `Symbol: ${symbol || "not read"}. URI: ${uri || "not read"}. The name is text. The address is something else.`,
+      `Símbolo: ${symbol ? clipForeign(symbol, official) : "no leído"}. URI: ${uri ? clipForeign(uri, official) : "no leída"}. El nombre es un texto. La dirección es otra cosa.`,
+      `Symbol: ${symbol ? clipForeign(symbol, official) : "not read"}. URI: ${uri ? clipForeign(uri, official) : "not read"}. The name is text. The address is something else.`,
     ),
   });
   const update = tokenMeta?.updateAuthority || (metaplex ? metaplex.updateAuthority : null);
@@ -683,7 +861,7 @@ function metadataSignals(
   const canChange = mutable === true || Boolean(tokenMeta?.updateAuthority);
   out.push({
     id: "mutable",
-    level: canChange ? "atencion" : "ok",
+    level: canChange ? "atencion" : official ? "ok" : "neutro",
     title: loc(
       canChange ? "El nombre se puede cambiar" : "El nombre no se puede cambiar en las fuentes leídas",
       canChange ? "The name can be changed" : "The name cannot be changed in the sources read",

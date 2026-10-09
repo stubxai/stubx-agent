@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { repoRootFromMeta } from "../paths.js";
-import { DISCLAIMER, DISCLAIMER_EN, DRAFT_LINE, HOW_LAB, HOW_VERIFY, OFFLINE_LINE, READONLY_LINE, UNKNOWN_LINE } from "../copy.js";
+import { AUDIT_EN, AUDIT_ES, DISCLAIMER, DISCLAIMER_EN, DRAFT_LINE, HOW_LAB, HOW_VERIFY, OFFLINE_LINE, PRIVACY_EN, PRIVACY_ES, READONLY_LINE, UNKNOWN_LINE } from "../copy.js";
 import { loadGlossary, loadMission } from "../mission/load.js";
 import type { CardSummary, GlossaryEntry, Localized, Mission, MissionStep } from "../mission/types.js";
 import { changelogHeadings, listTestFiles, loadBoard } from "../tablero/collect.js";
@@ -278,11 +278,15 @@ ${input.main}
 
 function staticStep(step: MissionStep, index: number, total: number, cards: ReadonlyMap<string, CardSummary>, glossary: ReadonlyMap<string, GlossaryEntry>): string {
   const heading = { es: `Paso ${index + 1} de ${total}`, en: `Step ${index + 1} of ${total}` };
-  const termId = step.glossary[0];
-  const term = termId ? glossary.get(termId) : undefined;
-  const help = term
-    ? `<p><a href="#termino-${escapeHtml(term.id)}">${both({ es: "¿Qué significa esta palabra?", en: "What does this word mean?" })}</a></p>`
-    : "";
+  const help = step.glossary
+    .map((termId) => {
+      const term = glossary.get(termId);
+      if (!term) return "";
+      return `<a href="#termino-${escapeHtml(term.id)}">${both({ es: `¿Qué significa «${term.term.es}»?`, en: `What does “${term.term.en}” mean?` })}</a>`;
+    })
+    .filter((item) => item.length > 0)
+    .join("");
+  const helpHtml = help.length > 0 ? `<p class="glosario-paso">${help}</p>` : "";
   const cardHtml = step.cards
     .map((mint) => {
       const card = cards.get(mint);
@@ -296,9 +300,9 @@ function staticStep(step: MissionStep, index: number, total: number, cards: Read
     .map((line) => `<p>${both(line)}</p>`)
     .join("");
   const cardsFold = cardHtml
-    ? `<details class="tecnico"><summary>${both({ es: "Ver las fichas", en: "See the cards" })}</summary>${cardHtml}</details>`
+    ? `<details class="tecnico"><summary>${both({ es: "Detalles", en: "Details" })}</summary>${cardHtml}</details>`
     : "";
-  return `<article class="paso"><h3>${both(heading)}</h3><p>${both(step.guide)}</p>${help}${cardsFold}<h4>${both(step.prompt)}</h4><ul>${options}</ul><details class="tecnico"><summary>${both({ es: "Explicación", en: "Explanation" })}</summary><p>${both(step.whyRight)}</p>${wrong}</details></article>`;
+  return `<article class="paso"><h3>${both(heading)}</h3><p>${both(step.guide)}</p>${helpHtml}${cardsFold}<h4>${both(step.prompt)}</h4><ul>${options}</ul><details class="tecnico"><summary>${both({ es: "Explicación", en: "Explanation" })}</summary><p>${both(step.whyRight)}</p>${wrong}</details></article>`;
 }
 
 function glossaryArticle(entry: GlossaryEntry): string {
@@ -336,7 +340,7 @@ function renderLab(repoRoot: string, cards: readonly CardSummary[], mission: Mis
 ${howDetails(HOW_LAB)}
 <div id="mision-app" data-mission="${escapeHtml(mission.id)}"></div>
 <div class="estatica" id="mision-estatica"><p class="nota">${both({ es: "Sin JavaScript se pueden leer los pasos, las explicaciones y la biblioteca. El progreso local necesita el script de esta misma carpeta.", en: "Without JavaScript the steps, explanations, and library can still be read. Local progress needs the script in this same folder." })}</p>${staticSteps}</div>
-<section id="biblioteca"><h2>${both({ es: "Biblioteca", en: "Library" })}</h2><p class="muted">${both({ es: revision.enStatus, en: revision.enStatusEn || revision.enStatus })}</p><div class="fichas">${terms}</div><h2>${both({ es: "Guías", en: "Guides" })}</h2><div class="fichas">${guideSection(repoRoot)}</div></section>
+<details class="biblioteca-extra" id="biblioteca"><summary>${both({ es: "Para quien quiera más detalle", en: "For anyone who wants more detail" })}</summary><h2>${both({ es: "Biblioteca", en: "Library" })}</h2><p class="muted">${both({ es: revision.enStatus, en: revision.enStatusEn || revision.enStatus })}</p><div class="fichas">${terms}</div><h2>${both({ es: "Guías", en: "Guides" })}</h2><div class="fichas">${guideSection(repoRoot)}</div></details>
 <dialog id="ayuda" aria-labelledby="ayuda-titulo"><h2 id="ayuda-titulo"></h2><div id="ayuda-cuerpo"></div><form method="dialog"><button type="submit" id="ayuda-cerrar">${both({ es: "Cerrar", en: "Close" })}</button></form></dialog>`;
   return shell({
     title: "STUBX Lab · misión 1 · borrador",
@@ -366,18 +370,20 @@ function renderVerify(cards: readonly CardSummary[], glossaryEntries: readonly G
     .join("");
   const main = `<h1>${both({ es: "Comprueba una dirección", en: "Check an address" })}</h1>
 <p class="lede">${both({ es: "Cualquier token SPL o Token-2022, leído en directo y solo en lectura. Las fichas de abajo son ejemplos fechados, no una lista completa.", en: "Any SPL or Token-2022 token, read live and read-only. The cards below are dated examples, not a complete list." })}</p>
-<p class="aviso-fijo">${both({ es: "Esto no es una auditoría ni una recomendación. Un token sin señales de riesgo puede seguir siendo una mala inversión.", en: "This is not an audit or a recommendation. A token with no risk signals can still be a bad investment." })}</p>
+<p class="aviso-fijo">${both({ es: AUDIT_ES, en: AUDIT_EN })}</p>
+<p class="aviso-fijo privacidad">${both({ es: PRIVACY_ES, en: PRIVACY_EN })}</p>
 ${howDetails(HOW_VERIFY)}
 <div class="herramienta">
 <form id="consulta" class="consulta" action="#">
 <label for="direccion-token">${both({ es: "Pega la dirección del token", en: "Paste the token address" })}</label>
 <input id="direccion-token" name="direccion" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done">
 <button type="submit">${both({ es: "Comprobar", en: "Check" })}</button>
+<p id="direccion-error" class="campo-error" hidden>${both({ es: "Pega primero una dirección. Suele tener entre 32 y 44 letras y números.", en: "Paste an address first. It is usually 32 to 44 letters and numbers." })}</p>
 </form>
 <section id="resultado" class="resultado" data-state="vacio" data-luz="neutro" aria-live="polite">
 <h2>${both({ es: "La lectura aparece aquí", en: "The reading shows up here" })}</h2>
 <p class="apoyo">${both({ es: "La lectura será una de estas tres. Los detalles técnicos se quedan plegados.", en: "The reading will be one of these three. Technical details stay folded." })}</p>
-<ul class="leyenda"><li data-luz="ok">${both({ es: "Dirección del registro de STUBX", en: "STUBX registry address" })}</li><li data-luz="riesgo">${both({ es: "Posible copia de STUBX", en: "Possible STUBX copy" })}</li><li data-luz="neutro">${both({ es: "No se pudo comprobar", en: "Could not be checked" })}</li></ul>
+<ul class="leyenda"><li data-luz="ok">${both({ es: "Dirección del registro de STUBX", en: "STUBX registry address" })}</li><li data-luz="atencion">${both({ es: "Se parece a STUBX, pero no es la CA oficial", en: "Looks like STUBX, but it is not the official CA" })}</li><li data-luz="neutro">${both({ es: "No se pudo comprobar", en: "Could not be checked" })}</li></ul>
 </section>
 </div>
 <details class="tecnico archivo"><summary>${both({ es: "Fichas de ejemplo", en: "Example cards" })}</summary>
@@ -414,6 +420,8 @@ const PERSON_EN: Record<string, string> = {
 };
 
 const MILESTONE_EN: Record<string, string> = {
+  "2026-10-09 · Verify y Lab: lectura visible en el móvil":
+    "2026-10-09 · Verify and Lab: the reading stays visible on a phone",
   "2026-10-09 · Revisión de seguridad de Verify y Lab (borrador, sin publicar)":
     "2026-10-09 · Verify and Lab security review (draft, unpublished)",
   "2026-10-09 · STUBX Lab, misión 1 (borrador, sin publicar)":
@@ -622,7 +630,12 @@ export function renderHeaders(): string {
     ["/tablero/index.html", selfCsp],
     ["/indice-borrador.html", selfCsp],
   ];
-  return `${blocks.map(([item, csp]) => `${item}\n  ${[csp, ...shared].join("\n  ")}`).join("\n\n")}\n`;
+  return `${blocks
+    .map(([item, csp]) => {
+      const lines = item.startsWith("/verify") ? ["! Content-Security-Policy", csp, ...shared] : [csp, ...shared];
+      return `${item}\n  ${lines.join("\n  ")}`;
+    })
+    .join("\n\n")}\n`;
 }
 
 function madridStamp(iso: string | null): string {

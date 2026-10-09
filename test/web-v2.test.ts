@@ -43,7 +43,9 @@ type View = {
   light: string;
   mint: string | null;
   title: { es: string; en: string };
+  support: { es: string; en: string };
   partialNote: { es: string; en: string } | null;
+  compare: { official: string; marks: { char: string; changed: boolean }[] } | null;
   rows: { label: { es: string; en: string }; value: { es: string; en: string } }[];
 };
 
@@ -117,6 +119,28 @@ function walk(dir: string): string[] {
   return out;
 }
 
+function cspHosts(policy: string): string[] {
+  const connect = policy
+    .split(";")
+    .map((part) => part.trim())
+    .find((part) => /(^|\s)connect-src\b/.test(part));
+  if (!connect) return [];
+  return connect
+    .split(/\s+/)
+    .filter((token) => token.startsWith("https://"))
+    .map((token) => new URL(token).host);
+}
+
+function literalHttpsHosts(source: string): string[] {
+  const hosts: string[] = [];
+  for (const match of source.matchAll(/["'](https:\/\/[^"'\\]+)["']/g)) {
+    const raw = match[1];
+    if (!raw) continue;
+    hosts.push(new URL(raw).host);
+  }
+  return hosts;
+}
+
 function contrast(a: string, b: string): number {
   const lin = (hex: string) => {
     const n = Number.parseInt(hex.slice(1), 16);
@@ -178,6 +202,16 @@ describe("web v2", () => {
     assert.match(shell, /register\("\/lab\/sw\.js", \{ scope: "\/lab\/" \}\)/);
     assert.match(shell, /onLab && "serviceWorker" in navigator/);
     assert.match(read("lab/index.html"), /worker-src 'self'/);
+    assert.equal(read("lab/index.html").includes("frame-ancestors"), false);
+    assert.equal(read("verify/index.html").includes("frame-ancestors"), false);
+    assert.match(read("_headers"), /frame-ancestors 'none'/);
+    assert.match(read("assets/site.css"), /max-width:\s*599px/);
+    assert.match(read("assets/site.css"), /header\.site \{\s*position:\s*static;/);
+    assert.match(read("assets/site.css"), /footer\.site a[\s\S]*min-height:\s*44px/);
+    assert.match(read("verify/index.html"), /id="direccion-error"/);
+    assert.match(read("lab/index.html"), /Para quien quiera más detalle/);
+    assert.match(read("assets/mission.js"), /Siguiente paso/);
+    assert.match(read("assets/mission.js"), /Empezar de nuevo/);
     assert.match(read("index.html"), /worker-src 'none'/);
     assert.match(read("verify/index.html"), /worker-src 'none'/);
     for (const file of htmlFiles(root)) {
@@ -270,25 +304,28 @@ describe("web v2", () => {
     assert.match(html, /id="ver-lectura-caida"/);
     assert.match(html, /2026-10-09/);
     assert.match(html, /USD Coin/);
-    assert.match(html, /Esto no es una auditoría ni una recomendación/);
+    assert.match(html, /No es una auditoría, ni una recomendación, ni un aval/);
+    assert.match(html, /ese servicio recibe la dirección y tu IP/);
     assert.equal(html.includes("Esta página no consulta la red"), false);
     assert.equal(html.includes("\uFFFD"), false);
     assert.match(html, /assets\/verify\.js/);
-    assert.match(html, /connect-src 'self' https:\/\/api\.mainnet-beta\.solana\.com https:\/\/solana-rpc\.publicnode\.com/);
+    const meta = html.match(/Content-Security-Policy" content="([^"]+)"/)?.[1] ?? "";
+    assert.deepEqual(cspHosts(meta), ["api.mainnet-beta.solana.com", "solana-rpc.publicnode.com"]);
     const home = read("index.html");
-    assert.match(home, /connect-src 'self'/);
-    assert.equal(home.includes("api.mainnet-beta.solana.com"), false);
+    const homeMeta = home.match(/Content-Security-Policy" content="([^"]+)"/)?.[1] ?? "";
+    assert.deepEqual(cspHosts(homeMeta), []);
     const headers = read("_headers");
-    assert.match(headers, /connect-src 'self' https:\/\/api\.mainnet-beta\.solana\.com https:\/\/solana-rpc\.publicnode\.com/);
     assert.match(headers, /\/verify\/\*/);
+    assert.match(headers, /! Content-Security-Policy/);
     const bundle = read("assets/verify.js");
     assert.match(bundle, /stubx-verify-preview/);
     assert.match(bundle, /ERYyyaE2Y2GuKB28YbC2w1nCuQ5ENQ89LR44kicvpump/);
     assert.match(bundle, /FMNb4CR8ksibmgY7Ztei6BWcZXi3WHcVeJhYb9TNpump/);
     assert.match(bundle, /0xC99056C762F0802e4154E6322bd71ae928857777/);
     assert.match(bundle, /function readAnyMint/);
-    assert.match(bundle, /https:\/\/api\.mainnet-beta\.solana\.com/);
-    assert.match(bundle, /https:\/\/solana-rpc\.publicnode\.com/);
+    const bundleHosts = literalHttpsHosts(bundle);
+    assert.equal(bundleHosts.some((host) => host === "api.mainnet-beta.solana.com"), true);
+    assert.equal(bundleHosts.some((host) => host === "solana-rpc.publicnode.com"), true);
     assert.equal(/fetch\(/.test(bundle), true);
     assert.equal(bundle.includes("localStorage"), false);
     assert.equal(bundle.includes("sessionStorage"), false);
@@ -300,7 +337,12 @@ describe("web v2", () => {
       liveNetwork: boolean;
       cardsDate: string;
     };
-    assert.equal(snap.commit, "0cb1633bffffe07383742e75a9ec9435764d1baf");
+    assert.equal(snap.commit, "fa9a500dac16251aa5d3831d59717981fb434be6");
+    const cited = spawnSync("git", ["rev-parse", `${snap.commit}:lab/verify/lookup.ts`], { cwd: repoRoot(), encoding: "utf8" });
+    const headLookup = spawnSync("git", ["rev-parse", "HEAD:lab/verify/lookup.ts"], { cwd: repoRoot(), encoding: "utf8" });
+    assert.equal(cited.status, 0, cited.stderr);
+    assert.equal(headLookup.status, 0, headLookup.stderr);
+    assert.equal(cited.stdout.trim(), headLookup.stdout.trim());
     assert.equal(snap.inBranch, true);
     assert.equal(Object.hasOwn(snap, "merged"), false);
     assert.equal(snap.liveNetwork, true);
@@ -350,6 +392,11 @@ describe("web v2", () => {
     assert.match(otherEvm.title.es, /solo existe en Solana/);
     const missing = lookup.classifyAddress("11111111111111111111111111111111", data.cards, "lista", data.evm);
     assert.equal(missing.kind, "sin_ficha");
+    assert.equal(missing.title.es, "No es la dirección oficial");
+    assert.match(missing.support.es, /Esto no dice quién creó esta dirección ni con qué intención/);
+    const near = lookup.classifyAddress(`${CA.slice(0, -1)}q`, data.cards, "lista", data.evm);
+    assert.equal(near.title.es, "No es la dirección oficial");
+    assert.equal(near.compare?.marks.filter((mark) => mark.changed).length, 1);
     const down = lookup.classifyAddress(CA, data.cards, "caida", data.evm);
     assert.equal(down.kind, "lectura_caida");
     assert.equal(down.light, "neutro");
@@ -480,6 +527,48 @@ describe("web v2", () => {
     assert.equal(flag.status, 0, flag.stderr);
   });
 
+  test("frame-ancestors 'none' cubre todas las rutas de _headers", () => {
+    const blocks: Array<{ path: string; headers: string[] }> = [];
+    let current: { path: string; headers: string[] } | null = null;
+    for (const line of read("_headers").split("\n")) {
+      if (line.startsWith("#")) continue;
+      if (line.trim() === "") {
+        current = null;
+        continue;
+      }
+      if (!/^\s/.test(line)) {
+        current = { path: line.trim(), headers: [] };
+        blocks.push(current);
+        continue;
+      }
+      assert.ok(current, line);
+      current.headers.push(line.trim());
+    }
+    const policies = blocks.flatMap((block) =>
+      block.headers
+        .filter((header) => header.startsWith("Content-Security-Policy:"))
+        .map((header) => ({ path: block.path, header })),
+    );
+    assert.ok(policies.length >= 1);
+    assert.ok(policies.every((policy) => policy.header.includes("frame-ancestors 'none'")));
+    const globalPolicy = policies.find((policy) => policy.path === "/*");
+    assert.deepEqual(cspHosts(globalPolicy?.header ?? ""), []);
+    const verifyPolicy = policies.find((policy) => policy.path === "/verify/*");
+    assert.deepEqual(cspHosts(verifyPolicy?.header ?? ""), ["api.mainnet-beta.solana.com", "solana-rpc.publicnode.com"]);
+    const verifyBlock = blocks.find((block) => block.path === "/verify/*");
+    assert.ok(verifyBlock?.headers.includes("! Content-Security-Policy"));
+    const star = blocks.find((block) => block.path === "/*");
+    assert.ok(star?.headers.some((header) => header === "X-Frame-Options: DENY"));
+    for (const file of htmlFiles(siteRoot())) {
+      const html = readFileSync(file, "utf8");
+      const rel = path.relative(siteRoot(), file);
+      assert.equal(html.includes("frame-ancestors"), false, rel);
+      if (!html.includes("<head>")) continue;
+      assert.match(html, /og-stubx-2026-10b-1200x630\.jpg/, rel);
+      assert.equal(html.includes("og-stubx-2026-10-1200x630.jpg"), false, rel);
+    }
+  });
+
   test("the browser bundle matches lab/", async () => {
     const root = repoRoot();
     const bundlePaths = [
@@ -495,7 +584,7 @@ describe("web v2", () => {
       encoding: "utf8",
     });
     assert.equal(run.status, 0, `${run.stdout}\n${run.stderr}`);
-    assert.match(run.stdout, /0cb1633bffffe07383742e75a9ec9435764d1baf/);
+    assert.match(run.stdout, /fa9a500dac16251aa5d3831d59717981fb434be6/);
     const same = (left: string, right: string) => {
       assert.equal(readFileSync(path.join(root, left), "utf8"), readFileSync(path.join(root, right), "utf8"), left);
     };

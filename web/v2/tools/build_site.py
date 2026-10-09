@@ -264,7 +264,7 @@ def shell(frm: str, current: str, title_es: str, title_en: str, desc_es: str, de
 <meta name="twitter:description" content="{html.escape(desc_es + " / " + desc_en)}">
 <meta name="twitter:image" content="{OG_IMAGE}">
 <meta name="twitter:image:alt" content="{html.escape(OG_ALT)}">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src {connect or "'self'"}; manifest-src 'self'; media-src 'none'; frame-src 'none'; worker-src {worker_src}; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src {connect or "'self'"}; manifest-src 'self'; media-src 'none'; frame-src 'none'; worker-src {worker_src}; object-src 'none'; base-uri 'self'; form-action 'none'">
 <title data-title-es="{html.escape(title_es)}" data-title-en="{html.escape(title_en)}">{html.escape(title_es)}</title>
 <meta name="theme-color" content="#071422">
 <link rel="icon" href="{prefix}favicon.ico" sizes="any">
@@ -329,7 +329,7 @@ def home() -> str:
 <a class="primary" href="/verify/">{t("Analizar token", "Analyze token")}</a>
 <a href="/methodology/">{t("Ver la metodología", "Read the methodology")}</a>
 </div>
-<p class="source">{t("La acción abre Verify: lectura en vivo y solo lectura, más las fichas fechadas del 2026-10-09 (commit 86df576). No es una puntuación. La PR 14 sigue sin fusionarse en main.", "The action opens Verify: a live read-only reading, plus the dated cards of 2026-10-09 (commit 86df576). It is not a score. PR 14 is still not merged into main.")}</p>
+<p class="source">{t("La acción abre Verify: lectura en vivo y solo lectura, más las fichas fechadas del 2026-10-09 (commit 86df576). No es una puntuación. La PR 14 se fusionó en main el 2026-10-09.", "The action opens Verify: a live read-only reading, plus the dated cards of 2026-10-09 (commit 86df576). It is not a score. PR 14 was merged into main on 2026-10-09.")}</p>
 </div>
 <figure>
 <picture>
@@ -359,7 +359,7 @@ def home() -> str:
 <h2>{t("Herramientas de esta misma web", "Tools on this website")}</h2>
 <p>{t("Misma navegación, mismos estilos y el mismo selector de idioma. Lo que no está construido no tiene un botón que finja funcionar.", "Same navigation, same styles, and the same language switch. What is not built has no button pretending to work.")}</p>
 <div class="grid-3">
-<article class="card"><p class="estado-pill">{t("Lectura en vivo · 2026-10-09", "Live reading · 2026-10-09")}</p><h3>Verify</h3><p>{t("Pega la dirección de un token SPL o Token-2022. La página lee la cadena en directo y solo en lectura, y la compara con las fichas fechadas. No es una puntuación.", "Paste the address of an SPL or Token-2022 token. The page reads the chain live and read-only, and compares it with the dated cards. It is not a score.")}</p><p><a class="primary" href="/verify/">{t("Analizar token", "Analyze token")}</a></p></article>
+<article class="card"><p class="estado-pill">{t("Lectura en vivo + fichas del 2026-10-09", "Live reading + cards of 2026-10-09")}</p><h3>Verify</h3><p>{t("Pega la dirección de un token SPL o Token-2022. La página lee la cadena en directo y solo en lectura, y la compara con las fichas fechadas. No es una puntuación.", "Paste the address of an SPL or Token-2022 token. The page reads the chain live and read-only, and compares it with the dated cards. It is not a score.")}</p><p><a class="primary" href="/verify/">{t("Analizar token", "Analyze token")}</a></p></article>
 <article class="card"><p class="estado-pill">{t("Demo fechada · 2026-10-09", "Dated demo · 2026-10-09")}</p><h3>Lab</h3><p>{t("Una misión de cinco pasos para distinguir el mint del registro de un clon. El progreso se queda en este navegador.", "A five-step mission to tell the registry mint from a clone. Progress stays in this browser.")}</p><p><a href="/lab/">{t("Hacer la misión", "Start the mission")}</a></p></article>
 <article class="card"><p class="estado-pill">{t("Registro · 2026-10-09", "Record · 2026-10-09")}</p><h3>{t("Tablero", "Board")}</h3><p>{t("Estados reales del registro de la PR 14. Una idea, un código en el repositorio y una función publicada no son lo mismo.", "Real states from the PR 14 record. An idea, code in the repository, and a published function are not the same thing.")}</p><p><a href="/tablero/">{t("Abrir el tablero", "Open the board")}</a></p></article>
 </div>
@@ -450,10 +450,10 @@ def methodology() -> str:
 <h2>{t("Qué hace Verify aquí", "What Verify does here")}</h2>
 <ul class="clean">
 <li>{t("Acepta una dirección y comprueba el formato. El nombre del token no sirve.", "It accepts an address and checks the format. The token name is not enough.")}</li>
-<li>{t("Si la dirección es de Solana, la lee en directo y solo en lectura en un servicio público, con un segundo servicio si el primero llega al límite o se agota el tiempo. La dirección no se guarda. Las fichas fechadas siguen: la oficial releída el 2026-10-09, con la cuenta personal publicada 2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX, los clones ERYyy y FMNb de ese día, los tres clones y el contraste USDC del 2026-10-08, y dos ejemplos 0x sin verificar en la cadena. Commit 86df576 del 2026-10-09. La PR 14 sigue sin fusionarse en main.", "If the address is on Solana, it reads it live and read-only on a public service, with a second service if the first hits its limit or runs out of time. The address is not stored. The dated cards remain: the official one read again on 2026-10-09, including the published personal account 2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX, the ERYyy and FMNb clones from that day, the three clones and the USDC contrast from 2026-10-08, and two 0x examples that are not verified on-chain. Commit 86df576 of 2026-10-09. PR 14 is still not merged into main.")}</li>
+<li>{t("Si la dirección es de Solana, la lee en directo y solo en lectura. Tu navegador consulta directamente un servicio público de Solana (api.mainnet-beta.solana.com o solana-rpc.publicnode.com), solo en lectura. Este sitio no guarda la dirección, pero ese servicio recibe la dirección y tu IP según sus propias condiciones. Las fichas fechadas siguen: la oficial releída el 2026-10-09, con la cuenta personal publicada 2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX, los clones ERYyy y FMNb de ese día, los tres clones y el contraste USDC del 2026-10-08, y dos ejemplos 0x sin verificar en la cadena. Commit 86df576 del 2026-10-09. La PR 14 se fusionó en main el 2026-10-09.", "If the address is on Solana, it reads it live and read-only. Your browser queries a public Solana service directly (api.mainnet-beta.solana.com or solana-rpc.publicnode.com), read-only. This site does not store the address, but that service receives the address and your IP under its own terms. The dated cards remain: the official one read again on 2026-10-09, including the published personal account 2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX, the ERYyy and FMNb clones from that day, the three clones and the USDC contrast from 2026-10-08, and two 0x examples that are not verified on-chain. Commit 86df576 of 2026-10-09. PR 14 was merged into main on 2026-10-09.")}</li>
 <li>{t("Si el servicio no responde, lo dice y no inventa un resultado. Una dirección 0x no se lee como mint de Solana.", "If the service does not respond, it says so and does not invent a result. A 0x address is not read as a Solana mint.")}</li>
 <li>{t("«Esta dirección es la del registro de STUBX» significa que la dirección coincide con el registro. No es una garantía permanente ni una auditoría.", "“This address is the one in the STUBX registry” means the address matches the registry. It is not a permanent guarantee or an audit.")}</li>
-<li>{t("«Posible copia de STUBX» dice que el nombre o el símbolo se parece y el mint es otro. No dice quién lo hizo.", "“Possible STUBX copy” says the name or the symbol looks similar and the mint is a different one. It does not say who did it.")}</li>
+<li>{t("«Se parece a STUBX, pero no es la CA oficial» dice que el nombre o el símbolo se parece y el mint es otro. No dice quién lo hizo ni con qué intención.", "“Looks like STUBX, but it is not the official CA” says the name or the symbol looks similar and the mint is a different one. It does not say who did it or why.")}</li>
 </ul>
 <h2>{t("Desconocido no es comprobado", "Unknown is not verified")}</h2>
 <p>{t("No disponible significa que esa llamada no dejó un dato usable. Desconocido es lo que no se leyó. Ninguno de los dos se convierte en cero, en autoridad revocada ni en metadatos inmutables.", "Unavailable means that call did not leave a usable fact. Unknown is what was not read. Neither one becomes zero, a revoked authority, or immutable metadata.")}</p>
@@ -582,7 +582,7 @@ def legal() -> str:
 <li>{t("No hay cuentas, formularios, analítica ni cookies.", "There are no accounts, forms, analytics, or cookies.")}</li>
 <li>{t("El selector de idioma guarda stubx-lab-lang en este navegador. Se puede borrar desde el propio navegador.", "The language switch stores stubx-lab-lang in this browser. You can delete it in the browser itself.")}</li>
 <li>{t("Lab guarda stubx-lab-mision-01 solo si haces la misión. Es progreso local, sin puntuación y sin valor. Se puede borrar.", "Lab stores stubx-lab-mision-01 only if you do the mission. It is local progress, with no score and no value. It can be deleted.")}</li>
-<li>{t("Verify no envía la dirección a ningún servidor. La lectura es local, con las fichas del 2026-10-09 y los ejemplos anteriores.", "Verify does not send the address to any server. The reading is local, with the 2026-10-09 cards and the earlier examples.")}</li>
+<li>{t("Tu navegador consulta directamente un servicio público de Solana (api.mainnet-beta.solana.com o solana-rpc.publicnode.com), solo en lectura. Este sitio no guarda la dirección, pero ese servicio recibe la dirección y tu IP según sus propias condiciones.", "Your browser queries a public Solana service directly (api.mainnet-beta.solana.com or solana-rpc.publicnode.com), read-only. This site does not store the address, but that service receives the address and your IP under its own terms.")}</li>
 <li>{t("El service worker solo se registra en Lab, con alcance /lab/. No guarda la portada ni las páginas de avisos. Recargar trae esta copia.", "The service worker registers only on Lab, with scope /lab/. It does not store the home page or the notice pages. Reloading fetches this copy.")}</li>
 </ul>
 <h2>{t("Contacto", "Contact")}</h2>
@@ -1006,11 +1006,10 @@ def headers() -> str:
 # HSTS va aquí porque Pages no lo envía solo. Sin preload.
 # worker-src 'self' deja registrar el service worker de Lab. Las páginas que no son Lab
 # repiten worker-src 'none' en la meta, y las dos políticas se cruzan.
-# connect-src global incluye solo los dos servicios públicos de lectura. La meta del resto
-# de páginas sigue en connect-src 'self': la intersección no deja salir. /verify/ repite
-# los mismos orígenes en la meta y en esta cabecera.
+# connect-src global se queda en 'self'. /verify/ y /verify/* quitan esa política
+# con ! Content-Security-Policy y ponen la suya, solo con los dos RPC públicos.
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self' {origins}; manifest-src 'self'; media-src 'none'; frame-src 'none'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; manifest-src 'self'; media-src 'none'; frame-src 'none'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests
   Strict-Transport-Security: max-age=31536000; includeSubDomains
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
@@ -1019,8 +1018,10 @@ def headers() -> str:
   Cross-Origin-Opener-Policy: same-origin
 
 /verify/
+  ! Content-Security-Policy
   {verify_csp}
 /verify/*
+  ! Content-Security-Policy
   {verify_csp}
 
 /assets/*

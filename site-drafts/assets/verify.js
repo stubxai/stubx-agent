@@ -2,6 +2,7 @@
 (() => {
 const STUBX_VERIFY = {"cards":[{"mint":"TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump","role":"registro","roleNote":{"es":"Mint del registro curado. Ficha releída el 2026-10-09: saldos de la curva, de la creadora y de la cuenta personal publicada. No es un censo. La ficha del 2026-10-08 se conserva.","en":"Curated registry mint. Card reread on 2026-10-09: balances of the curve, the creator, and the published personal account. It is not a census. The 2026-10-08 card is kept."},"id":"a9e7f8d9d16fa3113f669afbcb4966123279efed3efa0769a864be484f43d9eb","createdAt":"2026-10-09T17:06:59.737Z","partial":true,"referenceSlot":454936120,"name":"STUBX","nameStatus":"verificado","symbol":"STUBX","inRegistry":true,"inRegistryStatus":"verificado","mintAuthority":{"state":"revocada","status":"verificado"},"freezeAuthority":{"state":"revocada","status":"verificado"},"metadataReading":"no_mutables_en_fuentes","metadataLevel":"ok","holdersStatus":"verificado","holdersNote":"Saldos leídos de la curva, de la creadora y de la cuenta personal publicada (2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX). El resto respecto al suministro es 0.0000 %. No es un censo de cuentas con tokens.","impersonation":false,"authenticityLevel":"ok","signals":["mint en el registro"],"statement":"El mint coincide con el registro curado (stubx). Que esté en el registro no es una auditoría.","statementStatus":"verificado","curvePresent":true,"curvePresentStatus":"verificado","curveProgress":"1.74","curveProgressStatus":"inferido","curveProgressNote":"Porcentaje inferido con la cantidad real inicial pública de la curva clásica (Pump.fun lo llama ‘reserves’) (793100000000000). Truncado a 2 decimales hacia cero.","curveModuleNote":"Cuenta con el discriminador público de BondingCurve.","rulesVersion":"0.1.0","statement_en":"The mint matches the curated registry (stubx). Being in the registry is not an audit.","holdersNote_en":"Balances read from the curve, from the creator, and from the published personal account (2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX). The rest of the supply is 0.0000 %. It is not a census of token accounts.","curveProgressNote_en":"Percentage inferred from the public initial real curve amount of the classic curve (Pump.fun calls these ‘reserves’) (793100000000000). Truncated to 2 decimals toward zero.","curveModuleNote_en":"Account with the public BondingCurve discriminator.","signals_en":["mint in the registry"]},{"mint":"Hhq4ffySVX3UQqSowjhP1Lwa8YuJDf7iH2hYWvVHTuEf","role":"clon","roleNote":{"es":"Clon conocido en los ejemplos del 2026-10-08. La ficha marca posible suplantación y no atribuye intención.","en":"Known clone in the 2026-10-08 examples. The card marks possible impersonation and does not attribute intent."},"id":"2c5de795c4aab2014c94dd6ed2fbda4564256b5e00c6fe929f1b7392639393b0","createdAt":"2026-10-08T07:41:49.581Z","partial":true,"referenceSlot":454480545,"name":"Comunidad STUBX · Creador","nameStatus":"verificado","symbol":"COMUNIDAD","inRegistry":false,"inRegistryStatus":"verificado","mintAuthority":{"state":"revocada","status":"verificado"},"freezeAuthority":{"state":"revocada","status":"verificado"},"metadataReading":"no_mutables_en_fuentes","metadataLevel":"ok","holdersStatus":"no_disponible","holdersNote":"Sin respuesta utilizable. No se interpreta como autoridad revocada, como inmutabilidad ni como cantidad cero.","impersonation":true,"authenticityLevel":"riesgo","signals":["nombre «Comunidad STUBX · Creador» incluye STUBX/STUBX","enlace «https://stubxai.com/canales» coincide con un enlace u host del registro"],"statement":"Posible suplantación: el nombre, el símbolo, la imagen o un enlace coinciden con un token del registro curado, pero el mint es otro. La coincidencia no atribuye intención.","statementStatus":"inferido","curvePresent":true,"curvePresentStatus":"verificado","curveProgress":"0.00","curveProgressStatus":"inferido","curveProgressNote":"Porcentaje inferido con la cantidad real inicial pública de la curva clásica (Pump.fun lo llama ‘reserves’) (793100000000000). Truncado a 2 decimales hacia cero.","curveModuleNote":"Cuenta con el discriminador público de BondingCurve.","rulesVersion":"0.1.0","statement_en":"Possible impersonation: the name, symbol, image, or a link matches a token in the curated registry, but the mint is different. The match does not attribute intent.","holdersNote_en":"No usable response. It is not interpreted as a revoked authority, as immutability, or as a zero balance.","curveProgressNote_en":"Percentage inferred from the public initial real curve amount of the classic curve (Pump.fun calls these ‘reserves’) (793100000000000). Truncated to 2 decimals toward zero.","curveModuleNote_en":"Account with the public BondingCurve discriminator.","signals_en":["name “Comunidad STUBX · Creador” includes STUBX","link “https://stubxai.com/canales” matches a link or host in the registry"]},{"mint":"DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ","role":"clon","roleNote":{"es":"Clon conocido en los ejemplos del 2026-10-08. La ficha marca posible suplantación y no atribuye intención.","en":"Known clone in the 2026-10-08 examples. The card marks possible impersonation and does not attribute intent."},"id":"e19ccb6b9ab284a1349b1c0bd7472c1cbb1f3eb9808c37c752c85418b4239a32","createdAt":"2026-10-08T07:42:08.413Z","partial":true,"referenceSlot":454480614,"name":"Comunidad STUBX","nameStatus":"verificado","symbol":"COMUNIDAD","inRegistry":false,"inRegistryStatus":"verificado","mintAuthority":{"state":"revocada","status":"verificado"},"freezeAuthority":{"state":"revocada","status":"verificado"},"metadataReading":"no_mutables_en_fuentes","metadataLevel":"ok","holdersStatus":"no_disponible","holdersNote":"Sin respuesta utilizable. No se interpreta como autoridad revocada, como inmutabilidad ni como cantidad cero.","impersonation":true,"authenticityLevel":"riesgo","signals":["nombre «Comunidad STUBX» incluye STUBX/STUBX","enlace «https://stubxai.com/canales» coincide con un enlace u host del registro"],"statement":"Posible suplantación: el nombre, el símbolo, la imagen o un enlace coinciden con un token del registro curado, pero el mint es otro. La coincidencia no atribuye intención.","statementStatus":"inferido","curvePresent":true,"curvePresentStatus":"verificado","curveProgress":"0.00","curveProgressStatus":"inferido","curveProgressNote":"Porcentaje inferido con la cantidad real inicial pública de la curva clásica (Pump.fun lo llama ‘reserves’) (793100000000000). Truncado a 2 decimales hacia cero.","curveModuleNote":"Cuenta con el discriminador público de BondingCurve.","rulesVersion":"0.1.0","statement_en":"Possible impersonation: the name, symbol, image, or a link matches a token in the curated registry, but the mint is different. The match does not attribute intent.","holdersNote_en":"No usable response. It is not interpreted as a revoked authority, as immutability, or as a zero balance.","curveProgressNote_en":"Percentage inferred from the public initial real curve amount of the classic curve (Pump.fun calls these ‘reserves’) (793100000000000). Truncated to 2 decimals toward zero.","curveModuleNote_en":"Account with the public BondingCurve discriminator.","signals_en":["name “Comunidad STUBX” includes STUBX","link “https://stubxai.com/canales” matches a link or host in the registry"]},{"mint":"3Zi6p6wzYZYKyuHdBhsDfb2pRR7XTfTfLKkXL7rwpump","role":"clon","roleNote":{"es":"Clon conocido en los ejemplos del 2026-10-08. La ficha marca posible suplantación y no atribuye intención.","en":"Known clone in the 2026-10-08 examples. The card marks possible impersonation and does not attribute intent."},"id":"6da15234e08bd8507731922297162664cf9c16690397d4fbe2777a8f6c32d44c","createdAt":"2026-10-08T07:42:27.686Z","partial":true,"referenceSlot":454480685,"name":"Comunidad STUBX","nameStatus":"verificado","symbol":"COMUNIDAD","inRegistry":false,"inRegistryStatus":"verificado","mintAuthority":{"state":"revocada","status":"verificado"},"freezeAuthority":{"state":"revocada","status":"verificado"},"metadataReading":"no_mutables_en_fuentes","metadataLevel":"ok","holdersStatus":"no_disponible","holdersNote":"Sin respuesta utilizable. No se interpreta como autoridad revocada, como inmutabilidad ni como cantidad cero.","impersonation":true,"authenticityLevel":"riesgo","signals":["nombre «Comunidad STUBX» incluye STUBX/STUBX","enlace «https://stubxai.com/canales» coincide con un enlace u host del registro"],"statement":"Posible suplantación: el nombre, el símbolo, la imagen o un enlace coinciden con un token del registro curado, pero el mint es otro. La coincidencia no atribuye intención.","statementStatus":"inferido","curvePresent":true,"curvePresentStatus":"verificado","curveProgress":"0.00","curveProgressStatus":"inferido","curveProgressNote":"Porcentaje inferido con la cantidad real inicial pública de la curva clásica (Pump.fun lo llama ‘reserves’) (793100000000000). Truncado a 2 decimales hacia cero.","curveModuleNote":"Cuenta con el discriminador público de BondingCurve.","rulesVersion":"0.1.0","statement_en":"Possible impersonation: the name, symbol, image, or a link matches a token in the curated registry, but the mint is different. The match does not attribute intent.","holdersNote_en":"No usable response. It is not interpreted as a revoked authority, as immutability, or as a zero balance.","curveProgressNote_en":"Percentage inferred from the public initial real curve amount of the classic curve (Pump.fun calls these ‘reserves’) (793100000000000). Truncated to 2 decimals toward zero.","curveModuleNote_en":"Account with the public BondingCurve discriminator.","signals_en":["name “Comunidad STUBX” includes STUBX","link “https://stubxai.com/canales” matches a link or host in the registry"]},{"mint":"ERYyyaE2Y2GuKB28YbC2w1nCuQ5ENQ89LR44kicvpump","role":"clon","roleNote":{"es":"Ejemplo añadido el 2026-10-09. Se llama STUBX y no es el mint del registro. No es una lista completa.","en":"Example added on 2026-10-09. It is named STUBX and it is not the registry mint. This is not a complete list."},"id":"efa9c02fbf4a0873c703d200f107c5951109174f0a15a2fcf898eeb5b735206b","createdAt":"2026-10-09T16:16:12.461Z","partial":true,"referenceSlot":454922187,"name":"STUBX","nameStatus":"verificado","symbol":"STUBX","inRegistry":false,"inRegistryStatus":"verificado","mintAuthority":{"state":"revocada","status":"verificado"},"freezeAuthority":{"state":"revocada","status":"verificado"},"metadataReading":"no_mutables_en_fuentes","metadataLevel":"ok","holdersStatus":"verificado","holdersNote":"Saldos leídos de la curva y de la creadora. El resto respecto al suministro es 0.0006 %. No es un censo de cuentas con tokens.","impersonation":true,"authenticityLevel":"riesgo","signals":["nombre «STUBX» incluye STUBX/STUBX","símbolo «STUBX» incluye STUBX/STUBX","enlace «https://.superb-horse-9036f5.netlify.app» coincide con un enlace u host del registro"],"statement":"Posible suplantación: el nombre, el símbolo, la imagen o un enlace coinciden con un token del registro curado, pero el mint es otro. La coincidencia no atribuye intención.","statementStatus":"inferido","curvePresent":true,"curvePresentStatus":"verificado","curveProgress":"0.00","curveProgressStatus":"inferido","curveProgressNote":"Porcentaje inferido con la cantidad real inicial pública de la curva clásica (Pump.fun lo llama ‘reserves’) (793100000000000). Truncado a 2 decimales hacia cero.","curveModuleNote":"Cuenta con el discriminador público de BondingCurve.","rulesVersion":"0.1.0","statement_en":"Possible impersonation: the name, symbol, image, or a link matches a token in the curated registry, but the mint is different. The match does not attribute intent.","holdersNote_en":"Balances read from the curve and from the creator. The rest of the supply is 0.0006 %. It is not a census of token accounts.","curveProgressNote_en":"Percentage inferred from the public initial real curve amount of the classic curve (Pump.fun calls these ‘reserves’) (793100000000000). Truncated to 2 decimals toward zero.","curveModuleNote_en":"Account with the public BondingCurve discriminator.","signals_en":["name “STUBX” includes STUBX","symbol “STUBX” includes STUBX","link “https://.superb-horse-9036f5.netlify.app” matches a link or host in the registry"]},{"mint":"FMNb4CR8ksibmgY7Ztei6BWcZXi3WHcVeJhYb9TNpump","role":"clon","roleNote":{"es":"Ejemplo añadido el 2026-10-09. Se llama STUBX y no es el mint del registro. No es una lista completa.","en":"Example added on 2026-10-09. It is named STUBX and it is not the registry mint. This is not a complete list."},"id":"d0fdaab557d36d442f688e25a71bbc54b3d61b5fffa2bf26c2a02ba1eb7a9c86","createdAt":"2026-10-09T16:16:39.440Z","partial":true,"referenceSlot":454922310,"name":"STUBX","nameStatus":"verificado","symbol":"STUBX","inRegistry":false,"inRegistryStatus":"verificado","mintAuthority":{"state":"revocada","status":"verificado"},"freezeAuthority":{"state":"revocada","status":"verificado"},"metadataReading":"no_mutables_en_fuentes","metadataLevel":"ok","holdersStatus":"verificado","holdersNote":"Saldos leídos de la curva y de la creadora. El resto respecto al suministro es 0.0000 %. No es un censo de cuentas con tokens.","impersonation":true,"authenticityLevel":"riesgo","signals":["nombre «STUBX» incluye STUBX/STUBX","símbolo «STUBX» incluye STUBX/STUBX","enlace «https://superb-horse-9036f5.netlify.app» coincide con un enlace u host del registro"],"statement":"Posible suplantación: el nombre, el símbolo, la imagen o un enlace coinciden con un token del registro curado, pero el mint es otro. La coincidencia no atribuye intención.","statementStatus":"inferido","curvePresent":true,"curvePresentStatus":"verificado","curveProgress":"0.00","curveProgressStatus":"inferido","curveProgressNote":"Porcentaje inferido con la cantidad real inicial pública de la curva clásica (Pump.fun lo llama ‘reserves’) (793100000000000). Truncado a 2 decimales hacia cero.","curveModuleNote":"Cuenta con el discriminador público de BondingCurve.","rulesVersion":"0.1.0","statement_en":"Possible impersonation: the name, symbol, image, or a link matches a token in the curated registry, but the mint is different. The match does not attribute intent.","holdersNote_en":"Balances read from the curve and from the creator. The rest of the supply is 0.0000 %. It is not a census of token accounts.","curveProgressNote_en":"Percentage inferred from the public initial real curve amount of the classic curve (Pump.fun calls these ‘reserves’) (793100000000000). Truncated to 2 decimals toward zero.","curveModuleNote_en":"Account with the public BondingCurve discriminator.","signals_en":["name “STUBX” includes STUBX","symbol “STUBX” includes STUBX","link “https://superb-horse-9036f5.netlify.app” matches a link or host in the registry"]},{"mint":"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v","role":"contraste","roleNote":{"es":"USDC, contraste. Bytes del mint el 2026-10-09 18:42 Europe/Madrid: 7.442.271.613,512366. getTokenSupply en ese minuto no coincidió, así que no hay porcentajes. No es STUBX y no está presentado como clon. La ficha del 2026-10-08 conserva la cifra de aquel día.","en":"USDC, a contrast. Mint bytes on 2026-10-09 18:42 Europe/Madrid: 7,442,271,613.512366. getTokenSupply did not match in that minute, so there are no percentages. It is not STUBX and is not presented as a clone. The 2026-10-08 card keeps that day's figure."},"id":"80671753ebbcdee3317b7b2bbf7ef14eba21f8a58e437bcfdab42da02b15d7a2","createdAt":"2026-10-09T16:42:39.825Z","partial":true,"referenceSlot":454929422,"name":"USD Coin","nameStatus":"verificado","symbol":"USDC","inRegistry":false,"inRegistryStatus":"verificado","mintAuthority":{"state":"activa","status":"verificado"},"freezeAuthority":{"state":"activa","status":"verificado"},"metadataReading":"mutables","metadataLevel":"atención","holdersStatus":"no_disponible","holdersNote":"Sin respuesta utilizable. No se interpreta como autoridad revocada, como inmutabilidad ni como cantidad cero.","impersonation":false,"authenticityLevel":"ok","signals":[],"statement":"Este mint no está en el registro curado. Que no esté no significa que sea falso ni que sea una copia.","statementStatus":"verificado","curvePresent":false,"curvePresentStatus":"verificado","curveProgress":null,"curveProgressStatus":"no_aplica","curveProgressNote":"No hay curva. No se rellena con cero.","curveModuleNote":"La dirección derivada tiene una cuenta cuyo propietario no es el programa de Pump.fun. No es una curva y no se rellenan con cero las cantidades de la curva.","rulesVersion":"0.1.0","statement_en":"This mint is not in the curated registry. That does not mean it is fake or a copy.","holdersNote_en":"No usable response. It is not interpreted as a revoked authority, as immutability, or as a zero balance.","curveProgressNote_en":"There is no curve. It is not filled with zero.","curveModuleNote_en":"The derived address has an account whose owner is not the Pump.fun program. It is not a curve, and the curve amounts are not filled in with zero.","signals_en":[]}],"source":"lista","evm":[{"chain":"eip155:56","address":"0xC99056C762F0802e4154E6322bd71ae928857777","name":"STUBX","symbol":"STUBX","creator":"0x3fDBEEcf583A53eABb59c3Ab2eDdfa8a5dBA503e","notedOn":"2026-10-08","source":"search-v2 de Pump.fun, 08-10 09:14 CEST","verifiedOnChain":false},{"chain":"eip155:5042","address":"0xAEE5212f20cc95370cb3556c4493CFD07721a5a3","name":"STUBX","symbol":"STUBX","creator":"0x37623022B9B42C5F8187eCe013E768a094C1d1e5","notedOn":"2026-10-08","source":"search-v2 de Pump.fun, 08-10 09:14 CEST","verifiedOnChain":false,"note":"La red eip155:5042 no está identificada con certeza."}],"rpc":{"primary":"https://api.mainnet-beta.solana.com","fallback":"https://solana-rpc.publicnode.com"},"registry":[{"id":"stubx","mint":"TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump","name":"STUBX","symbol":"STUBX","imageUris":["https://ipfs.io/ipfs/bafkreiew224xxf6ncagzzew5bfxlc6hejrib6jmxx66kxdrv5pkeoavd5e"],"imageCids":["bafkreiew224xxf6ncagzzew5bfxlc6hejrib6jmxx66kxdrv5pkeoavd5e"],"links":["https://x.com/stubxai","https://stubxai.com/","https://superb-horse-9036f5.netlify.app/"],"webHosts":["stubxai.com","superb-horse-9036f5.netlify.app"],"publishedAccounts":[{"address":"2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX","label":"cuenta personal publicada del creador, saldo leído; no es un censo"}]}]};
 const BASE58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+const OFFICIAL_MINT = "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump";
 const COPY = {
     vacio: {
         light: "neutro",
@@ -17,8 +18,8 @@ const COPY = {
         lightLabel: { es: "Dirección no válida", en: "Address is not valid" },
         title: { es: "Esta dirección no es válida", en: "This address is not valid" },
         support: {
-            es: "Tiene que ser la dirección completa, sin el nombre del token y sin texto alrededor.",
-            en: "It has to be the full address, without the token name and without surrounding text.",
+            es: `Tiene que ser la dirección completa, sin el nombre del token y sin texto alrededor. Una dirección de Solana es larga: de 32 a 44 letras y números, sin 0, O, I ni l. Por ejemplo: ${OFFICIAL_MINT}.`,
+            en: `It has to be the full address, without the token name and without surrounding text. A Solana address is long: 32 to 44 letters and numbers, with no 0, O, I, or l. For example: ${OFFICIAL_MINT}.`,
         },
     },
     oficial: {
@@ -53,8 +54,8 @@ const COPY = {
         lightLabel: { es: "Sin ficha", en: "No card" },
         title: { es: "No se pudo comprobar", en: "Could not be checked" },
         support: {
-            es: "No está entre las fichas de ejemplo. La lista no es completa y no rellena lo que la cadena no haya dicho.",
-            en: "It is not among the example cards. The list is not complete and it does not fill in what the chain has not said.",
+            es: "No está entre las fichas de ejemplo. La lista no es completa y esta página no consulta la red, así que no rellena el hueco.",
+            en: "It is not among the example cards. The list is not complete and this page does not query the network, so it does not fill the gap.",
         },
     },
     lectura_caida: {
@@ -71,8 +72,8 @@ const COPY = {
         lightLabel: { es: "Comprobando", en: "Checking" },
         title: { es: "Comprobando esta dirección…", en: "Checking this address…" },
         support: {
-            es: "Se va a leer la red pública de Solana. La dirección no se guarda en este sitio.",
-            en: "The public Solana network is about to be read. The address is not stored on this site.",
+            es: "Solo se mira la ficha local. La dirección no se envía a ningún sitio.",
+            en: "Only the local card is read. The address is not sent anywhere.",
         },
     },
 };
@@ -127,6 +128,49 @@ function viewOf(kind, mint, rows, partialNote) {
         mint,
         rows,
         partialNote,
+        compare: null,
+    };
+}
+function looksLikeOfficial(mint, official) {
+    if (mint.length === 0 || mint.length !== official.length || mint === official)
+        return false;
+    for (let i = 0; i < mint.length; i += 1) {
+        if (mint[i] !== official[i])
+            return true;
+    }
+    return false;
+}
+function addressMarks(mint, official) {
+    const marks = [];
+    for (let i = 0; i < mint.length; i += 1) {
+        const char = mint[i] ?? "";
+        marks.push({ char, changed: char !== (official[i] ?? "") });
+    }
+    return marks;
+}
+function officialMintOf(cards) {
+    return cards.find((card) => card.role === "registro")?.mint ?? OFFICIAL_MINT;
+}
+const NOT_OFFICIAL_GAP = {
+    es: "No hay ficha de ejemplo. La lista no es completa y esta página no consulta la red, así que no rellena el hueco.",
+    en: "There is no example card. The list is not complete and this page does not query the network, so it does not fill the gap.",
+};
+function notOfficialView(mint, official) {
+    const caseOnly = mint !== official && mint.toLowerCase() === official.toLowerCase();
+    const caseNote = {
+        es: "Las direcciones distinguen mayúsculas. Esta coincide con la oficial salvo por las mayúsculas.",
+        en: "Addresses are case-sensitive. This one matches the official address except for the letter case.",
+    };
+    return {
+        kind: "sin_ficha",
+        light: "atencion",
+        lightLabel: pair("No es la oficial", "Not the official one"),
+        title: pair("No es la dirección oficial", "Not the official address"),
+        support: pair(`No es la dirección oficial de STUBX. La oficial es ${official}. Esto no dice quién creó esta dirección ni con qué intención.`, `This is not the official STUBX address. The official one is ${official}. This does not say who created this address or why.`),
+        mint,
+        rows: [],
+        partialNote: pair(caseOnly ? `${caseNote.es} ${NOT_OFFICIAL_GAP.es}` : NOT_OFFICIAL_GAP.es, caseOnly ? `${caseNote.en} ${NOT_OFFICIAL_GAP.en}` : NOT_OFFICIAL_GAP.en),
+        compare: looksLikeOfficial(mint, official) ? { official, marks: addressMarks(mint, official) } : null,
     };
 }
 function pendingView(raw) {
@@ -199,6 +243,7 @@ function evmView(address, evm) {
                 { label: pair("En la cadena", "On-chain"), value: pair("Sin verificar", "Not verified") },
             ],
             partialNote: null,
+            compare: null,
         };
     }
     const shown = /^0x[0-9a-fA-F]{40}$/.test(address) ? address : null;
@@ -211,6 +256,7 @@ function evmView(address, evm) {
         mint: shown,
         rows: [],
         partialNote: null,
+        compare: null,
     };
 }
 function classifyAddress(raw, cards, source, evm = []) {
@@ -221,13 +267,24 @@ function classifyAddress(raw, cards, source, evm = []) {
         return evmView(mint, evm);
     if (!isAddress(mint))
         return viewOf("invalida", null, [], null);
-    if (source === "caida")
-        return viewOf("lectura_caida", mint, [], null);
-    const card = cards.find((item) => item.mint === mint);
-    if (!card)
-        return viewOf("sin_ficha", mint, [], null);
-    const kind = card.role === "registro" ? "oficial" : card.role === "clon" ? "copia" : "otra";
-    return viewOf(kind, card.mint, rowsFor(card), partialNoteFor(card));
+    const official = officialMintOf(source === "caida" ? [] : cards);
+    if (mint === official) {
+        if (source === "caida")
+            return viewOf("lectura_caida", mint, [], null);
+        const registry = cards.find((item) => item.mint === mint);
+        if (!registry)
+            return viewOf("lectura_caida", mint, [], null);
+        const kind = registry.role === "registro" ? "oficial" : registry.role === "clon" ? "copia" : "otra";
+        return viewOf(kind, registry.mint, rowsFor(registry), partialNoteFor(registry));
+    }
+    if (source !== "caida") {
+        const card = cards.find((item) => item.mint === mint);
+        if (card) {
+            const kind = card.role === "registro" ? "oficial" : card.role === "clon" ? "copia" : "otra";
+            return viewOf(kind, card.mint, rowsFor(card), partialNoteFor(card));
+        }
+    }
+    return notOfficialView(mint, official);
 }
 function readU16(data, offset) {
     if (offset < 0 || offset + 2 > data.length) {
@@ -308,7 +365,8 @@ function isRetryableFailure(result) {
         return false;
     }
     const status = result.httpStatus ?? null;
-    if (status === 429 || status === 408 || status === 403 || (status !== null && status >= 500)) {
+    // Un 403 es un rechazo, no un fallo pasajero: no se prueba el servicio siguiente.
+    if (status === 429 || status === 408 || (status !== null && status >= 500)) {
         return true;
     }
     return /429|too many|rate limit|timeout|timed out|tiempo de espera|network|fetch failed|ECONN|ENET|ENOTFOUND|socket/i.test(result.error ?? "");
@@ -328,27 +386,28 @@ class FallbackRpc {
     endpoints;
     lastEndpoint;
     usedFallback = false;
+    reads = [];
     constructor(readers, endpoints) {
         this.readers = readers;
         this.endpoints = endpoints;
         this.lastEndpoint = endpoints[0] ?? "";
     }
     getSlot() {
-        return this.first((reader) => reader.getSlot());
+        return this.first("getSlot", (reader) => reader.getSlot());
     }
     getAccountInfo(address) {
-        return this.first((reader) => reader.getAccountInfo(address));
+        return this.first("getAccountInfo", (reader) => reader.getAccountInfo(address));
     }
     getMultipleAccounts(addresses) {
-        return this.first((reader) => reader.getMultipleAccounts(addresses));
+        return this.first("getMultipleAccounts", (reader) => reader.getMultipleAccounts(addresses));
     }
     getTokenSupply(mint) {
-        return this.first((reader) => reader.getTokenSupply(mint));
+        return this.first("getTokenSupply", (reader) => reader.getTokenSupply(mint));
     }
     getTokenLargestAccounts(mint) {
-        return this.first((reader) => reader.getTokenLargestAccounts(mint));
+        return this.first("getTokenLargestAccounts", (reader) => reader.getTokenLargestAccounts(mint));
     }
-    async first(run) {
+    async first(method, run) {
         let last = null;
         for (let index = 0; index < this.readers.length; index += 1) {
             const reader = this.readers[index];
@@ -359,6 +418,7 @@ class FallbackRpc {
             last = result;
             this.lastEndpoint = this.endpoints[index] ?? this.lastEndpoint;
             if (result.ok || !isRetryableFailure(result) || index === this.readers.length - 1) {
+                this.reads.push({ method, endpoint: this.lastEndpoint });
                 if (index > 0) {
                     this.usedFallback = true;
                 }
@@ -583,8 +643,10 @@ const HOMOGLYPHS = {
     "\u03A1": "P",
     "\u03A4": "T",
     "\u03A5": "Y",
+    "\u03A3": "S",
     "\u03A7": "X",
     "\u03B1": "a",
+    "\u03C3": "s",
     "\u03BF": "o",
     "\u03C4": "t",
     "\u0410": "A",
@@ -622,7 +684,7 @@ const HOMOGLYPHS = {
     "\u13F4": "B",
 };
 function normalizeToken(value) {
-    const folded = value.normalize("NFKC").replace(/[\p{Cc}\p{Cf}]/gu, "");
+    const folded = value.normalize("NFKC").replace(/[\p{Cc}\p{Cf}\uFFFD]/gu, "");
     let mapped = "";
     for (const char of folded) {
         mapped += HOMOGLYPHS[char] ?? char;
@@ -1452,7 +1514,7 @@ const ALLOWED_RPC_METHODS = [
     "getSlot",
 ];
 
-async function httpTransport(endpoint, body, timeoutMs) {
+async function httpTransport(endpoint, body, timeoutMs, signal) {
     const headers = {
         "content-type": "application/json",
         accept: "application/json",
@@ -1464,7 +1526,7 @@ async function httpTransport(endpoint, body, timeoutMs) {
         method: "POST",
         headers,
         body,
-        signal: AbortSignal.timeout(timeoutMs),
+        signal: signal ? AbortSignal.any([AbortSignal.timeout(timeoutMs), signal]) : AbortSignal.timeout(timeoutMs),
         cache: "no-store",
         credentials: "omit",
         referrerPolicy: "no-referrer",
@@ -1491,7 +1553,8 @@ class RpcClient {
     id = 1;
     constructor(options) {
         this.endpoint = options.endpoint;
-        this.transport = options.transport ?? httpTransport;
+        this.transport =
+            options.transport ?? ((endpoint, body, timeoutMs) => httpTransport(endpoint, body, timeoutMs, options.signal));
         this.timeoutMs = options.timeoutMs ?? 8000;
         this.maxRetries = options.maxRetries ?? 2;
         this.backoffBaseMs = options.backoffBaseMs ?? 500;
@@ -1689,9 +1752,14 @@ function decodeBase64(value) {
     return out;
 }
 
+const OFFICIAL_CA = "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump";
 const AUDIT_NOTICE = {
-    es: "Esto no es una auditoría ni una recomendación. Un token sin señales de riesgo puede seguir siendo una mala inversión.",
-    en: "This is not an audit or a recommendation. A token with no risk signals can still be a bad investment.",
+    es: "Lectura en directo de datos públicos de la blockchain. No es una auditoría, ni una recomendación, ni un aval. STUBX no tiene relación con este token salvo que sea la CA oficial. Que no aparezcan señales no significa que no haya riesgo.",
+    en: "Live reading of public blockchain data. It is not an audit, a recommendation, or an endorsement. STUBX has no relationship with this token unless it is the official CA. No signals showing does not mean there is no risk.",
+};
+const PRIVACY_NOTICE = {
+    es: "Tu navegador consulta directamente un servicio público de Solana (api.mainnet-beta.solana.com o solana-rpc.publicnode.com), solo en lectura. Este sitio no guarda la dirección, pero ese servicio recibe la dirección y tu IP según sus propias condiciones.",
+    en: "Your browser queries a public Solana service directly (api.mainnet-beta.solana.com or solana-rpc.publicnode.com), read-only. This site does not store the address, but that service receives the address and your IP under its own terms.",
 };
 function loadingView(mint) {
     return {
@@ -1701,15 +1769,15 @@ function loadingView(mint) {
         light: "espera",
         lightLabel: { es: "Leyendo", en: "Reading" },
         title: { es: "Leyendo la cadena…", en: "Reading the chain…" },
-        support: {
-            es: "Se consulta un servicio público de Solana, solo lectura. La dirección no se guarda en este sitio.",
-            en: "A public Solana service is queried, read-only. The address is not stored on this site.",
-        },
+        support: PRIVACY_NOTICE,
         signals: [],
         rows: [],
         endpointHost: null,
         usedFallback: false,
         slot: null,
+        fetchedAt: null,
+        sources: [],
+        canSample: false,
     };
 }
 function loc(es, en) {
@@ -1729,25 +1797,44 @@ function blank(kind, mint, title, support) {
         endpointHost: null,
         usedFallback: false,
         slot: null,
+        fetchedAt: null,
+        sources: [],
+        canSample: false,
     };
 }
+function takeQuerySlot(stamps, now, limit = 6, windowMs = 60_000) {
+    const fresh = stamps.filter((stamp) => now - stamp < windowMs);
+    if (fresh.length >= limit) {
+        return { allowed: false, stamps: fresh };
+    }
+    return { allowed: true, stamps: [...fresh, now] };
+}
+function readCache(cache, key, now, ttlMs = 60_000) {
+    const hit = cache.get(key);
+    if (!hit || now - hit.at >= ttlMs) {
+        return null;
+    }
+    return hit.value;
+}
 function failureReading(kind, mint, host, usedFallback) {
+    const checked = loc("No se pudo comprobar", "Could not be checked");
     const copy = {
         limite: {
-            title: loc("Límite de peticiones", "Request limit"),
+            title: checked,
             support: loc("El servicio público de lectura ha llegado al límite de peticiones. Prueba otra vez dentro de un momento. No se ha inventado un resultado.", "The public read service has hit its request limit. Try again in a moment. No result was invented."),
         },
         tiempo: {
-            title: loc("Tiempo de espera agotado", "Timed out"),
+            title: checked,
             support: loc("Se agotó el tiempo de espera del servicio de lectura. No se ha inventado un resultado.", "The read service timed out. No result was invented."),
         },
         red: {
-            title: loc("No se pudo leer la cadena", "The chain could not be read"),
-            support: loc("No se pudo leer la cadena: el servicio no respondió o rechazó la petición. No se ha inventado un resultado.", "The chain could not be read: the service did not respond or refused the request. No result was invented."),
+            title: checked,
+            support: loc("No se pudo comprobar: el servicio no respondió o rechazó la petición. No se ha inventado un resultado.", "It could not be checked: the service did not respond or refused the request. No result was invented."),
         },
     }[kind];
     return {
         ...blank(kind, mint, copy.title, copy.support),
+        lightLabel: loc("No se pudo comprobar", "Could not be checked"),
         endpointHost: host,
         usedFallback,
     };
@@ -1759,6 +1846,59 @@ function hostOf(endpoint) {
     catch {
         return null;
     }
+}
+function sourceRows(rpc) {
+    const labels = {
+        getMultipleAccounts: loc("Cuentas leídas", "Accounts read"),
+        getTokenSupply: loc("Suministro leído", "Supply read"),
+        getTokenLargestAccounts: loc("Muestra de cuentas", "Account sample"),
+        getAccountInfo: loc("Cuenta leída", "Account read"),
+        getSlot: loc("Slot", "Slot"),
+    };
+    return rpc.reads.map((read) => ({
+        dato: labels[read.method] ?? loc(read.method, read.method),
+        host: hostOf(read.endpoint) ?? read.endpoint,
+    }));
+}
+function madridClock(iso) {
+    const date = new Date(iso);
+    const format = (lang) => new Intl.DateTimeFormat(lang === "en" ? "en-GB" : "es-ES", {
+        timeZone: "Europe/Madrid",
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23",
+    }).format(date);
+    return loc(format("es"), format("en"));
+}
+function sourceClock(iso, slot, rpc) {
+    const sources = sourceRows(rpc);
+    const hosts = [...new Set(sources.map((item) => item.host))];
+    const when = madridClock(iso);
+    const rows = [
+        {
+            label: loc("Momento", "Time"),
+            value: loc(slot === null ? `Leído a las ${when.es} (Madrid).` : `Leído en el slot ${slot}, a las ${when.es} (Madrid).`, slot === null ? `Read at ${when.en} (Madrid).` : `Read at slot ${slot}, at ${when.en} (Madrid).`),
+        },
+    ];
+    for (const source of sources) {
+        rows.push({ label: source.dato, value: loc(source.host, source.host) });
+    }
+    if (hosts.length > 1) {
+        rows.push({
+            label: loc("Servicios", "Services"),
+            value: loc("Esta lectura junta más de un servicio.", "This reading combines more than one service."),
+        });
+    }
+    return rows;
+}
+function clipForeign(value, official) {
+    const missing = "Sin nombre en las fuentes leídas";
+    if (official) {
+        return value || missing;
+    }
+    const raw = value || missing;
+    const cut = raw.length > 64 ? `${raw.slice(0, 64)}…` : raw;
+    return `«${cut}»`;
 }
 function isMintAccount(owner, data) {
     if (owner === TOKEN_PROGRAM) {
@@ -1795,9 +1935,51 @@ async function readAnyMint(input) {
         now: input.now,
         sleep: input.sleep,
         random: input.random,
+        signal: input.signal,
     }));
     const rpc = new FallbackRpc(readers, endpoints);
     return readWith(checked.mint, input.registry, rpc);
+}
+async function readLargestAccounts(input) {
+    const checked = validateMint(input.mint.trim());
+    if (!checked.ok) {
+        return {
+            id: "cuentas",
+            level: "atencion",
+            title: loc("No se pudo comprobar", "Could not be checked"),
+            explain: loc("La dirección no es un mint válido. No se ha pedido la muestra.", "The address is not a valid mint. The sample was not requested."),
+        };
+    }
+    const endpoints = input.endpoints.map((item) => item.trim()).filter((item) => item.length > 0);
+    if (endpoints.length === 0) {
+        return emptySample();
+    }
+    const readers = endpoints.map((endpoint) => new RpcClient({
+        endpoint,
+        transport: input.transport,
+        timeoutMs: input.timeoutMs ?? 6000,
+        maxRetries: 0,
+        minIntervalMs: input.minIntervalMs ?? 200,
+        now: input.now,
+        sleep: input.sleep,
+        random: input.random,
+        signal: input.signal,
+    }));
+    const rpc = new FallbackRpc(readers, endpoints);
+    const largest = await rpc.getTokenLargestAccounts(checked.mint);
+    if (!largest.ok) {
+        const kind = classifyRpcFailure(largest.error, largest.httpStatus);
+        const text = {
+            limite: loc("No se pudo comprobar. El servicio llegó al límite al pedir las cuentas más grandes. No es una concentración de cero.", "It could not be checked. The service hit its limit while asking for the largest accounts. It is not zero concentration."),
+            tiempo: loc("No se pudo comprobar. Se agotó el tiempo de 6 segundos al pedir las cuentas más grandes. No es una concentración de cero.", "It could not be checked. The 6 second wait ran out while asking for the largest accounts. It is not zero concentration."),
+            red: loc("No se pudo comprobar. El servicio no devolvió las cuentas más grandes. No es una concentración de cero.", "It could not be checked. The service did not return the largest accounts. It is not zero concentration."),
+        }[kind];
+        return { id: "cuentas", level: "atencion", title: loc("No se pudo comprobar", "Could not be checked"), explain: text };
+    }
+    const info = await rpc.getAccountInfo(checked.mint);
+    const program = info.ok && info.value ? info.value.owner : TOKEN_PROGRAM;
+    const sample = await accountSample(rpc, checked.mint, program, bondingCurvePda(checked.mint), largest, null);
+    return sample.signal;
 }
 async function readWith(mint, registry, rpc) {
     const meta = metadataPda(mint);
@@ -1828,10 +2010,13 @@ async function readWith(mint, registry, rpc) {
                     explain: loc("Se pidió la cuenta y la respuesta fue vacía. No es lo mismo que un mint sin permisos.", "The account was requested and the response was empty. That is not the same as a mint with no permissions."),
                 },
             ],
-            rows: [],
+            rows: sourceClock(packed.fetchedAt, packed.slot, rpc),
             endpointHost: hostOf(rpc.lastEndpoint),
             usedFallback: rpc.usedFallback,
             slot: packed.slot,
+            fetchedAt: packed.fetchedAt,
+            sources: sourceRows(rpc),
+            canSample: false,
         };
     }
     if (!isMintAccount(mintInfo.owner, mintInfo.data)) {
@@ -1852,10 +2037,16 @@ async function readWith(mint, registry, rpc) {
                     explain: loc(`El propietario de la cuenta es ${owner}. No es el programa SPL Token ni Token-2022.`, `The account owner is ${owner}. It is not the SPL Token program or Token-2022.`),
                 },
             ],
-            rows: [{ label: loc("Programa", "Program"), value: loc(owner, owner) }],
+            rows: [
+                { label: loc("Programa", "Program"), value: loc(owner, owner) },
+                ...sourceClock(packed.fetchedAt, packed.slot, rpc),
+            ],
             endpointHost: hostOf(rpc.lastEndpoint),
             usedFallback: rpc.usedFallback,
             slot: packed.slot,
+            fetchedAt: packed.fetchedAt,
+            sources: sourceRows(rpc),
+            canSample: false,
         };
     }
     const decoded = decodeMint(mintInfo.owner, mintInfo.data);
@@ -1865,8 +2056,6 @@ async function readWith(mint, registry, rpc) {
     }
     const supply = await rpc.getTokenSupply(mint);
     rememberSlot(supply, slots);
-    const largest = await rpc.getTokenLargestAccounts(mint);
-    rememberSlot(largest, slots);
     const metaplex = metaInfo ? decodeMetaplex(metaInfo.owner, metaInfo.data, mint) : null;
     const bonding = curveInfo && curveInfo.owner === PUMP_PROGRAM ? decodeBondingCurve(curveInfo.owner, curveInfo.data) : null;
     const names = [decoded.tokenMetadata?.name, metaplex?.name].filter((item) => Boolean(item));
@@ -1900,28 +2089,24 @@ async function readWith(mint, registry, rpc) {
                 : `The mint bytes say ${formatUnits(decoded.supplyRaw, decoded.decimals)} with ${decoded.decimals} decimals, and the other read does not match. Percentages are not calculated.`
             : `The mint bytes say ${formatUnits(decoded.supplyRaw, decoded.decimals)} with ${decoded.decimals} decimals. The other supply read did not respond, so there are no percentages.`),
     });
-    signals.push(authoritySignal("emision", decoded.mintAuthority));
-    signals.push(authoritySignal("congelacion", decoded.freezeAuthority));
+    signals.push(authoritySignal("emision", decoded.mintAuthority, likeness.inRegistry));
+    signals.push(authoritySignal("congelacion", decoded.freezeAuthority, true));
     signals.push(...extensionSignals(decoded.extensions, decoded.extensionsParsed));
-    signals.push(...metadataSignals(decoded.tokenMetadata, metaplex));
-    const sample = await accountSample(rpc, mint, mintInfo.owner, curve, largest, supplyMatches ? decoded.supplyRaw : null);
-    if (sample.failure) {
-        const kind = classifyRpcFailure(sample.failure, sample.httpStatus);
-        const text = {
-            limite: loc("No se pudo leer la muestra de cuentas con tokens: el servicio llegó al límite de peticiones. No es una concentración de cero.", "The token-account sample could not be read: the service hit its request limit. It is not zero concentration."),
-            tiempo: loc("No se pudo leer la muestra de cuentas con tokens: se agotó el tiempo de espera. No es una concentración de cero.", "The token-account sample could not be read: the wait timed out. It is not zero concentration."),
-            red: loc("No se pudo leer la muestra de cuentas con tokens. No es una concentración de cero.", "The token-account sample could not be read. It is not zero concentration."),
-        }[kind];
+    signals.push(...metadataSignals(decoded.tokenMetadata, metaplex, likeness.inRegistry));
+    if ([...names, ...symbols].some((item) => item.includes("\uFFFD"))) {
         signals.push({
-            id: "cuentas",
+            id: "invisibles",
             level: "atencion",
-            title: loc("Cuentas con tokens", "Token accounts"),
-            explain: text,
+            title: loc("Hay caracteres invisibles en el nombre", "There are invisible characters in the name"),
+            explain: loc("Al mostrar el nombre se marcaron caracteres de control o invisibles. La comparación con STUBX los quita antes de mirar.", "When showing the name, control or invisible characters were marked. The comparison with STUBX removes them first."),
         });
     }
-    else {
-        signals.push(sample.signal);
-    }
+    signals.push({
+        id: "cuentas",
+        level: "neutro",
+        title: loc("Cuentas con tokens", "Token accounts"),
+        explain: loc("La muestra de las 20 cuentas con más tokens no se pide sola: los servicios públicos suelen rechazarla. Se puede intentar aparte. Si falla, no es una concentración de cero.", "The sample of the 20 largest token accounts is not requested on its own: public services often refuse it. It can be tried separately. If it fails, it is not zero concentration."),
+    });
     signals.push(curveSignal(curveInfo, bonding));
     const copyByName = !likeness.inRegistry && likeness.signals.some((item) => /^nombre |^símbolo /.test(item));
     if (likeness.inRegistry) {
@@ -1935,9 +2120,9 @@ async function readWith(mint, registry, rpc) {
     else if (copyByName) {
         signals.push({
             id: "copia",
-            level: "riesgo",
-            title: loc("Posible copia de STUBX", "Possible STUBX copy"),
-            explain: loc("El nombre o el símbolo se parece a STUBX y la dirección es otra. La coincidencia no dice quién lo hizo.", "The name or the symbol looks like STUBX and the address is different. The match does not say who did it."),
+            level: "atencion",
+            title: loc("Se parece a STUBX, pero no es la CA oficial", "Looks like STUBX, but it is not the official CA"),
+            explain: loc(`El nombre o el símbolo se parece a STUBX y la dirección es otra. Esto no dice quién lo creó ni con qué intención. La única CA oficial es ${OFFICIAL_CA}.`, `The name or the symbol looks like STUBX and the address is different. This does not say who created it or why. The only official CA is ${OFFICIAL_CA}.`),
         });
     }
     else {
@@ -1956,6 +2141,15 @@ async function readWith(mint, registry, rpc) {
             });
         }
     }
+    const hosts = new Set(sourceRows(rpc).map((item) => item.host));
+    if (hosts.size > 1) {
+        signals.push({
+            id: "fuentes",
+            level: "atencion",
+            title: loc("Esta lectura junta más de un servicio", "This reading combines more than one service"),
+            explain: loc(`No todos los datos salieron del mismo servicio: ${[...hosts].join(", ")}.`, `Not every fact came from the same service: ${[...hosts].join(", ")}.`),
+        });
+    }
     const risky = signals.some((item) => item.level === "riesgo");
     const attention = signals.some((item) => item.level === "atencion");
     const headline = likeness.inRegistry
@@ -1965,21 +2159,18 @@ async function readWith(mint, registry, rpc) {
             title: loc("Esta dirección es la del registro de STUBX", "This address is the one in the STUBX registry"),
             support: loc("La lectura de ahora coincide con el mint curado. Las fichas fechadas siguen abajo, como foto anterior.", "This reading matches the curated mint. The dated cards remain below, as an earlier snapshot."),
         }
-        : copyByName
-            ? {
-                light: "riesgo",
-                lightLabel: loc("Posible copia de STUBX", "Possible STUBX copy"),
-                title: loc("Posible copia de STUBX", "Possible STUBX copy"),
-                support: loc("El nombre o el símbolo se parece a STUBX y la dirección es otra. Mira las señales, no solo el nombre.", "The name or the symbol looks like STUBX and the address is different. Read the signals, not only the name."),
-            }
-            : {
-                light: risky || attention ? "atencion" : "neutro",
-                lightLabel: loc(risky || attention ? "Hay señales" : "Sin esas señales", risky || attention ? "Signals found" : "Without those signals"),
-                title: loc("Lectura de este token", "Reading for this token"),
-                support: loc("Cada señal describe un hecho leído ahora. No es una puntuación.", "Each signal describes a fact read just now. It is not a score."),
-            };
-    const displayName = names[0] || "Sin nombre en las fuentes leídas";
-    const displaySymbol = symbols[0] || "Sin símbolo en las fuentes leídas";
+        : {
+            light: (risky ? "riesgo" : copyByName || attention ? "atencion" : "neutro"),
+            lightLabel: copyByName
+                ? loc("Se parece a STUBX, pero no es la CA oficial", "Looks like STUBX, but it is not the official CA")
+                : loc(risky || attention ? "Hay señales" : "Sin esas señales", risky || attention ? "Signals found" : "Without those signals"),
+            title: loc("Lectura de este token", "Reading for this token"),
+            support: copyByName
+                ? loc("No es la dirección oficial de STUBX. Cada señal describe un hecho leído ahora. No es una puntuación.", "This is not the official STUBX address. Each signal describes a fact read just now. It is not a score.")
+                : loc("Cada señal describe un hecho leído ahora. No es una puntuación.", "Each signal describes a fact read just now. It is not a score."),
+        };
+    const displayName = clipForeign(names[0] || "", likeness.inRegistry);
+    const displaySymbol = clipForeign(symbols[0] || "", likeness.inRegistry);
     return {
         ok: true,
         kind: "lectura",
@@ -1998,22 +2189,22 @@ async function readWith(mint, registry, rpc) {
                 value: loc(formatUnits(decoded.supplyRaw, decoded.decimals), formatUnits(decoded.supplyRaw, decoded.decimals)),
             },
             { label: loc("Decimales", "Decimals"), value: loc(String(decoded.decimals), String(decoded.decimals)) },
-            {
-                label: loc("Servicio de lectura", "Read service"),
-                value: loc(rpc.usedFallback ? `${hostOf(rpc.lastEndpoint) ?? "público"} · segundo servicio` : (hostOf(rpc.lastEndpoint) ?? "público"), rpc.usedFallback ? `${hostOf(rpc.lastEndpoint) ?? "public"} · second service` : (hostOf(rpc.lastEndpoint) ?? "public")),
-            },
+            ...sourceClock(packed.fetchedAt, slots.size === 1 ? ([...slots][0] ?? packed.slot) : null, rpc),
         ],
         endpointHost: hostOf(rpc.lastEndpoint),
         usedFallback: rpc.usedFallback,
         slot: slots.size === 1 ? [...slots][0] ?? packed.slot : packed.slot,
+        fetchedAt: packed.fetchedAt,
+        sources: sourceRows(rpc),
+        canSample: true,
     };
 }
-function authoritySignal(kind, authority) {
+function authoritySignal(kind, authority, official) {
     const minting = kind === "emision";
     if (authority.state === "revocada") {
         return {
             id: kind,
-            level: "ok",
+            level: minting && !official ? "neutro" : "ok",
             title: loc(minting ? "Nadie puede crear más tokens con ese permiso" : "Nadie puede congelar cuentas con ese permiso", minting ? "Nobody can create more tokens with that permission" : "Nobody can freeze accounts with that permission"),
             explain: loc(minting
                 ? "La autoridad de emisión está revocada en esta lectura. Eso no demuestra que el proyecto sea legítimo."
@@ -2138,7 +2329,7 @@ function oneExtension(item) {
     }
     return null;
 }
-function metadataSignals(tokenMeta, metaplex) {
+function metadataSignals(tokenMeta, metaplex, official) {
     if (!tokenMeta && !metaplex) {
         return [
             {
@@ -2153,18 +2344,20 @@ function metadataSignals(tokenMeta, metaplex) {
     const name = tokenMeta?.name || metaplex?.name || "";
     const symbol = tokenMeta?.symbol || metaplex?.symbol || "";
     const uri = tokenMeta?.uri || metaplex?.uri || "";
+    const visibleName = clipForeign(name, official);
     out.push({
         id: "metadatos",
         level: "neutro",
-        title: loc(name ? `Nombre: ${name}` : "Nombre no leído", name ? `Name: ${name}` : "Name not read"),
-        explain: loc(`Símbolo: ${symbol || "no leído"}. URI: ${uri || "no leída"}. El nombre es un texto. La dirección es otra cosa.`, `Symbol: ${symbol || "not read"}. URI: ${uri || "not read"}. The name is text. The address is something else.`),
+        tone: official ? undefined : "ajeno",
+        title: loc(name ? `Nombre: ${visibleName}` : "Nombre no leído", name ? `Name: ${visibleName}` : "Name not read"),
+        explain: loc(`Símbolo: ${symbol ? clipForeign(symbol, official) : "no leído"}. URI: ${uri ? clipForeign(uri, official) : "no leída"}. El nombre es un texto. La dirección es otra cosa.`, `Symbol: ${symbol ? clipForeign(symbol, official) : "not read"}. URI: ${uri ? clipForeign(uri, official) : "not read"}. The name is text. The address is something else.`),
     });
     const update = tokenMeta?.updateAuthority || (metaplex ? metaplex.updateAuthority : null);
     const mutable = metaplex ? metaplex.mutable : tokenMeta?.updateAuthority ? true : null;
     const canChange = mutable === true || Boolean(tokenMeta?.updateAuthority);
     out.push({
         id: "mutable",
-        level: canChange ? "atencion" : "ok",
+        level: canChange ? "atencion" : official ? "ok" : "neutro",
         title: loc(canChange ? "El nombre se puede cambiar" : "El nombre no se puede cambiar en las fuentes leídas", canChange ? "The name can be changed" : "The name cannot be changed in the sources read"),
         explain: loc(canChange
             ? `Hay quien puede actualizar los metadatos${update ? ` (${update})` : ""}. Un nombre de hoy puede no ser el de mañana.`
@@ -2308,7 +2501,7 @@ function paintVerify(out, view) {
     var list = verifyEl("ul", { class: "leyenda" });
     list.append(
       legendItem("ok", lang === "en" ? "STUBX registry address" : "Dirección del registro de STUBX"),
-      legendItem("riesgo", lang === "en" ? "Possible STUBX copy" : "Posible copia de STUBX"),
+      legendItem("atencion", lang === "en" ? "Looks like STUBX, but it is not the official CA" : "Se parece a STUBX, pero no es la CA oficial"),
       legendItem("neutro", lang === "en" ? "Could not be checked" : "No se pudo comprobar"),
     );
     out.append(emptyTitle, emptySupport, list);
@@ -2319,12 +2512,21 @@ function paintVerify(out, view) {
   var name = verifyEl("span");
   name.textContent = view.lightLabel[lang];
   flag.append(dot, name);
-  var title = verifyEl("h2");
+  var title = verifyEl("h2", { tabindex: "-1" });
   title.textContent = view.title[lang];
   var support = verifyEl("p", { class: "apoyo" });
   support.textContent = view.support[lang];
   out.append(flag, title, support);
-  if (view.mint) {
+  if (view.compare && view.compare.marks) {
+    var compared = verifyEl("p", { class: "mint comparado" });
+    view.compare.marks.forEach(function (mark) {
+      var span = verifyEl("span");
+      if (mark.changed) span.className = "cambia";
+      span.textContent = mark.char;
+      compared.append(span);
+    });
+    out.append(compared);
+  } else if (view.mint) {
     var mint = verifyEl("p", { class: "mint" });
     mint.textContent = view.mint;
     out.append(mint);
@@ -2337,7 +2539,7 @@ function paintVerify(out, view) {
   if (view.signals && view.signals.length) {
     var signals = verifyEl("div", { class: "senales" });
     view.signals.forEach(function (signal) {
-      var card = verifyEl("article", { class: "senal", "data-nivel": signal.level });
+      var card = verifyEl("article", { class: signal.tone ? "senal " + signal.tone : "senal", "data-nivel": signal.level });
       var heading = verifyEl("h3");
       heading.textContent = signal.title[lang];
       var body = verifyEl("p");
@@ -2346,6 +2548,11 @@ function paintVerify(out, view) {
       signals.append(card);
     });
     out.append(signals);
+  }
+  if (view.canSample) {
+    var sampleBtn = verifyEl("button", { type: "button", id: "leer-cuentas" });
+    sampleBtn.textContent = lang === "en" ? "Try to read the largest accounts" : "Intentar leer las cuentas más grandes";
+    out.append(sampleBtn);
   }
   if (view.kind !== "vacio" && typeof AUDIT_NOTICE !== "undefined") {
     var audit = verifyEl("p", { class: "aviso-fijo" });
@@ -2361,6 +2568,7 @@ function paintVerify(out, view) {
       var term = verifyEl("dt");
       term.textContent = row.label[lang];
       var detail = verifyEl("dd");
+      if ((row.value[lang] || "").charAt(0) === "«") detail.className = "ajeno";
       detail.textContent = row.value[lang];
       rows.append(term, detail);
     });
@@ -2379,15 +2587,40 @@ function bootVerify() {
   var source = cards.length > 0 ? "lista" : "caida";
 
   var last = emptyView();
+  var fieldError = document.getElementById("direccion-error");
 
-  function apply(view) {
+  function coverHeight() {
+    var header = document.querySelector("header.site");
+    if (!header) return 0;
+    var pos = window.getComputedStyle(header).position;
+    if (pos !== "fixed" && pos !== "sticky") return 0;
+    return Math.ceil(header.getBoundingClientRect().height);
+  }
+
+  function revealVerdict() {
+    out.style.scrollMarginTop = coverHeight() + "px";
+    out.scrollIntoView({ block: "start", inline: "nearest" });
+    var title = out.querySelector("h2");
+    if (title && title.focus) title.focus({ preventScroll: true });
+  }
+
+  function showFieldError() {
+    if (fieldError) fieldError.hidden = false;
+    input.setAttribute("aria-invalid", "true");
+    input.setAttribute("aria-describedby", "direccion-error");
+    if (input.focus) input.focus();
+  }
+
+  function hideFieldError() {
+    if (fieldError) fieldError.hidden = true;
+    input.removeAttribute("aria-describedby");
+  }
+
+  function apply(view, reveal) {
     last = view;
     paintVerify(out, view);
     input.setAttribute("aria-invalid", view.kind === "invalida" ? "true" : "false");
-    if (view.kind !== "vacio" && view.kind !== "comprobando") {
-      var narrow = window.matchMedia("(max-width: 48rem)").matches;
-      out.scrollIntoView({ block: narrow ? "start" : "nearest", inline: "nearest" });
-    }
+    if (reveal && view.kind !== "vacio" && view.kind !== "comprobando") revealVerdict();
   }
 
   var generation = 0;
@@ -2407,8 +2640,11 @@ function bootVerify() {
     if (cardView.kind === "copia") {
       return {
         id: "ficha",
-        level: "riesgo",
-        title: { es: "La ficha fechada también marca posible copia de STUBX", en: "The dated card also marks a possible STUBX copy" },
+        level: "atencion",
+        title: {
+          es: "La ficha fechada también dice que se parece a STUBX y no es la CA oficial",
+          en: "The dated card also says it looks like STUBX and is not the official CA",
+        },
         explain: cardView.support,
       };
     }
@@ -2423,28 +2659,103 @@ function bootVerify() {
     return null;
   }
 
+  var stamps = [];
+  var memory = new Map();
+  var currentAbort = null;
+  var inFlight = false;
+
+  function submitButton() {
+    return form.querySelector("button[type='submit']");
+  }
+
+  function setBusy(busy) {
+    inFlight = busy;
+    var submit = submitButton();
+    if (submit) submit.disabled = busy;
+    var extra = out.querySelector("#leer-cuentas");
+    if (extra) extra.disabled = busy;
+  }
+
+  function pauseView(mint) {
+    return {
+      ok: false,
+      kind: "limite",
+      mint: mint,
+      light: "neutro",
+      lightLabel: { es: "No se pudo comprobar", en: "Could not be checked" },
+      title: { es: "No se pudo comprobar", en: "Could not be checked" },
+      support: {
+        es: "Se han hecho 6 lecturas en un minuto. Espera un momento antes de comprobar otra. No se ha inventado un resultado.",
+        en: "6 readings were made in one minute. Wait a moment before checking another. No result was invented.",
+      },
+      signals: [],
+      rows: [],
+      endpointHost: null,
+      usedFallback: false,
+      slot: null,
+      fetchedAt: null,
+      sources: [],
+      canSample: false,
+    };
+  }
+
+  function endpointsOf() {
+    var rpc = STUBX_VERIFY.rpc || {};
+    return [rpc.primary, rpc.fallback].filter(function (item) { return !!item; });
+  }
+
+  function decorate(view, normalized) {
+    var cardView = classifyAddress(normalized, cards, "lista", evm);
+    if (cardView.compare) view.compare = cardView.compare;
+    var extra = datedSignal(cardView);
+    if (extra && view.ok && view.signals) view.signals = view.signals.concat([extra]);
+    return view;
+  }
+
   function run() {
+    if (inFlight) return;
+    if (input.value.trim() === "") {
+      apply(emptyView(), false);
+      showFieldError();
+      return;
+    }
+    hideFieldError();
     var value = input.value;
     var ticket = ++generation;
     if (typeof readAnyMint !== "function" || typeof loadingView !== "function") {
-      apply(pendingView(value));
+      apply(pendingView(value), false);
       window.requestAnimationFrame(function () {
         try {
-          apply(classifyAddress(value, cards, source, evm));
+          apply(classifyAddress(value, cards, source, evm), true);
         } catch (error) {
-          apply(classifyAddress(value, [], "caida", evm));
+          apply(classifyAddress(value, [], "caida", evm), true);
         }
       });
       return;
     }
     var normalized = normalizeAddress(value);
     if (!normalized || /^0x/i.test(normalized) || !isAddress(normalized)) {
-      apply(classifyAddress(value, cards, source, evm));
+      apply(classifyAddress(value, cards, source, evm), true);
       return;
     }
-    apply(loadingView(normalized));
-    var rpc = STUBX_VERIFY.rpc || {};
-    var endpoints = [rpc.primary, rpc.fallback].filter(function (item) { return !!item; });
+    var now = Date.now();
+    var cached = typeof readCache === "function" ? readCache(memory, normalized, now, 60000) : null;
+    if (cached) {
+      apply(cached, true);
+      return;
+    }
+    var slot = typeof takeQuerySlot === "function" ? takeQuerySlot(stamps, now, 6, 60000) : { allowed: true, stamps: stamps };
+    stamps = slot.stamps;
+    if (!slot.allowed) {
+      apply(pauseView(normalized), true);
+      return;
+    }
+    if (currentAbort) currentAbort.abort();
+    var controller = new AbortController();
+    currentAbort = controller;
+    setBusy(true);
+    apply(loadingView(normalized), true);
+    var endpoints = endpointsOf();
     readAnyMint({
       mint: normalized,
       registry: STUBX_VERIFY.registry || [],
@@ -2452,21 +2763,100 @@ function bootVerify() {
       maxRetries: 0,
       minIntervalMs: 200,
       timeoutMs: 8000,
+      signal: controller.signal,
     }).then(function (reading) {
-      if (ticket !== generation) return;
-      var view = reading;
-      var extra = datedSignal(classifyAddress(normalized, cards, "lista", evm));
-      if (extra && view.ok) {
-        view.signals = view.signals.concat([extra]);
-      }
-      apply(view);
+      if (ticket !== generation || controller.signal.aborted) return;
+      var view = decorate(reading, normalized);
+      if (view.ok) memory.set(normalized, { at: Date.now(), value: view });
+      apply(view, true);
     }).catch(function () {
-      if (ticket !== generation) return;
-      apply(classifyAddress(normalized, cards, "caida", evm));
+      if (ticket !== generation || controller.signal.aborted) return;
+      apply({
+        ok: false,
+        kind: "red",
+        mint: normalized,
+        light: "neutro",
+        lightLabel: { es: "No se pudo comprobar", en: "Could not be checked" },
+        title: { es: "No se pudo comprobar", en: "Could not be checked" },
+        support: {
+          es: "No se pudo comprobar: el servicio no respondió o rechazó la petición. No se ha inventado un resultado.",
+          en: "It could not be checked: the service did not respond or refused the request. No result was invented.",
+        },
+        signals: [],
+        rows: [],
+        endpointHost: null,
+        usedFallback: false,
+        slot: null,
+        fetchedAt: null,
+        sources: [],
+        canSample: false,
+      }, true);
+    }).then(function () {
+      if (ticket === generation) setBusy(false);
     });
   }
 
-  apply(emptyView());
+  function readSample() {
+    if (inFlight || !last || !last.canSample || !last.mint) return;
+    var now = Date.now();
+    var slot = typeof takeQuerySlot === "function" ? takeQuerySlot(stamps, now, 6, 60000) : { allowed: true, stamps: stamps };
+    stamps = slot.stamps;
+    if (!slot.allowed) {
+      apply(pauseView(last.mint), true);
+      return;
+    }
+    if (typeof readLargestAccounts !== "function") return;
+    var ticket = ++generation;
+    if (currentAbort) currentAbort.abort();
+    var controller = new AbortController();
+    currentAbort = controller;
+    setBusy(true);
+    var mint = last.mint;
+    readLargestAccounts({
+      mint: mint,
+      registry: STUBX_VERIFY.registry || [],
+      endpoints: endpointsOf(),
+      maxRetries: 0,
+      minIntervalMs: 200,
+      timeoutMs: 6000,
+      signal: controller.signal,
+    }).then(function (signal) {
+      if (ticket !== generation || controller.signal.aborted) return;
+      var view = last;
+      view.signals = (view.signals || []).map(function (item) {
+        return item.id === "cuentas" ? signal : item;
+      });
+      view.canSample = false;
+      memory.set(mint, { at: Date.now(), value: view });
+      apply(view, true);
+    }).catch(function () {
+      if (ticket !== generation || controller.signal.aborted) return;
+      var view = last;
+      var failed = {
+        id: "cuentas",
+        level: "atencion",
+        title: { es: "No se pudo comprobar", en: "Could not be checked" },
+        explain: {
+          es: "No se pudo comprobar. El servicio no devolvió las cuentas más grandes. No es una concentración de cero.",
+          en: "It could not be checked. The service did not return the largest accounts. It is not zero concentration.",
+        },
+      };
+      view.signals = (view.signals || []).map(function (item) {
+        return item.id === "cuentas" ? failed : item;
+      });
+      view.canSample = false;
+      apply(view, true);
+    }).then(function () {
+      if (ticket === generation) setBusy(false);
+    });
+  }
+
+  out.addEventListener("click", function (event) {
+    var target = event.target;
+    if (target && target.id === "leer-cuentas") readSample();
+  });
+
+  apply(emptyView(), false);
   form.addEventListener("submit", function (event) {
     event.preventDefault();
     run();

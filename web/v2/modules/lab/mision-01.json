@@ -19,7 +19,7 @@
     {
       "id": "direccion",
       "kind": "check",
-      "glossary": ["direccion"],
+      "glossary": ["direccion", "registro"],
       "cards": [
         "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump",
         "DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ",
@@ -31,8 +31,8 @@
         "en": "Which address is the official STUBX?"
       },
       "guide": {
-        "es": "El nombre se puede repetir. La dirección, no.",
-        "en": "A name can be copied. The address cannot."
+        "es": "La dirección del mint identifica ese token. El nombre se puede copiar; la dirección, no.",
+        "en": "The mint address identifies that token. A name can be copied; the address cannot."
       },
       "options": [
         {
@@ -79,19 +79,19 @@
     {
       "id": "emision",
       "kind": "check",
-      "glossary": ["autoridad-emision"],
+      "glossary": ["autoridad-emision", "autoridad-congelacion"],
       "cards": [
         "DjEjb6bxQ3Hjej9CzUAVeRqyt7k1tevHgcS37t41PUhQ",
         "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump"
       ],
       "fields": ["name", "mint", "mintAuthority", "freezeAuthority"],
       "prompt": {
-        "es": "Un permiso cerrado no dice cuál es la oficial. ¿Qué es cierto?",
-        "en": "A closed permission does not say which one is official. What is true?"
+        "es": "Las dos fichas tienen el permiso cerrado. ¿Qué es cierto?",
+        "en": "Both cards show a closed permission. What is true?"
       },
       "guide": {
-        "es": "Cerrar el permiso de crear más tokens, o el de congelar, no cambia la dirección.",
-        "en": "Closing the permission to create more tokens, or the one to freeze, does not change the address."
+        "es": "Permiso cerrado = nadie puede crear más monedas de ese token. Las copias también pueden tenerlo.",
+        "en": "Closed permission = nobody can create more coins of that token. Copies can have it too."
       },
       "options": [
         {
@@ -135,7 +135,7 @@
     {
       "id": "desconocido",
       "kind": "check",
-      "glossary": ["desconocido"],
+      "glossary": ["desconocido", "ficha", "censo"],
       "cards": ["Hhq4ffySVX3UQqSowjhP1Lwa8YuJDf7iH2hYWvVHTuEf"],
       "fields": ["name", "holders", "metadata"],
       "prompt": {
@@ -143,8 +143,8 @@
         "en": "If a fact says “unavailable”, what do you do?"
       },
       "guide": {
-        "es": "Lo que no se leyó sigue sin leerse.",
-        "en": "What was not read stays unread."
+        "es": "No disponible quiere decir que esa lectura no dejó un dato. No es un cero y no borra el resto de la ficha.",
+        "en": "Unavailable means that reading left no fact. It is not a zero and it does not erase the rest of the card."
       },
       "options": [
         {
@@ -188,7 +188,7 @@
     {
       "id": "curva",
       "kind": "check",
-      "glossary": ["curva-pump"],
+      "glossary": ["curva-pump", "reserva-real", "suplantacion"],
       "cards": [
         "3Zi6p6wzYZYKyuHdBhsDfb2pRR7XTfTfLKkXL7rwpump",
         "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump"
@@ -199,8 +199,8 @@
         "en": "A copy shows 0.00. Does that prove someone’s intent?"
       },
       "guide": {
-        "es": "El 0,00 es un cálculo de la ficha, no un dato ausente.",
-        "en": "0.00 is a calculation on the card, not a missing fact."
+        "es": "El 0,00 es un cálculo de la curva en la ficha. No dice lo que alguien quiso hacer.",
+        "en": "0.00 is a curve calculation on the card. It does not say what someone meant to do."
       },
       "options": [
         {
@@ -227,8 +227,8 @@
       ],
       "correct": "senal-sin-intencion",
       "whyRight": {
-        "es": "En los tres clones, el 0,00 sale porque la cantidad real de la curva coincide con 793100000000000. La señal de copia no atribuye intención.",
-        "en": "On the three clones, 0.00 appears because the real curve amount matches 793100000000000. The copy signal does not attribute intent."
+        "es": "En los tres clones, el 0,00 sale porque la cantidad real de la curva coincide con la inicial documentada. La señal de copia no atribuye intención. El número está en Detalles.",
+        "en": "On the three clones, 0.00 appears because the real curve amount matches the documented initial amount. The copy signal does not attribute intent. The number is in Details."
       },
       "whyWrong": {
         "no-leida": {
@@ -244,7 +244,7 @@
     {
       "id": "caso-nuevo",
       "kind": "comprehension",
-      "glossary": ["direccion"],
+      "glossary": ["direccion", "autoridad-emision"],
       "cards": [],
       "fields": [],
       "prompt": {
@@ -252,8 +252,8 @@
         "en": "Same name, different address. What do you check first?"
       },
       "guide": {
-        "es": "Caso imaginario. No es una ficha real.",
-        "en": "An imagined case. It is not a real card."
+        "es": "Caso imaginario, no es una ficha real. El nombre puede repetirse; la dirección distingue un token de otro.",
+        "en": "An imagined case, not a real card. A name can be repeated; the address tells one token from another."
       },
       "options": [
         {

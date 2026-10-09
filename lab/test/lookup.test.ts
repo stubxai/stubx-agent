@@ -24,6 +24,9 @@ describe("lectura de una dirección", () => {
     const invalid = classifyAddress("<script>alert(1)</script>", cards, "lista");
     assert.equal(invalid.kind, "invalida");
     assert.equal(invalid.title.es, "Esta dirección no es válida");
+    assert.match(invalid.support.es, /32 a 44/);
+    assert.match(invalid.support.es, new RegExp(official));
+    assert.match(invalid.support.en, /32 to 44/);
     assert.equal(invalid.mint, null);
     const spaces = classifyAddress("   hola mundo  ", cards, "lista");
     assert.equal(spaces.kind, "invalida");
@@ -31,7 +34,7 @@ describe("lectura de una dirección", () => {
     assert.equal(pending.kind, "comprobando");
     assert.equal(pending.title.es, "Comprobando esta dirección…");
     assert.equal(pending.mint, official);
-    assert.equal(pending.support.es.includes("no se guarda"), true);
+    assert.equal(pending.support.es.includes("no se envía"), true);
   });
 
   test("la oficial, la copia y otra ficha no se confunden", () => {
@@ -59,11 +62,83 @@ describe("lectura de una dirección", () => {
     assert.equal(curve?.value.es.includes("0"), false);
   });
 
-  test("sin ficha y con la lectura caída se dice que no se pudo comprobar", () => {
+  test("una dirección válida parecida a la oficial no se presenta como comprobación fallida", () => {
+    const near = `${official.slice(0, -1)}q`;
+    const view = classifyAddress(near, cards, "lista", evm);
+    assert.equal(view.kind, "sin_ficha");
+    assert.equal(view.title.es, "No es la dirección oficial");
+    assert.equal(view.title.en, "Not the official address");
+    assert.equal(
+      view.support.es,
+      `No es la dirección oficial de STUBX. La oficial es ${official}. Esto no dice quién creó esta dirección ni con qué intención.`,
+    );
+    assert.equal(
+      view.support.en,
+      `This is not the official STUBX address. The official one is ${official}. This does not say who created this address or why.`,
+    );
+    assert.match(view.partialNote?.es ?? "", /No hay ficha de ejemplo/);
+    assert.equal(view.compare?.official, official);
+    const changed = view.compare?.marks.filter((mark) => mark.changed) ?? [];
+    assert.equal(changed.length, 1);
+    assert.equal(changed[0]?.char, "q");
+    assert.equal(view.compare?.marks.at(-1)?.changed, true);
+    assert.equal(view.compare?.marks[0]?.changed, false);
+    const down = classifyAddress(near, cards, "caida", evm);
+    assert.equal(down.title.es, "No es la dirección oficial");
+    assert.notEqual(down.kind, "lectura_caida");
+  });
+
+  test("una dirección válida distinta, aunque no se parezca, no es la oficial", () => {
+    const expectNotOfficial = (raw: string, marks: boolean) => {
+      const view = classifyAddress(raw, cards, "lista", evm);
+      assert.equal(view.title.es, "No es la dirección oficial", raw);
+      assert.equal(
+        view.support.es,
+        `No es la dirección oficial de STUBX. La oficial es ${official}. Esto no dice quién creó esta dirección ni con qué intención.`,
+      );
+      assert.equal(
+        view.support.en,
+        `This is not the official STUBX address. The official one is ${official}. This does not say who created this address or why.`,
+      );
+      assert.equal(view.compare !== null, marks, raw);
+      return view;
+    };
+    const chars = official.split("");
+    for (let i = 8; i < 13; i += 1) chars[i] = chars[i] === "1" ? "2" : "1";
+    const many = chars.join("");
+    let diff = 0;
+    for (let i = 0; i < many.length; i += 1) if (many[i] !== official[i]) diff += 1;
+    assert.equal(diff, 5);
+    expectNotOfficial(many, true);
+    expectNotOfficial(official.slice(0, -1), false);
+    expectNotOfficial(`${official}1`, false);
+    const vanity = `TNWw${"1".repeat(official.length - 8)}pump`;
+    const vanityView = expectNotOfficial(vanity, true);
+    assert.equal(vanity.startsWith("TNWw"), true);
+    assert.equal(vanity.endsWith("pump"), true);
+    assert.equal(vanityView.compare?.marks.slice(0, 4).every((mark) => !mark.changed), true);
+    assert.equal(vanityView.compare?.marks.slice(-4).every((mark) => !mark.changed), true);
+    assert.ok((vanityView.compare?.marks.filter((mark) => mark.changed).length ?? 0) >= 5);
+    const lower = expectNotOfficial(official.toLowerCase(), true);
+    assert.match(lower.partialNote?.es ?? "", /distinguen mayúsculas/);
+    assert.match(lower.partialNote?.en ?? "", /case-sensitive/);
+    const exact = classifyAddress(official, cards, "lista", evm);
+    assert.equal(exact.title.es, "Parece el STUBX oficial");
+    assert.equal(exact.support.es.includes("No es la dirección oficial"), false);
+    const copy = classifyAddress(clone, cards, "lista", evm);
+    assert.equal(copy.title.es, "Cuidado: posible copia");
+    const other = classifyAddress(usdc, cards, "lista", evm);
+    assert.equal(other.title.es, "No es el STUBX oficial");
+    const far = classifyAddress(wrappedSol, cards, "caida", evm);
+    assert.equal(far.title.es, "No es la dirección oficial");
+    assert.notEqual(far.kind, "lectura_caida");
+  });
+
+  test("sin ficha conocida y con la lectura caída no se inventa un resultado", () => {
     const missing = classifyAddress(wrappedSol, cards, "lista");
     assert.equal(missing.kind, "sin_ficha");
-    assert.equal(missing.title.es, "No se pudo comprobar");
-    assert.match(missing.support.es, /lista no es completa/);
+    assert.equal(missing.title.es, "No es la dirección oficial");
+    assert.match(missing.partialNote?.es ?? "", /no consulta la red/);
     assert.equal(missing.rows.length, 0);
     const down = classifyAddress(official, cards, "caida");
     assert.equal(down.kind, "lectura_caida");
@@ -102,6 +177,7 @@ describe("lectura de una dirección", () => {
       classifyAddress("???", cards, "lista"),
       classifyAddress("0xC99056C762F0802e4154E6322bd71ae928857777", cards, "lista", evm),
       classifyAddress("0x1111111111111111111111111111111111111111", cards, "lista", evm),
+      classifyAddress(`${official.slice(0, -1)}q`, cards, "lista", evm),
     ];
     assert.deepEqual(bannedHits(views), []);
   });

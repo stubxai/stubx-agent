@@ -53,9 +53,15 @@ type RpcClientOptions = {
   sleep?: (ms: number) => Promise<void>;
   random?: () => number;
   monoNow?: () => number;
+  signal?: AbortSignal;
 };
 
-export async function httpTransport(endpoint: string, body: string, timeoutMs: number): Promise<{ status: number; body: string }> {
+export async function httpTransport(
+  endpoint: string,
+  body: string,
+  timeoutMs: number,
+  signal?: AbortSignal,
+): Promise<{ status: number; body: string }> {
   const headers: Record<string, string> = {
     "content-type": "application/json",
     accept: "application/json",
@@ -67,7 +73,7 @@ export async function httpTransport(endpoint: string, body: string, timeoutMs: n
     method: "POST",
     headers,
     body,
-    signal: AbortSignal.timeout(timeoutMs),
+    signal: signal ? AbortSignal.any([AbortSignal.timeout(timeoutMs), signal]) : AbortSignal.timeout(timeoutMs),
     cache: "no-store",
     credentials: "omit",
     referrerPolicy: "no-referrer",
@@ -96,7 +102,8 @@ export class RpcClient {
 
   constructor(options: RpcClientOptions) {
     this.endpoint = options.endpoint;
-    this.transport = options.transport ?? httpTransport;
+    this.transport =
+      options.transport ?? ((endpoint, body, timeoutMs) => httpTransport(endpoint, body, timeoutMs, options.signal));
     this.timeoutMs = options.timeoutMs ?? 8000;
     this.maxRetries = options.maxRetries ?? 2;
     this.backoffBaseMs = options.backoffBaseMs ?? 500;

@@ -2,9 +2,10 @@
 
 ## 2026-10-09 · Verify lee cualquier mint, solo lectura, sin publicar
 
-- La página `/verify` lee en el navegador, sin backend, cualquier mint SPL o Token-2022. Servicios públicos: `https://api.mainnet-beta.solana.com` y, si ese llega al límite o se agota el tiempo, `https://solana-rpc.publicnode.com`. Los dos orígenes salen de `verify/policy/limits.json`. `connect-src` no añade otros dominios.
-- El resultado son señales con una explicación en español e inglés. No hay puntuación de seguro, recomendado ni estafa. El aviso fijo dice que esto no es una auditoría ni una recomendación. La dirección consultada no se guarda.
-- Las fichas fechadas siguen. Un nombre o un símbolo parecido a STUBX con otra dirección sale como «Posible copia de STUBX». La muestra de las 20 cuentas mayores se llama «cuentas con tokens». La curva habla de cantidad real y cantidad virtual.
+- La página `/verify` lee en el navegador, sin backend, cualquier mint SPL o Token-2022. Servicios públicos: `https://api.mainnet-beta.solana.com` y, si ese llega al límite o se agota el tiempo, `https://solana-rpc.publicnode.com`. Un 403 no pasa al segundo servicio. `connect-src` de `/*` se queda en `'self'`. Solo `/verify/` y `/verify/*` abren esos dos orígenes, con `! Content-Security-Policy`.
+- El aviso fijo y el de privacidad dicen que no es una auditoría ni un aval, y que el servicio público recibe la dirección y la IP. No hay puntuación de seguro, recomendado ni estafa.
+- Un nombre o un símbolo parecido a STUBX, ya plegado (NFKC, homoglifos y sin invisibles), sale en ámbar: «Se parece a STUBX, pero no es la CA oficial». El titular del resto de mints sigue siendo «Lectura de este token», con la línea «No es la dirección oficial de STUBX.» solo en ese caso. La muestra de cuentas no se pide sola.
+- En menos de 600 px la cabecera deja de quedarse fija y el veredicto se desplaza a la vista. El campo vacío avisa en línea. `frame-ancestors` queda solo en `_headers`. Hay como máximo 6 lecturas por minuto y una memoria de 60 segundos en la pestaña. La PR 14 ya está en main (2026-10-09). Esta vista previa no se despliega antes del 2026-10-20.
 
 ## 2026-10-09 · Revisión de seguridad de Verify y Lab (borrador, sin publicar)
 
