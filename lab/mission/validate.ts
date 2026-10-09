@@ -8,8 +8,8 @@ export function validateMission(mission: Mission, glossary: GlossaryFile, cards:
   const ids = new Set<string>();
   const glossaryIds = new Set(glossary.entries.map((entry) => entry.id));
   const cardIds = new Set(cards.map((card) => card.mint));
-  if (checkCount(mission) !== 5) {
-    issues.push("La misión tiene que tener 5 comprobaciones.");
+  if (mission.steps.length !== 5 || checkCount(mission) !== 4) {
+    issues.push("La misión tiene que tener 5 pasos, cuatro de ellos comprobaciones.");
   }
   const comprehension = mission.steps.filter((step) => step.kind === "comprehension");
   if (comprehension.length !== 1 || mission.steps.at(-1)?.kind !== "comprehension") {
@@ -20,10 +20,19 @@ export function validateMission(mission: Mission, glossary: GlossaryFile, cards:
       issues.push(`Paso repetido: ${step.id}`);
     }
     ids.add(step.id);
+    if (step.prompt.es.length > 120 || step.prompt.en.length > 140) {
+      issues.push(`La pregunta de ${step.id} es demasiado larga.`);
+    }
+    if (step.guide.es.length > 160 || step.guide.en.length > 180) {
+      issues.push(`La guía de ${step.id} es demasiado larga.`);
+    }
     if (!step.options.some((option) => option.id === step.correct)) {
       issues.push(`La respuesta correcta de ${step.id} no está entre las opciones.`);
     }
     for (const option of step.options) {
+      if (!option.mint && (option.label.es.length > 110 || option.label.en.length > 130)) {
+        issues.push(`La opción ${option.id} es demasiado larga.`);
+      }
       if (option.id === step.correct) {
         continue;
       }

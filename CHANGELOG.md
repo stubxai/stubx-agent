@@ -5,6 +5,7 @@
 - `lab/`: misión estática «Cómo detectar un token clon en 5 comprobaciones», sobre las fichas de Verify del 2026-10-08. Progreso solo en el navegador. Glosario y tres guías en español, con inglés pendiente de revisión humana.
 - `site-drafts/`: páginas `/verify`, `/lab` y `/tablero` generadas, autocontenidas y sin publicar. No sustituyen la web existente.
 - Pruebas sin red en `lab/test/`. `npm test` las incluye. `npm run lab:build` regenera los HTML.
+- `/verify` comprueba una dirección pegada contra esas fichas, con semáforo y detalles plegados. Si la dirección no es válida o la lectura no está, lo dice en claro y no inventa un resultado. La misión pasa a 5 pasos con preguntas cortas.
 
 ## 2026-10-08 · STUBX Verify (MVP, solo lectura)
 

@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { DISCLAIMER, DISCLAIMER_EN, DRAFT_LINE, OFFLINE_LINE, UNKNOWN_LINE } from "../copy.js";
+import { DISCLAIMER, DISCLAIMER_EN, DRAFT_LINE, HOW_LAB, HOW_VERIFY, OFFLINE_LINE, UNKNOWN_LINE } from "../copy.js";
 import { loadGlossary, loadMission } from "../mission/load.js";
 import type { CardSummary, GlossaryEntry, Localized, Mission, MissionStep } from "../mission/types.js";
 import { changelogHeadings, listTestFiles, loadBoard } from "../tablero/collect.js";
@@ -165,7 +165,17 @@ function pageHref(prefix: string, page: Exclude<PageName, never>): string {
   return prefix === "" ? `${page}/index.html` : `../${page}/index.html`;
 }
 
-function shell(input: { title: string; description: string; prefix: string; current: PageName; main: string; mission?: boolean }): string {
+function howDetails(copy: { es: readonly string[]; en: readonly string[] }): string {
+  const items = copy.es
+    .map((line, index) => {
+      const en = copy.en[index] ?? "";
+      return `<li><span class="lang es" lang="es">${escapeHtml(line)}</span><span class="lang en" lang="en">${escapeHtml(en)}</span></li>`;
+    })
+    .join("");
+  return `<details class="como"><summary>${both({ es: "¿Cómo funciona?", en: "How does it work?" })}</summary><ol>${items}</ol></details>`;
+}
+
+function shell(input: { title: string; description: string; prefix: string; current: PageName; main: string; mission?: boolean; verify?: boolean; narrow?: boolean }): string {
   const nav: Array<{ id: Exclude<PageName, "index">; es: string; en: string }> = [
     { id: "verify", es: "Verify", en: "Verify" },
     { id: "lab", es: "Lab", en: "Lab" },
@@ -178,6 +188,8 @@ function shell(input: { title: string; description: string; prefix: string; curr
     })
     .join("");
   const mission = input.mission ? `\n<script src="${asset(input.prefix, "mission.js")}"></script>` : "";
+  const verify = input.verify ? `\n<script src="${asset(input.prefix, "verify.js")}"></script>` : "";
+  const frame = input.narrow ? "wrap estrecha" : "wrap";
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -193,7 +205,7 @@ function shell(input: { title: string; description: string; prefix: string; curr
 <body>
 <a class="skip lang es" href="#contenido">Saltar al contenido</a>
 <a class="skip lang en" href="#contenido">Skip to content</a>
-<header class="site"><div class="wrap">
+<header class="site"><div class="${frame}">
 <p class="brand"><strong>STUBX</strong></p>
 <p class="draft">${both(DRAFT_LINE)}</p>
 <nav class="site" aria-label="Secciones / Sections"><ul>${links}</ul></nav>
@@ -202,7 +214,7 @@ function shell(input: { title: string; description: string; prefix: string; curr
 <button type="button" data-set-lang="en" lang="en">English</button>
 </div>
 </div></header>
-<main id="contenido" class="wrap">
+<main id="contenido" class="${frame}">
 <div class="aviso" data-disclaimer="si">
 <p>${escapeHtml(DISCLAIMER)}</p>
 <p lang="en">${escapeHtml(DISCLAIMER_EN)}</p>
@@ -213,20 +225,22 @@ function shell(input: { title: string; description: string; prefix: string; curr
 <p id="aviso-version" class="nota" hidden>${both({ es: "Hay otra copia de estas páginas. Recargar no borra el progreso local.", en: "Another copy of these pages is available. Reloading does not delete local progress." })} <button type="button" id="recargar">${both({ es: "Recargar", en: "Reload" })}</button></p>
 ${input.main}
 </main>
-<footer class="site"><div class="wrap">
+<footer class="site"><div class="${frame}">
 <p>${both(OFFLINE_LINE)}</p>
 <p>${both({ es: "Borrador 2026-10-09. Sin cuentas, sin firma y sin analítica.", en: "Draft 2026-10-09. No accounts, no signing, and no analytics." })}</p>
-</div></footer>${mission}
+</div></footer>${mission}${verify}
 </body>
 </html>
 `;
 }
 
-function staticStep(step: MissionStep, index: number, checks: number, cards: ReadonlyMap<string, CardSummary>): string {
-  const heading =
-    step.kind === "check"
-      ? { es: `Comprobación ${index + 1} de ${checks}`, en: `Check ${index + 1} of ${checks}` }
-      : { es: "Comprobación de comprensión", en: "Comprehension check" };
+function staticStep(step: MissionStep, index: number, total: number, cards: ReadonlyMap<string, CardSummary>, glossary: ReadonlyMap<string, GlossaryEntry>): string {
+  const heading = { es: `Paso ${index + 1} de ${total}`, en: `Step ${index + 1} of ${total}` };
+  const termId = step.glossary[0];
+  const term = termId ? glossary.get(termId) : undefined;
+  const help = term
+    ? `<p><a href="#termino-${escapeHtml(term.id)}">${both({ es: "¿Qué significa esta palabra?", en: "What does this word mean?" })}</a></p>`
+    : "";
   const cardHtml = step.cards
     .map((mint) => {
       const card = cards.get(mint);
@@ -239,7 +253,10 @@ function staticStep(step: MissionStep, index: number, checks: number, cards: Rea
   const wrong = Object.values(step.whyWrong)
     .map((line) => `<p>${both(line)}</p>`)
     .join("");
-  return `<article class="paso"><h3>${both(heading)}</h3><p>${both(step.guide)}</p>${cardHtml}<h4>${both(step.prompt)}</h4><ul>${options}</ul><details><summary>${both({ es: "Explicación", en: "Explanation" })}</summary><p>${both(step.whyRight)}</p>${wrong}</details></article>`;
+  const cardsFold = cardHtml
+    ? `<details class="tecnico"><summary>${both({ es: "Ver las fichas", en: "See the cards" })}</summary>${cardHtml}</details>`
+    : "";
+  return `<article class="paso"><h3>${both(heading)}</h3><p>${both(step.guide)}</p>${help}${cardsFold}<h4>${both(step.prompt)}</h4><ul>${options}</ul><details class="tecnico"><summary>${both({ es: "Explicación", en: "Explanation" })}</summary><p>${both(step.whyRight)}</p>${wrong}</details></article>`;
 }
 
 function glossaryArticle(entry: GlossaryEntry): string {
@@ -265,12 +282,13 @@ function guideSection(repoRoot: string): string {
 function renderLab(repoRoot: string, cards: readonly CardSummary[], mission: Mission): string {
   const byMint = new Map(cards.map((card) => [card.mint, card]));
   const glossary = loadGlossary(repoRoot);
-  const checks = mission.steps.filter((step) => step.kind === "check").length;
-  const staticSteps = mission.steps.map((step, index) => staticStep(step, index, checks, byMint)).join("");
+  const glossaryById = new Map(glossary.entries.map((entry) => [entry.id, entry]));
+  const staticSteps = mission.steps.map((step, index) => staticStep(step, index, mission.steps.length, byMint, glossaryById)).join("");
   const terms = glossary.entries.map((entry) => glossaryArticle(entry)).join("");
   const revision = JSON.parse(readFileSync(path.join(repoRoot, "lab/library/revision.json"), "utf8")) as { enStatus: string };
   const main = `<h1>${both(mission.title)}</h1>
-<div class="guia"><svg class="marca" viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="8" width="28" height="34" rx="3" fill="none" stroke="#ff2d6f" stroke-width="2"/><path d="M12 18h16M12 26h16M12 34h10" stroke="#f4f7fb" stroke-width="2"/></svg><div><p class="muted">${both({ es: "Guía", en: "Guide" })}</p><p>${both(mission.intro)}</p></div></div>
+<p class="lede">${both(mission.intro)}</p>
+${howDetails(HOW_LAB)}
 <div id="mision-app" data-mission="${escapeHtml(mission.id)}"></div>
 <div class="estatica" id="mision-estatica"><p class="nota">${both({ es: "Sin JavaScript se pueden leer los pasos, las explicaciones y la biblioteca. El progreso local necesita el script de esta misma carpeta.", en: "Without JavaScript the steps, explanations, and library can still be read. Local progress needs the script in this same folder." })}</p>${staticSteps}</div>
 <section id="biblioteca"><h2>${both({ es: "Biblioteca", en: "Library" })}</h2><p class="muted">${escapeHtml(revision.enStatus)}</p><div class="fichas">${terms}</div><h2>${both({ es: "Guías", en: "Guides" })}</h2><div class="fichas">${guideSection(repoRoot)}</div></section>
@@ -282,6 +300,7 @@ function renderLab(repoRoot: string, cards: readonly CardSummary[], mission: Mis
     current: "lab",
     main,
     mission: true,
+    narrow: true,
   });
 }
 
@@ -299,17 +318,34 @@ function renderVerify(cards: readonly CardSummary[], glossaryEntries: readonly G
     )
     .map((entry) => glossaryArticle(entry))
     .join("");
-  const main = `<h1>${both({ es: "Verify · fichas del 2026-10-08", en: "Verify · cards from 2026-10-08" })}</h1>
-<p>${both({ es: "Lectura estática de las fichas guardadas en el repositorio. Esta página no consulta la red, no descarga imágenes y no sustituye al comando verify.", en: "A static reading of the cards stored in the repository. This page does not query the network, does not download images, and does not replace the verify command." })}</p>
+  const main = `<h1>${both({ es: "Comprueba una dirección", en: "Check an address" })}</h1>
+<p class="lede">${both({ es: "Solo con las fichas del 2026-10-08. Esta página no consulta la red.", en: "Only with the 2026-10-08 cards. This page does not query the network." })}</p>
+${howDetails(HOW_VERIFY)}
+<div class="herramienta">
+<form id="consulta" class="consulta" action="#">
+<label for="direccion-token">${both({ es: "Pega la dirección del token", en: "Paste the token address" })}</label>
+<input id="direccion-token" name="direccion" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done">
+<button type="submit">${both({ es: "Comprobar", en: "Check" })}</button>
+</form>
+<section id="resultado" class="resultado" data-state="vacio" data-luz="neutro" aria-live="polite">
+<h2>${both({ es: "La lectura aparece aquí", en: "The reading shows up here" })}</h2>
+<p class="apoyo">${both({ es: "La lectura será una de estas tres. Los detalles técnicos se quedan plegados.", en: "The reading will be one of these three. Technical details stay folded." })}</p>
+<ul class="leyenda"><li data-luz="ok">${both({ es: "Parece el STUBX oficial", en: "Looks like the official STUBX" })}</li><li data-luz="riesgo">${both({ es: "Cuidado: posible copia", en: "Careful: possible copy" })}</li><li data-luz="neutro">${both({ es: "No se pudo comprobar", en: "Could not be checked" })}</li></ul>
+</section>
+</div>
+<details class="tecnico archivo"><summary>${both({ es: "Fichas del 2026-10-08", en: "Cards from 2026-10-08" })}</summary>
 <p>${both({ es: "Las cinco fichas son parciales: la muestra de holders quedó en no disponible. Eso no rellena el dato ni anula los campos verificados.", en: "All five cards are partial: the holder sample stayed unavailable. That does not fill the fact in and does not cancel the verified fields." })}</p>
 <div class="fichas">${articles}</div>
-<section><h2>${both({ es: "Ayuda para leer la ficha", en: "Help for reading a card" })}</h2><div class="fichas">${help}</div></section>`;
+<div class="fichas">${help}</div>
+</details>`;
   return shell({
     title: "STUBX Verify · borrador",
-    description: "Fichas públicas de STUBX Verify del 2026-10-08, en una página estática.",
+    description: "Comprueba una dirección con las fichas públicas de STUBX Verify del 2026-10-08.",
     prefix: "../",
     current: "verify",
     main,
+    verify: true,
+    narrow: true,
   });
 }
 

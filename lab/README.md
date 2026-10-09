@@ -2,7 +2,9 @@
 
 Borrador. No está publicado en stubxai.com y no pide autorización para existir en el repositorio: sí la pide para copiarse a la web.
 
-La misión 1, «Cómo detectar un token clon en 5 comprobaciones», lee las fichas de `verify/examples/2026-10-08/`. No vuelve a consultar la red. El progreso se guarda solo en el navegador (`localStorage`, clave `stubx-lab-mision-01`). Se puede borrar. No es un certificado y no tiene valor.
+La misión 1, «Cómo detectar un token clon en 5 pasos», lee las fichas de `verify/examples/2026-10-08/`. No vuelve a consultar la red. El progreso se guarda solo en el navegador (`localStorage`, clave `stubx-lab-mision-01`). Se puede borrar. No es un certificado y no tiene valor.
+
+`/verify` pide una dirección y responde en una frase: parece la oficial, posible copia, o no se pudo comprobar. Una dirección que no parece válida, o una lectura que no está disponible, tienen su propio mensaje. No llama a la red.
 
 ## Qué hay
 

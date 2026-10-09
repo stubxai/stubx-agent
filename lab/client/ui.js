@@ -189,17 +189,13 @@ function bootLab() {
     return article;
   }
 
-  function helpButtons(step) {
-    var row = el("div", { class: "opciones" });
-    step.glossary.forEach(function (id) {
-      var entry = findEntry(id);
-      var button = el("button", { type: "button", class: "secondary" });
-      var name = entry ? entry.term[lang] : id;
-      button.textContent = (lang === "en" ? "Help: " : "Ayuda: ") + name;
-      button.addEventListener("click", function () { openHelp(id); });
-      row.append(button);
-    });
-    return row;
+  function helpButton(step) {
+    var id = step.glossary[0];
+    if (!id) return null;
+    var button = el("button", { type: "button", class: "secondary" });
+    button.textContent = lang === "en" ? "What does this word mean?" : "¿Qué significa esta palabra?";
+    button.addEventListener("click", function () { openHelp(id); });
+    return button;
   }
 
   function resetButton() {
@@ -221,7 +217,7 @@ function bootLab() {
 
   function render() {
     root.replaceChildren();
-    var checks = mission.steps.filter(function (step) { return step.kind === "check"; }).length;
+    var total = mission.steps.length;
     var nav = el("ol", { class: "pasos" });
     mission.steps.forEach(function (step, index) {
       var item = el("li");
@@ -230,9 +226,7 @@ function bootLab() {
       var active = liveStep();
       var isLive = Boolean(active && active.id === step.id);
       var showing = reviewId ? reviewId === step.id : isLive;
-      var label = step.kind === "check"
-        ? String(index + 1)
-        : (lang === "en" ? "Case" : "Caso");
+      var label = String(index + 1);
       button.textContent = label;
       if (!solved && !isLive) button.disabled = true;
       if (showing) button.setAttribute("aria-current", "step");
@@ -268,7 +262,7 @@ function bootLab() {
     }
 
     if (banner) {
-      var feedback = el("div", { class: "feedback", role: "status", tabindex: "-1" });
+      var feedback = el("div", { class: banner.correct ? "feedback encaja" : "feedback no-encaja", role: "status", tabindex: "-1" });
       var feedbackTitle = el("h2");
       feedbackTitle.textContent = banner.correct
         ? (lang === "en" ? "That answer fits" : "Esa respuesta encaja")
@@ -316,16 +310,25 @@ function bootLab() {
       var section = el("section");
       var heading = el("h2");
       var position = mission.steps.indexOf(step);
-      heading.textContent = step.kind === "check"
-        ? (lang === "en" ? "Check " + (position + 1) + " of " + checks : "Comprobación " + (position + 1) + " de " + checks)
-        : (lang === "en" ? "Comprehension check" : "Comprobación de comprensión");
-      var guide = el("p");
+      heading.textContent = lang === "en"
+        ? "Step " + (position + 1) + " of " + total
+        : "Paso " + (position + 1) + " de " + total;
+      var guide = el("p", { class: "apoyo" });
       guide.textContent = step.guide[lang];
-      section.append(heading, guide, helpButtons(step));
-      step.cards.forEach(function (mint) {
-        var card = STUBX_LAB.cards[mint];
-        if (card) section.append(cardNode(card, step.fields));
-      });
+      section.append(heading, guide);
+      var word = helpButton(step);
+      if (word) section.append(word);
+      if (step.cards.length > 0) {
+        var fold = el("details", { class: "tecnico" });
+        var summary = el("summary");
+        summary.textContent = lang === "en" ? "See the cards" : "Ver las fichas";
+        fold.append(summary);
+        step.cards.forEach(function (mint) {
+          var card = STUBX_LAB.cards[mint];
+          if (card) fold.append(cardNode(card, step.fields));
+        });
+        section.append(fold);
+      }
       var prompt = el("h3");
       prompt.textContent = step.prompt[lang];
       section.append(prompt);

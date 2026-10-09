@@ -116,6 +116,11 @@ describe("páginas estáticas", () => {
     }
     assert.match(css, /:focus-visible/);
     assert.match(css, /prefers-reduced-motion/);
+    assert.match(css, /overflow-wrap: anywhere/);
+    assert.match(css, /min-height: 3\.5rem/);
+    assert.ok(contrast(PALETTE.ok, PALETTE.bgElev) >= 4.5);
+    assert.ok(contrast(PALETTE.risk, PALETTE.bgElev) >= 4.5);
+    assert.ok(contrast(PALETTE.attention, PALETTE.bgElev) >= 4.5);
   });
 
   test("lab, verify y tablero salen de los datos del repositorio", () => {
@@ -123,8 +128,16 @@ describe("páginas estáticas", () => {
     const verify = page(pages, "verify/index.html");
     const board = page(pages, "tablero/index.html");
     assert.match(lab, /data-mission="mision-01"/);
-    assert.match(lab, /Cómo detectar un token clon en 5 comprobaciones/);
-    assert.match(lab, /How to spot a clone token in 5 checks/);
+    assert.match(lab, /Cómo detectar un token clon en 5 pasos/);
+    assert.match(lab, /How to spot a clone token in 5 steps/);
+    assert.match(lab, /¿Cómo funciona\?/);
+    assert.match(verify, /Pega la dirección del token/);
+    assert.match(verify, /Parece el STUBX oficial/);
+    assert.match(verify, /Cuidado: posible copia/);
+    assert.match(verify, /No se pudo comprobar/);
+    assert.match(verify, /id="direccion-token"/);
+    assert.match(verify, /id="resultado"/);
+    assert.match(missionJs, /Paso /);
     assert.match(lab, /TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump/);
     assert.match(missionJs, /function answer/);
     assert.match(missionJs, /function initialProgress/);
@@ -138,6 +151,18 @@ describe("páginas estáticas", () => {
     assert.match(board, /lab\/test\/mission\.test\.ts/);
     assert.match(board, /\.github\/workflows\/ci\.yml/);
     assert.match(page(pages, "index.html"), /href="\.\/lab\/index\.html"/);
+    const verifyJs = page(pages, "assets/verify.js");
+    assert.match(verifyJs, /function classifyAddress/);
+    assert.match(verifyJs, /function pendingView/);
+    assert.match(verifyJs, /lectura_caida/);
+    assert.match(verifyJs, /Esta dirección no es válida/);
+    assert.match(verifyJs, /Comprobando esta dirección/);
+    for (const html of [lab, verify]) {
+      const start = html.indexOf('<details class="como">');
+      const end = html.indexOf("</details>", start);
+      const block = html.slice(start, end);
+      assert.equal([...block.matchAll(/<li>/g)].length, 3, html.slice(0, 40));
+    }
   });
 
   test("los svg decorativos no se anuncian como imagen sin texto", () => {

@@ -17,3 +17,16 @@ export function bundleMission(engineJs: string, uiJs: string, data: unknown): st
   const ui = uiJs.replaceAll("\r\n", "\n").trim();
   return `"use strict";\n(() => {\nconst STUBX_LAB = ${jsonForScript(data)};\n${engine}\n${ui}\nbootLab();\n})();\n`;
 }
+
+export function bundleVerify(lookupJs: string, uiJs: string, data: unknown): string {
+  if (/^\s*import\s/m.test(lookupJs)) {
+    throw new Error("La lectura compilada todavía importa módulos.");
+  }
+  const lookup = lookupJs
+    .replaceAll("\r\n", "\n")
+    .replaceAll(/^\/\/# sourceMappingURL=.*$/gm, "")
+    .replaceAll(/^export /gm, "")
+    .trim();
+  const ui = uiJs.replaceAll("\r\n", "\n").trim();
+  return `"use strict";\n(() => {\nconst STUBX_VERIFY = ${jsonForScript(data)};\n${lookup}\n${ui}\nbootVerify();\n})();\n`;
+}

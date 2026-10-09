@@ -5,7 +5,7 @@ import { repoRootFromMeta } from "../paths.js";
 import { loadCards, loadFuentes, loadGlossary, loadMission } from "../mission/load.js";
 import { validateMission } from "../mission/validate.js";
 import { renderCss } from "./css.js";
-import { bundleMission } from "./bundle.js";
+import { bundleMission, bundleVerify } from "./bundle.js";
 import { renderPages } from "./render.js";
 import type { BuiltPage } from "./render.js";
 
@@ -24,6 +24,12 @@ export function buildOutputs(repoRoot: string): BuiltPage[] {
   for (const card of cards) {
     byMint[card.mint] = card;
   }
+  const lookupPath = path.join(repoRoot, "dist/lab/verify/lookup.js");
+  const verifyUiPath = path.join(repoRoot, "lab/client/verify-ui.js");
+  const verifyJs = bundleVerify(readFileSync(lookupPath, "utf8"), readFileSync(verifyUiPath, "utf8"), {
+    cards,
+    source: "lista" as const,
+  });
   const missionJs = bundleMission(readFileSync(enginePath, "utf8"), readFileSync(uiPath, "utf8"), {
     mission,
     cards: byMint,
@@ -33,6 +39,7 @@ export function buildOutputs(repoRoot: string): BuiltPage[] {
   return [
     { rel: "site-drafts/assets/site.css", body: renderCss() },
     { rel: "site-drafts/assets/mission.js", body: missionJs },
+    { rel: "site-drafts/assets/verify.js", body: verifyJs },
     ...renderPages(repoRoot, cards),
   ];
 }

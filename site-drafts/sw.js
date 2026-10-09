@@ -1,4 +1,4 @@
-var CACHE = "stubx-lab-draft-2026-10-09-2";
+var CACHE = "stubx-lab-draft-2026-10-09-3";
 var FILES = [
   "./",
   "./index.html",
@@ -8,6 +8,7 @@ var FILES = [
   "./assets/site.css",
   "./assets/site.js",
   "./assets/mission.js",
+  "./assets/verify.js",
   "./sw.js",
 ];
 

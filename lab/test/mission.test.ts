@@ -19,8 +19,9 @@ describe("misión 1", () => {
   const glossary = loadGlossary(root);
   const byMint = new Map(cards.map((card) => [card.mint, card]));
 
-  test("tiene cinco comprobaciones y un caso nuevo al final", () => {
-    assert.equal(checkCount(mission), 5);
+  test("tiene cinco pasos y un caso nuevo al final", () => {
+    assert.equal(mission.steps.length, 5);
+    assert.equal(checkCount(mission), 4);
     assert.equal(mission.steps.at(-1)?.kind, "comprehension");
     assert.deepEqual(mission.steps.at(-1)?.cards, []);
     assert.deepEqual(validateMission(mission, glossary, cards), []);
@@ -142,7 +143,8 @@ describe("misión 1", () => {
 
   test("cada opción incorrecta tiene explicación en los dos idiomas", () => {
     for (const step of mission.steps) {
-      assert.ok(step.prompt.es.length > 0);
+      assert.ok(step.prompt.es.length > 0 && step.prompt.es.length <= 120);
+      assert.ok(step.prompt.en.length <= 140);
       assert.ok(step.prompt.en.length > 0);
       assert.ok(step.whyRight.es.length > 0);
       assert.ok(step.whyRight.en.length > 0);
