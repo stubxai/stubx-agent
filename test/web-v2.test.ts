@@ -698,7 +698,11 @@ test("el pie antiguo no sale en el alt de la imagen OG", () => {
     if (rel === "archivo.html" || rel === "token.json" || rel.startsWith("tools/__pycache__")) continue;
     if (!/\.(html|py|js|mjs|json|md|css|txt|xml)$/.test(rel)) continue;
     const text = readFileSync(file, "utf8").toLowerCase();
-    for (const phrase of OLD_OG_FOOTER) assert.equal(text.includes(phrase), false, `${rel} ${phrase}`);
+    const studioLabel = rel === "studio/lib/copy.mjs" || rel === "studio/reglas/index.html";
+    for (const phrase of OLD_OG_FOOTER) {
+      if (studioLabel && (phrase === "imagen generada con ia" || phrase === "ai-generated image")) continue;
+      assert.equal(text.includes(phrase), false, `${rel} ${phrase}`);
+    }
   }
 });
 

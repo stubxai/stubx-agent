@@ -166,6 +166,7 @@ type Glyph = {
   x: number;
   y: number;
   size: number;
+  w: number;
   role: string;
   missing?: boolean;
 };
@@ -282,6 +283,19 @@ function pngDeclaring(width: number, height: number): Uint8Array {
     offset += part.length;
   }
   return out;
+}
+
+function brandLinesOf(card: Card, role: string): string[] {
+  const ys = [...new Set(card.glyphs.filter((glyph) => glyph.role === role).map((glyph) => glyph.y))].sort((a, b) => a - b);
+  return ys.map((y) => card.glyphs.filter((glyph) => glyph.role === role && glyph.y === y).map((glyph) => glyph.ch).join(""));
+}
+
+function assertLockedSuffix(card: Card, role: string, suffix: string) {
+  const lines = brandLinesOf(card, role);
+  assert.ok(lines.length > 0, role);
+  const last = lines[lines.length - 1] ?? "";
+  if (lines.length === 1) assert.ok(last.endsWith(suffix), `${role} ${last}`);
+  else assert.equal(last, suffix, `${role} ${lines.join("|")}`);
 }
 
 function joined(card: Card, role: string): string {
@@ -627,8 +641,8 @@ describe("studio", () => {
       aiLabel: (origins: string[], lang: string) => string;
       AI_LABEL: { ai: { es: string; en: string }; mascota: { es: string; en: string } };
     }>("lib/copy.mjs");
-    assert.equal(AI_LABEL.ai.es, "Imagen creada con IA");
-    assert.equal(AI_LABEL.ai.en, "Image created with AI");
+    assert.equal(AI_LABEL.ai.es, "Imagen generada con IA");
+    assert.equal(AI_LABEL.ai.en, "AI-generated image");
     assert.equal(AI_LABEL.mascota.es, "Ilustración con elementos generados con IA.");
     assert.equal(AI_LABEL.mascota.en, "Illustration with AI-generated elements.");
     assert.equal(aiLabel([], "es"), "");
@@ -694,7 +708,16 @@ describe("studio", () => {
     assert.match(reglas, /Los recursos de STUBX siguen como opción por defecto/);
     assert.match(reglas, /STUBX assets stay the default option/);
     assert.match(reglas, /No oficial de \{nombre\} ni de STUBX/);
-    assert.match(reglas, /Not official for \{name\} or for STUBX/);
+    assert.match(reglas, /Not official from \{name\} or STUBX/);
+    assert.match(reglas, /Si usas el nombre o el logo de otro token: necesitas tener derecho a usarlos/);
+    assert.match(reglas, /If you use another token’s name or logo: you need the right to use them/);
+    assert.match(reglas, /STUBX solo ofrece la herramienta: no revisa, no avala ni promociona ese token/);
+    assert.match(reglas, /STUBX only offers the tool: it does not review, endorse or promote that token/);
+    assert.match(reglas, /ai: «Imagen generada con IA»/);
+    assert.match(reglas, /ai: “AI-generated image”/);
+    assert.match(editor, /Usa solo un logo que tengas derecho a usar\. Si se hizo con IA, indícalo al publicar\./);
+    assert.match(editor, /Only use a logo you have the right to use\. If it was made with AI, say so when you post\./);
+    assert.match(readStudio("lib/logo.mjs"), /replace\(\/\[\\u200B-\\u200F\\u202A-\\u202E\\u2066-\\u2069\\uFEFF\]\/g, ""\)/);
     assert.match(editor, /id="aviso-logo-medida"/);
     assert.match(editor, /Ese PNG declara más de 2048 px de ancho o de alto y no se abre/);
     assert.match(editor, /That PNG declares more than 2048 px in width or height and will not be opened/);
@@ -812,7 +835,7 @@ describe("studio", () => {
     assert.equal(isStubxToken("stubx"), true);
     assert.equal(isStubxToken("LUNA"), false);
     assert.equal(brandFor("es", "LUNA"), "No oficial de LUNA ni de STUBX");
-    assert.equal(brandFor("en", "LUNA"), "Not official for LUNA or for STUBX");
+    assert.equal(brandFor("en", "LUNA"), "Not official from LUNA or STUBX");
     assert.equal(brandFor("es", "STUBX"), BRAND.es);
     assert.equal(brandFor("en", "stubx"), BRAND.en);
     assert.equal(brandFor("es", "LUNA\u202E"), "No oficial de LUNA ni de STUBX");
@@ -843,8 +866,38 @@ describe("studio", () => {
       origins: [],
     });
     assert.equal(englishToken.fits, true);
-    assert.equal(joined(englishToken, "brand"), "NOTOFFICIALFORLUNAORFORSTUBX");
+    assert.equal(joined(englishToken, "brand"), "NOTOFFICIALFROMLUNAORSTUBX");
     assert.equal(englishToken.label, "");
+    const wideName = "M".repeat(20);
+    for (const lang of ["es", "en"] as const) {
+      const suffix = lang === "en" ? "ORSTUBX" : "NIDESTUBX";
+      for (const height of [1080, 1920]) {
+        const card = await renderCard({
+          width: 1080,
+          height,
+          lang,
+          title: "Hola",
+          body: "Texto limpio.",
+          token: wideName,
+          watermark: false,
+          origins: [],
+        });
+        assertLockedSuffix(card, "brand", suffix);
+        assertLockedSuffix(card, "brandTop", suffix);
+        const lines = brandLinesOf(card, "brand");
+        const topLines = brandLinesOf(card, "brandTop");
+        assert.equal((lines.at(-1) ?? "").includes(suffix), true);
+        if (height === 1920) {
+          assert.ok(lines.length > 1);
+          assert.equal(lines.at(-1), suffix);
+          assert.equal(topLines.at(-1), suffix);
+        }
+        const brandGlyphs = card.glyphs.filter((glyph) => glyph.role === "brand");
+        const right = Math.max(...brandGlyphs.map((glyph) => glyph.x + glyph.w));
+        assert.ok(right <= card.width);
+        assert.ok(brandGlyphs.some((glyph) => glyph.ch === "S" && glyph.y >= card.brandTop && glyph.y < card.footerTop));
+      }
+    }
     const plain = await renderCard({
       width: 1080,
       height: 1080,

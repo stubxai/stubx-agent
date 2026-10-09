@@ -190,6 +190,14 @@ function blit(rgba, width, height, zone, image) {
   }
 }
 
+function layoutBrand(lang, token, maxWidth, fontSize) {
+  const suffix = lang === "en" ? "or STUBX" : "ni de STUBX";
+  const full = brandFor(lang, token);
+  if (!full.endsWith(suffix) || measureText(full, fontSize) <= maxWidth) return wrapText(full, maxWidth, fontSize);
+  const prefix = full.slice(0, full.length - suffix.length).trimEnd();
+  return [...wrapText(prefix, maxWidth, fontSize), suffix];
+}
+
 function drawWatermark(rgba, width, height, color) {
   const mask = new Uint8ClampedArray(width * height * 4);
   const fontSize = Math.max(FONT_H, Math.round(height * 0.02));
@@ -241,7 +249,7 @@ export async function renderCard(options) {
   const footerText = FOOTER[lang];
   const label = aiLabel(options.origins ?? [], lang);
   const footerLines = wrapText(footerText, inner, size);
-  const brandLines = wrapText(brandText, inner, size);
+  const brandLines = layoutBrand(lang, tokenText, inner, size);
   const riskLines = wrapText(riskText, inner, size);
   const aiLines = label ? wrapText(label, inner, size) : [];
   const lineH = size * 1.2;

@@ -23,8 +23,8 @@ export const PNG_COMMENT = "Community content, unofficial. Not from @stubxai.";
 
 export const AI_LABEL = {
   ai: {
-    es: "Imagen creada con IA",
-    en: "Image created with AI",
+    es: "Imagen generada con IA",
+    en: "AI-generated image",
   },
   mascota: {
     es: "Ilustración con elementos generados con IA.",
@@ -36,7 +36,7 @@ export function brandFor(lang, token) {
   const name = clipToken(token);
   const code = lang === "en" ? "en" : "es";
   if (!name || isStubxToken(name)) return BRAND[code];
-  if (code === "en") return `Not official for ${name} or for STUBX`;
+  if (code === "en") return `Not official from ${name} or STUBX`;
   return `No oficial de ${name} ni de STUBX`;
 }
 

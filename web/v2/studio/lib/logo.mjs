@@ -8,10 +8,8 @@ export const LOGO_MAX_BYTES = 1_500_000;
 export const LOGO_MAX_EDGE = 2048;
 export const LOGO_DRAW_EDGE = 512;
 
-const HIDDEN_NAME = /[\u00AD\u034F\u061C\u180E\u200B-\u200F\u202A-\u202E\u2060-\u2064\u2066-\u2069\uFEFF]/g;
-
 export function clipToken(value) {
-  return String(value ?? "").replace(HIDDEN_NAME, "").replace(/[\u0000-\u001f]/g, "").trim().slice(0, TOKEN_MAX);
+  return String(value ?? "").replace(/[\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF]/g, "").replace(/[\u0000-\u001f]/g, "").trim().slice(0, TOKEN_MAX);
 }
 
 export function isStubxToken(value) {
