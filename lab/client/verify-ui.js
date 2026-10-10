@@ -18,14 +18,33 @@ function legendItem(light, text) {
 }
 
 function entenderResultado(lang) {
+  var titleText = lang === "en" ? "Understand this result" : "Entender este resultado";
   var understand = verifyEl("nav", {
     id: "entender-resultado",
     class: "entender-resultado",
-    "aria-label": lang === "en" ? "Understand this result" : "Entender este resultado",
+    "aria-label": titleText,
   });
-  var understandTitle = verifyEl("p");
-  understandTitle.textContent = lang === "en" ? "Understand this result" : "Entender este resultado";
-  understand.append(understandTitle);
+  var button = verifyEl("button", { type: "button", class: "abrir-entender" });
+  button.textContent = titleText;
+  var panel = verifyEl("div", { class: "explicacion-resultado", tabindex: "-1", hidden: "hidden" });
+  var lines = lang === "en"
+    ? [
+      "Permissions: mint authority can create more tokens. Freeze authority can block accounts. Neither one says the project is legitimate.",
+      "Supply: it is the total number of tokens in this reading, using the mint decimals.",
+      "Metadata: if they can change, the name or symbol in this reading may not be tomorrow's.",
+      "Distribution: a sample of accounts is not a census of who holds the tokens.",
+    ]
+    : [
+      "Permisos: el de emisión permite crear más tokens. El de congelación permite bloquear cuentas. Ninguno de los dos dice si el proyecto es legítimo.",
+      "Suministro: es la cantidad total de tokens en esta lectura, con los decimales del mint.",
+      "Metadatos: si se pueden cambiar, el nombre o el símbolo de esta lectura pueden dejar de ser los de mañana.",
+      "Distribución: una muestra de cuentas no es un censo de quién tiene los tokens.",
+    ];
+  lines.forEach(function (line) {
+    var paragraph = verifyEl("p");
+    paragraph.textContent = line;
+    panel.append(paragraph);
+  });
   [
     ["/aprender/#guia-permisos", "Permisos", "Permissions"],
     ["/aprender/#autoridad-emision", "Suministro", "Supply"],
@@ -34,8 +53,13 @@ function entenderResultado(lang) {
   ].forEach(function (item) {
     var link = verifyEl("a", { href: item[0], "data-guia": item[0] });
     link.textContent = lang === "en" ? item[2] : item[1];
-    understand.append(link);
+    panel.append(link);
   });
+  button.addEventListener("click", function () {
+    panel.hidden = false;
+    panel.focus();
+  });
+  understand.append(button, panel);
   return understand;
 }
 
@@ -285,6 +309,8 @@ function bootVerify() {
     if (extra) extra.disabled = busy;
     var retry = out.querySelector("#reintentar");
     if (retry) retry.disabled = busy;
+    var save = out.querySelector("#guardar-consulta");
+    if (save) save.disabled = busy;
   }
 
   function pauseView(mint) {

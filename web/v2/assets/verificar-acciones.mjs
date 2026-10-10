@@ -18,10 +18,20 @@ const COPY = {
     none: "No hay una consulta anterior de esta dirección en esta red.",
     compare: "Comparar consultas",
     unknown: "no se puede determinar si cambió",
+    unknownState: "no se puede determinar",
     changed: "cambió",
     same: "igual",
     changes: "Qué cambió",
     unknownTitle: "Lo que no se puede determinar",
+    unchangedTitle: "Lo que sigue igual",
+    difference: "Diferencia",
+    unread: "no se leyó",
+    utc: "Hora UTC",
+    slot: "Momento de la red",
+    technical: "Detalles técnicos",
+    incomplete: "Lectura incompleta: se guardará marcando lo que falta",
+    emptySave: "No hay una lectura para guardar. No se ha guardado una ficha vacía.",
+    wait: "La lectura no ha terminado. Espera a que aparezca el resultado.",
     noChange: "No hay un cambio en los datos leídos en las dos consultas.",
     db: "Este navegador no dejó guardar el cuaderno.",
     fail: "No hay una lectura en pantalla para guardar. Pulsa Comprobar y espera el resultado.",
@@ -39,10 +49,20 @@ const COPY = {
     none: "There is no earlier query of this address on this network.",
     compare: "Compare queries",
     unknown: "it cannot be determined whether it changed",
+    unknownState: "it cannot be determined",
     changed: "changed",
     same: "same",
     changes: "What changed",
     unknownTitle: "What cannot be determined",
+    unchangedTitle: "What stayed the same",
+    difference: "Difference",
+    unread: "not read",
+    utc: "UTC time",
+    slot: "Network moment",
+    technical: "Technical details",
+    incomplete: "Incomplete reading: it will be saved marking what is missing",
+    emptySave: "There is no reading to save. An empty card was not saved.",
+    wait: "The reading has not finished. Wait until the result appears.",
     noChange: "There is no change in the facts read on both queries.",
     db: "This browser did not allow the notebook to be saved.",
     fail: "There is no reading on screen to save. Press Check and wait for the result.",
@@ -132,7 +152,7 @@ function say(message) {
   node.append(p);
 }
 
-function saySaved() {
+function saySaved(incomplete) {
   const node = box();
   if (!node) return;
   node.replaceChildren();
@@ -140,6 +160,7 @@ function saySaved() {
   p.className = "nota confirmacion-guardado";
   p.setAttribute("role", "status");
   p.setAttribute("aria-live", "polite");
+  if (incomplete) p.append(document.createTextNode(`${t("incomplete")} `));
   p.append(document.createTextNode(t("saved")));
   const link = document.createElement("a");
   link.href = "/cuaderno/";
@@ -174,7 +195,7 @@ function sideText(row, side, card) {
 function gridFor(rows, verdict, current, previous) {
   const grid = document.createElement("div");
   grid.className = "comparacion";
-  const word = verdict === "cambio" ? t("changed") : verdict === "igual" ? t("same") : t("unknown");
+  const word = verdict === "cambio" ? t("changed") : verdict === "igual" ? t("same") : t("unknownState");
   for (const row of rows) {
     const article = document.createElement("article");
     article.className = "ficha";
@@ -185,10 +206,21 @@ function gridFor(rows, verdict, current, previous) {
     left.textContent = `${t("left")}: ${sideText(row, "left", current.card)}`;
     const right = document.createElement("p");
     right.textContent = `${t("right")}: ${sideText(row, "right", previous.card)}`;
+    article.append(title, left, right);
+    if (row.difference && verdict === "cambio") {
+      const delta = formatAmount(row.difference, current.card.decimals, lang());
+      if (delta) {
+        const diff = document.createElement("p");
+        diff.className = "nota";
+        diff.textContent = `${t("difference")}: ${delta}`;
+        article.append(diff);
+      }
+    }
     const mark = document.createElement("p");
     mark.className = verdict === "cambio" ? "nota" : "muted";
+    mark.dataset.estado = verdict;
     mark.textContent = word;
-    article.append(title, left, right, mark);
+    article.append(mark);
     grid.append(article);
   }
   return grid;
@@ -227,7 +259,32 @@ function paintComparison(current, previous, compared) {
     details.append(summary, gridFor(compared.unknown, "indeterminado", current, previous));
     node.append(lead, details);
   }
-  node.append(entenderNav(lang()));
+  if (compared.unchanged.length) {
+    const sameBox = document.createElement("details");
+    sameBox.open = true;
+    sameBox.className = "aviso-mas grupo-igual";
+    const summary = document.createElement("summary");
+    summary.textContent = t("unchangedTitle");
+    sameBox.append(summary, gridFor(compared.unchanged, "igual", current, previous));
+    node.append(sameBox);
+  }
+  const tech = document.createElement("details");
+  tech.className = "tecnico";
+  const techSummary = document.createElement("summary");
+  techSummary.textContent = t("technical");
+  const list = document.createElement("dl");
+  const slotName = document.createElement("dt");
+  slotName.textContent = t("slot");
+  const slotValue = document.createElement("dd");
+  const slotText = (value) => (value === null || value === undefined ? t("unread") : String(value));
+  slotValue.textContent = `${t("left")}: ${slotText(compared.technical.slot.left)} · ${t("right")}: ${slotText(compared.technical.slot.right)}`;
+  const timeName = document.createElement("dt");
+  timeName.textContent = t("utc");
+  const timeValue = document.createElement("dd");
+  timeValue.textContent = `${t("left")}: ${compared.technical.consultedAt.left} · ${t("right")}: ${compared.technical.consultedAt.right}`;
+  list.append(slotName, slotValue, timeName, timeValue);
+  tech.append(techSummary, list);
+  node.append(tech, entenderNav(lang()));
   lastView = { current, previous };
   const changes = document.getElementById("que-cambio");
   if (changes) changes.scrollIntoView({ block: "nearest" });
@@ -242,11 +299,16 @@ function recordOnScreen(mint) {
 }
 
 async function saveQuery(mint) {
+  const screen = document.getElementById("resultado");
+  if (screen && screen.getAttribute("aria-busy") === "true") {
+    say(t("wait"));
+    return;
+  }
   say(t("saving"));
   try {
     const record = recordOnScreen(mint);
-    if (!record) {
-      say(t("fail"));
+    if (!record || !record.card) {
+      say(t("emptySave"));
       return;
     }
     const db = await openDb();
@@ -256,7 +318,7 @@ async function saveQuery(mint) {
       return;
     }
     await dbPut(db, { id: record.id, note: "", card: record.card });
-    saySaved();
+    saySaved(Boolean(record.card.partial));
   } catch {
     say(t("db"));
   }

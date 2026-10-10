@@ -448,6 +448,40 @@ describe("lectura universal con RPC simulado", () => {
     assert.equal(reading.signals.find((item) => item.id === "emision")?.level, "ok");
   });
 
+  test("una lectura normal no pide suministro ni cuentas grandes a publicnode", async () => {
+    const sample = fixture("revoked-mint");
+    const accounts = new Map<string, AccountFixture | null>([
+      [sample.mint, sample.mintAccount],
+      [metadataPda(sample.mint), null],
+      [bondingCurvePda(sample.mint), null],
+    ]);
+    const hosts: Record<string, string[]> = { getTokenSupply: [], getTokenLargestAccounts: [], getMultipleAccounts: [] };
+    const base = transportFor({
+      slot: sample.slot,
+      accounts,
+      supply: { amount: "7723351880366328", decimals: 6 },
+      largest: [],
+    });
+    const reading = await readAnyMint({
+      mint: sample.mint,
+      registry,
+      endpoints: ["https://solana-rpc.publicnode.com", "https://api.mainnet-beta.solana.com"],
+      transport: async (endpoint, body, timeoutMs) => {
+        const method = (JSON.parse(body) as { method: string }).method;
+        if (hosts[method]) hosts[method]?.push(new URL(endpoint).hostname);
+        return base(endpoint, body, timeoutMs);
+      },
+      maxRetries: 0,
+      minIntervalMs: 0,
+      sleep: async () => {},
+    });
+    assert.equal(reading.ok, true);
+    assert.deepEqual(hosts.getTokenSupply, ["api.mainnet-beta.solana.com"]);
+    assert.deepEqual(hosts.getTokenLargestAccounts, ["api.mainnet-beta.solana.com"]);
+    assert.deepEqual(hosts.getMultipleAccounts, ["solana-rpc.publicnode.com"]);
+    assert.equal(reading.sources.some((item) => item.host === "api.mainnet-beta.solana.com"), false);
+  });
+
   test("la lectura automática pide las cuentas más grandes y un fallo aparte no es un censo", async () => {
     const sample = fixture("revoked-mint");
     const methods: string[] = [];

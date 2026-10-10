@@ -29,8 +29,25 @@
 
   apply(readLang());
 
+  function focusHash() {
+    var hash = location.hash;
+    if (!hash || hash.length < 2) return;
+    var id = "";
+    try {
+      id = decodeURIComponent(hash.slice(1));
+    } catch (error) {
+      return;
+    }
+    var target = document.getElementById(id);
+    if (!target) return;
+    if (!target.hasAttribute("tabindex")) target.setAttribute("tabindex", "-1");
+    target.focus();
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     apply(readLang());
+    focusHash();
+    window.addEventListener("hashchange", focusHash);
     document.querySelectorAll("[data-set-lang]").forEach(function (button) {
       button.addEventListener("click", function () {
         var lang = button.getAttribute("data-set-lang") === "en" ? "en" : "es";

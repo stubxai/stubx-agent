@@ -2020,7 +2020,7 @@ async function readLargestAccounts(input) {
         signal: input.signal,
     }));
     const rpc = new FallbackRpc(readers, endpoints);
-    const largest = await rpc.getTokenLargestAccounts(checked.mint);
+    const largest = await mainnetOnlyClient(input, input.timeoutMs ?? 6000).getTokenLargestAccounts(checked.mint);
     if (!largest.ok) {
         const kind = classifyRpcFailure(largest.error, largest.httpStatus);
         const text = {
@@ -2039,11 +2039,11 @@ async function readLargestAccounts(input) {
 // El suministro y las cuentas grandes van después, de una en una: un 429
 // se reintenta una vez con espera; un 403 no se repite en el mismo nodo.
 const OPTIONAL_SUPPLY_URL = "https://api.mainnet-beta.solana.com";
-async function optionalMainnetSupply(mint, input) {
-    const client = new RpcClient({
+function mainnetOnlyClient(input, timeoutMs) {
+    return new RpcClient({
         endpoint: OPTIONAL_SUPPLY_URL,
         transport: input.transport,
-        timeoutMs: input.timeoutMs ?? 8000,
+        timeoutMs,
         maxRetries: input.maxRetries ?? 0,
         minIntervalMs: input.minIntervalMs ?? 200,
         now: input.now,
@@ -2051,7 +2051,10 @@ async function optionalMainnetSupply(mint, input) {
         random: input.random,
         signal: input.signal,
     });
-    return client.getTokenSupply(mint);
+}
+async function optionalMainnetSupply(mint, input) {
+    // getTokenSupply en publicnode responde 403 por diseño. Solo se pide a mainnet-beta.
+    return mainnetOnlyClient(input, input.timeoutMs ?? 8000).getTokenSupply(mint);
 }
 function groupFacts(facts) {
     const failed = facts.filter((item) => item.state === "fallo" || item.state === "no_consultado");
@@ -2205,7 +2208,8 @@ async function readWith(mint, registry, rpc, input) {
             explain: loc("Al mostrar el nombre se marcaron caracteres de control o invisibles. La comparación con STUBX los quita antes de mirar.", "When showing the name, control or invisible characters were marked. The comparison with STUBX removes them first."),
         });
     }
-    const largest = await rpc.getTokenLargestAccounts(mint);
+    // getTokenLargestAccounts en publicnode responde 403 por diseño. Solo se pide a mainnet-beta.
+    const largest = await mainnetOnlyClient(input, input.timeoutMs ?? 6000).getTokenLargestAccounts(mint);
     let largestState = "fallo";
     if (!largest.ok) {
         largestState = "fallo";
@@ -2694,14 +2698,33 @@ function legendItem(light, text) {
 }
 
 function entenderResultado(lang) {
+  var titleText = lang === "en" ? "Understand this result" : "Entender este resultado";
   var understand = verifyEl("nav", {
     id: "entender-resultado",
     class: "entender-resultado",
-    "aria-label": lang === "en" ? "Understand this result" : "Entender este resultado",
+    "aria-label": titleText,
   });
-  var understandTitle = verifyEl("p");
-  understandTitle.textContent = lang === "en" ? "Understand this result" : "Entender este resultado";
-  understand.append(understandTitle);
+  var button = verifyEl("button", { type: "button", class: "abrir-entender" });
+  button.textContent = titleText;
+  var panel = verifyEl("div", { class: "explicacion-resultado", tabindex: "-1", hidden: "hidden" });
+  var lines = lang === "en"
+    ? [
+      "Permissions: mint authority can create more tokens. Freeze authority can block accounts. Neither one says the project is legitimate.",
+      "Supply: it is the total number of tokens in this reading, using the mint decimals.",
+      "Metadata: if they can change, the name or symbol in this reading may not be tomorrow's.",
+      "Distribution: a sample of accounts is not a census of who holds the tokens.",
+    ]
+    : [
+      "Permisos: el de emisión permite crear más tokens. El de congelación permite bloquear cuentas. Ninguno de los dos dice si el proyecto es legítimo.",
+      "Suministro: es la cantidad total de tokens en esta lectura, con los decimales del mint.",
+      "Metadatos: si se pueden cambiar, el nombre o el símbolo de esta lectura pueden dejar de ser los de mañana.",
+      "Distribución: una muestra de cuentas no es un censo de quién tiene los tokens.",
+    ];
+  lines.forEach(function (line) {
+    var paragraph = verifyEl("p");
+    paragraph.textContent = line;
+    panel.append(paragraph);
+  });
   [
     ["/aprender/#guia-permisos", "Permisos", "Permissions"],
     ["/aprender/#autoridad-emision", "Suministro", "Supply"],
@@ -2710,8 +2733,13 @@ function entenderResultado(lang) {
   ].forEach(function (item) {
     var link = verifyEl("a", { href: item[0], "data-guia": item[0] });
     link.textContent = lang === "en" ? item[2] : item[1];
-    understand.append(link);
+    panel.append(link);
   });
+  button.addEventListener("click", function () {
+    panel.hidden = false;
+    panel.focus();
+  });
+  understand.append(button, panel);
   return understand;
 }
 
@@ -2961,6 +2989,8 @@ function bootVerify() {
     if (extra) extra.disabled = busy;
     var retry = out.querySelector("#reintentar");
     if (retry) retry.disabled = busy;
+    var save = out.querySelector("#guardar-consulta");
+    if (save) save.disabled = busy;
   }
 
   function pauseView(mint) {

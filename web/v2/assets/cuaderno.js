@@ -66,7 +66,7 @@ const COPY = {
     program: "Programa",
     mintAuth: "Permiso de emisión",
     freezeAuth: "Permiso de congelación",
-    supplyAccount: "Suministro en la cuenta",
+    supplyAccount: "Suministro total",
     supplyRpc: "Suministro leído aparte",
     decimals: "Decimales",
     name: "Nombre",
@@ -93,7 +93,13 @@ const COPY = {
     right: "Consulta B",
     changed: "cambió",
     same: "igual",
+    unknownState: "no se puede determinar",
     unknownChange: "no se puede determinar si cambió",
+    difference: "Diferencia",
+    unread: "no se leyó",
+    utc: "Hora UTC",
+    incomplete: "Lectura incompleta: se guardará marcando lo que falta",
+    emptySave: "No hay una lectura para guardar. No se ha guardado una ficha vacía.",
     changesTitle: "Qué cambió",
     unknownTitle: "Lo que no se puede determinar",
     unchangedTitle: "Lo que sigue igual",
@@ -137,7 +143,7 @@ const COPY = {
     program: "Program",
     mintAuth: "Mint authority",
     freezeAuth: "Freeze authority",
-    supplyAccount: "Supply on the account",
+    supplyAccount: "Total supply",
     supplyRpc: "Supply read separately",
     decimals: "Decimals",
     name: "Name",
@@ -164,7 +170,13 @@ const COPY = {
     right: "Query B",
     changed: "changed",
     same: "same",
+    unknownState: "it cannot be determined",
     unknownChange: "it cannot be determined whether it changed",
+    difference: "Difference",
+    unread: "not read",
+    utc: "UTC time",
+    incomplete: "Incomplete reading: it will be saved marking what is missing",
+    emptySave: "There is no reading to save. An empty card was not saved.",
     changesTitle: "What changed",
     unknownTitle: "What cannot be determined",
     unchangedTitle: "What stayed the same",
@@ -245,12 +257,12 @@ function announceSaved(extra, retryMint) {
   node.dataset.kind = "ok";
   node.setAttribute("role", "status");
   node.setAttribute("aria-live", "polite");
+  if (extra) node.append(document.createTextNode(`${extra} `));
   node.append(document.createTextNode(t("saved")));
   const link = document.createElement("a");
   link.href = "#lista-consultas";
   link.textContent = t("open");
   node.append(link);
-  if (extra) node.append(document.createTextNode(` ${extra}`));
   if (retryMint) {
     const button = document.createElement("button");
     button.type = "button";
@@ -408,7 +420,16 @@ function renderCard(card) {
   article.append(mintLine);
   const list = el("dl");
   const facts = [];
-  const supplyStatus = card.supplyAccount !== null && card.supplyAccount !== undefined ? "verificado" : card.isMint ? "ausente" : card.supplyRpcStatus;
+  const accountKnown = card.supplyAccount !== null && card.supplyAccount !== undefined && card.supplyAccount !== "";
+  const rpcKnown = card.supplyRpcStatus === "verificado" && typeof card.supplyRpc === "string" && card.supplyRpc !== "";
+  const supplyRaw = accountKnown ? card.supplyAccount : rpcKnown ? card.supplyRpc : null;
+  const supplyStatus = accountKnown || rpcKnown
+    ? "verificado"
+    : card.isMint === false && card.supplyRpcStatus === "no_aplica"
+      ? "no_aplica"
+      : card.isMint
+        ? "fallo"
+        : card.supplyRpcStatus;
   facts.push(dataRow(list, t("program"), card.programStatus, programLabel(card.program)));
   const mintAuth = card.mintAuthority.address
     ? `${authorityLabel(card.mintAuthority)} · ${card.mintAuthority.address}`
@@ -418,8 +439,7 @@ function renderCard(card) {
     : authorityLabel(card.freezeAuthority);
   facts.push(dataRow(list, t("mintAuth"), card.mintAuthority.status, mintAuth));
   facts.push(dataRow(list, t("freezeAuth"), card.freezeAuthority.status, freezeAuth));
-  facts.push(dataRow(list, t("supplyAccount"), supplyStatus, amountText(card.supplyAccount, card.decimals, supplyStatus)));
-  facts.push(dataRow(list, t("supplyRpc"), card.supplyRpcStatus, amountText(card.supplyRpc, card.decimals, card.supplyRpcStatus)));
+  facts.push(dataRow(list, t("supplyAccount"), supplyStatus, amountText(supplyRaw, card.decimals, supplyStatus)));
   facts.push(dataRow(list, t("decimals"), card.decimals === null ? "ausente" : "verificado", card.decimals));
   facts.push(dataRow(list, t("name"), card.name.status, card.name.text));
   facts.push(dataRow(list, t("symbol"), card.symbol.status, card.symbol.text));
@@ -449,6 +469,9 @@ function renderCard(card) {
   summaryTech.textContent = t("technical");
   const tech = el("dl");
   dataRow(tech, t("slot"), card.slotStatus, card.slot);
+  const utcTerm = text("dt", t("utc"));
+  const utcValue = text("dd", card.consultedAt);
+  tech.append(utcTerm, utcValue);
   dataRow(tech, t("rawAccount"), supplyStatus, card.supplyAccount);
   dataRow(tech, t("rawRpc"), card.supplyRpcStatus, card.supplyRpc);
   if (card.errors.length) {
@@ -591,7 +614,7 @@ async function consult(mint) {
     });
     const box = document.getElementById("resultado");
     if (!result.card) {
-      showMessage(t(result.error === "rpc" ? "rpc" : "invalid"), "error");
+      showMessage(t(result.error === "rpc" ? "rpc" : result.error === "invalid" ? "invalid" : "emptySave"), "error");
       if (box) box.replaceChildren();
       return;
     }
@@ -603,8 +626,9 @@ async function consult(mint) {
     const record = { id: crypto.randomUUID(), note: "", card: result.card, source: "leida" };
     const saved = await persist(record);
     if (!saved) return;
-    const needsRetry = Boolean(result.card.partial || !result.ok);
-    announceSaved(needsRetry ? t("network") : "", needsRetry ? mint : "");
+    const incomplete = Boolean(result.card.partial || !result.ok);
+    const extra = incomplete ? `${t("incomplete")}${result.ok ? "" : ` ${t("network")}`}` : "";
+    announceSaved(extra, incomplete ? mint : "");
     await refresh();
   } catch {
     showRetry(t("network"), mint);
@@ -667,13 +691,17 @@ function renderComparison() {
   };
   const gridFor = (rows, verdict) => {
     const grid = el("div", { class: "comparacion" });
-    const word = verdict === "igual" ? t("same") : verdict === "cambio" ? t("changed") : t("unknownChange");
+    const word = verdict === "igual" ? t("same") : verdict === "cambio" ? t("changed") : t("unknownState");
     for (const rowItem of rows) {
       const article = el("article", { class: "ficha", "data-veredicto": verdict });
       article.append(text("h3", rowItem.field[lang()]));
       article.append(text("p", `${t("left")}: ${shownSide(rowItem, "left", left.card)}`));
       article.append(text("p", `${t("right")}: ${shownSide(rowItem, "right", right.card)}`));
-      article.append(text("p", word, { class: verdict === "cambio" ? "nota" : "muted" }));
+      if (rowItem.difference && verdict === "cambio") {
+        const delta = formatAmount(rowItem.difference, left.card.decimals, lang());
+        if (delta) article.append(text("p", `${t("difference")}: ${delta}`, { class: "nota" }));
+      }
+      article.append(text("p", word, { class: verdict === "cambio" ? "nota" : "muted", "data-estado": verdict }));
       grid.append(article);
     }
     return grid;
@@ -689,12 +717,21 @@ function renderComparison() {
     out.append(unknown);
   }
   if (compared.unchanged.length) {
-    const sameBox = el("details", { class: "aviso-mas" });
+    const sameBox = el("details", { class: "aviso-mas grupo-igual", open: "open" });
     const summary = el("summary");
     summary.textContent = t("unchangedTitle");
     sameBox.append(summary, gridFor(compared.unchanged, "igual"));
     out.append(sameBox);
   }
+  const tech = el("details", { class: "tecnico" });
+  const techSummary = el("summary");
+  techSummary.textContent = t("technical");
+  const techList = el("dl");
+  const slotText = (value) => (value === null || value === undefined ? t("unread") : String(value));
+  techList.append(text("dt", t("slot")), text("dd", `${t("left")}: ${slotText(compared.technical.slot.left)} · ${t("right")}: ${slotText(compared.technical.slot.right)}`));
+  techList.append(text("dt", t("utc")), text("dd", `${t("left")}: ${compared.technical.consultedAt.left} · ${t("right")}: ${compared.technical.consultedAt.right}`));
+  tech.append(techSummary, techList);
+  out.append(tech);
   if (compared.notes.left || compared.notes.right) {
     const notes = el("div", { class: "nota-personal" });
     notes.append(text("p", `${t("left")}: ${compared.notes.left}`));

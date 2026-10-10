@@ -350,7 +350,7 @@ export async function readLargestAccounts(input: ReadMintInput): Promise<Signal>
       }),
   );
   const rpc = new FallbackRpc(readers, endpoints);
-  const largest = await rpc.getTokenLargestAccounts(checked.mint);
+  const largest = await mainnetOnlyClient(input, input.timeoutMs ?? 6000).getTokenLargestAccounts(checked.mint);
   if (!largest.ok) {
     const kind = classifyRpcFailure(largest.error, largest.httpStatus);
     const text = {
@@ -380,11 +380,11 @@ export async function readLargestAccounts(input: ReadMintInput): Promise<Signal>
 // se reintenta una vez con espera; un 403 no se repite en el mismo nodo.
 const OPTIONAL_SUPPLY_URL = "https://api.mainnet-beta.solana.com";
 
-async function optionalMainnetSupply(mint: string, input: ReadMintInput): Promise<RpcResult<TokenAmount>> {
-  const client = new RpcClient({
+function mainnetOnlyClient(input: ReadMintInput, timeoutMs: number): RpcClient {
+  return new RpcClient({
     endpoint: OPTIONAL_SUPPLY_URL,
     transport: input.transport,
-    timeoutMs: input.timeoutMs ?? 8000,
+    timeoutMs,
     maxRetries: input.maxRetries ?? 0,
     minIntervalMs: input.minIntervalMs ?? 200,
     now: input.now,
@@ -392,7 +392,11 @@ async function optionalMainnetSupply(mint: string, input: ReadMintInput): Promis
     random: input.random,
     signal: input.signal,
   });
-  return client.getTokenSupply(mint);
+}
+
+async function optionalMainnetSupply(mint: string, input: ReadMintInput): Promise<RpcResult<TokenAmount>> {
+  // getTokenSupply en publicnode responde 403 por diseño. Solo se pide a mainnet-beta.
+  return mainnetOnlyClient(input, input.timeoutMs ?? 8000).getTokenSupply(mint);
 }
 
 function groupFacts(facts: ReadingFact[]): { missing: Localized; missingState: "ok" | "falta"; absent: Localized } {
@@ -601,7 +605,8 @@ async function readWith(
       ),
     });
   }
-  const largest = await rpc.getTokenLargestAccounts(mint);
+  // getTokenLargestAccounts en publicnode responde 403 por diseño. Solo se pide a mainnet-beta.
+  const largest = await mainnetOnlyClient(input, input.timeoutMs ?? 6000).getTokenLargestAccounts(mint);
   let largestState: FactState = "fallo";
   if (!largest.ok) {
     largestState = "fallo";

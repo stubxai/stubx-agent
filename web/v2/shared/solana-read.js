@@ -614,8 +614,13 @@ function retryableRpcFailure(result) {
   );
 }
 
+const MAINNET_ONLY_METHODS = new Set(["getTokenSupply", "getTokenLargestAccounts"]);
+
 async function rpcCall(state, method, params) {
-  const endpoints = state.endpoints?.length ? state.endpoints : [state.endpoint];
+  // publicnode cierra getTokenSupply y las cuentas grandes con 403. No se pide ahí.
+  const endpoints = MAINNET_ONLY_METHODS.has(method)
+    ? [DEFAULT_RPC]
+    : (state.endpoints?.length ? state.endpoints : [state.endpoint]);
   let last = null;
   for (const endpoint of endpoints) {
     state.endpoint = endpoint;

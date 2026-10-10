@@ -104,6 +104,9 @@ test("lectura, guardado y comparación en el uso real", async ({ page }, testInf
   await expect(page.locator("#reintentar")).toBeVisible();
   const entender = page.locator("#entender-resultado");
   await expect(entender).toContainText("Entender este resultado");
+  await entender.getByRole("button", { name: "Entender este resultado" }).click();
+  await expect(entender.locator(".explicacion-resultado")).toBeVisible();
+  await expect(entender.locator(".explicacion-resultado")).toBeFocused();
   await expect(entender.getByRole("link", { name: "Permisos" })).toHaveAttribute("href", "/aprender/#guia-permisos");
   await expect(entender.getByRole("link", { name: "Suministro" })).toHaveAttribute("href", "/aprender/#autoridad-emision");
   await expect(entender.getByRole("link", { name: "Metadatos" })).toHaveAttribute("href", "/aprender/#metadatos-mutables");
@@ -124,11 +127,13 @@ test("lectura, guardado y comparación en el uso real", async ({ page }, testInf
   const openNotebook = saved.getByRole("link", { name: "Abrir Cuaderno" });
   await expect(openNotebook).toBeVisible();
   await expect(openNotebook).toHaveAttribute("href", "/cuaderno/");
+  await expect(saved).toContainText("Lectura incompleta: se guardará marcando lo que falta");
   if (testInfo.project.name !== "desktop") {
     const covered = await page.evaluate(() => {
       const node = document.querySelector(".confirmacion-guardado");
       const bar = document.querySelector(".consulta-barra");
       if (!node || !bar) return true;
+      if (getComputedStyle(bar).position !== "fixed") return false;
       const box = node.getBoundingClientRect();
       const form = bar.getBoundingClientRect();
       const point = document.elementFromPoint(box.left + 12, Math.min(box.top + 8, box.bottom - 4));
@@ -142,11 +147,15 @@ test("lectura, guardado y comparación en el uso real", async ({ page }, testInf
   supplyMode = "fail";
   await page.locator("#direccion-cuaderno").fill(USDC);
   await page.locator("#consultar").click();
-  await expect(page.locator("#consulta-error")).toContainText("Guardada en el Cuaderno de este navegador", { timeout: 30_000 });
+  await expect(page.locator("#consulta-error")).toContainText("Lectura incompleta: se guardará marcando lo que falta", { timeout: 30_000 });
+  await expect(page.locator("#consulta-error")).toContainText("Guardada en el Cuaderno de este navegador");
   await expect(page.locator("#consulta-error")).toHaveAttribute("aria-live", "polite");
   await expect(page.locator("#consulta-error")).toContainText("El servicio público no respondió, prueba otra vez en un minuto");
   await expect(page.locator("#consulta-error").getByRole("link", { name: "Abrir Cuaderno" })).toBeVisible();
   await expect(page.locator("#resultado")).toContainText("Entender este resultado");
+  await page.locator("#resultado .abrir-entender").click();
+  await expect(page.locator("#resultado .explicacion-resultado")).toBeVisible();
+  await expect(page.locator("#resultado .explicacion-resultado")).toBeFocused();
   await expect(page.locator("#resultado").getByRole("link", { name: "Distribución" })).toHaveAttribute("href", "/aprender/#censo");
 
   const leftOptions = page.locator("#comparar-izquierda option");
@@ -158,8 +167,20 @@ test("lectura, guardado y comparación en el uso real", async ({ page }, testInf
   expect(rightText.filter((item) => item.includes("USDC")).length).toBe(1);
   expect(rightText.some((item) => item.includes("OTRO"))).toBe(false);
   await page.locator("#comparar").click();
-  await expect(page.locator("#comparacion")).toContainText("no se puede determinar si cambió");
-  await expect(page.locator("#comparacion")).toContainText("Entender este resultado");
+  const compared = page.locator("#comparacion");
+  await expect(compared).toContainText("Lo que sigue igual");
+  await expect(compared).toContainText("Suministro total");
+  await expect(compared).toContainText("Permiso de emisión");
+  await expect(compared).toContainText("Decimales");
+  await expect(compared).toContainText("Entender este resultado");
+  await expect(compared.locator(".tecnico")).toContainText("Momento de la red");
+  const mainRows = compared.locator("article.ficha");
+  const rowCount = await mainRows.count();
+  for (let index = 0; index < rowCount; index += 1) {
+    const text = await mainRows.nth(index).innerText();
+    const states = ["cambió", "igual", "no se puede determinar"].filter((word) => text.includes(word));
+    expect(states).toHaveLength(1);
+  }
 
   await page.locator("#direccion-cuaderno").fill(OTHER);
   await page.locator("#consultar").click();

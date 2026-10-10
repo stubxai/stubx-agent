@@ -33,17 +33,20 @@ interface Card {
   isMint?: boolean;
   partial?: boolean;
   officialStubx?: boolean;
-  name: { text: string | null };
-  symbol?: { text: string | null };
+  name: { text: string | null; status?: string };
+  symbol?: { text: string | null; status?: string };
   uri: { text: string | null };
   supplyRpc: string | null;
   supplyAccount: string | null;
   program?: string;
+  programStatus?: string;
+  slot?: number | null;
+  slotStatus?: string;
   mint: string;
   decimals?: number | null;
   network?: string;
-  mintAuthority?: { state: string; status: string };
-  freezeAuthority?: { state: string; status: string };
+  mintAuthority?: { state: string; address?: string | null; status: string };
+  freezeAuthority?: { state: string; address?: string | null; status: string };
 }
 
 interface ModelModule {
@@ -55,9 +58,15 @@ interface ModelModule {
   visibleText: (value: string) => string;
   withNote: (record: { id: string; card: Card }, note: string) => { ok: boolean; record?: { note: string } };
   toExport: (records: unknown[], exportedAt: string) => string;
-  compareRecords: (left: { card: Card }, right: { card: Card }) => { ok: boolean; rows?: Array<{ field: { es: string }; same: boolean; verdict?: string }> };
+  compareRecords: (left: { card: Card }, right: { card: Card }) => {
+    ok: boolean;
+    rows?: Array<{ field: { es: string }; same: boolean; verdict?: string; difference?: string | null }>;
+    unchanged?: Array<{ field: { es: string } }>;
+    technical?: { slot: { left: number | null; right: number | null } };
+  };
   pickPrevious: (records: Array<{ id: string; card: Card }>, card: Card, exceptId: string) => { id: string } | null;
   staleLine: (consultedAt: string, lang: string) => string;
+  formatReadingStamp: (consultedAt: string, lang: string) => string;
   readingOptionLabel: (card: Card, lang: string) => string;
 }
 
@@ -426,6 +435,36 @@ describe("lector y cuaderno", () => {
     assert.deepEqual(seen, ["solana-rpc.publicnode.com"]);
   });
 
+  test("getTokenSupply y las cuentas grandes no se piden a publicnode", async () => {
+    const { read } = await modules();
+    const hosts: Record<string, string[]> = { getTokenSupply: [], getTokenLargestAccounts: [], getMultipleAccounts: [] };
+    const result = await read.readMint({
+      mint: CA,
+      ...fastClock(),
+      endpoint: read.PUBLICNODE_RPC,
+      maxRetries: 0,
+      transport: async (endpoint: string, body: string) => {
+        const method = (JSON.parse(body) as { method: string }).method;
+        const host = new URL(endpoint).hostname;
+        if (hosts[method]) hosts[method]?.push(host);
+        if (method === "getMultipleAccounts") {
+          return rpcOk([
+            account(read.TOKEN_PROGRAM, mintBytes()),
+            account(read.METADATA_PROGRAM, metadataBytes("USDC", "USDC", "https://example.invalid/meta")),
+            null,
+          ]);
+        }
+        if (method === "getTokenSupply") return rpcOk({ amount: "7723351880366328", decimals: 6, uiAmountString: "skip" });
+        if (method === "getTokenLargestAccounts") return rpcOk([]);
+        throw new Error(method);
+      },
+    });
+    assert.equal(result.ok, true);
+    assert.deepEqual(hosts.getTokenSupply, ["api.mainnet-beta.solana.com"]);
+    assert.deepEqual(hosts.getTokenLargestAccounts, ["api.mainnet-beta.solana.com"]);
+    assert.deepEqual(hosts.getMultipleAccounts, ["solana-rpc.publicnode.com"]);
+  });
+
   test("solo se comparan dos fichas del mismo mint y la antigua no se presenta como actual", async () => {
     const { read, model } = await modules();
     const left = { id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", note: "primera", card: read.blankCard(CA, WHEN, []) };
@@ -434,11 +473,11 @@ describe("lector y cuaderno", () => {
     const right = { id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", note: "segunda", card: rightCard };
     const same = model.compareRecords(left, right);
     assert.equal(same.ok, true);
-    const supply = same.rows?.find((row) => row.field.es === "Suministro en la cuenta");
+    const supply = same.rows?.find((row) => row.field.es === "Suministro total");
     assert.equal(supply?.same, false);
     assert.equal(supply?.verdict, "indeterminado");
     const bothBlank = model.compareRecords(left, { ...right, card: read.blankCard(CA, "2026-10-09T13:00:00.000Z", []) });
-    const blankSupply = bothBlank.rows?.find((row) => row.field.es === "Suministro en la cuenta");
+    const blankSupply = bothBlank.rows?.find((row) => row.field.es === "Suministro total");
     assert.equal(blankSupply?.verdict, "indeterminado");
     assert.equal(blankSupply?.same, false);
     const older = read.blankCard(CA, WHEN, []);
@@ -448,8 +487,40 @@ describe("lector y cuaderno", () => {
     older.decimals = 6;
     newer.decimals = 6;
     const moved = model.compareRecords({ ...left, card: older }, { ...right, card: newer });
-    const movedSupply = moved.rows?.find((row) => row.field.es === "Suministro en la cuenta");
+    const movedSupply = moved.rows?.find((row) => row.field.es === "Suministro total");
     assert.equal(movedSupply?.verdict, "cambio");
+    assert.equal(movedSupply?.difference, "1000000");
+    const usdcLeft = read.blankCard(OTHER, "2026-10-10T19:35:21.457Z", []);
+    const usdcRight = read.blankCard(OTHER, "2026-10-10T19:35:10.216Z", []);
+    for (const card of [usdcLeft, usdcRight]) {
+      card.isMint = true;
+      card.program = "spl-token";
+      card.programStatus = "verificado";
+      card.decimals = 6;
+      card.mintAuthority = { state: "activa", address: null, status: "verificado" };
+      card.freezeAuthority = { state: "revocada", address: null, status: "verificado" };
+      card.name = { text: "USD Coin", status: "verificado" };
+      card.symbol = { text: "USDC", status: "verificado" };
+      card.slotStatus = "verificado";
+    }
+    usdcLeft.slot = 11;
+    usdcRight.slot = 22;
+    usdcLeft.supplyAccount = "7723351880366328";
+    usdcRight.supplyAccount = "7723319021661631";
+    const usdc = model.compareRecords({ card: usdcLeft }, { card: usdcRight });
+    const total = usdc.rows?.find((row) => row.field.es === "Suministro total");
+    assert.equal(total?.verdict, "cambio");
+    assert.equal(total?.difference, (7723319021661631n - 7723351880366328n).toString());
+    assert.equal(usdc.rows?.some((row) => row.field.es === "Slot" || row.field.es === "Momento de la red"), false);
+    assert.deepEqual(usdc.technical?.slot, { left: 11, right: 22 });
+    const unchangedNames = (usdc.unchanged ?? []).map((row) => row.field.es);
+    assert.equal(unchangedNames.includes("Permiso de emisión"), true);
+    assert.equal(unchangedNames.includes("Nombre"), true);
+    assert.equal(unchangedNames.includes("Decimales"), true);
+    assert.ok(unchangedNames.length > 0);
+    for (const row of usdc.rows ?? []) {
+      assert.equal(["cambio", "igual", "indeterminado"].includes(row.verdict ?? ""), true);
+    }
     const previous = model.pickPrevious(
       [
         { id: "1", card: older },
@@ -489,8 +560,9 @@ describe("lector y cuaderno", () => {
     assert.equal(actions.includes("sessionStorage"), false);
     assert.equal(actions.includes("searchParams"), false);
     assert.match(actions, /stubx-cuaderno/);
-    assert.match(model.staleLine(WHEN, "es"), /puede haber cambiado/);
-    assert.match(model.staleLine(WHEN, "en"), /this may have changed/);
+    assert.equal(model.staleLine(WHEN, "es"), `Consultado el ${model.formatReadingStamp(WHEN, "es")} · puede haber cambiado`);
+    assert.equal(model.staleLine(WHEN, "en"), `Checked on ${model.formatReadingStamp(WHEN, "en")} · this may have changed`);
+    assert.equal(model.staleLine(WHEN, "es").includes("2026-10-09T"), false);
     assert.equal(model.staleLine(WHEN, "es").includes("actual"), false);
   });
 

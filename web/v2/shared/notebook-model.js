@@ -293,8 +293,6 @@ const COMPARE_FIELDS = [
   ["program", "programStatus", "Programa", "Program", false],
   ["mintAuthority.state", "mintAuthority.status", "Permiso de emisión", "Mint authority", false],
   ["freezeAuthority.state", "freezeAuthority.status", "Permiso de congelación", "Freeze authority", false],
-  ["supplyAccount", null, "Suministro en la cuenta", "Supply on the account", true],
-  ["supplyRpc", "supplyRpcStatus", "Suministro de getTokenSupply", "Supply from getTokenSupply", true],
   ["decimals", null, "Decimales", "Decimals", false],
   ["name.text", "name.status", "Nombre", "Name", false],
   ["symbol.text", "symbol.status", "Símbolo", "Symbol", false],
@@ -303,7 +301,6 @@ const COMPARE_FIELDS = [
   ["curve.realToken", "curve.status", "Cantidad real de tokens de la curva", "Real curve token amount", true],
   ["curve.virtualToken", "curve.status", "Cantidad virtual de tokens de la curva", "Virtual curve token amount", true],
   ["curve.complete", "curve.status", "Curva completa", "Curve complete", false],
-  ["slot", "slotStatus", "Slot", "Slot", false],
 ];
 
 function readPath(card, path) {
@@ -326,6 +323,53 @@ function compareFact(status, value) {
 
 function determined(state) {
   return state === "ok" || state === "ausente" || state === "no_aplica";
+}
+
+function supplyDigits(value) {
+  return typeof value === "string" && /^\d+$/.test(value) ? value : null;
+}
+
+function totalSupply(card) {
+  const account = supplyDigits(card && card.supplyAccount);
+  if (account) return { raw: account, state: "ok" };
+  if (card && card.supplyRpcStatus === "verificado") {
+    const extra = supplyDigits(card.supplyRpc);
+    if (extra) return { raw: extra, state: "ok" };
+  }
+  if (card && card.supplyRpcStatus === "no_aplica" && card.isMint === false) return { raw: null, state: "no_aplica" };
+  return { raw: null, state: "fallo" };
+}
+
+function supplyRow(left, right) {
+  const a = totalSupply(left.card);
+  const b = totalSupply(right.card);
+  let verdict = "indeterminado";
+  let difference = null;
+  if (determined(a.state) && determined(b.state)) {
+    verdict = a.raw === b.raw ? "igual" : "cambio";
+    if (
+      verdict === "cambio"
+      && a.raw
+      && b.raw
+      && Number.isInteger(left.card.decimals)
+      && left.card.decimals === right.card.decimals
+    ) {
+      difference = (BigInt(b.raw) - BigInt(a.raw)).toString();
+    }
+  }
+  return {
+    field: { es: "Suministro total", en: "Total supply" },
+    left: a.raw,
+    right: b.raw,
+    amount: true,
+    difference,
+    leftState: a.state,
+    rightState: b.state,
+    verdict,
+    same: verdict === "igual",
+    leftAt: left.card.consultedAt,
+    rightAt: right.card.consultedAt,
+  };
 }
 
 export function compareRecords(left, right) {
@@ -356,6 +400,8 @@ export function compareRecords(left, right) {
       rightAt: right.card.consultedAt,
     };
   });
+  const freezeAt = rows.findIndex((row) => row.field.es === "Permiso de congelación");
+  rows.splice(freezeAt + 1, 0, supplyRow(left, right));
   return {
     ok: true,
     mint: left.card.mint,
@@ -365,6 +411,10 @@ export function compareRecords(left, right) {
     changes: rows.filter((row) => row.verdict === "cambio"),
     unknown: rows.filter((row) => row.verdict === "indeterminado"),
     unchanged: rows.filter((row) => row.verdict === "igual"),
+    technical: {
+      slot: { left: left.card.slot ?? null, right: right.card.slot ?? null },
+      consultedAt: { left: left.card.consultedAt, right: right.card.consultedAt },
+    },
     notes: { left: left.note, right: right.note },
   };
 }
@@ -380,9 +430,9 @@ export function pickPrevious(records, card, exceptId) {
 }
 
 export function staleLine(consultedAt, lang) {
-  const local = formatLocal(consultedAt, lang);
-  if (lang === "en") return `Checked on ${consultedAt} UTC · local ${local} · this may have changed`;
-  return `Consultado el ${consultedAt} UTC · hora local ${local} · puede haber cambiado`;
+  const local = formatReadingStamp(consultedAt, lang);
+  if (lang === "en") return `Checked on ${local} · this may have changed`;
+  return `Consultado el ${local} · puede haber cambiado`;
 }
 
 export function formatReadingStamp(consultedAt, lang) {

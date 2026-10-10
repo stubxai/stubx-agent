@@ -788,13 +788,34 @@ body:has(a[href="/aprender/"][aria-current="page"]) main > p:has(> a[href="/lab/
 body:has(a[href="/comparar/"][aria-current="page"]) main > dl { order: 5; }
 .aviso[data-disclaimer="si"] > p:first-child { margin: 0; color: var(--cream); font-weight: 650; }
 .entender-resultado {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem 0.9rem;
+  display: grid;
+  gap: 0.55rem;
   margin: 0.8rem 0;
 }
-.entender-resultado p { flex-basis: 100%; margin: 0; font-weight: 700; }
-.entender-resultado a { text-decoration: underline; }
+.abrir-entender {
+  justify-self: start;
+  min-height: 44px;
+  padding: 0.45rem 0.9rem;
+  border: 2px solid var(--tone, var(--pink));
+  border-radius: 0.75rem;
+  background: transparent;
+  color: var(--cream, #f9e6d0);
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.explicacion-resultado {
+  display: grid;
+  gap: 0.45rem;
+  scroll-margin-top: 1rem;
+  scroll-margin-bottom: 1.5rem;
+}
+.explicacion-resultado[hidden] { display: none; }
+.explicacion-resultado:focus { outline: 3px solid var(--accent, var(--pink)); outline-offset: 3px; }
+.explicacion-resultado p { margin: 0; }
+.explicacion-resultado a, .entender-resultado a { text-decoration: underline; }
 .confirmacion-guardado { scroll-margin-top: 5rem; scroll-margin-bottom: 14rem; }
 .confirmacion-guardado a { text-decoration: underline; }
 #consulta-error[data-kind="ok"] a { text-decoration: underline; }
@@ -1249,3 +1270,43 @@ dd[data-estado="fallo"], dd[data-estado="ausente"], dd[data-estado="no_consultad
 .ficha[data-veredicto="cambio"] { border-left-color: var(--attention); }
 .ficha[data-veredicto="indeterminado"] { border-left-color: var(--line); }
 .grupo-desconocido { margin-top: 0.8rem; }
+article[id] { scroll-margin-top: 1rem; }
+@media (max-width: 48rem) {
+  body:has(a[href="/cuaderno/"][aria-current="page"]):has(#resultado:not(:empty)) form.consulta,
+  body:has(a[href="/cuaderno/"][aria-current="page"]):has(#comparacion:not(:empty)) form.consulta {
+    position: static;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    z-index: auto;
+    border-top: 0;
+    box-shadow: none;
+  }
+  body:has(#resultado[data-state]:not([data-state="vacio"])) .consulta-barra,
+  body:has(#comparacion-verify:not(:empty)) .consulta-barra {
+    position: static;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    z-index: auto;
+    border-top: 0;
+    box-shadow: none;
+  }
+  body:has(#resultado[data-state]:not([data-state="vacio"])) #aviso-guardar,
+  body:has(#comparacion-verify:not(:empty)) #aviso-guardar {
+    position: static;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    z-index: auto;
+    max-height: none;
+    margin: 0 0 0.85rem;
+  }
+  body:has(a[href="/cuaderno/"][aria-current="page"]):has(#resultado:not(:empty)),
+  body:has(a[href="/cuaderno/"][aria-current="page"]):has(#comparacion:not(:empty)),
+  body:has(#resultado[data-state]:not([data-state="vacio"])),
+  body:has(#comparacion-verify:not(:empty)) {
+    padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
+  }
+  #comparacion, #comparacion-verify, #resultado { scroll-margin-bottom: 1.5rem; }
+}
