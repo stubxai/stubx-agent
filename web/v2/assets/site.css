@@ -365,9 +365,13 @@ html.js .estatica { display: none; }
   header.site { position: static; }
   #resultado, #mision-app section, #mision-app .feedback { scroll-margin-top: 0.75rem; }
 }
+@media (max-width: 48rem) {
+  #resultado { scroll-margin-bottom: 9rem; }
+}
 @media (max-width: 360px) {
   .resultado h2 { font-size: 1.35rem; }
   button, summary, .consulta button, .consulta input { min-height: 44px; }
+}
 }
 
 @font-face {

@@ -35,6 +35,7 @@ describe("v0.1.0 notes, without a tag", () => {
     assert.match(log, /revocación a los 60 segundos \(PR #33\)/);
     assert.match(log, /La lectura de la curva está en stubxai\.com\/pares desde el 2026-10-10 \(PR #31\)\. El tablero la da por publicada\./);
     assert.match(log, /La medición de uso no está en el cliente \(PR #23, fusionada en main\)/);
+    assert.match(log, /El cuaderno está en stubxai\.com\/cuaderno desde el 2026-10-10 \(PR #24\)\./);
     assert.match(log, /En la web v2, `\/verify` es Verify universal, desplegado \(merge `2434636`\)\./);
     assert.match(log, /Este repositorio no inserta medición de visitas ni cookies\. Cloudflare Web Analytics debe estar apagado en el panel de la zona \(sin baliza en el HTML servido el 2026-10-10\)\./);
     assert.match(log, /no está creado/);
@@ -63,8 +64,8 @@ describe("v0.1.0 notes, without a tag", () => {
     assert.equal(en.toLowerCase().includes("preview"), false);
     assert.match(es, /`web\/v2\/` es la web publicada en stubxai.com desde el 2026-10-09 \(merge `ed1c7759`\)\. `web\/current\/` es la copia anterior, para volver atrás\./);
     assert.match(en, /`web\/v2\/` is the website published on stubxai.com since 2026-10-09 \(merge `ed1c7759`\)\. `web\/current\/` is the earlier copy, kept so it can be put back\./);
-    assert.match(es, /Studio está desplegado \(PR #20 y #26\) y se indexa\. Verify universal está desplegado \(merge `2434636`\)\. El cuaderno no forma parte de este despliegue\./);
-    assert.match(en, /Studio is deployed \(pull requests #20 and #26\) and it is indexable\. Verify universal is deployed \(merge `2434636`\)\. The notebook is not part of this deployment\./);
+    assert.match(es, /Studio está desplegado \(PR #20 y #26\) y se indexa\. Verify universal está desplegado \(merge `2434636`\)\. El cuaderno está en stubxai\.com\/cuaderno desde el 2026-10-10 \(PR #24\)\./);
+    assert.match(en, /Studio is deployed \(pull requests #20 and #26\) and it is indexable\. Verify universal is deployed \(merge `2434636`\)\. The notebook is at stubxai\.com\/cuaderno since 2026-10-10 \(pull request #24\)\./);
     assert.match(es, /el tablero en \/tablero \(PR #27\)/);
     assert.match(en, /the board at \/tablero \(pull request #27\)/);
     assert.match(es, /stubxai\.com\/pares desde el 2026-10-10 \(PR #31\) y el tablero la da por publicada/);
@@ -92,7 +93,9 @@ describe("v0.1.0 notes, without a tag", () => {
     const helper = read("scripts/prepare-v0.1.0-tag.mjs");
     assert.match(message, /STUBX 0\.1\.0 \(2026-10-10\)/);
     assert.match(message, /You could lose everything/);
-    assert.match(guide, /no creado/);
+    assert.match(guide, /Estado: \*\*creado\*\*/);
+    assert.match(guide, /392de12adf34c1df890a95c7491fb31c1c8bce45/);
+    assert.equal(guide.includes("no creado"), false);
     assert.match(guide, /git tag -a v0\.1\.0 SHA/);
     assert.equal(helper.includes("git tag"), true);
     assert.match(helper, /process\.exit\(1\)/);
@@ -119,6 +122,13 @@ describe("v0.1.0 notes, without a tag", () => {
     assert.match(refused.stderr, /No se crea el tag/);
 
     assert.equal(tagsOf(), before);
+    const listed = before.trim();
+    assert.ok(listed === "" || listed === "v0.1.0", listed);
+    if (listed === "v0.1.0") {
+      const peeled = spawnSync("git", ["rev-parse", "v0.1.0^{}"], { cwd: root, encoding: "utf8" });
+      assert.equal(peeled.status, 0, peeled.stderr);
+      assert.equal(peeled.stdout.trim(), "392de12adf34c1df890a95c7491fb31c1c8bce45");
+    }
   });
 
   test("README and LIMITS use the current footer, not the retired line", () => {
