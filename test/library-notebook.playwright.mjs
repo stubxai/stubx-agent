@@ -322,22 +322,41 @@ try {
   await wide.close();
 
   const verify = await desktop.newPage();
+  const documentUrls = [];
+  verify.on("request", (req) => {
+    if (req.resourceType() === "document") documentUrls.push(req.url());
+  });
   await verify.goto(`${base}/verify/`, { waitUntil: "domcontentloaded" });
   await verify.locator("#direccion-token").fill(official);
   await verify.locator('a[href="/aprender/#direccion"]').click();
-  await verify.waitForURL(/\/aprender\/\?a=TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump#direccion/);
+  await verify.waitForFunction((mint) => location.pathname === "/aprender/" && !location.href.includes(mint), official);
+  const learned = await verify.evaluate(() => location.pathname + location.search + location.hash);
+  if (learned.includes("a=") || learned.includes(official)) failures.push(`la biblioteca dejó la dirección en la URL: ${learned}`);
   const stored = await verify.evaluate(() => ({
     session: sessionStorage.getItem("stubx-verify-draft"),
     local: localStorage.getItem("stubx-verify-draft"),
   }));
   if (stored.session || stored.local) failures.push("Verify guardó la dirección");
   await verify.getByRole("link", { name: "Verify", exact: true }).click();
-  await verify.waitForURL(/\/verify\/\?a=TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump/);
+  await verify.waitForFunction(
+    (mint) => location.pathname === "/verify/" && !location.href.includes(mint) && document.getElementById("direccion-token")?.value === mint,
+    official,
+  );
+  const keptUrl = await verify.evaluate(() => location.pathname + location.search + location.hash);
+  if (keptUrl.includes("a=") || keptUrl.includes(official)) failures.push(`Verify dejó la dirección en la URL: ${keptUrl}`);
   const kept = await verify.locator("#direccion-token").inputValue();
   if (kept !== official) failures.push(`Verify no recuperó la dirección del enlace: ${kept}`);
-  const storedAfter = await verify.evaluate(() => sessionStorage.getItem("stubx-verify-draft"));
-  if (storedAfter) failures.push("Verify guardó la dirección al volver");
+  const storedAfter = await verify.evaluate(() => ({
+    session: sessionStorage.getItem("stubx-verify-draft"),
+    local: localStorage.getItem("stubx-verify-draft"),
+  }));
+  if (storedAfter.session || storedAfter.local) failures.push("Verify guardó la dirección al volver");
   await shot(verify, "verify-direccion-conservada.png");
+  await verify.goBack();
+  await verify.waitForFunction((mint) => location.pathname === "/aprender/" && !location.href.includes(mint), official);
+  if (documentUrls.some((url) => url.includes(official) || url.includes("a="))) {
+    failures.push(`la dirección llegó al servidor: ${documentUrls.filter((url) => url.includes(official) || url.includes("a=")).join(" ")}`);
+  }
   await desktop.close();
 } catch (error) {
   failures.push(error instanceof Error ? error.stack || error.message : String(error));

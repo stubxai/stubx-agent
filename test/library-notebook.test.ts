@@ -3,6 +3,7 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { describe, test } from "node:test";
 import { pathToFileURL } from "node:url";
+import vm from "node:vm";
 import { repoRoot } from "../src/paths.js";
 
 const CA = "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump";
@@ -496,7 +497,10 @@ describe("lector y cuaderno", () => {
     const draft = readFileSync(path.join(root, "web/v2/assets/draft-address.js"), "utf8");
     assert.equal(draft.includes("sessionStorage"), false);
     assert.equal(draft.includes("localStorage"), false);
-    assert.match(draft, /searchParams\.set\("a"/);
+    assert.equal(draft.includes('searchParams.set("a"'), false);
+    assert.equal(draft.includes("searchParams.set('a'"), false);
+    assert.match(draft, /history\.replaceState/);
+    assert.match(draft, /url\.hash = "a=" \+ address/);
     const verify = readFileSync(path.join(root, "web/v2/verify/index.html"), "utf8");
     assert.match(verify, /draft-address\.js/);
     const learn = readFileSync(path.join(root, "web/v2/aprender/index.html"), "utf8");
@@ -504,5 +508,105 @@ describe("lector y cuaderno", () => {
     assert.match(verify, /href="\/aprender\/#direccion"/);
     const mission = readFileSync(path.join(root, "lab/client/ui.js"), "utf8");
     assert.match(mission, /\/aprender\/\?from=lab#/);
+  });
+
+  test("la dirección viaja en el fragmento y sale del historial", () => {
+    const source = readFileSync(path.join(repoRoot(), "web/v2/assets/draft-address.js"), "utf8");
+    const run = (start: string, options: { value?: string; links: string[] }) => {
+      let current = new URL(start);
+      const replacements: string[] = [];
+      const input = options.value === undefined ? null : { value: options.value };
+      const links = options.links.map((href) => {
+        const link: { href: string; click: () => void; getAttribute: (name: string) => string | null; setAttribute: (name: string, value: string) => void; addEventListener: (type: string, fn: () => void) => void } = {
+          href,
+          click: () => undefined,
+          getAttribute: (name) => (name === "href" ? link.href : null),
+          setAttribute: (name, value) => {
+            if (name === "href") link.href = value;
+          },
+          addEventListener: (type, fn) => {
+            if (type === "click") link.click = fn;
+          },
+        };
+        return link;
+      });
+      const sandbox = {
+        location: {
+          get href() { return current.href; },
+          get origin() { return current.origin; },
+          get pathname() { return current.pathname; },
+          get search() { return current.search; },
+          get hash() { return current.hash; },
+        },
+        history: {
+          state: { page: "stubx" },
+          replaceState: (_state: unknown, _title: string, next: string) => {
+            assert.equal(_state, sandbox.history.state);
+            current = new URL(next, current.origin);
+            replacements.push(current.pathname + current.search + current.hash);
+          },
+        },
+        document: {
+          getElementById: (id: string) => (id === "direccion-token" ? input : null),
+          querySelectorAll: (selector: string) => {
+            const matched = links.filter((link) => {
+              if (selector === 'a[href^="/aprender/"]') return link.href.startsWith("/aprender/");
+              if (selector === 'a[href="/verify/"], a[href^="/verify/?"]') return link.href === "/verify/" || link.href.startsWith("/verify/?");
+              return false;
+            });
+            return matched;
+          },
+        },
+        URL,
+        URLSearchParams,
+      };
+      vm.runInNewContext(source, sandbox, { filename: "draft-address.js" });
+      return {
+        input,
+        links,
+        replacements,
+        url: () => current.pathname + current.search + current.hash,
+      };
+    };
+
+    const filled = run(`https://stubxai.com/verify/#a=${CA}`, { value: "", links: ["/aprender/#direccion"] });
+    assert.equal(filled.input?.value, CA);
+    assert.equal(filled.url(), "/verify/");
+    assert.deepEqual(filled.replacements, ["/verify/"]);
+    filled.links[0]?.click();
+    assert.equal(filled.links[0]?.href, `/aprender/#a=${CA}`);
+    assert.equal(filled.links[0]?.href.includes("?"), false);
+
+    const typed = run("https://stubxai.com/verify/#direccion", { value: CA, links: ["/aprender/?from=lab#direccion"] });
+    assert.equal(typed.input?.value, CA);
+    assert.deepEqual(typed.replacements, []);
+    typed.links[0]?.click();
+    assert.equal(typed.links[0]?.href, `/aprender/?from=lab#a=${CA}`);
+
+    const ignoredQuery = run(`https://stubxai.com/verify/?a=${CA}#direccion`, { value: "", links: [] });
+    assert.equal(ignoredQuery.input?.value, "");
+    assert.equal(ignoredQuery.url(), "/verify/#direccion");
+
+    const invalid = run("https://stubxai.com/verify/#a=no-es-direccion", { value: "", links: [] });
+    assert.equal(invalid.input?.value, "");
+    assert.equal(invalid.url(), "/verify/");
+
+    const library = run(`https://stubxai.com/aprender/#direccion&a=${CA}`, { links: ["/verify/", "/verify/?lang=es"] });
+    assert.equal(library.url(), "/aprender/#direccion");
+    assert.equal(library.replacements.some((item) => item.includes(CA)), false);
+    library.links[0]?.click();
+    library.links[1]?.click();
+    assert.equal(library.links[0]?.href, `/verify/#a=${CA}`);
+    assert.equal(library.links[1]?.href, `/verify/?lang=es#a=${CA}`);
+
+    const section = run("https://stubxai.com/aprender/#direccion", { links: ["/verify/"] });
+    assert.deepEqual(section.replacements, []);
+    section.links[0]?.click();
+    assert.equal(section.links[0]?.href, "/verify/");
+
+    const leaked = run(`https://stubxai.com/aprender/?a=${CA}#direccion`, { links: ["/verify/"] });
+    assert.equal(leaked.url(), "/aprender/#direccion");
+    leaked.links[0]?.click();
+    assert.equal(leaked.links[0]?.href, "/verify/");
   });
 });
