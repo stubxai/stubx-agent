@@ -3,7 +3,7 @@ import templates from "./templates.json" with { type: "json" };
 import { FOOTER, PNG_COMMENT, brandFor } from "./lib/copy.mjs";
 import { clearDraft, clipDraftText, loadDraft, saveDraft } from "./lib/draft.mjs";
 import { analyze, exportAllowed } from "./lib/filter.mjs";
-import { DEFAULT_TOKEN, TOKEN_MAX, clipToken, isStubxToken, readLogoPng } from "./lib/logo.mjs";
+import { DEFAULT_TOKEN, TOKEN_MAX, clipToken, createLogoGate, isStubxToken, readLogoPng } from "./lib/logo.mjs";
 import { decodePng, injectComment } from "./lib/png.mjs";
 import { renderCard } from "./lib/render.mjs";
 
@@ -40,7 +40,7 @@ let formatId = "square";
 let backgroundId = backgrounds[0]?.id ?? "";
 let avatarId = avatars[0]?.id ?? "";
 let customLogo = null;
-let logoTicket = 0;
+const logoGate = createLogoGate();
 let dirty = false;
 let timer = 0;
 let latest = null;
@@ -283,18 +283,41 @@ function showLogoError(message) {
   else logoNotice.hidden = false;
 }
 
+function readBlob(blob, signal) {
+  return new Promise((resolve, reject) => {
+    const abort = () => reject(new DOMException("Aborted", "AbortError"));
+    if (signal?.aborted) {
+      abort();
+      return;
+    }
+    const onAbort = () => abort();
+    signal?.addEventListener("abort", onAbort, { once: true });
+    blob.arrayBuffer().then(
+      (buffer) => {
+        signal?.removeEventListener("abort", onAbort);
+        if (signal?.aborted) abort();
+        else resolve(buffer);
+      },
+      (error) => {
+        signal?.removeEventListener("abort", onAbort);
+        reject(error);
+      },
+    );
+  });
+}
+
 logoInput.addEventListener("change", () => {
   const file = logoInput.files?.[0];
   if (!file) return;
-  const ticket = ++logoTicket;
-  file.arrayBuffer().then((buffer) => readLogoPng(new Uint8Array(buffer))).then((image) => {
-    if (ticket !== logoTicket) return;
+  const load = logoGate.begin();
+  readBlob(file, load.signal).then((buffer) => readLogoPng(new Uint8Array(buffer))).then((image) => {
+    if (!load.stillCurrent()) return;
     customLogo = image;
     hideLogoErrors();
     paintChoices();
     schedule();
   }).catch((error) => {
-    if (ticket !== logoTicket) return;
+    if (!load.stillCurrent() || error?.name === "AbortError") return;
     customLogo = null;
     logoInput.value = "";
     showLogoError(error?.message);
@@ -303,6 +326,7 @@ logoInput.addEventListener("change", () => {
   });
 });
 logoClear.addEventListener("click", () => {
+  logoGate.cancel();
   customLogo = null;
   logoInput.value = "";
   hideLogoErrors();
@@ -331,7 +355,7 @@ clearButton.addEventListener("click", () => {
   clearDraft(localStorage);
   dirty = false;
   customLogo = null;
-  logoTicket += 1;
+  logoGate.cancel();
   logoInput.value = "";
   hideLogoErrors();
   tokenInput.value = DEFAULT_TOKEN;

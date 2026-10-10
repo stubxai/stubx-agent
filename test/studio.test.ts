@@ -237,7 +237,29 @@ function deniedTokens(raw: string): string[] {
 }
 
 function textHasToken(text: string, token: string): boolean {
-  return new RegExp(`(?:^|[^a-z])${token}(?![a-z])`).test(text.toLowerCase());
+  const needle = token.toLowerCase();
+  if (!/^[a-z]+$/.test(needle)) return false;
+  return new RegExp(`(?:^|[^a-z])${needle}(?![a-z])`).test(text.toLowerCase());
+}
+
+function hiddenNames(): string[] {
+  return [
+    ["Cri", "stian"],
+    ["Par", "do"],
+    ["Cama", "cho"],
+  ].map((parts) => parts.join("").toLowerCase());
+}
+
+function mentionsHiddenName(text: string): boolean {
+  const folded = text.toLowerCase();
+  return hiddenNames().some((name) => folded.includes(name));
+}
+
+function addedDiff(diff: string): string {
+  return diff
+    .split("\n")
+    .filter((line) => line.startsWith("+") && !line.startsWith("+++"))
+    .join("\n");
 }
 
 function walkFiles(dir: string, out: string[] = []): string[] {
@@ -771,6 +793,16 @@ describe("studio", () => {
     assert.match(script, /message === "logo-bytes"/);
     assert.match(script, /message === "logo-size"/);
     assert.match(script, /function hideLogoErrors\(\)/);
+    assert.match(script, /createLogoGate/);
+    assert.match(script, /stillCurrent\(\)/);
+    assert.match(logoSrc, /new AbortController\(\)/);
+    assert.match(logoSrc, /ticket \+= 1/);
+    assert.match(logoSrc, /error\?\.message === "PNG demasiado grande"\) throw new Error\("logo-size"\)/);
+    const quitar = script.slice(script.indexOf("logoClear.addEventListener"), script.indexOf("download.addEventListener"));
+    assert.match(quitar, /logoGate\.cancel\(\)/);
+    const show = script.slice(script.indexOf("function showLogoError"), script.indexOf("function readBlob"));
+    assert.match(show, /message === "logo-size"\) logoSizeNotice\.hidden = false/);
+    assert.match(show, /else logoNotice\.hidden = false/);
     assert.match(script, /const stubxName = isStubxToken\(name\)/);
     assert.match(script, /const avatar = stubxName \? avatarItem\(\) : null/);
     assert.equal(/type="file"|<form\b|gallery|galería|FormData/.test(script), false);
@@ -1041,7 +1073,7 @@ describe("studio", () => {
       return true;
     });
     await assert.rejects(() => readLogoPng(packed), (error: Error) => {
-      assert.equal(error.message, "PNG demasiado grande");
+      assert.equal(error.message, "logo-size");
       return true;
     });
     const disguised = await renderCard({
@@ -1246,6 +1278,41 @@ describe("studio", () => {
   test("una palabra suelta no coincide dentro de otra", () => {
     assert.equal(textHasToken("alfa beta gamma", "beta"), true);
     assert.equal(textHasToken("alfabeto", "beta"), false);
+    assert.equal(textHasToken("ALFA BETA GAMMA", "BeTa"), true);
+    assert.equal(textHasToken("Alfabeto", "BETA"), false);
+  });
+
+  test("quitar logo anula la carga que todavía no ha terminado", async () => {
+    const { createLogoGate } = await load<{
+      createLogoGate: () => {
+        begin: () => { signal: AbortSignal; stillCurrent: () => boolean };
+        cancel: () => void;
+      };
+    }>("lib/logo.mjs");
+    const gate = createLogoGate();
+    const current = gate.begin();
+    let logo: unknown = null;
+    let notice = "";
+    const pending = new Promise<{ width: number }>((resolve) => {
+      setTimeout(() => resolve({ width: 4 }), 30);
+    }).then((image) => {
+      if (!current.stillCurrent()) return;
+      logo = image;
+    });
+    const failed = Promise.reject(new DOMException("Aborted", "AbortError")).catch((error: Error) => {
+      if (!current.stillCurrent() || error?.name === "AbortError") return;
+      notice = error.message;
+    });
+    gate.cancel();
+    await Promise.all([pending, failed]);
+    assert.equal(logo, null);
+    assert.equal(notice, "");
+    assert.equal(current.signal.aborted, true);
+    assert.equal(current.stillCurrent(), false);
+    const next = gate.begin();
+    assert.equal(current.stillCurrent(), false);
+    assert.equal(next.signal.aborted, false);
+    assert.equal(next.stillCurrent(), true);
   });
 
   test("web/v2 se recorre sin depender de una lista externa", () => {
@@ -1284,6 +1351,47 @@ describe("studio", () => {
       const diff = execFileSync("git", ["diff", "-U0", base, "HEAD"], { cwd: root, encoding: "utf8" });
       const log = execFileSync("git", ["log", `${base}..HEAD`, "--format=%B"], { cwd: root, encoding: "utf8" });
       if (tokens.some((token) => textHasToken(diff, token) || textHasToken(log, token))) hits.push("rama");
+    }
+    assert.deepEqual(hits, []);
+  });
+
+  test("el nombre y los apellidos no distinguen mayúsculas", () => {
+    const names = hiddenNames();
+    assert.equal(names.length, 3);
+    for (const name of names) {
+      assert.equal(/^[a-z]+$/.test(name), true);
+      assert.equal(mentionsHiddenName(name.toUpperCase()), true);
+      assert.equal(mentionsHiddenName(name.slice(0, 1) + name.slice(1).toUpperCase()), true);
+    }
+    const root = repoRoot();
+    const hits: string[] = [];
+    const skipDir = new Set([".git", "node_modules", "dist", "__pycache__"]);
+    const walk = (dir: string) => {
+      for (const name of readdirSync(dir)) {
+        if (skipDir.has(name)) continue;
+        const full = path.join(dir, name);
+        if (statSync(full).isDirectory()) {
+          walk(full);
+          continue;
+        }
+        if (BINARY_EXT.has(path.extname(full).toLowerCase())) continue;
+        if (mentionsHiddenName(readFileSync(full).toString("latin1"))) hits.push(path.relative(root, full));
+      }
+    };
+    walk(root);
+    const baseRef = ["origin/main", "main"].find((ref) => {
+      try {
+        execFileSync("git", ["rev-parse", "--verify", "--quiet", ref], { cwd: root, stdio: "ignore" });
+        return true;
+      } catch {
+        return false;
+      }
+    });
+    if (baseRef) {
+      const base = execFileSync("git", ["merge-base", "HEAD", baseRef], { cwd: root, encoding: "utf8" }).trim();
+      const diff = execFileSync("git", ["diff", "-U0", base, "HEAD"], { cwd: root, encoding: "utf8" });
+      const log = execFileSync("git", ["log", `${base}..HEAD`, "--format=%B"], { cwd: root, encoding: "utf8" });
+      if (mentionsHiddenName(addedDiff(diff)) || mentionsHiddenName(log)) hits.push("rama");
     }
     assert.deepEqual(hits, []);
   });
