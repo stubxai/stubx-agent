@@ -3,7 +3,7 @@ import templates from "./templates.json" with { type: "json" };
 import { FOOTER, PNG_COMMENT, brandFor } from "./lib/copy.mjs";
 import { clearDraft, clipDraftText, loadDraft, saveDraft } from "./lib/draft.mjs";
 import { analyze, exportAllowed } from "./lib/filter.mjs";
-import { DEFAULT_TOKEN, TOKEN_MAX, clipToken, createLogoGate, isStubxToken, readLogoPng } from "./lib/logo.mjs";
+import { DEFAULT_TOKEN, LOGO_MAX_BYTES, TOKEN_MAX, clipToken, createLogoGate, isStubxToken, readLogoPng } from "./lib/logo.mjs";
 import { decodePng, injectComment } from "./lib/png.mjs";
 import { renderCard } from "./lib/render.mjs";
 
@@ -24,8 +24,10 @@ const tokenCount = document.getElementById("contador-token");
 const logoInput = document.getElementById("logo");
 const logoClear = document.getElementById("quitar-logo");
 const logoNotice = document.getElementById("aviso-logo");
+const logoFormatNotice = document.getElementById("aviso-logo-formato");
 const logoWeightNotice = document.getElementById("aviso-logo-peso");
 const logoSizeNotice = document.getElementById("aviso-logo-medida");
+const logoScaleNotice = document.getElementById("aviso-logo-reducir");
 const mascotNotice = document.getElementById("aviso-mascota");
 const logoState = document.getElementById("logo-estado");
 const userLive = document.getElementById("vista-usuario");
@@ -272,14 +274,18 @@ tokenInput.addEventListener("input", () => {
 });
 function hideLogoErrors() {
   logoNotice.hidden = true;
+  logoFormatNotice.hidden = true;
   logoWeightNotice.hidden = true;
   logoSizeNotice.hidden = true;
+  logoScaleNotice.hidden = true;
 }
 
 function showLogoError(message) {
   hideLogoErrors();
   if (message === "logo-bytes") logoWeightNotice.hidden = false;
   else if (message === "logo-size") logoSizeNotice.hidden = false;
+  else if (message === "logo-scale") logoScaleNotice.hidden = false;
+  else if (message === "logo-format") logoFormatNotice.hidden = false;
   else logoNotice.hidden = false;
 }
 
@@ -309,6 +315,15 @@ function readBlob(blob, signal) {
 logoInput.addEventListener("change", () => {
   const file = logoInput.files?.[0];
   if (!file) return;
+  if (file.size > LOGO_MAX_BYTES) {
+    logoGate.cancel();
+    customLogo = null;
+    logoInput.value = "";
+    showLogoError("logo-bytes");
+    paintChoices();
+    schedule();
+    return;
+  }
   const load = logoGate.begin();
   readBlob(file, load.signal).then((buffer) => readLogoPng(new Uint8Array(buffer))).then((image) => {
     if (!load.stillCurrent()) return;
