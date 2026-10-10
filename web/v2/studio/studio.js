@@ -258,6 +258,28 @@ async function draw() {
   userLive.textContent = [name, titleInput.value, bodyInput.value, card.noticeText, card.label].filter(Boolean).join(". ");
   persist();
   prepare();
+  placePreview();
+}
+
+function placePreview() {
+  const header = document.querySelector("header.site");
+  const box = document.querySelector(".vista-caja");
+  if (!header || !box) return;
+  const narrow = window.matchMedia("(max-width: 800px)").matches;
+  if (narrow) {
+    header.classList.remove("sin-fijar");
+    box.classList.remove("sin-fijar");
+    document.documentElement.style.removeProperty("--cabecera");
+    document.documentElement.style.scrollPaddingTop = "";
+    return;
+  }
+  const bar = Math.ceil(header.getBoundingClientRect().height);
+  document.documentElement.style.setProperty("--cabecera", `${bar}px`);
+  const preview = box.getBoundingClientRect().height;
+  const fits = bar + 4 + preview <= window.innerHeight - 8;
+  header.classList.toggle("sin-fijar", !fits);
+  box.classList.toggle("sin-fijar", !fits);
+  document.documentElement.style.scrollPaddingTop = fits ? `${bar + 4 + preview + 12}px` : "0px";
 }
 
 // La imagen se prepara antes del toque: iOS solo deja compartir o abrir una pestaña
@@ -506,6 +528,9 @@ if (saved) {
   applyTemplate(templateId, lang(), lang() === "es");
 }
 paintChoices();
+placePreview();
+window.addEventListener("resize", placePreview);
+document.fonts?.ready?.then(placePreview);
 loadImages().then(schedule).catch(() => {
   loadNotice.hidden = false;
   schedule();

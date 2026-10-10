@@ -2022,6 +2022,54 @@ describe("studio", () => {
     }
   });
 
+  test("el titular no parte palabras en ninguna fuente ni formato", { timeout: 120_000 }, async () => {
+    const { renderCard } = await load<{ renderCard: (options: Record<string, unknown>) => Promise<Card> }>("lib/render.mjs");
+    const { HEADLINES } = await load<{ HEADLINES: { id: string }[] }>("lib/headlines.mjs");
+    const templates = JSON.parse(readStudio("templates.json")) as {
+      formats: { id: string; width: number; height: number }[];
+    };
+    assert.ok(HEADLINES.length >= 5);
+    assert.ok(templates.formats.some((format) => format.id === "square" && format.width === 1080 && format.height === 1080));
+    assert.ok(templates.formats.some((format) => format.id === "story" && format.width === 1080 && format.height === 1920));
+    const titles = ["Mira la dirección", "DESCENTRALIZACIÓN"];
+    const shown = (word: string) => [...word].map((ch) => [...ch.toLocaleUpperCase("es-ES")][0] ?? ch).join("");
+    for (const format of templates.formats) {
+      for (const headline of HEADLINES) {
+        for (const title of titles) {
+          const card = await renderCard({
+            width: format.width,
+            height: format.height,
+            lang: "es",
+            title,
+            body: "Texto de apoyo.",
+            headline: headline.id,
+            origins: ["mascota"],
+            watermark: false,
+            fill: "#0a090d",
+            ink: "#fff3f5",
+          });
+          const label = `${format.id} ${headline.id} ${title}`;
+          assert.equal(card.fits, true, label);
+          const words = title.split(/\s+/).filter(Boolean).map(shown);
+          const lines = brandLinesOf(card, "title");
+          assert.ok(lines.length > 0, label);
+          let index = 0;
+          for (const line of lines) {
+            let rest = line;
+            while (rest.length > 0) {
+              const word = words[index];
+              assert.ok(word, `${label} sobra «${line}»`);
+              assert.ok(rest.startsWith(word), `${label} «${line}» no empieza por «${word}»`);
+              rest = rest.slice(word.length);
+              index += 1;
+            }
+          }
+          assert.equal(index, words.length, `${label} ${lines.join("|")}`);
+        }
+      }
+    }
+  });
+
   test("un texto largo con eñe sigue llevando pie y marca", { timeout: 60_000 }, async () => {
     const { renderCard } = await load<{ renderCard: (options: Record<string, unknown>) => Promise<Card> }>("lib/render.mjs");
     const { NOTICE_SHORT } = await load<{ NOTICE_SHORT: { es: string } }>("lib/copy.mjs");

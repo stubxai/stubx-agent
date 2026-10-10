@@ -22,7 +22,7 @@ async function readAsset(file) {
   return new Uint8Array(await response.arrayBuffer());
 }
 
-export function wrapFace(font, text, maxWidth, size) {
+export function wrapFace(font, text, maxWidth, size, wholeWords = false) {
   const limit = typeof maxWidth === "function" ? maxWidth : () => maxWidth;
   const lines = [];
   for (const paragraph of String(text ?? "").split(/\n/)) {
@@ -32,7 +32,7 @@ export function wrapFace(font, text, maxWidth, size) {
     let lineIndex = lines.length;
     const room = () => Math.max(1, limit(lineIndex));
     const pushWord = (word) => {
-      if (measureFont(font, word, size) <= room()) {
+      if (wholeWords || measureFont(font, word, size) <= room()) {
         line = word;
         return;
       }
@@ -87,25 +87,29 @@ function widthFor(font, zone, size, avoid) {
 
 export function fitFace(font, text, zone, maxSize, minSize, avoid) {
   const value = String(text ?? "");
+  const wholeWords = Boolean(avoid?.wholeWords);
   if (!value.trim() || zone.h <= 0 || zone.w <= 0) return { lines: [], size: minSize, fits: !value.trim() };
   const packed = (size) => {
     const limit = widthFor(font, zone, size, avoid);
-    const lines = wrapFace(font, value, limit, size);
+    const lines = wrapFace(font, value, limit, size, wholeWords);
     const tall = lines.length * lineBox(font, size).step <= zone.h;
-    const wide = lines.every((line, index) => measureFont(font, line, size) <= limit(index) + 0.01);
-    return { lines, ok: tall && wide && lines.length > 0 };
+    const wide = lines.length > 0 && lines.every((line, index) => measureFont(font, line, size) <= limit(index) + 0.01);
+    return { lines, ok: tall && wide, wide };
   };
   let size = Math.ceil(maxSize);
-  const floor = Math.max(8, Math.floor(minSize));
+  const designFloor = Math.max(8, Math.floor(minSize));
+  const floor = wholeWords ? 4 : designFloor;
   while (size > floor) {
     const fit = packed(size);
     if (fit.ok) return { lines: fit.lines, size, fits: true };
+    if (wholeWords && size <= designFloor && fit.wide) break;
     size -= 1;
   }
-  const fit = packed(floor);
-  const maxLines = Math.max(0, Math.floor(zone.h / lineBox(font, floor).step));
+  const used = Math.max(floor, Math.min(size, Math.ceil(maxSize)));
+  const fit = packed(used);
+  const maxLines = Math.max(0, Math.floor(zone.h / lineBox(font, used).step));
   const lines = fit.lines.slice(0, maxLines);
-  return { lines, size: floor, fits: fit.ok && fit.lines.length <= maxLines };
+  return { lines, size: used, fits: fit.ok && fit.lines.length <= maxLines };
 }
 
 function raster(lines, width, height) {

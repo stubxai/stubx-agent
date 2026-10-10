@@ -260,7 +260,7 @@ export async function renderCard(options) {
     titleZone,
     Math.max(minInk, height * 0.16),
     Math.max(22, Math.round(height * 0.045)),
-    { x: watermarkBox.x, y: watermarkBox.y, w: watermarkBox.w, h: watermarkBox.h, padRatio: decoRatio(titleLook), slack: 2 },
+    { x: watermarkBox.x, y: watermarkBox.y, w: watermarkBox.w, h: watermarkBox.h, padRatio: decoRatio(titleLook), slack: 2, wholeWords: true },
   );
   const bodyFit = fitFace(bodyFont, options.body ?? "", bodyZone, Math.max(18, height * 0.04), Math.max(14, Math.round(height * 0.02)));
   const tokenFit = fitFace(bodyFont, tokenText, tokenZone, Math.max(14, Math.round(height * 0.028)), 12);
