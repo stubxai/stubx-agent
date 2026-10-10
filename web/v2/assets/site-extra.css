@@ -262,8 +262,22 @@ details.mapa nav ul { padding-top: 0.75rem; }
   .langs { order: 2; }
   a.brand img { width: 36px; height: 36px; }
 }
+@media (min-width: 960px) {
+  header.site .wrap {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    column-gap: 1rem;
+  }
+  header.site .topbar { grid-column: 1 / -1; }
+  header.site details.mapa { margin-top: 0.85rem; justify-self: end; }
+}
 @media (max-width: 599px) {
   header.site { position: static; }
+  a.brand::after { content: none; }
+  header.site .topbar { flex-wrap: nowrap; align-items: center; }
+  header.site .langs { order: 0; flex: 0 0 auto; }
+  header.site .langs button { padding: 0.4rem 0.65rem; }
   nav.site ul {
     flex-wrap: nowrap;
     overflow-x: auto;
