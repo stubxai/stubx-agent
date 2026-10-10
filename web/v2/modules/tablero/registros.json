@@ -1,6 +1,6 @@
 {
-  "version": "1.0.0",
-  "updated": "2026-10-09",
+  "version": "1.1.0",
+  "updated": "2026-10-10",
   "editor": "Equipo del repositorio. La revisión por una persona distinta está pendiente.",
   "note": {
     "es": "Estados de un registro, no fechas prometidas. Una idea, una implementación en el repositorio y una función publicada en la web son cosas distintas. Nada de esta página está publicado en stubxai.com.",
@@ -357,26 +357,49 @@
     },
     {
       "id": "U07",
-      "version": "0",
-      "title": { "es": "Comparación y simulación avanzada", "en": "Advanced comparison and simulation" },
-      "status": "propuesta",
+      "version": "1",
+      "title": { "es": "Calculadora educativa de la curva", "en": "Educational curve calculator" },
+      "status": "en_revision",
       "webPublished": false,
       "scope": {
-        "es": "Idea posterior a una base de Verify fiable. No hay simulación ni botón de envío en Lab ni en estas páginas.",
-        "en": "Idea that follows a reliable Verify base. There is no simulation and no send button in Lab or on these pages."
+        "es": "Un solo paso en una curva abierta cuya moneda base es SOL. Cualquier mint. Sin simulación, sin envío y sin firma. No está en stubxai.com.",
+        "en": "One step on an open curve whose base currency is SOL. Any mint. No simulation, no sending, and no signing. It is not on stubxai.com."
       },
-      "owner": "Sin asignar",
-      "reviewer": "No aplica todavía.",
-      "reviewedOn": null,
+      "owner": "Equipo del repositorio",
+      "reviewer": "Pendiente de una persona distinta del autor, antes de publicar.",
+      "reviewedOn": "2026-10-10",
       "block": {
-        "es": "Verify sigue en borrador. El plan no autoriza esta ficha todavía.",
-        "en": "Verify is still a draft. The plan does not authorize this item yet."
+        "es": "Publicar en stubxai.com necesita autorización. La calculadora no está en la web.",
+        "en": "Publishing on stubxai.com needs authorization. The calculator is not on the website."
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "label": { "es": "Página Comparar", "en": "Compare page" },
+          "path": "web/v2/comparar/index.html",
+          "note": { "es": "Cálculo local. No envía.", "en": "Local calculation. It does not send." }
+        },
+        {
+          "label": { "es": "Cálculo", "en": "Calculation" },
+          "path": "web/v2/modules/curve-math.mjs",
+          "note": { "es": "Dos fórmulas. La diferencia máxima es una unidad.", "en": "Two formulas. The maximum gap is one unit." }
+        },
+        {
+          "label": { "es": "Lectura", "en": "Read" },
+          "path": "web/v2/modules/chain-read.mjs",
+          "note": { "es": "Lista cerrada de métodos. El fallo no se anota como fuente.", "en": "Closed method list. A failure is not recorded as the source." }
+        }
+      ],
       "history": [
         {
           "on": "2026-10-09",
           "change": { "es": "Anotada como propuesta. No se ha empezado.", "en": "Recorded as a proposal. Not started." }
+        },
+        {
+          "on": "2026-10-10",
+          "change": {
+            "es": "Calculadora en el repositorio, solo lectura y sin simulación. Sigue fuera de stubxai.com.",
+            "en": "Calculator in the repository, read-only and without simulation. Still absent from stubxai.com."
+          }
         }
       ]
     },

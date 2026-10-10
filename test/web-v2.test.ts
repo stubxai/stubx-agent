@@ -18,6 +18,7 @@ const MICA_EN =
 const ROUTES = [
   "index.html",
   "verify/index.html",
+  "comparar/index.html",
   "lab/index.html",
   "tablero/index.html",
   "avances/index.html",
@@ -303,6 +304,36 @@ describe("web v2", () => {
     assert.match(security, /COMUNIDAD/);
     assert.match(risks, /puedes perder todo lo que aportes/);
     assert.match(risks, /you could lose everything you put in/i);
+  });
+
+  test("the curve calculator is read-only and has one route policy", () => {
+    const html = read("comparar/index.html");
+    const home = read("index.html");
+    assert.match(home, /Abrir la calculadora/);
+    assert.match(home, /Open the calculator/);
+    assert.match(html, /Calculadora educativa de la curva/);
+    assert.match(html, /Educational curve calculator/);
+    assert.match(html, /Estimación educativa\. No es una recomendación ni una orden; el resultado real puede ser distinto\./);
+    assert.match(html, /Educational estimate\. It is not a recommendation or an order; the real result can differ\./);
+    assert.match(html, /No es una auditoría ni una recomendación\./);
+    assert.match(html, /id="consulta"/);
+    assert.match(html, /id="resultado"/);
+    assert.match(html, /type="module"/);
+    assert.match(html, /assets\/comparar\.mjs/);
+    assert.match(html, /solana-rpc\.publicnode\.com/);
+    assert.match(html, /api\.mainnet-beta\.solana\.com/);
+    const meta = html.match(/Content-Security-Policy" content="([^"]+)"/)?.[1] ?? "";
+    assert.deepEqual(cspHosts(meta), ["solana-rpc.publicnode.com", "api.mainnet-beta.solana.com"]);
+    assert.equal(meta.includes("frame-ancestors"), false);
+    const headers = read("_headers");
+    const block = headers.split("/comparar/*")[1]?.split("\n\n")[0] ?? "";
+    assert.match(block, /! Content-Security-Policy/);
+    assert.equal((block.match(/Content-Security-Policy:/g) ?? []).length, 1);
+    assert.deepEqual(cspHosts(block), ["solana-rpc.publicnode.com", "api.mainnet-beta.solana.com"]);
+    const bundle = read("assets/comparar.mjs");
+    assert.equal(bundle.includes("sendTransaction"), false);
+    assert.equal(bundle.includes("localStorage"), false);
+    assert.match(read("sitemap.xml"), /https:\/\/stubxai\.com\/comparar\//);
   });
 
   test("unbuilt modules stay explanatory", () => {
