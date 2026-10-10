@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-09 · Medición de uso: ninguna en el cliente
+
+- Este proyecto no añade baliza, cookie ni script de terceros, y no guarda la IP (Cloudflare la recibe como alojamiento). Tampoco un contador agregado: la petición llevaría la IP al alojamiento aunque el programa no la escriba.
+- Las únicas cifras que se pueden mirar son las que GitHub ya enseña en la página del repositorio: estrellas, forks y watchers. No son visitas a la web. No se usa la API de tráfico.
+- La decisión está en [docs/medicion-uso.md](docs/medicion-uso.md). `npm test` falla si el HTML, el CSS o el JavaScript de la web trae una baliza.
+
 ## 2026-10-09 · Verify lee cualquier mint, solo lectura, sin publicar
 
 - La página `/verify` lee en el navegador, sin backend, cualquier mint SPL o Token-2022. El primer servicio es `https://solana-rpc.publicnode.com`, que responde desde el navegador. Si ese devuelve 403, 429 o se agota el tiempo, se prueba `https://api.mainnet-beta.solana.com`: ese fallo es del servicio, no del mint ni de su autoridad. Una respuesta rechazada no se anota como fuente de ese dato. Si los dos fallan, la página dice «No se pudo comprobar» y no inventa cifras. `connect-src` de `/*` se queda en `'self'`. Solo `/verify/` y `/verify/*` abren esos dos orígenes, con `! Content-Security-Policy`.

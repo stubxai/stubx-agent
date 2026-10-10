@@ -360,22 +360,31 @@
     },
     {
       "id": "U04",
-      "version": "0",
+      "version": "1",
       "title": { "es": "Contribuciones útiles", "en": "Useful contributions" },
-      "status": "propuesta",
+      "status": "en_revision",
       "webPublished": false,
       "scope": {
-        "es": "Idea de un piloto manual. El 2026-10-10, stubxai.com/contribuir responde y la página dice que no está construida.",
-        "en": "Idea of a manual pilot. On 2026-10-10, stubxai.com/contribuir answers and the page says it is not built."
+        "es": "Canal de contribuciones preparado para stubxai.com/contribuir. El 2026-10-10 esa dirección responde y la página dice que no está construida.",
+        "en": "Contributions channel prepared for stubxai.com/contribuir. On 2026-10-10 that address answers and the page says it is not built."
       },
-      "owner": "Sin asignar",
-      "reviewer": "No aplica todavía.",
-      "reviewedOn": null,
+      "owner": "Equipo del repositorio",
+      "reviewer": "Pendiente de una persona distinta del autor, antes de publicar.",
+      "reviewedOn": "2026-10-10",
       "block": {
-        "es": "Hace falta definir el canal antes de pedir aportaciones.",
-        "en": "The channel has to be defined before asking for contributions."
+        "es": "Listo para marcar En stubxai.com como sí cuando se despliegue la página. Hoy la función no se abre en la web.",
+        "en": "Ready to mark On stubxai.com as yes when the page is deployed. Today the function does not open on the website."
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "label": { "es": "Página de contribuciones", "en": "Contributions page" },
+          "href": "https://github.com/stubxai/stubx-agent/pull/28",
+          "note": {
+            "es": "El canal está en esa propuesta de cambio. Esta copia del tablero no incluye esos archivos. Al desplegarla, la columna stubxai.com pasa a sí.",
+            "en": "The channel is in that change proposal. This copy of the board does not include those files. When it is deployed, the stubxai.com column becomes yes."
+          }
+        }
+      ],
       "history": [
         {
           "on": "2026-10-09",
@@ -384,6 +393,10 @@
         {
           "on": "2026-10-10",
           "change": { "es": "stubxai.com/contribuir responde y la página dice que no está construida. Sigue sin publicar.", "en": "stubxai.com/contribuir answers and the page says it is not built. Still not published." }
+        },
+        {
+          "on": "2026-10-10",
+          "change": { "es": "El registro queda listo. Al desplegar la página, la columna stubxai.com pasa a sí. El historial anterior se conserva.", "en": "The record is ready. When the page is deployed, the stubxai.com column becomes yes. The earlier history is kept." }
         }
       ]
     },

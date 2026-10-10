@@ -580,7 +580,8 @@ def legal() -> str:
 </ul>
 <h2>{t("Privacidad", "Privacy")}</h2>
 <ul class="clean">
-<li>{t("No hay cuentas, formularios, analítica ni cookies.", "There are no accounts, forms, analytics, or cookies.")}</li>
+<li>{t("No hay cuentas ni formularios. Cloudflare Web Analytics debe estar apagado en el panel de la zona. Este repositorio no lo inserta y el HTML servido el 2026-10-10 no lleva la baliza.", "There are no accounts or forms. Cloudflare Web Analytics must be off in the zone dashboard. This repository does not insert it, and the HTML served on 2026-10-10 does not contain the beacon.")}</li>
+<li>{t("Este proyecto no guarda la IP. Cloudflare, como alojamiento, recibe la IP de cada visita y la trata según su propia política (registros del servidor que este proyecto no consulta ni exporta).", "This project does not store the IP address. Cloudflare, as the host, receives each visitor's IP and processes it under its own policy (server logs that this project does not query or export).")}</li>
 <li>{t("El selector de idioma guarda stubx-lab-lang en este navegador. Se puede borrar desde el propio navegador.", "The language switch stores stubx-lab-lang in this browser. You can delete it in the browser itself.")}</li>
 <li>{t("Lab guarda stubx-lab-mision-01 solo si haces la misión. Es progreso local, sin puntuación y sin valor. Se puede borrar.", "Lab stores stubx-lab-mision-01 only if you do the mission. It is local progress, with no score and no value. It can be deleted.")}</li>
 <li>{t("Tu navegador consulta directamente un servicio público de Solana (api.mainnet-beta.solana.com o solana-rpc.publicnode.com), solo en lectura. Este sitio no guarda la dirección, pero ese servicio recibe la dirección y tu IP según sus propias condiciones.", "Your browser queries a public Solana service directly (api.mainnet-beta.solana.com or solana-rpc.publicnode.com), read-only. This site does not store the address, but that service receives the address and your IP under its own terms.")}</li>
@@ -1212,7 +1213,7 @@ def main() -> None:
         "STUBX · Contribute",
         "Las contribuciones no están abiertas.",
         "Contributions are not open.",
-        slot("Contribuir", "Contribute", "No hay canal, plantilla descargable ni formulario. No se piden archivos ni datos. U04 es una propuesta, sin premios.", "There is no channel, no downloadable template, and no form. Files and data are not being requested. U04 is a proposal, with no prizes.", "tarea-U04"),
+        slot("Contribuir", "Contribute", "Esta dirección sigue sin la función. El registro del tablero está listo para marcar la columna stubxai.com en sí cuando se despliegue la página.", "This address still does not have the function. The board record is ready to mark the stubxai.com column yes when the page is deployed.", "tarea-U04"),
     )
     write_page("404.html", "home", "STUBX · No está", "STUBX · Not here", "Esa ruta no está en la vista previa.", "That route is not in the preview.", not_found(), absolute=True)
     print("web v2 escrita")
