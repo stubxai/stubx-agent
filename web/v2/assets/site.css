@@ -1,5 +1,6 @@
 :root {
   color-scheme: dark;
+  /* Pares de texto comprobados (AA). El kit de memes añade rosa, gema y crema. */
   --bg: #071422;
   --bg-elev: #10243f;
   --text: #f4f7fb;
@@ -10,9 +11,26 @@
   --ok: #c8f5dc;
   --attention: #ffe3ad;
   --risk: #ffd0dc;
+  --pink: #fb437f;
+  --gem: #1beb91;
+  --night: #05122e;
+  --abyss: #040d1f;
+  --cream: #f9e6d0;
   --space: 1rem;
+  --space-sm: 0.5rem;
+  --space-lg: 1.5rem;
   --measure: 72rem;
   --tool: 42rem;
+  --radius: 1.05rem;
+  --radius-sm: 0.65rem;
+  --radius-pill: 999px;
+  --shadow: 0 14px 32px rgba(4, 13, 31, 0.32);
+  --motion-fast: 160ms;
+  --motion: 3.6s;
+  --ease: cubic-bezier(0.22, 0.8, 0.28, 1);
+  --font: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell, "Noto Sans", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --focus: 3px solid var(--accent);
 }
 *, *::before, *::after { box-sizing: border-box; }
 html { background: var(--bg); color: var(--text); }
@@ -25,7 +43,7 @@ body {
   color: var(--text);
 }
 a { color: var(--text); }
-a:hover { color: var(--accent); }
+a:hover { color: var(--pink); }
 :focus { outline: none; }
 :focus-visible {
   outline: 3px solid var(--accent);
@@ -374,16 +392,23 @@ html.js .estatica { display: none; }
   src: url("../fonts/JetBrainsMono-Regular.woff2") format("woff2");
 }
 body {
-  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell, "Noto Sans", sans-serif;
+  font-family: var(--font);
   overflow-wrap: anywhere;
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(ellipse 70% 42% at 100% -8%, rgba(251, 67, 127, 0.2), transparent 58%),
+    radial-gradient(ellipse 46% 32% at -8% 12%, rgba(27, 235, 145, 0.1), transparent 52%);
 }
 code, .mint, .ca-value, .hash {
-  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-family: var(--mono);
 }
 header.site {
   position: sticky;
   top: 0;
   z-index: 4;
+  background: var(--bg-elev);
+  border-bottom: 4px solid var(--accent);
+  box-shadow: 0 4px 0 var(--gem);
 }
 .topbar {
   display: flex;
@@ -393,20 +418,36 @@ header.site {
 }
 a.brand { margin-right: auto; }
 a.brand {
-  display: inline-flex;
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  grid-template-rows: auto auto;
+  column-gap: 0.7rem;
+  row-gap: 0.05rem;
   align-items: center;
-  gap: 0.7rem;
   text-decoration: none;
   text-transform: none;
   letter-spacing: 0;
   color: var(--text);
 }
 a.brand img {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
+  grid-row: 1 / span 2;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 0 2px var(--gem);
+  animation: talon-bob var(--motion) var(--ease) infinite;
 }
-a.brand strong { font-size: 1.05rem; letter-spacing: 0.12em; }
+a.brand strong { font-size: 1.05rem; letter-spacing: 0.14em; }
+a.brand::after {
+  content: "No stub, no story";
+  color: var(--cream);
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
 .draft {
   margin: 0 0 1.25rem;
   max-width: none;
@@ -438,10 +479,12 @@ img { max-width: 100%; height: auto; }
 .hero img, .pair img {
   width: 100%;
   height: auto;
-  border-radius: 16px;
-  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  border: 3px solid var(--accent);
   background: var(--bg-elev);
+  box-shadow: 0 0 0 5px rgba(27, 235, 145, 0.45), var(--shadow);
 }
+.hero img { animation: talon-bob var(--motion) var(--ease) infinite; }
 .pair > *, .grid-2 > *, .grid-3 > *, .hero > *, .card, .slot { min-width: 0; }
 .hero figcaption, .pair figcaption { margin-top: 0.45rem; color: var(--muted); font-size: 0.92rem; }
 .hero-actions, .btn-row { display: flex; flex-wrap: wrap; gap: 0.6rem; margin: 1rem 0 0; }
@@ -484,10 +527,13 @@ main .wrap > h2, main h2 { margin-top: 1.6rem; }
 .ca-panel, .card, .slot, .callout {
   background: var(--bg-elev);
   border: 1px solid var(--line);
+  border-radius: var(--radius);
   padding: 1rem 1.05rem;
   margin: 0 0 1rem;
+  box-shadow: var(--shadow);
 }
-.ca-panel { border-left: 6px solid var(--accent); }
+.ca-panel, .card, .slot, .callout { border-top: 3px solid var(--accent); }
+.ca-panel { border-left: 6px solid var(--gem); }
 .ca-value {
   margin: 0.35rem 0 0.8rem;
   font-size: clamp(0.92rem, 2.2vw, 1.08rem);
@@ -498,9 +544,10 @@ main .wrap > h2, main h2 { margin-top: 1.6rem; }
 .grid-2, .grid-3 { display: grid; gap: 0.85rem; }
 .kicker {
   margin: 0 0 0.35rem;
-  color: var(--muted);
+  color: var(--pink);
   font-size: 0.82rem;
-  letter-spacing: 0.08em;
+  font-weight: 650;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 .source, .small { color: var(--muted); font-size: 0.92rem; }
@@ -526,9 +573,13 @@ main .wrap > h2, main h2 { margin-top: 1.6rem; }
   display: inline-block;
   margin: 0 0 0.45rem;
   padding: 0.15rem 0.55rem;
-  border: 1px solid var(--line);
-  border-radius: 999px;
+  border: 1px solid var(--pink);
+  border-radius: var(--radius-pill);
+  color: var(--cream);
+  background: var(--abyss);
   font-size: 0.85rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
 }
 ul.clean, ol.clean { padding-left: 1.15rem; }
 ul.clean li, ol.clean li { margin: 0.35rem 0; }
@@ -553,12 +604,18 @@ ul.clean li, ol.clean li { margin: 0.35rem 0; }
   white-space: nowrap;
   border: 0;
 }
+footer.site {
+  border-top: 4px solid var(--accent);
+  box-shadow: inset 0 4px 0 var(--gem);
+  background: var(--night);
+}
 footer.site a {
   color: var(--text);
   display: inline-block;
   padding: 12px 4px;
   min-height: 44px;
 }
+footer.site a:hover { color: var(--pink); }
 footer.site ul { padding-left: 1.1rem; }
 details.mapa { margin-top: 0.75rem; }
 details.mapa summary { width: auto; display: inline-flex; border-radius: 999px; }
@@ -579,4 +636,111 @@ details.mapa nav ul { padding-top: 0.75rem; }
 }
 @media (max-width: 599px) {
   header.site { position: static; }
+}
+
+/* Sistema visual compartido: ticket, mascota y lema. */
+@keyframes talon-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+body::before {
+  content: "";
+  position: fixed;
+  z-index: 6;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 6px;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--accent) 0 12px,
+    var(--gem) 12px 16px,
+    var(--night) 16px 24px
+  );
+}
+button, summary, .langs button, nav.site a, .grupos a, .ca-actions a {
+  border-radius: var(--radius-pill);
+  transition: background-color var(--motion-fast) var(--ease), border-color var(--motion-fast) var(--ease), transform var(--motion-fast) var(--ease);
+}
+a.primary, button.primary, .consulta button {
+  box-shadow: 0 0 0 3px rgba(27, 235, 145, 0.55);
+}
+a.primary:hover, button.primary:hover, .consulta button:hover,
+nav.site a[aria-current="page"]:hover, .langs button[aria-pressed="true"]:hover,
+.pasos button[aria-current="step"]:hover {
+  color: var(--accent-ink);
+}
+a.primary:hover, button.primary:hover, .consulta button:hover {
+  transform: translateY(-1px);
+}
+nav.site a:hover, .grupos a:hover, .ca-actions a:hover {
+  border-color: var(--pink);
+  background: var(--abyss);
+}
+nav.site a[aria-current="page"]:hover { background: var(--accent); }
+.hero > div {
+  border-left: 6px solid var(--accent);
+  padding-left: 1rem;
+}
+.hero h1 { letter-spacing: -0.03em; }
+main h1::before {
+  content: "";
+  display: inline-block;
+  width: 2rem;
+  height: 2rem;
+  margin-right: 0.55rem;
+  vertical-align: -0.35rem;
+  background: url("talon-avatar-96.webp") center / cover no-repeat;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 0 2px var(--gem);
+}
+.hero h1::before { content: none; display: none; margin: 0; border: 0; box-shadow: none; }
+main h1::after {
+  content: "";
+  display: block;
+  width: 4.75rem;
+  height: 4px;
+  margin-top: 0.55rem;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(90deg, var(--accent), var(--gem));
+}
+.ficha, .tarea, .paso, .guia-texto, .resultado, .feedback, .glosario article {
+  border-radius: var(--radius);
+  border-top: 3px solid var(--accent);
+  box-shadow: var(--shadow);
+}
+.aviso, .nota, .risk-block {
+  border-radius: var(--radius-sm);
+}
+.aviso { box-shadow: none; }
+.card, .slot, .ficha, .tarea, .paso {
+  transition: border-color var(--motion-fast) var(--ease), transform var(--motion-fast) var(--ease);
+}
+.card:hover, .slot:hover, .tarea:hover {
+  border-color: var(--pink);
+  transform: translateY(-2px);
+}
+.consulta input, input, textarea, select {
+  border-radius: var(--radius-sm);
+}
+:focus-visible {
+  outline: var(--focus);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px var(--bg), 0 0 0 9px var(--gem);
+}
+#resultado:focus { outline: 3px solid var(--accent); outline-offset: 3px; }
+@media (max-width: 48rem) {
+  main h1 { font-size: clamp(1.7rem, 7.5vw, 2.05rem); }
+  a.brand img { width: 40px; height: 40px; }
+  .hero > div { padding-left: 0.8rem; }
+  .consulta {
+    border-top: 4px solid var(--accent);
+    box-shadow: 0 -4px 0 var(--gem), 0 -16px 28px rgba(4, 13, 31, 0.55);
+  }
+}
+.skip { left: 0.85rem; }
+@media (prefers-reduced-motion: reduce) {
+  a.brand img, .hero img { animation: none; }
 }

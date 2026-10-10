@@ -1,5 +1,6 @@
 :root {
   color-scheme: dark;
+  /* Pares de texto comprobados (AA). El kit de memes añade rosa, gema y crema. */
   --bg: #071422;
   --bg-elev: #10243f;
   --text: #f4f7fb;
@@ -10,9 +11,26 @@
   --ok: #c8f5dc;
   --attention: #ffe3ad;
   --risk: #ffd0dc;
+  --pink: #fb437f;
+  --gem: #1beb91;
+  --night: #05122e;
+  --abyss: #040d1f;
+  --cream: #f9e6d0;
   --space: 1rem;
+  --space-sm: 0.5rem;
+  --space-lg: 1.5rem;
   --measure: 72rem;
   --tool: 42rem;
+  --radius: 1.05rem;
+  --radius-sm: 0.65rem;
+  --radius-pill: 999px;
+  --shadow: 0 14px 32px rgba(4, 13, 31, 0.32);
+  --motion-fast: 160ms;
+  --motion: 3.6s;
+  --ease: cubic-bezier(0.22, 0.8, 0.28, 1);
+  --font: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell, "Noto Sans", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --focus: 3px solid var(--accent);
 }
 *, *::before, *::after { box-sizing: border-box; }
 html { background: var(--bg); color: var(--text); }
@@ -25,7 +43,7 @@ body {
   color: var(--text);
 }
 a { color: var(--text); }
-a:hover { color: var(--accent); }
+a:hover { color: var(--pink); }
 :focus { outline: none; }
 :focus-visible {
   outline: 3px solid var(--accent);
