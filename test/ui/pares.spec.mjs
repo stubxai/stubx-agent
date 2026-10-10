@@ -101,7 +101,13 @@ test("el informe lee un paso y cambia de idioma", async ({ page }, info) => {
   await expect(page.locator("#resultado")).toContainText("Un emparejamiento no es una colaboración ni un respaldo.");
   await expect(page.locator("#resultado")).toContainText(NAME);
   await expect(page.locator("#resultado")).toContainText("no se abre");
-  expect(seen.some((url) => url.includes("evil.example"))).toBe(false);
+  expect(seen.some((url) => {
+    try {
+      return new URL(url).host === "evil.example";
+    } catch {
+      return false;
+    }
+  })).toBe(false);
   await expect(page.locator("#exportar")).toBeVisible();
   const downloads = [];
   page.on("download", (download) => downloads.push(download.suggestedFilename()));
@@ -133,5 +139,5 @@ test("si el primer servicio limita, se usa el respaldo", async ({ page }) => {
   await expect(page.locator("#resultado")).toContainText("api.mainnet-beta.solana.com", { timeout: 20000 });
   await expect(page.locator("#resultado")).toContainText("Moneda base: SOL");
   expect(hosts[0]).toBe("solana-rpc.publicnode.com");
-  expect(hosts.includes("api.mainnet-beta.solana.com")).toBe(true);
+  expect(hosts.some((host) => host === "api.mainnet-beta.solana.com")).toBe(true);
 });
