@@ -121,8 +121,24 @@ async function shot(page, name) {
   return file;
 }
 
+function allowedRequest(url) {
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return false;
+  }
+  if (parsed.origin === base) return true;
+  return parsed.protocol === "https:" && parsed.hostname === "api.mainnet-beta.solana.com";
+}
+
 async function mockRpc(page, counter) {
   await page.route(/api\.mainnet-beta\.solana\.com/, async (route) => {
+    if (!allowedRequest(route.request().url())) {
+      counter.external += 1;
+      await route.abort();
+      return;
+    }
     counter.count += 1;
     const body = route.request().postDataJSON();
     if (body.method === "getMultipleAccounts") {
@@ -148,8 +164,7 @@ async function mockRpc(page, counter) {
     await route.fulfill({ status: 400, contentType: "application/json", body: rpc(null) });
   });
   await page.route("**/*", (route) => {
-    const url = route.request().url();
-    if (url.startsWith(base) || url.startsWith("https://api.mainnet-beta.solana.com")) {
+    if (allowedRequest(route.request().url())) {
       route.fallback();
       return;
     }
