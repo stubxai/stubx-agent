@@ -95,12 +95,12 @@ export function decodeBondingCurve(owner: string, data: Uint8Array): BondingCurv
     quoteMint,
     quoteMintNote,
     quoteUnitNote: quoteIsSol
-      ? "Unidades mínimas de la reserva quote. En la curva clásica de Pump.fun, y cuando quote_mint es la pubkey por defecto, esa reserva son lamports."
+      ? "Unidades mínimas de la cantidad quote. En la curva clásica de Pump.fun, y cuando quote_mint es la pubkey por defecto, esa cantidad son lamports."
       : "Unidades mínimas del mint quote indicado.",
     progressPercent,
     progressNote: classic
-      ? "Porcentaje inferido con la reserva real inicial pública de la curva clásica (793100000000000). Truncado a 2 decimales hacia cero."
-      : "La fórmula de la curva clásica no encaja con el suministro o la reserva de esta cuenta. No se estima el avance.",
+      ? "Porcentaje inferido con la cantidad real inicial pública de la curva clásica (793100000000000). Truncado a 2 decimales hacia cero."
+      : "La fórmula de la curva clásica no encaja con el suministro o la cantidad real de esta cuenta. No se estima el avance.",
     trailingBytes: Math.max(0, data.length - cursor),
   };
 }

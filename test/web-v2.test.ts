@@ -52,6 +52,7 @@ type View = {
 
 type Lookup = {
   classifyAddress: (raw: string, cards: readonly object[], source?: string, evm?: readonly object[]) => View;
+  reserveWhenLiveFails: (view: View) => View;
   emptyView: () => View;
   pendingView: (raw: string) => View;
   isAddress: (value: string) => boolean;
@@ -131,6 +132,28 @@ function walk(dir: string): string[] {
     else out.push(full);
   }
   return out;
+}
+
+function cspHosts(policy: string): string[] {
+  const connect = policy
+    .split(";")
+    .map((part) => part.trim())
+    .find((part) => /(^|\s)connect-src\b/.test(part));
+  if (!connect) return [];
+  return connect
+    .split(/\s+/)
+    .filter((token) => token.startsWith("https://"))
+    .map((token) => new URL(token).host);
+}
+
+function literalHttpsHosts(source: string): string[] {
+  const hosts: string[] = [];
+  for (const match of source.matchAll(/["'](https:\/\/[^"'\\]+)["']/g)) {
+    const raw = match[1];
+    if (!raw) continue;
+    hosts.push(new URL(raw).host);
+  }
+  return hosts;
 }
 
 function contrast(a: string, b: string): number {
@@ -293,7 +316,7 @@ describe("web v2", () => {
     }
   });
 
-  test("verify is the dated card demo, not a live reading", () => {
+  test("verify reads any mint live and keeps the dated cards", () => {
     const html = read("verify/index.html");
     assert.match(html, /id="consulta"/);
     assert.match(html, /id="direccion-token"/);
@@ -301,22 +324,46 @@ describe("web v2", () => {
     assert.match(html, /id="ver-lectura-caida"/);
     assert.match(html, /2026-10-09/);
     assert.match(html, /USD Coin/);
+    assert.match(html, /No es una auditoría, ni una recomendación, ni un aval/);
+    assert.match(html, /ese servicio recibe la dirección y tu IP/);
+    assert.equal(html.includes("Esta página no consulta la red"), false);
     assert.equal(html.includes("\uFFFD"), false);
     assert.match(html, /assets\/verify\.js/);
+    const meta = html.match(/Content-Security-Policy" content="([^"]+)"/)?.[1] ?? "";
+    assert.deepEqual(cspHosts(meta), ["solana-rpc.publicnode.com", "api.mainnet-beta.solana.com"]);
+    const home = read("index.html");
+    const homeMeta = home.match(/Content-Security-Policy" content="([^"]+)"/)?.[1] ?? "";
+    assert.deepEqual(cspHosts(homeMeta), []);
+    const headers = read("_headers");
+    assert.match(headers, /\/verify\/\*/);
+    assert.match(headers, /! Content-Security-Policy/);
     const bundle = read("assets/verify.js");
     assert.match(bundle, /stubx-verify-preview/);
     assert.match(bundle, /ERYyyaE2Y2GuKB28YbC2w1nCuQ5ENQ89LR44kicvpump/);
     assert.match(bundle, /FMNb4CR8ksibmgY7Ztei6BWcZXi3WHcVeJhYb9TNpump/);
     assert.match(bundle, /0xC99056C762F0802e4154E6322bd71ae928857777/);
-    assert.equal(/fetch\(/.test(bundle), false);
+    assert.match(bundle, /function readAnyMint/);
+    const bundleHosts = literalHttpsHosts(bundle);
+    assert.equal(bundleHosts.some((host) => host === "api.mainnet-beta.solana.com"), true);
+    assert.equal(bundleHosts.some((host) => host === "solana-rpc.publicnode.com"), true);
+    assert.equal(/fetch\(/.test(bundle), true);
+    assert.equal(bundle.includes("localStorage"), false);
+    assert.equal(bundle.includes("sessionStorage"), false);
+    assert.equal(/gtag|google-analytics|googletagmanager|plausible|posthog/i.test(bundle), false);
     assert.equal(bundle.includes("\uFFFD"), false);
     const snap = JSON.parse(read("modules/snapshot.json")) as {
+      pr: number;
+      branch: string;
       commit: string;
       inBranch: boolean;
       liveNetwork: boolean;
       cardsDate: string;
+      note: string;
     };
-    assert.equal(snap.commit, "fa9a500dac16251aa5d3831d59717981fb434be6");
+    assert.equal(snap.pr, 21);
+    assert.equal(snap.branch, "feat/verify-universal");
+    assert.equal(JSON.stringify(snap).includes("feat/lab-mision-1"), false);
+    assert.equal(JSON.stringify(snap).includes('"pr":14'), false);
     const cited = spawnSync("git", ["rev-parse", `${snap.commit}:lab/verify/lookup.ts`], { cwd: repoRoot(), encoding: "utf8" });
     const headLookup = spawnSync("git", ["rev-parse", "HEAD:lab/verify/lookup.ts"], { cwd: repoRoot(), encoding: "utf8" });
     assert.equal(cited.status, 0, cited.stderr);
@@ -324,7 +371,7 @@ describe("web v2", () => {
     assert.equal(cited.stdout.trim(), headLookup.stdout.trim());
     assert.equal(snap.inBranch, true);
     assert.equal(Object.hasOwn(snap, "merged"), false);
-    assert.equal(snap.liveNetwork, false);
+    assert.equal(snap.liveNetwork, true);
     assert.equal(snap.cardsDate, "2026-10-09");
   });
 
@@ -341,6 +388,12 @@ describe("web v2", () => {
     const official = lookup.classifyAddress(`  ${CA.slice(0, 8)} ${CA.slice(8)}  `, data.cards, "lista", data.evm);
     assert.equal(official.kind, "oficial");
     assert.equal(official.light, "ok");
+    const liveDown = lookup.reserveWhenLiveFails(official);
+    assert.equal(liveDown.light, "neutro");
+    assert.equal(liveDown.title.es, "No se pudo comprobar en directo");
+    assert.equal(liveDown.title.en, "Could not check live");
+    assert.match(liveDown.partialNote?.es ?? "", /Es la ficha del 2026-10-09/);
+    assert.equal(liveDown.title.es.includes("Parece el STUBX oficial"), false);
     assert.equal(official.mint, CA);
     assert.match(official.partialNote?.es ?? "", /cuenta personal publicada/);
     assert.match(official.partialNote?.es ?? "", /censo/);
@@ -350,7 +403,9 @@ describe("web v2", () => {
     assert.match(officialCard.holdersNote ?? "", /0\.0000 %/);
     const clone = lookup.classifyAddress(CLONE, data.cards, "lista", data.evm);
     assert.equal(clone.kind, "copia");
-    assert.equal(clone.light, "riesgo");
+    assert.equal(clone.light, "atencion");
+    assert.equal(clone.title.es, "Se parece a STUBX, pero no es la CA oficial");
+    assert.equal(/copia|riesgo/i.test(clone.title.es), false);
     const ery = lookup.classifyAddress("ERYyyaE2Y2GuKB28YbC2w1nCuQ5ENQ89LR44kicvpump", data.cards, "lista", data.evm);
     assert.equal(ery.kind, "copia");
     const fmn = lookup.classifyAddress("FMNb4CR8ksibmgY7Ztei6BWcZXi3WHcVeJhYb9TNpump", data.cards, "lista", data.evm);
@@ -540,9 +595,14 @@ describe("web v2", () => {
         .filter((header) => header.startsWith("Content-Security-Policy:"))
         .map((header) => ({ path: block.path, header })),
     );
-    assert.equal(policies.length, 1);
-    assert.equal(policies[0]?.path, "/*");
-    assert.match(policies[0]?.header ?? "", /frame-ancestors 'none'/);
+    assert.ok(policies.length >= 1);
+    assert.ok(policies.every((policy) => policy.header.includes("frame-ancestors 'none'")));
+    const globalPolicy = policies.find((policy) => policy.path === "/*");
+    assert.deepEqual(cspHosts(globalPolicy?.header ?? ""), []);
+    const verifyPolicy = policies.find((policy) => policy.path === "/verify/*");
+    assert.deepEqual(cspHosts(verifyPolicy?.header ?? ""), ["solana-rpc.publicnode.com", "api.mainnet-beta.solana.com"]);
+    const verifyBlock = blocks.find((block) => block.path === "/verify/*");
+    assert.ok(verifyBlock?.headers.includes("! Content-Security-Policy"));
     const star = blocks.find((block) => block.path === "/*");
     assert.ok(star?.headers.some((header) => header === "X-Frame-Options: DENY"));
     for (const file of htmlFiles(siteRoot())) {
@@ -570,7 +630,10 @@ describe("web v2", () => {
       encoding: "utf8",
     });
     assert.equal(run.status, 0, `${run.stdout}\n${run.stderr}`);
-    assert.match(run.stdout, /fa9a500dac16251aa5d3831d59717981fb434be6/);
+    const snap = JSON.parse(readFileSync(path.join(root, "web/v2/modules/snapshot.json"), "utf8")) as { pr: number; branch: string; commit: string };
+    assert.equal(snap.pr, 21);
+    assert.equal(snap.branch, "feat/verify-universal");
+    assert.match(run.stdout, new RegExp(snap.commit));
     const same = (left: string, right: string) => {
       assert.equal(readFileSync(path.join(root, left), "utf8"), readFileSync(path.join(root, right), "utf8"), left);
     };

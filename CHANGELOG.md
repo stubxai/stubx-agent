@@ -1,11 +1,11 @@
 # Changelog
 
-## 2026-10-09 · Verify y Lab: lectura visible en el móvil
+## 2026-10-09 · Verify lee cualquier mint, solo lectura, sin publicar
 
-- En menos de 600 px la cabecera deja de quedarse fija. Tras Comprobar, la página se desplaza al veredicto y el foco va al titular.
-- Una dirección válida que no es la oficial y no tiene ficha dice «No es la dirección oficial» y muestra la oficial. Si mide lo mismo, marca los caracteres que cambian. Las fichas conocidas siguen mostrando su ficha. El campo vacío avisa en línea. La dirección no válida incluye un ejemplo.
-- `frame-ancestors` queda solo en `_headers`. El beacon de Cloudflare Web Analytics no se toca aquí: hay que apagarlo en el panel de la zona.
-- Cada pregunta del Lab lleva una frase llana. El número largo de la curva sale en Detalles. El glosario del paso lista sus términos. El avance espera a «Siguiente paso». El pie tiene enlaces de 44 px, la biblioteca va plegada y la pantalla final tiene «Empezar de nuevo».
+- La página `/verify` lee en el navegador, sin backend, cualquier mint SPL o Token-2022. El primer servicio es `https://solana-rpc.publicnode.com`, que responde desde el navegador. Si ese devuelve 403, 429 o se agota el tiempo, se prueba `https://api.mainnet-beta.solana.com`: ese fallo es del servicio, no del mint ni de su autoridad. Una respuesta rechazada no se anota como fuente de ese dato. Si los dos fallan, la página dice «No se pudo comprobar» y no inventa cifras. `connect-src` de `/*` se queda en `'self'`. Solo `/verify/` y `/verify/*` abren esos dos orígenes, con `! Content-Security-Policy`.
+- El aviso fijo y el de privacidad dicen que no es una auditoría ni un aval, y que el servicio público recibe la dirección y la IP. No hay puntuación de seguro, recomendado ni estafa.
+- Un nombre o un símbolo parecido a STUBX, ya plegado (NFKC, homoglifos y sin invisibles), sale en ámbar: «Se parece a STUBX, pero no es la CA oficial». El titular del resto de mints sigue siendo «Lectura de este token», con la línea «No es la dirección oficial de STUBX.» solo en ese caso. La muestra de cuentas no se pide sola.
+- En menos de 600 px la cabecera deja de quedarse fija y el veredicto se desplaza a la vista. El campo vacío avisa en línea. `frame-ancestors` queda solo en `_headers`. Hay como máximo 6 lecturas por minuto y una memoria de 60 segundos en la pestaña. La PR 14 ya está en main (2026-10-09). Esta vista previa no se despliega antes del 2026-10-20.
 
 ## 2026-10-09 · Revisión de seguridad de Verify y Lab (borrador, sin publicar)
 

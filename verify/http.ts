@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { extractCid } from "./cid.js";
 import type { LookupOptions } from "node:dns";
 import { lookup } from "node:dns/promises";
 import { request as httpsRequest, type RequestOptions } from "node:https";
@@ -45,17 +46,13 @@ type HttpOptions = {
   resolveHost?: HostResolver;
 };
 
-const CID_RE = /(?:baf[a-z2-7]{20,}|Qm[1-9A-HJ-NP-Za-km-z]{44})/;
 const ARWEAVE_RE = /^[A-Za-z0-9_-]{43}$/;
 
 const IPFS_GATEWAY_HOSTS = ["gateway.pinata.cloud", "dweb.link", "w3s.link", "ipfs.io"] as const;
 const ARWEAVE_GATEWAY_HOSTS = ["arweave.net"] as const;
 const MAX_REDIRECTS = 3;
 
-export function extractCid(value: string): string | null {
-  const match = CID_RE.exec(value);
-  return match ? match[0] : null;
-}
+export { extractCid } from "./cid.js";
 
 export function extractArweaveId(value: string): string | null {
   const trimmed = value.trim();
