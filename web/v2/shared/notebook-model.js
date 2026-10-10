@@ -185,15 +185,19 @@ export function validateRecord(record) {
   if (typeof record.id !== "string" || !ID.test(record.id)) {
     return fail("El identificador de la consulta no es válido.", "The query id is not valid.");
   }
-  if (typeof record.note !== "string" || record.note.length > MAX_NOTE) {
+  if (typeof record.note !== "string") {
     return fail("La nota tiene que ser un texto de hasta 2000 caracteres.", "The note must be text of at most 2000 characters.");
   }
-  if (DANGER.test(record.note)) {
+  const note = visibleText(record.note);
+  if (note.length > MAX_NOTE) {
+    return fail("La nota tiene que ser un texto de hasta 2000 caracteres.", "The note must be text of at most 2000 characters.");
+  }
+  if (DANGER.test(note)) {
     return fail("La nota parece un script. No se importa.", "The note looks like a script. It was not imported.");
   }
   const card = validateCard(record.card);
   if (!card.ok) return card;
-  return { ok: true, record: { id: record.id, note: record.note, card: card.card } };
+  return { ok: true, record: { id: record.id, note, card: card.card } };
 }
 
 export function validateExport(text) {
@@ -330,8 +334,12 @@ export function formatLocal(consultedAt, lang) {
 }
 
 export function withNote(record, note) {
-  if (typeof note !== "string" || note.length > MAX_NOTE || DANGER.test(note)) {
+  if (typeof note !== "string") {
     return fail("La nota tiene que ser texto, de hasta 2000 caracteres, y no puede ser un script.", "The note must be text, at most 2000 characters, and it cannot be a script.");
   }
-  return { ok: true, record: { id: record.id, note, card: record.card } };
+  const cleaned = visibleText(note);
+  if (cleaned.length > MAX_NOTE || DANGER.test(cleaned)) {
+    return fail("La nota tiene que ser texto, de hasta 2000 caracteres, y no puede ser un script.", "The note must be text, at most 2000 characters, and it cannot be a script.");
+  }
+  return { ok: true, record: { id: record.id, note: cleaned, card: record.card } };
 }

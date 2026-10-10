@@ -1,29 +1,41 @@
-/* Guarda la dirección escrita en Verify para volver desde la biblioteca. */
+/* Pasa la dirección escrita en Verify dentro del enlace, solo al pulsar. No la guarda. */
 (function () {
-  var KEY = "stubx-verify-draft";
-  var input = document.getElementById("direccion-token");
-  if (!input) return;
+  var BASE58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
-  function read() {
+  function queryAddress() {
     try {
-      return sessionStorage.getItem(KEY) || "";
+      var value = new URLSearchParams(location.search).get("a") || "";
+      return BASE58.test(value) ? value : "";
     } catch (error) {
       return "";
     }
   }
 
-  function store() {
-    try {
-      sessionStorage.setItem(KEY, input.value);
-    } catch (error) {
-      /* La página sigue usable aunque el navegador no guarde la sesión. */
-    }
+  function withAddress(href, address) {
+    var url = new URL(href, location.origin);
+    url.searchParams.set("a", address);
+    return url.pathname + url.search + url.hash;
   }
 
-  if (!input.value && read()) input.value = read();
-  input.addEventListener("input", store);
-  window.addEventListener("pagehide", store);
-  document.querySelectorAll('a[href^="/aprender/"]').forEach(function (link) {
-    link.addEventListener("click", store);
+  var input = document.getElementById("direccion-token");
+  if (input) {
+    var fromQuery = queryAddress();
+    if (!input.value && fromQuery) input.value = fromQuery;
+    document.querySelectorAll('a[href^="/aprender/"]').forEach(function (link) {
+      link.addEventListener("click", function () {
+        var value = String(input.value || "").trim();
+        if (!BASE58.test(value)) return;
+        link.setAttribute("href", withAddress(link.getAttribute("href") || "/aprender/", value));
+      });
+    });
+    return;
+  }
+
+  var carried = queryAddress();
+  if (!carried) return;
+  document.querySelectorAll('a[href="/verify/"], a[href^="/verify/?"]').forEach(function (link) {
+    link.addEventListener("click", function () {
+      link.setAttribute("href", withAddress(link.getAttribute("href") || "/verify/", carried));
+    });
   });
 })();

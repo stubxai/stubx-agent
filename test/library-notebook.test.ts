@@ -16,6 +16,8 @@ interface ReadModule {
   PUMP_PROGRAM: string;
   ALLOWED_METHODS: readonly string[];
   ALLOWED_RPCS: readonly string[];
+  PUBLICNODE_RPC: string;
+  DEFAULT_RPC: string;
   metadataPda: (mint: string) => Promise<string>;
   bondingCurvePda: (mint: string) => Promise<string>;
   decodeMintAccount: (owner: string, data: Uint8Array) => { supplyRaw: string; mintAuthority: { state: string }; freezeAuthority: { state: string } } | null;
@@ -45,6 +47,7 @@ interface ModelModule {
   validateCard: (card: Card) => { ok: boolean };
   withinStoreLimit: (existingCount: number, incomingNewCount: number) => boolean;
   visibleText: (value: string) => string;
+  withNote: (record: { id: string; card: Card }, note: string) => { ok: boolean; record?: { note: string } };
   toExport: (records: unknown[], exportedAt: string) => string;
   compareRecords: (left: { card: Card }, right: { card: Card }) => { ok: boolean; rows?: Array<{ field: { es: string }; same: boolean }> };
   staleLine: (consultedAt: string, lang: string) => string;
@@ -293,6 +296,59 @@ describe("lector y cuaderno", () => {
     assert.equal(model.withinStoreLimit(200, 1), false);
     assert.equal(model.withinStoreLimit(199, 2), false);
     assert.equal(model.visibleText("ab\u202Ecd\u200F"), "abcd");
+    const saved = model.withNote({ id: record.id, card }, "ab\u202Ecd\u200F\u2067");
+    assert.equal(saved.ok, true);
+    assert.equal(saved.record?.note, "abcd");
+    const imported = model.validateExport(model.toExport([{ ...record, note: "izq\u202Eder" }], WHEN));
+    assert.equal(imported.records?.[0]?.note, "izqder");
+  });
+
+  test("publicnode va primero y un 403, un 5xx o un timeout prueba mainnet-beta", async () => {
+    const { read } = await modules();
+    const okAccounts = rpcOk([
+      account(read.TOKEN_PROGRAM, mintBytes()),
+      account(read.METADATA_PROGRAM, metadataBytes("STUBX", "STB", "https://evil.example/phish")),
+      account(read.PUMP_PROGRAM, curveBytes()),
+    ]);
+    async function failThen(status: number | "timeout") {
+      const seen: string[] = [];
+      const result = await read.readMint({
+        mint: CA,
+        ...fastClock(),
+        endpoint: read.PUBLICNODE_RPC,
+        maxRetries: 0,
+        transport: async (endpoint: string, body: string) => {
+          seen.push(new URL(endpoint).hostname);
+          const method = JSON.parse(body).method as string;
+          if (method === "getMultipleAccounts" && new URL(endpoint).hostname === "solana-rpc.publicnode.com") {
+            if (status === "timeout") throw new Error("The operation was aborted due to timeout");
+            return { status, body: "" };
+          }
+          if (method === "getTokenSupply") return rpcOk({ amount: "1000", decimals: 6, uiAmountString: "0.001" });
+          return okAccounts;
+        },
+      });
+      assert.equal(result.ok, true, String(status));
+      assert.equal(seen[0], "solana-rpc.publicnode.com");
+      assert.ok(seen.includes("api.mainnet-beta.solana.com"), seen.join(","));
+    }
+    await failThen(403);
+    await failThen(429);
+    await failThen(503);
+    await failThen("timeout");
+    const seen: string[] = [];
+    const rejected = await read.readMint({
+      mint: CA,
+      ...fastClock(),
+      endpoint: read.PUBLICNODE_RPC,
+      maxRetries: 0,
+      transport: async (endpoint: string) => {
+        seen.push(new URL(endpoint).hostname);
+        return { status: 200, body: JSON.stringify({ jsonrpc: "2.0", id: 1, error: { code: -32602, message: "invalid" } }) };
+      },
+    });
+    assert.equal(rejected.ok, false);
+    assert.deepEqual(seen, ["solana-rpc.publicnode.com"]);
   });
 
   test("solo se comparan dos fichas del mismo mint y la antigua no se presenta como actual", async () => {
@@ -413,11 +469,11 @@ describe("lector y cuaderno", () => {
     assert.match(notebook, /this may have changed/);
     assert.match(
       notebook,
-      /Lo que escribes se guarda solo en este navegador\. No escribas claves, frases semilla ni datos personales\. Borrar lo elimina\. Para leer la cadena, tu navegador consulta un servicio público de Solana \(por defecto api\.mainnet-beta\.solana\.com, o el que elijas\), que recibe la dirección consultada y tu IP\./,
+      /Lo que escribes se guarda solo en este navegador\. No escribas claves, frases semilla ni datos personales\. Borrar lo elimina\. Para leer la cadena, tu navegador consulta un servicio público de Solana \(por defecto solana-rpc\.publicnode\.com, o el que elijas\), que recibe la dirección consultada y tu IP\./,
     );
     assert.match(
       notebook,
-      /What you write is stored only in this browser\. Do not write keys, seed phrases, or personal data\. Clear deletes it\. To read the chain, your browser queries a public Solana service \(by default api\.mainnet-beta\.solana\.com, or the one you choose\), which receives the address and your IP\./,
+      /What you write is stored only in this browser\. Do not write keys, seed phrases, or personal data\. Clear deletes it\. To read the chain, your browser queries a public Solana service \(by default solana-rpc\.publicnode\.com, or the one you choose\), which receives the address and your IP\./,
     );
     assert.match(
       notebook,
@@ -437,8 +493,14 @@ describe("lector y cuaderno", () => {
     assert.equal(notebook.includes("frame-ancestors"), false);
     assert.match(notebook, /No es una auditoría ni una recomendación\./);
     assert.equal(notebook.toLowerCase().includes("phantom"), false);
+    const draft = readFileSync(path.join(root, "web/v2/assets/draft-address.js"), "utf8");
+    assert.equal(draft.includes("sessionStorage"), false);
+    assert.equal(draft.includes("localStorage"), false);
+    assert.match(draft, /searchParams\.set\("a"/);
     const verify = readFileSync(path.join(root, "web/v2/verify/index.html"), "utf8");
     assert.match(verify, /draft-address\.js/);
+    const learn = readFileSync(path.join(root, "web/v2/aprender/index.html"), "utf8");
+    assert.match(learn, /draft-address\.js/);
     assert.match(verify, /href="\/aprender\/#direccion"/);
     const mission = readFileSync(path.join(root, "lab/client/ui.js"), "utf8");
     assert.match(mission, /\/aprender\/\?from=lab#/);

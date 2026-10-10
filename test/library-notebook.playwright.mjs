@@ -134,7 +134,7 @@ function allowedRequest(url) {
 }
 
 async function mockRpc(page, counter) {
-  await page.route(/api\.mainnet-beta\.solana\.com/, async (route) => {
+  await page.route(/solana-rpc\.publicnode\.com|api\.mainnet-beta\.solana\.com/, async (route) => {
     if (!allowedRequest(route.request().url())) {
       counter.external += 1;
       await route.abort();
@@ -308,10 +308,18 @@ try {
   await verify.goto(`${base}/verify/`, { waitUntil: "domcontentloaded" });
   await verify.locator("#direccion-token").fill(official);
   await verify.locator('a[href="/aprender/#direccion"]').click();
-  await verify.waitForURL(/\/aprender\/#direccion/);
-  await verify.goBack();
+  await verify.waitForURL(/\/aprender\/\?a=TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump#direccion/);
+  const stored = await verify.evaluate(() => ({
+    session: sessionStorage.getItem("stubx-verify-draft"),
+    local: localStorage.getItem("stubx-verify-draft"),
+  }));
+  if (stored.session || stored.local) failures.push("Verify guardó la dirección");
+  await verify.getByRole("link", { name: "Verify", exact: true }).click();
+  await verify.waitForURL(/\/verify\/\?a=TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump/);
   const kept = await verify.locator("#direccion-token").inputValue();
-  if (kept !== official) failures.push(`Verify no conservó la dirección: ${kept}`);
+  if (kept !== official) failures.push(`Verify no recuperó la dirección del enlace: ${kept}`);
+  const storedAfter = await verify.evaluate(() => sessionStorage.getItem("stubx-verify-draft"));
+  if (storedAfter) failures.push("Verify guardó la dirección al volver");
   await shot(verify, "verify-direccion-conservada.png");
   await desktop.close();
 } catch (error) {

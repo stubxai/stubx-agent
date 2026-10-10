@@ -2,7 +2,7 @@
  * Cuaderno local. Solo lectura, sin cartera y sin ejecutar el JSON importado.
  */
 import {
-  DEFAULT_RPC,
+  PUBLICNODE_RPC,
   DISCLAIMER,
   OFFICIAL_MINT,
   isAllowedRpcUrl,
@@ -256,7 +256,7 @@ async function browserTransport(endpoint, body, timeoutMs) {
 function endpointFromForm() {
   const input = document.getElementById("rpc-url");
   const value = input && typeof input.value === "string" ? input.value.trim() : "";
-  return value || DEFAULT_RPC;
+  return value || PUBLICNODE_RPC;
 }
 
 function statusLabel(value) {

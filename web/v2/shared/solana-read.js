@@ -473,8 +473,23 @@ function authorityField(value) {
 }
 
 function endpointsFor(preferred) {
-  const first = ALLOWED_RPCS.find((item) => new URL(item).origin === new URL(preferred).origin) ?? preferred;
-  return [first, ...ALLOWED_RPCS.filter((item) => new URL(item).origin !== new URL(first).origin)];
+  let origin = "";
+  try {
+    origin = new URL(preferred).origin;
+  } catch {
+    origin = "";
+  }
+  const first = ALLOWED_RPCS.find((item) => new URL(item).origin === origin);
+  if (!first) return [...ALLOWED_RPCS];
+  return [first, ...ALLOWED_RPCS.filter((item) => item !== first)];
+}
+
+function retryableRpcFailure(result) {
+  const status = result?.httpStatus ?? null;
+  if (status === 403 || status === 429 || status === 408 || (status !== null && status >= 500)) return true;
+  return /429|403|too many|rate limit|timeout|timed out|tiempo de espera|network|fetch failed|ECONN|ENET|ENOTFOUND|socket|access forbidden|aborted/i.test(
+    result?.error ?? "",
+  );
 }
 
 async function rpcCall(state, method, params) {
@@ -483,10 +498,7 @@ async function rpcCall(state, method, params) {
   for (const endpoint of endpoints) {
     state.endpoint = endpoint;
     last = await rpcCallOnce(state, method, params);
-    if (last.ok) return last;
-    const status = last.httpStatus;
-    const retryable = status === null || status === 429 || status >= 500;
-    if (!retryable) return last;
+    if (!last || last.ok || !retryableRpcFailure(last)) return last;
   }
   return last;
 }
@@ -525,7 +537,14 @@ async function rpcCallOnce(state, method, params) {
         : null;
       return { ok: true, method, value: parsed.result, slot, fetchedAt };
     } catch (error) {
-      lastError = error instanceof Error ? error.message.slice(0, 300) : "error de red";
+      const name = error && typeof error === "object" ? error.name : "";
+      const message = error instanceof Error ? error.message.slice(0, 300) : "error de red";
+      if (name === "AbortError" || /timeout|timed out|aborted/i.test(message)) {
+        lastError = "timeout";
+        lastStatus = 408;
+      } else {
+        lastError = message;
+      }
       if (attempt < state.maxRetries) {
         await state.sleep(300 * (attempt + 1));
         continue;
@@ -547,7 +566,7 @@ export async function readMint(options) {
       card: null,
     };
   }
-  const endpoint = options.endpoint ?? DEFAULT_RPC;
+  const endpoint = options.endpoint ?? PUBLICNODE_RPC;
   if (!isAllowedRpcUrl(endpoint)) {
     return { ok: false, error: "rpc", card: blankCard(mint, consultedAt, []) };
   }
