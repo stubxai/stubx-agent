@@ -330,7 +330,7 @@ describe("lector y cuaderno", () => {
       });
       assert.equal(result.ok, true, String(status));
       assert.equal(seen[0], "solana-rpc.publicnode.com");
-      assert.ok(seen.includes("api.mainnet-beta.solana.com"), seen.join(","));
+      assert.equal(seen.some((host) => host === "api.mainnet-beta.solana.com"), true);
     }
     await failThen(403);
     await failThen(429);
