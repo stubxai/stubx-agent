@@ -488,8 +488,7 @@ def prepare_tool(name: str) -> str:
     if name == "verify":
         raw = re.sub(r'<p class="aviso-fijo privacidad">.*?</p>', "", raw, count=1, flags=re.S)
         raw = re.sub(r'<p id="aviso-guardar" class="aviso-fijo privacidad">.*?</p>', "", raw, count=1, flags=re.S)
-        field = '<input id="direccion-token" name="direccion" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done">'
-        raw = raw.replace(field, field + "\n" + aviso_html(), 1)
+        raw = raw.replace("</div>\n</form>", "</div>\n" + aviso_html() + "\n</form>", 1)
         extra = (
             '<p><button type="button" id="ver-lectura-caida">'
             + t(

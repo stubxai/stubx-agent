@@ -374,11 +374,13 @@ function renderVerify(cards: readonly CardSummary[], glossaryEntries: readonly G
 ${howDetails(HOW_VERIFY)}
 <div class="herramienta">
 <form id="consulta" class="consulta" action="#">
+<div class="consulta-barra">
 <label for="direccion-token">${both({ es: "Pega la dirección del token", en: "Paste the token address" })}</label>
 <input id="direccion-token" name="direccion" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done">
-<p id="aviso-guardar" class="aviso-fijo privacidad">${both({ es: PRIVACY_ES, en: PRIVACY_EN })}</p>
 <button type="submit">${both({ es: "Comprobar", en: "Check" })}</button>
 <p id="direccion-error" class="campo-error" hidden>${both({ es: "Pega primero una dirección. Suele tener entre 32 y 44 letras y números.", en: "Paste an address first. It is usually 32 to 44 letters and numbers." })}</p>
+</div>
+<p id="aviso-guardar" class="aviso-fijo privacidad">${both({ es: PRIVACY_ES, en: PRIVACY_EN })}</p>
 </form>
 <section id="resultado" class="resultado" data-state="vacio" data-luz="neutro" aria-live="polite">
 <h2>${both({ es: "La lectura aparece aquí", en: "The reading shows up here" })}</h2>

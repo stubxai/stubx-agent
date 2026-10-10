@@ -197,6 +197,10 @@ details.como li { margin: 0.35rem 0; }
   gap: 0.65rem;
   background: var(--bg);
 }
+.consulta-barra { display: contents; }
+.consulta .privacidad { order: 1; }
+.consulta-barra > button { order: 2; }
+.consulta .campo-error { order: 3; }
 .consulta label { font-weight: 650; font-size: 1.05rem; }
 .consulta input {
   width: 100%;
@@ -354,8 +358,50 @@ html.js .estatica { display: none; }
     background: var(--bg);
     box-shadow: 0 -12px 28px rgba(7, 20, 34, 0.55);
   }
-  .consulta label { grid-column: 1 / -1; font-size: 0.98rem; }
-  .consulta button { width: auto; min-width: 8.25rem; padding-left: 1rem; padding-right: 1rem; }
+  .consulta:has(.consulta-barra) {
+    position: static;
+    display: block;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    z-index: auto;
+    padding: 0;
+    border-top: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .consulta-barra {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 4;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    column-gap: 0.55rem;
+    row-gap: 0.35rem;
+    align-items: center;
+    padding: 0.65rem 1rem calc(0.65rem + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--line);
+    background: var(--bg);
+    box-shadow: 0 -12px 28px rgba(7, 20, 34, 0.55);
+  }
+  #aviso-guardar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(7.2rem + env(safe-area-inset-bottom));
+    z-index: 3;
+    margin: 0;
+    max-height: calc(50vh - 8rem);
+    overflow: auto;
+    background: var(--bg);
+  }
+  body:has(#aviso-guardar) { padding-bottom: calc(24rem + env(safe-area-inset-bottom)); }
+  .consulta label,
+  .consulta-barra label { grid-column: 1 / -1; font-size: 0.98rem; }
+  .consulta button,
+  .consulta-barra > button { width: auto; min-width: 8.25rem; padding-left: 1rem; padding-right: 1rem; }
   body:has(.consulta) { padding-bottom: calc(8.5rem + env(safe-area-inset-bottom)); }
   .opciones button, .consulta button, .consulta input { min-height: 3.5rem; }
   nav.site a, .langs button, .pasos button, summary { min-height: 44px; }
