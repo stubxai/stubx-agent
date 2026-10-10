@@ -817,6 +817,39 @@ describe("web v2", () => {
     });
     assert.equal(ancestor.status, 0);
   });
+
+  test("publicar otra vez deja web/v2 igual", () => {
+    const root = repoRoot();
+    const digest = () => {
+      const hash = createHash("sha256");
+      const files: string[] = [];
+      const walk = (rel: string) => {
+        const full = path.join(root, rel);
+        const info = statSync(full);
+        if (info.isDirectory()) {
+          if (path.basename(full) === "__pycache__") return;
+          for (const name of readdirSync(full).sort()) walk(path.join(rel, name));
+          return;
+        }
+        if (rel.endsWith(".pyc")) return;
+        files.push(rel);
+      };
+      walk("web/v2");
+      for (const rel of files.sort()) {
+        hash.update(rel);
+        hash.update(readFileSync(path.join(root, rel)));
+      }
+      return hash.digest("hex");
+    };
+    const before = digest();
+    const run = spawnSync("python3", ["web/v2/tools/build_site.py", "--publish"], {
+      cwd: root,
+      encoding: "utf8",
+      env: { ...process.env, STUBX_PUBLISH: "1", PYTHONDONTWRITEBYTECODE: "1" },
+    });
+    assert.equal(run.status, 0, `${run.stdout}\n${run.stderr}`);
+    assert.equal(digest(), before, "regenerar web/v2 en modo publicación cambió archivos");
+  });
 });
 
 function digestTree(root: string, rels: readonly string[]): string {

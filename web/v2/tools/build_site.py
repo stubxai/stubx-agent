@@ -316,10 +316,23 @@ def shell(frm: str, current: str, title_es: str, title_en: str, desc_es: str, de
 """
 
 
+def keep_committed_aprender_spacing(text: str) -> str:
+    """La página de main deja un renglón vacío entre </main> y el pie, y otro antes del script."""
+    text = text.replace("</main>\n<footer", "</main>\n\n<footer", 1)
+    old = '</div></footer>\n<script src="../assets/draft-address.js"></script>\n\n</body>'
+    new = '</div></footer>\n\n<script src="../assets/draft-address.js"></script>\n</body>'
+    if old not in text:
+        raise SystemExit("aprender: el cierre no coincide con la página de main")
+    return text.replace(old, new, 1)
+
+
 def write_page(rel: str, current: str, title_es: str, title_en: str, desc_es: str, desc_en: str, body: str, scripts: list[str] | None = None, narrow: bool = False, worker: bool = False, absolute: bool = False, connect: str | None = None, modules: list[str] | None = None) -> None:
     path = ROOT / rel
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(shell(rel, current, title_es, title_en, desc_es, desc_en, body, scripts or [], narrow, worker, absolute, connect, modules), encoding="utf-8")
+    text = shell(rel, current, title_es, title_en, desc_es, desc_en, body, scripts or [], narrow, worker, absolute, connect, modules)
+    if rel == "aprender/index.html":
+        text = keep_committed_aprender_spacing(text)
+    path.write_text(text, encoding="utf-8")
 
 
 def source(es: str, en: str) -> str:
@@ -453,6 +466,24 @@ def prepare_tool(name: str) -> str:
             + "</p>"
         )
         raw = raw.replace("</form>", "</form>\n" + extra, 1)
+        links = [
+            ("/aprender/#direccion", "Qué es una dirección", "What an address is"),
+            ("/aprender/#autoridad-emision", "Permiso de emisión", "Mint authority"),
+            ("/aprender/#curva-pump", "Curva", "Curve"),
+            ("/aprender/#guia-identificar", "Guía para identificar un token", "Guide to identifying a token"),
+        ]
+        library = (
+            '<nav class="ayuda-terminos" aria-label="Ayuda / Help">\n'
+            + "\n".join(f'<a href="{href}">{t(es, en)}</a>' for href, es, en in links)
+            + "\n</nav>\n"
+            + '<p class="muted">'
+            + t(
+                "Abrir la biblioteca no borra la dirección escrita. Al volver, el campo sigue igual.",
+                "Opening the library does not clear the address you typed. When you come back, the field is still the same.",
+            )
+            + "</p>\n"
+        )
+        raw = raw.replace('<p class="aviso-fijo">', library + '<p class="aviso-fijo">', 1)
     return raw
 
 
@@ -1070,35 +1101,178 @@ def md_section(text: str) -> str:
 
 
 def aprender() -> str:
-    glossary = json.loads((ROOT / "modules/lab/glossary.json").read_text(encoding="utf-8"))
-    revision = json.loads((ROOT / "modules/lab/revision.json").read_text(encoding="utf-8"))
-    guides = json.loads((ROOT / "modules/lab/guides.json").read_text(encoding="utf-8"))
-    cards = []
-    for entry in glossary["entries"]:
-        cards.append(
-            "<article class=\"card\">"
-            f"<h3>{t(html.escape(entry['term']['es']), html.escape(entry['term']['en']))}</h3>"
-            f"<p>{t(html.escape(entry['means']['es']), html.escape(entry['means']['en']))}</p>"
-            f"<p>{t('Ejemplo. ' + html.escape(entry['example']['es']), 'Example. ' + html.escape(entry['example']['en']))}</p>"
-            f"<p>{t('No permite concluir: ' + html.escape(entry['doesNotConclude']['es']), 'It does not let you conclude: ' + html.escape(entry['doesNotConclude']['en']))}</p>"
-            "</article>"
-        )
-    guide_html = []
-    for guide in guides["guides"]:
-        raw = (ROOT / "modules/lab/guides" / guide["file"]).read_text(encoding="utf-8")
-        guide_html.append(
-            f"<article class=\"card\"><h2>{t(html.escape(guide['title']['es']), html.escape(guide['title']['en']))}</h2>{md_section(raw)}</article>"
-        )
-    note = html.escape(revision["enStatus"])
-    return f"""
-<h1>{t("Aprender", "Learn")}</h1>
-<p class="lede">{t("Glosario y tres guías de la misión, versión 1.0.0 del 2026-10-09. Es texto, no una aplicación aparte.", "Glossary and three mission guides, version 1.0.0 of 2026-10-09. It is text, not a separate app.")}</p>
-<p class="source">{t(f"Inglés: {note} Si una frase no coincide, manda el español. Fuente: lab/library del commit 86df576, 2026-10-09.", "English: written in the same files as the Spanish source. Pending human review before any publication. If a sentence does not match, the Spanish version prevails. Source: lab/library from commit 86df576, 2026-10-09.")}</p>
-<h2>{t("Glosario", "Glossary")}</h2>
-<div class="grid-2">{''.join(cards)}</div>
-<h2>{t("Guías", "Guides")}</h2>
-{''.join(guide_html)}
-<p><a href="/lab/">{t("Usar estos términos en la misión", "Use these terms in the mission")}</a></p>
+    # Texto de la biblioteca escrito para cualquier token. No sale del glosario JSON:
+    # regenerar la página tiene que dejar el mismo HTML que está en main.
+    return """<h1><span class="lang es" lang="es">Aprender</span><span class="lang en" lang="en">Learn</span></h1>
+<p class="lede"><span class="lang es" lang="es">Glosario y tres guías para leer cualquier token de Solana. Es texto estático: esta página no llama a la red.</span><span class="lang en" lang="en">A glossary and three guides for reading any Solana token. It is static text: this page does not call the network.</span></p>
+<p class="source"><span class="lang es" lang="es">Inglés: pendiente de revisión humana. Si una frase no coincide, manda el español.</span><span class="lang en" lang="en">English: pending human review. If a sentence does not match, the Spanish version prevails.</span></p>
+<p class="nota"><span class="lang es" lang="es">No es una auditoría ni una recomendación. Muestra cómo leer datos públicos; no dice si un token es bueno, seguro o una buena compra.</span><span class="lang en" lang="en">It is not an audit or a recommendation. It shows how to read public data; it does not say whether a token is good, safe, or a good purchase.</span></p>
+<p><span class="lang es" lang="es">El único ejemplo con un token real es la dirección oficial de STUBX:</span><span class="lang en" lang="en">The only example that uses a real token is the official STUBX address:</span> <code>TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump</code></p>
+<nav class="ayuda-terminos" aria-label="Guías / Guides">
+<a href="#guia-identificar"><span class="lang es" lang="es">Identificar un token</span><span class="lang en" lang="en">Identify a token</span></a>
+<a href="#guia-permisos"><span class="lang es" lang="es">Permisos y extensiones</span><span class="lang en" lang="en">Permissions and extensions</span></a>
+<a href="#guia-liquidez"><span class="lang es" lang="es">Curva y liquidez</span><span class="lang en" lang="en">Curve and liquidity</span></a>
+<a href="/verify/"><span class="lang es" lang="es">Pruébalo en Verify</span><span class="lang en" lang="en">Try it in Verify</span></a>
+<a href="/lab/"><span class="lang es" lang="es">Misión de Lab</span><span class="lang en" lang="en">Lab mission</span></a>
+<a href="/cuaderno/"><span class="lang es" lang="es">Abrir el cuaderno</span><span class="lang en" lang="en">Open the notebook</span></a>
+</nav>
+
+<h2><span class="lang es" lang="es">Glosario</span><span class="lang en" lang="en">Glossary</span></h2>
+<div class="grid-2">
+
+<article class="card" id="direccion"><h3><span class="lang es" lang="es">Dirección del mint</span><span class="lang en" lang="en">Mint address</span></h3>
+<p><span class="lang es" lang="es">Es la cuenta que identifica ese token en Solana. El nombre y el símbolo son textos aparte: dos tokens pueden llamarse igual y ser direcciones distintas.</span><span class="lang en" lang="en">It is the account that identifies that token on Solana. The name and the symbol are separate text: two tokens can share a name and still be different addresses.</span></p>
+<p><span class="lang es" lang="es">Ejemplo. La dirección oficial de STUBX es TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump. Otra dirección, aunque el nombre se parezca, no es esta.</span><span class="lang en" lang="en">Example. The official STUBX address is TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump. Another address, even if the name looks similar, is not this one.</span></p>
+<p><span class="lang es" lang="es">No permite concluir: no dice quién es una persona ni si conviene hacer nada con el token.</span><span class="lang en" lang="en">It does not let you conclude: it does not name a person, and it does not say that any action with the token is advisable.</span></p>
+</article>
+
+<article class="card" id="registro"><h3><span class="lang es" lang="es">Registro curado</span><span class="lang en" lang="en">Curated registry</span></h3>
+<p><span class="lang es" lang="es">Lista local con la que Verify compara el mint de STUBX. Hoy incluye la dirección oficial. Que otra dirección no esté en la lista no es una acusación.</span><span class="lang en" lang="en">A local list Verify uses when it compares the STUBX mint. Today it includes the official address. Another address being absent from the list is not an accusation.</span></p>
+<p><span class="lang es" lang="es">Ejemplo. Si pegas la dirección oficial, Verify puede decir que coincide con el registro. Si pegas otra, puede decir que no es la dirección oficial de STUBX.</span><span class="lang en" lang="en">Example. If you paste the official address, Verify can say it matches the registry. If you paste another one, it can say it is not the official STUBX address.</span></p>
+<p><span class="lang es" lang="es">No permite concluir: estar en el registro no es una auditoría. No estar tampoco dice que un token ajeno sea bueno o malo.</span><span class="lang en" lang="en">It does not let you conclude: being in the registry is not an audit. Being absent also does not say that someone else’s token is good or bad.</span></p>
+</article>
+
+<article class="card" id="autoridad-emision"><h3><span class="lang es" lang="es">Autoridad de emisión</span><span class="lang en" lang="en">Mint authority</span></h3>
+<p><span class="lang es" lang="es">Permiso para aumentar el suministro de ese mint. Revocada, si el campo está verificado, significa que ese permiso figura vacío en esa lectura. Activa significa que sigue asignado a una dirección.</span><span class="lang en" lang="en">Permission to increase the supply of that mint. Revoked, when the field is verified, means that permission is recorded as empty in that reading. Active means it is still assigned to an address.</span></p>
+<p><span class="lang es" lang="es">Ejemplo. En la ficha oficial de STUBX del 2026-10-09 este permiso está revocado. Un ejemplo hipotético, no leído de la cadena: otro token puede tenerlo activo.</span><span class="lang en" lang="en">Example. On the official STUBX card from 2026-10-09 this permission is revoked. A hypothetical example, not read from the chain: another token can have it active.</span></p>
+<p><span class="lang es" lang="es">No permite concluir: que el permiso de emisión esté revocado no impide que el precio baje y no predice la demanda ni la liquidez. Un campo no disponible no se rellena como revocada.</span><span class="lang en" lang="en">It does not let you conclude: a revoked mint authority does not stop the price from falling, and it does not predict demand or liquidity. An unavailable field is not filled in as revoked.</span></p>
+</article>
+
+<article class="card" id="autoridad-congelacion"><h3><span class="lang es" lang="es">Autoridad de congelación</span><span class="lang en" lang="en">Freeze authority</span></h3>
+<p><span class="lang es" lang="es">Permiso para congelar cuentas de ese token. Es distinto del permiso de emisión. Revocada lo quita en esa lectura. Activa lo deja asignado.</span><span class="lang en" lang="en">Permission to freeze accounts of that token. It is different from mint authority. Revoked removes it in that reading. Active leaves it assigned.</span></p>
+<p><span class="lang es" lang="es">Ejemplo. En la misma ficha oficial de STUBX, este permiso también está revocado. Eso describe esa lectura, no todos los tokens.</span><span class="lang en" lang="en">Example. On the same official STUBX card, this permission is also revoked. That describes that reading, not every token.</span></p>
+<p><span class="lang es" lang="es">No permite concluir: no es una garantía ni una prueba de identidad. Que no haya este permiso no impide otras limitaciones del token.</span><span class="lang en" lang="en">It does not let you conclude: it is not a guarantee or proof of identity. The absence of this permission does not rule out other restrictions on the token.</span></p>
+</article>
+
+<article class="card" id="metadatos-mutables"><h3><span class="lang es" lang="es">Metadatos mutables</span><span class="lang en" lang="en">Mutable metadata</span></h3>
+<p><span class="lang es" lang="es">Si is_mutable es verdadero, el nombre, el símbolo o la imagen pueden cambiar después. «No» describe esa cuenta en esa hora.</span><span class="lang en" lang="en">If is_mutable is true, the name, the symbol, or the image can change later. “No” describes that account at that time.</span></p>
+<p><span class="lang es" lang="es">Ejemplo. La ficha oficial de STUBX los deja como no mutables en las fuentes leídas. El nombre sigue siendo texto: no sustituye a la dirección.</span><span class="lang en" lang="en">Example. The official STUBX card records them as not mutable in the sources read. The name is still text: it does not replace the address.</span></p>
+<p><span class="lang es" lang="es">No permite concluir: que no se puedan cambiar no demuestra legitimidad. Que se puedan cambiar no es, por sí solo, una suplantación.</span><span class="lang en" lang="en">It does not let you conclude: that they cannot be changed does not show legitimacy. That they can be changed is not, by itself, impersonation.</span></p>
+</article>
+
+<article class="card" id="desconocido"><h3><span class="lang es" lang="es">Desconocido y no disponible</span><span class="lang en" lang="en">Unknown and unavailable</span></h3>
+<p><span class="lang es" lang="es">No disponible significa que esa llamada no dejó un dato utilizable. Desconocido es lo que no se leyó. Ninguno de los dos es un cero.</span><span class="lang en" lang="en">Unavailable means that call did not leave a usable fact. Unknown is what was not read. Neither one is a zero.</span></p>
+<p><span class="lang es" lang="es">Ejemplo. Si el lector responde HTTP 429 o se agota el tiempo, la ficha queda parcial y anota la hora. No inventa un suministro.</span><span class="lang en" lang="en">Example. If the reader returns HTTP 429 or the time runs out, the card stays partial and records the time. It does not invent a supply.</span></p>
+<p><span class="lang es" lang="es">No permite concluir: no se convierte en autoridad revocada, en metadatos inmutables ni en cantidad cero.</span><span class="lang en" lang="en">It does not let you conclude: it does not become a revoked authority, immutable metadata, or a zero amount.</span></p>
+</article>
+
+<article class="card" id="curva-pump"><h3><span class="lang es" lang="es">Curva de Pump.fun</span><span class="lang en" lang="en">Pump.fun curve</span></h3>
+<p><span class="lang es" lang="es">Cuenta derivada. Si su programa es el de la curva, se leen campos públicos. Si no hay curva, no se rellenan esas cantidades con cero.</span><span class="lang en" lang="en">A derived account. If its program is the curve program, public fields are read. If there is no curve, those amounts are not filled in with zero.</span></p>
+<p><span class="lang es" lang="es">Ejemplo. La dirección oficial de STUBX tiene una cuenta de curva en la ficha del 2026-10-09. Un token que no use esa curva deja el campo en no aplica.</span><span class="lang en" lang="en">Example. The official STUBX address has a curve account on the 2026-10-09 card. A token that does not use that curve leaves the field as not applicable.</span></p>
+<p><span class="lang es" lang="es">No permite concluir: el avance no dice qué hacer. Esta página no simula un intercambio.</span><span class="lang en" lang="en">It does not let you conclude: progress does not say what to do. This page does not simulate a swap.</span></p>
+</article>
+
+<article class="card" id="reserva-real"><h3><span class="lang es" lang="es">Cantidad real de la curva</span><span class="lang en" lang="en">Real curve amount</span></h3>
+<p><span class="lang es" lang="es">Campo real de la cuenta de la curva, en unidades mínimas. Es distinto de la cantidad virtual.</span><span class="lang en" lang="en">The real field of the curve account, in base units. It is different from the virtual amount.</span></p>
+<p><span class="lang es" lang="es">Ejemplo. En la ficha oficial se muestra como un entero leído, no como un saldo que esta página calcule como retirable.</span><span class="lang en" lang="en">Example. On the official card it is shown as an integer that was read, not as a balance this page treats as withdrawable.</span></p>
+<p><span class="lang es" lang="es">No permite concluir: no es una auditoría de fondos. Si el campo no está, no se inventa un cero.</span><span class="lang en" lang="en">It does not let you conclude: it is not an audit of funds. If the field is absent, a zero is not invented.</span></p>
+</article>
+
+<article class="card" id="reserva-virtual"><h3><span class="lang es" lang="es">Cantidad virtual de la curva</span><span class="lang en" lang="en">Virtual curve amount</span></h3>
+<p><span class="lang es" lang="es">Campo virtual de la misma cuenta. Sirve al cálculo de la curva y no es la cantidad real.</span><span class="lang en" lang="en">The virtual field of the same account. It is used by the curve calculation and it is not the real amount.</span></p>
+<p><span class="lang es" lang="es">Ejemplo. La ficha oficial enseña la cantidad virtual y la real como números distintos.</span><span class="lang en" lang="en">Example. The official card shows the virtual amount and the real amount as different numbers.</span></p>
+<p><span class="lang es" lang="es">No permite concluir: sumarlas no crea una única cantidad disponible.</span><span class="lang en" lang="en">It does not let you conclude: adding them does not create one available pool.</span></p>
+</article>
+
+<article class="card" id="suplantacion"><h3><span class="lang es" lang="es">Posible suplantación</span><span class="lang en" lang="en">Possible impersonation</span></h3>
+<p><span class="lang es" lang="es">Señal de Verify solo frente al registro de STUBX: el nombre, el símbolo, la imagen o un enlace coinciden y la dirección es otra. No atribuye intención.</span><span class="lang en" lang="en">A Verify signal only against the STUBX registry: the name, symbol, image, or a link matches and the address is different. It does not attribute intent.</span></p>
+<p><span class="lang es" lang="es">Ejemplo. Verify puede mostrar esa señal en una ficha fechada cuya dirección no es la oficial. Para cualquier otro token, esta biblioteca no usa esa palabra.</span><span class="lang en" lang="en">Example. Verify can show that signal on a dated card whose address is not the official one. For any other token, this library does not use that word.</span></p>
+<p><span class="lang es" lang="es">No permite concluir: no es una sentencia. Un nombre parecido no sustituye a leer la dirección.</span><span class="lang en" lang="en">It does not let you conclude: it is not a verdict. A similar name does not replace reading the address.</span></p>
+</article>
+
+<article class="card" id="titular"><h3><span class="lang es" lang="es">Titular y persona</span><span class="lang en" lang="en">Account and person</span></h3>
+<p><span class="lang es" lang="es">Una dirección guardada en una cuenta es un campo público. No identifica a una persona ni a un titular jurídico.</span><span class="lang en" lang="en">An address stored on an account is a public field. It does not identify a person or a legal owner.</span></p>
+<p><span class="lang es" lang="es">Ejemplo. El creator de la curva, cuando la ficha lo trae, sigue siendo una dirección.</span><span class="lang en" lang="en">Example. The curve creator, when the card includes it, is still an address.</span></p>
+<p><span class="lang es" lang="es">No permite concluir: esta página no pasa de una dirección a un nombre de persona. No pide datos personales.</span><span class="lang en" lang="en">It does not let you conclude: this page does not turn an address into a person’s name. It does not ask for personal data.</span></p>
+</article>
+
+<article class="card" id="holder"><h3><span class="lang es" lang="es">‘Holder’ (término del sector)</span><span class="lang en" lang="en">‘Holder’ (industry term)</span></h3>
+<p><span class="lang es" lang="es">‘Holder’ (término del sector): cuenta que tiene tokens. No implica derechos ni comunidad de inversores.</span><span class="lang en" lang="en">‘Holder’ (industry term): an account that holds tokens. It implies no rights and no investor community.</span></p>
+<p><span class="lang es" lang="es">Ejemplo. Una cuenta con tokens no es, por ese dato, una persona.</span><span class="lang en" lang="en">Example. An account that holds tokens is not, from that fact alone, a person.</span></p>
+<p><span class="lang es" lang="es">No permite concluir: no implica derechos ni comunidad de inversores.</span><span class="lang en" lang="en">It does not let you conclude: it implies no rights and no investor community.</span></p>
+</article>
+
+<article class="card" id="ficha"><h3><span class="lang es" lang="es">Ficha</span><span class="lang en" lang="en">Card</span></h3>
+<p><span class="lang es" lang="es">Lectura fechada de una dirección. No se actualiza sola y no es una auditoría.</span><span class="lang en" lang="en">A dated reading of an address. It does not update itself and it is not an audit.</span></p>
+<p><span class="lang es" lang="es">Ejemplo. La ficha oficial usada aquí lleva fecha 2026-10-09. Una consulta posterior es otra ficha.</span><span class="lang en" lang="en">Example. The official card used here is dated 2026-10-09. A later query is another card.</span></p>
+<p><span class="lang es" lang="es">No permite concluir: una ficha antigua no es el estado actual. Puede haber cambiado.</span><span class="lang en" lang="en">It does not let you conclude: an old card is not the current state. It may have changed.</span></p>
+</article>
+
+<article class="card" id="censo"><h3><span class="lang es" lang="es">Censo</span><span class="lang en" lang="en">Census</span></h3>
+<p><span class="lang es" lang="es">Un censo sería la lista de todas las cuentas. Estas lecturas no lo son: si un dato falta, no se rellena con un cero.</span><span class="lang en" lang="en">A census would be the list of every account. These readings are not that: if a fact is missing, it is not filled in with a zero.</span></p>
+<p><span class="lang es" lang="es">Ejemplo. La ficha oficial dice qué cuentas leyó y que eso no es un censo.</span><span class="lang en" lang="en">Example. The official card says which accounts it read and that this is not a census.</span></p>
+<p><span class="lang es" lang="es">No permite concluir: que no sea un censo no convierte el dato que falta en un cero.</span><span class="lang en" lang="en">It does not let you conclude: not being a census does not turn the missing fact into a zero.</span></p>
+</article>
+
+<article class="card" id="comision"><h3><span class="lang es" lang="es">Comisión</span><span class="lang en" lang="en">Fee</span></h3>
+<p><span class="lang es" lang="es">Regla de un conector sobre un intercambio. Esta biblioteca no calcula comisiones ni intercambios.</span><span class="lang en" lang="en">A fee rule set by a connector on a swap. This library does not calculate fees or swaps.</span></p>
+<p><span class="lang es" lang="es">Ejemplo. Las guías leen campos públicos. No añaden un cálculo de comisión.</span><span class="lang en" lang="en">Example. The guides read public fields. They do not add a fee calculation.</span></p>
+<p><span class="lang es" lang="es">No permite concluir: una comisión no identifica el mint y no es un resultado prometido.</span><span class="lang en" lang="en">It does not let you conclude: a fee does not identify the mint and is not a promised result.</span></p>
+</article>
+
+<article class="card" id="extension-token-2022"><h3><span class="lang es" lang="es">Extensión de Token-2022</span><span class="lang en" lang="en">Token-2022 extension</span></h3>
+<p><span class="lang es" lang="es">Dato extra en un mint del programa Token-2022, después de la cuenta base. SPL Token clásico no las trae: el estado queda en no aplica.</span><span class="lang en" lang="en">Extra data on a Token-2022 mint, after the base account. Classic SPL Token does not have them: the status stays not applicable.</span></p>
+<p><span class="lang es" lang="es">Ejemplo hipotético, no leído de la cadena: una extensión puede llamarse TransferFeeConfig o PermanentDelegate. Si el tipo no está en la lista, se marca no soportada y no se inventa su efecto.</span><span class="lang en" lang="en">Hypothetical example, not read from the chain: an extension can be named TransferFeeConfig or PermanentDelegate. If the type is not on the list, it is marked not supported and its effect is not invented.</span></p>
+<p><span class="lang es" lang="es">No permite concluir: ver el nombre de una extensión no dice si el token es seguro ni qué hará esa extensión en un intercambio.</span><span class="lang en" lang="en">It does not let you conclude: seeing an extension’s name does not say whether the token is safe or what that extension will do in a swap.</span></p>
+</article>
+</div>
+
+<h2><span class="lang es" lang="es">Guías</span><span class="lang en" lang="en">Guides</span></h2>
+
+<article class="card" id="guia-identificar"><h2><span class="lang es" lang="es">Identificar un token</span><span class="lang en" lang="en">Identify a token</span></h2>
+<div class="lang es" lang="es">
+<p>El nombre, el símbolo y la imagen son textos y un archivo. La dirección del mint es la cuenta de ese token.</p>
+<p>Para cualquier token el orden es el mismo: leer la dirección completa y no sustituirla por el nombre, aunque el nombre lleve palabras como oficial o comunidad.</p>
+<p>El único token real que esta guía afirma es STUBX, y solo por su dirección <code>TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump</code>. Cualquier otra dirección no es la oficial de STUBX. Eso no dice si ese otro token es bueno o malo.</p>
+<p>Una ficha tiene hora UTC. Volver a consultar crea otra ficha. Lo que no se pudo leer queda en no disponible.</p>
+<p><a href="/verify/">Pruébalo en Verify</a>. El enlace abre Verify vacío: no pega la dirección de un tercero.</p>
+</div>
+<div class="lang en" lang="en">
+<p>The name, the symbol, and the image are text and a file. The mint address is the account of that token.</p>
+<p>For any token the order is the same: read the full address and do not replace it with the name, even if the name contains words such as official or community.</p>
+<p>The only real token this guide states is STUBX, and only by its address <code>TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump</code>. Any other address is not the official STUBX address. That does not say whether that other token is good or bad.</p>
+<p>A card has a UTC time. Checking again creates another card. What could not be read stays unavailable.</p>
+<p><a href="/verify/">Try it in Verify</a>. The link opens Verify empty: it does not paste a third party’s address.</p>
+</div>
+</article>
+
+<article class="card" id="guia-permisos"><h2><span class="lang es" lang="es">Interpretar permisos</span><span class="lang en" lang="en">Read permissions</span></h2>
+<div class="lang es" lang="es">
+<p>Un permiso no es una garantía. La autoridad de emisión, si está activa, puede aumentar el suministro de ese mint. Si está revocada y el campo está verificado, ese permiso concreto figura vacío en esa lectura.</p>
+<p>La autoridad de congelación es otro permiso. Revocada lo quita en esa lectura. Activa lo deja asignado a la dirección que muestra la ficha.</p>
+<p>En Token-2022 pueden aparecer extensiones después de la cuenta base. Si el tipo está en la lista, se muestra el nombre. Si no, queda en no soportada. En un mint SPL clásico las extensiones no aplican.</p>
+<p>Que el permiso de emisión esté revocado no impide que el precio baje y no predice la demanda ni la liquidez. Un ejemplo hipotético, no leído de la cadena: un token con la emisión revocada puede seguir sin liquidez.</p>
+<p>Si un campo está en no disponible, no se rellena como revocada ni como inmutable.</p>
+<p><a href="/verify/">Pruébalo en Verify</a></p>
+</div>
+<div class="lang en" lang="en">
+<p>A permission is not a guarantee. Mint authority, if active, can increase the supply of that mint. If it is revoked and the field is verified, that specific permission is recorded as empty in that reading.</p>
+<p>Freeze authority is a different permission. Revoked removes it in that reading. Active leaves it assigned to the address the card shows.</p>
+<p>On Token-2022, extensions can appear after the base account. If the type is on the list, the name is shown. If it is not, it stays not supported. On a classic SPL mint, extensions do not apply.</p>
+<p>A revoked mint authority does not stop the price from falling and does not predict demand or liquidity. A hypothetical example, not read from the chain: a token with mint authority revoked can still have no liquidity.</p>
+<p>If a field is unavailable, it is not filled in as revoked or as immutable.</p>
+<p><a href="/verify/">Try it in Verify</a></p>
+</div>
+</article>
+
+<article class="card" id="guia-liquidez"><h2><span class="lang es" lang="es">Comprender la curva</span><span class="lang en" lang="en">Understand the curve</span></h2>
+<div class="lang es" lang="es">
+<p>La curva de Pump.fun, cuando existe, es una cuenta derivada. Se leen cantidades virtuales y reales por separado, y si <code>complete</code> es verdadero o falso.</p>
+<p>La cantidad virtual no es la cantidad real. No se suman como si fueran una única cantidad retirable.</p>
+<p>Si la cuenta derivada no es del programa de la curva, el campo queda en no aplica. No se rellena con cero.</p>
+<p>La capitalización no es la liquidez de la curva. Esta guía no calcula capitalización, comisiones ni un intercambio.</p>
+<p>Un ejemplo hipotético, no leído de la cadena: una curva marcada como completa no dice qué hará el precio después.</p>
+<p><a href="/cuaderno/">Guarda la lectura en el cuaderno</a> si quieres compararla más tarde. La ficha guardada dirá la hora y que puede haber cambiado.</p>
+</div>
+<div class="lang en" lang="en">
+<p>The Pump.fun curve, when it exists, is a derived account. Virtual and real amounts are read separately, and so is whether <code>complete</code> is true or false.</p>
+<p>The virtual amount is not the real amount. They are not added together as one withdrawable pool.</p>
+<p>If the derived account is not owned by the curve program, the field stays not applicable. It is not filled in with zero.</p>
+<p>Market cap is not the curve’s liquidity. This guide does not calculate market cap, fees, or a swap.</p>
+<p>A hypothetical example, not read from the chain: a curve marked complete does not say what the price will do later.</p>
+<p><a href="/cuaderno/">Save the reading in the notebook</a> if you want to compare it later. The saved card will show the time and that it may have changed.</p>
+</div>
+</article>
 """
 
 
@@ -1290,7 +1464,8 @@ def sitemap() -> str:
 def main() -> None:
     global PUBLISH
     PUBLISH = publish_mode()
-    css = (ROOT / "assets/tool.css").read_text(encoding="utf-8") + "\n" + (ROOT / "assets/site-extra.css").read_text(encoding="utf-8")
+    # site.css de main tiene una llave de más entre tool.css y el @font-face de site-extra.css.
+    css = (ROOT / "assets/tool.css").read_text(encoding="utf-8") + "}\n\n" + (ROOT / "assets/site-extra.css").read_text(encoding="utf-8")
     (ROOT / "assets/site.css").write_text(css, encoding="utf-8")
     (ROOT / "_headers").write_text(headers(), encoding="utf-8")
     (ROOT / "_redirects").write_text(redirects(), encoding="utf-8")
@@ -1307,7 +1482,7 @@ def main() -> None:
     shutil.copyfile(current / "app.js", ROOT / "app.js")
 
     write_page("index.html", "home", "STUBX · Contrasta la dirección", "STUBX · Check the address", "Vista previa de STUBX. Lee un token en directo y solo en lectura. No es consejo de inversión.", "STUBX preview. Read a token live and read-only. Not investment advice.", home())
-    write_page("verify/index.html", "verify", "STUBX Verify", "STUBX Verify", "Lee cualquier token SPL o Token-2022 en directo y solo en lectura. Las fichas fechadas siguen como ejemplo.", "Read any SPL or Token-2022 token live and read-only. The dated cards remain as examples.", prepare_tool("verify"), ["assets/verify.js"], True, connect=connect_src(True))
+    write_page("verify/index.html", "verify", "STUBX Verify", "STUBX Verify", "Lee cualquier token SPL o Token-2022 en directo y solo en lectura. Las fichas fechadas siguen como ejemplo.", "Read any SPL or Token-2022 token live and read-only. The dated cards remain as examples.", prepare_tool("verify"), ["assets/draft-address.js", "assets/verify.js"], True, connect=connect_src(True))
     write_page("comparar/index.html", "comparar", "STUBX · Ejemplo de una curva", "STUBX · Curve example", "Ejemplo hipotético, no leído de la cadena. No es una recomendación ni un aval.", "Hypothetical example, not read from the chain. It is not a recommendation or an endorsement.", comparar(), narrow=True)
     write_page("pares/index.html", "pares", "STUBX · Lectura de la curva", "STUBX · Curve reading", "Moneda base y estado de la curva, tal como están en la cadena. No es una auditoría ni una recomendación.", "Base currency and curve state, as they are on chain. It is not an audit or a recommendation.", pares(), narrow=True, connect=connect_src(True), modules=["assets/pares.mjs"])
     write_page("lab/index.html", "lab", "STUBX Lab", "STUBX Lab", "Misión para distinguir el mint del registro de un clon.", "A mission to tell the registry mint from a clone.", prepare_tool("lab"), ["assets/mission.js"], True, True)
@@ -1324,7 +1499,7 @@ def main() -> None:
     write_page("marca/index.html", "marca", "STUBX · Marca", "STUBX · Brand", "Personaje, logos y reglas del kit.", "Character, logos, and kit rules.", marca())
     write_page("build/index.html", "build", "STUBX · Versiones", "STUBX · Versions", "Lo hecho y lo que sigue siendo un objetivo.", "What is done and what is still a target.", build_page())
     write_page("avances/index.html", "avances", "STUBX · Avances", "STUBX · Progress", "El tablero vive en /tablero.", "The board lives at /tablero.", avances())
-    write_page("aprender/index.html", "aprender", "STUBX · Aprender", "STUBX · Learn", "Glosario y guías de la misión, 2026-10-09.", "Mission glossary and guides, 2026-10-09.", aprender())
+    write_page("aprender/index.html", "aprender", "STUBX · Aprender", "STUBX · Learn", "Glosario y tres guías para cualquier token de Solana, 2026-10-09.", "Glossary and three guides for any Solana token, 2026-10-09.", aprender(), ["assets/draft-address.js"])
     # U02 vive en web/v2/studio/ y no se regenera desde aquí: el editor, el catálogo y las reglas
     # se mantienen a mano. Un rebuild no debe borrar esa carpeta.
     # El cuaderno de web/v2/cuaderno/ también está escrito a mano. Regenerarlo lo sustituiría por un hueco.
