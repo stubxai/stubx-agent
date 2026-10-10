@@ -24,7 +24,10 @@
         "observedOn": "2026-10-08",
         "conclusion": "success",
         "url": "https://github.com/stubxai/stubx-agent/actions/runs/37745755560",
-        "names": ["typecheck, test, audit (22.14.0)", "gitleaks"],
+        "names": [
+          "typecheck, test, audit (22.14.0)",
+          "gitleaks"
+        ],
         "limit": {
           "es": "Esa ejecución cubre el código de Verify en ese momento. No cubre Lab ni commits posteriores.",
           "en": "That run covers the Verify code at that time. It does not cover Lab or later commits."
@@ -36,7 +39,10 @@
     {
       "id": "VERIFY",
       "version": "0.1.0",
-      "title": { "es": "STUBX Verify, MVP de solo lectura", "en": "STUBX Verify, read-only MVP" },
+      "title": {
+        "es": "STUBX Verify, MVP de solo lectura",
+        "en": "STUBX Verify, read-only MVP"
+      },
       "status": "en_revision",
       "webPublished": true,
       "scope": {
@@ -52,24 +58,48 @@
       },
       "evidence": [
         {
-          "label": { "es": "PR 13", "en": "PR 13" },
+          "label": {
+            "es": "PR 13",
+            "en": "PR 13"
+          },
           "href": "https://github.com/stubxai/stubx-agent/pull/13",
-          "note": { "es": "Fusionada en main. La página está en stubxai.com/verify.", "en": "Merged into main. The page is at stubxai.com/verify." }
+          "note": {
+            "es": "Fusionada en main. La página está en stubxai.com/verify.",
+            "en": "Merged into main. The page is at stubxai.com/verify."
+          }
         },
         {
-          "label": { "es": "CI del 2026-10-08", "en": "CI on 2026-10-08" },
+          "label": {
+            "es": "CI del 2026-10-08",
+            "en": "CI on 2026-10-08"
+          },
           "href": "https://github.com/stubxai/stubx-agent/actions/runs/37745755560",
-          "note": { "es": "Verde en esa ejecución. No habla de Lab.", "en": "That run passed. It does not cover Lab." }
+          "note": {
+            "es": "Verde en esa ejecución. No habla de Lab.",
+            "en": "That run passed. It does not cover Lab."
+          }
         },
         {
-          "label": { "es": "Fichas de ejemplo", "en": "Example cards" },
+          "label": {
+            "es": "Fichas de ejemplo",
+            "en": "Example cards"
+          },
           "path": "verify/examples/2026-10-08/LEEME.md",
-          "note": { "es": "Fecha de consulta 2026-10-08.", "en": "Query date 2026-10-08." }
+          "note": {
+            "es": "Fecha de consulta 2026-10-08.",
+            "en": "Query date 2026-10-08."
+          }
         },
         {
-          "label": { "es": "Pruebas sin red", "en": "Offline tests" },
+          "label": {
+            "es": "Pruebas sin red",
+            "en": "Offline tests"
+          },
           "path": "verify/test/offline.test.ts",
-          "note": { "es": "No contactan la red.", "en": "They do not contact the network." }
+          "note": {
+            "es": "No contactan la red.",
+            "en": "They do not contact the network."
+          }
         }
       ],
       "history": [
@@ -99,7 +129,10 @@
     {
       "id": "U01",
       "version": "1.0.0",
-      "title": { "es": "STUBX Lab, misión 1", "en": "STUBX Lab, mission 1" },
+      "title": {
+        "es": "STUBX Lab, misión 1",
+        "en": "STUBX Lab, mission 1"
+      },
       "status": "en_revision",
       "webPublished": true,
       "scope": {
@@ -115,24 +148,48 @@
       },
       "evidence": [
         {
-          "label": { "es": "PR 14", "en": "PR 14" },
+          "label": {
+            "es": "PR 14",
+            "en": "PR 14"
+          },
           "href": "https://github.com/stubxai/stubx-agent/pull/14",
-          "note": { "es": "Fusionada el 2026-10-09. La misión está en stubxai.com/lab.", "en": "Merged on 2026-10-09. The mission is at stubxai.com/lab." }
+          "note": {
+            "es": "Fusionada el 2026-10-09. La misión está en stubxai.com/lab.",
+            "en": "Merged on 2026-10-09. The mission is at stubxai.com/lab."
+          }
         },
         {
-          "label": { "es": "Guion", "en": "Script" },
+          "label": {
+            "es": "Guion",
+            "en": "Script"
+          },
           "path": "lab/mission/mision-01.json",
-          "note": { "es": "Fuente de los pasos y de las explicaciones.", "en": "Source of the steps and the explanations." }
+          "note": {
+            "es": "Fuente de los pasos y de las explicaciones.",
+            "en": "Source of the steps and the explanations."
+          }
         },
         {
-          "label": { "es": "Pruebas de la misión", "en": "Mission tests" },
+          "label": {
+            "es": "Pruebas de la misión",
+            "en": "Mission tests"
+          },
           "path": "lab/test/mission.test.ts",
-          "note": { "es": "Sin red.", "en": "No network." }
+          "note": {
+            "es": "Sin red.",
+            "en": "No network."
+          }
         },
         {
-          "label": { "es": "Página borrador", "en": "Draft page" },
+          "label": {
+            "es": "Página borrador",
+            "en": "Draft page"
+          },
           "path": "site-drafts/lab/index.html",
-          "note": { "es": "Copia de trabajo. La función abierta está en stubxai.com/lab.", "en": "Working copy. The open function is at stubxai.com/lab." }
+          "note": {
+            "es": "Copia de trabajo. La función abierta está en stubxai.com/lab.",
+            "en": "Working copy. The open function is at stubxai.com/lab."
+          }
         }
       ],
       "history": [
@@ -162,7 +219,10 @@
     {
       "id": "U03",
       "version": "1.0.0",
-      "title": { "es": "Tablero de construcción", "en": "Construction board" },
+      "title": {
+        "es": "Tablero de construcción",
+        "en": "Construction board"
+      },
       "status": "en_revision",
       "webPublished": true,
       "scope": {
@@ -178,24 +238,48 @@
       },
       "evidence": [
         {
-          "label": { "es": "PR 14", "en": "PR 14" },
+          "label": {
+            "es": "PR 14",
+            "en": "PR 14"
+          },
           "href": "https://github.com/stubxai/stubx-agent/pull/14",
-          "note": { "es": "Fusionada el 2026-10-09. La página está en stubxai.com/tablero.", "en": "Merged on 2026-10-09. The page is at stubxai.com/tablero." }
+          "note": {
+            "es": "Fusionada el 2026-10-09. La página está en stubxai.com/tablero.",
+            "en": "Merged on 2026-10-09. The page is at stubxai.com/tablero."
+          }
         },
         {
-          "label": { "es": "Registros", "en": "Records" },
+          "label": {
+            "es": "Registros",
+            "en": "Records"
+          },
           "path": "lab/tablero/registros.json",
-          "note": { "es": "Fuente editable del tablero.", "en": "Editable source of the board." }
+          "note": {
+            "es": "Fuente editable del tablero.",
+            "en": "Editable source of the board."
+          }
         },
         {
-          "label": { "es": "Página borrador", "en": "Draft page" },
+          "label": {
+            "es": "Página borrador",
+            "en": "Draft page"
+          },
           "path": "site-drafts/tablero/index.html",
-          "note": { "es": "Generada. La función abierta está en stubxai.com/tablero.", "en": "Generated. The open function is at stubxai.com/tablero." }
+          "note": {
+            "es": "Generada. La función abierta está en stubxai.com/tablero.",
+            "en": "Generated. The open function is at stubxai.com/tablero."
+          }
         },
         {
-          "label": { "es": "Plantilla vacía", "en": "Empty template" },
+          "label": {
+            "es": "Plantilla vacía",
+            "en": "Empty template"
+          },
           "path": "lab/tablero/plantilla.json",
-          "note": { "es": "No nombra un token. Se puede copiar con la licencia MIT.", "en": "It names no token. It can be copied under the MIT license." }
+          "note": {
+            "es": "No nombra un token. Se puede copiar con la licencia MIT.",
+            "en": "It names no token. It can be copied under the MIT license."
+          }
         }
       ],
       "history": [
@@ -218,7 +302,10 @@
     {
       "id": "U06",
       "version": "1.0.0",
-      "title": { "es": "Biblioteca mínima ES/EN", "en": "Minimal ES/EN library" },
+      "title": {
+        "es": "Biblioteca mínima ES/EN",
+        "en": "Minimal ES/EN library"
+      },
       "status": "en_revision",
       "webPublished": true,
       "scope": {
@@ -234,19 +321,37 @@
       },
       "evidence": [
         {
-          "label": { "es": "PR 14", "en": "PR 14" },
+          "label": {
+            "es": "PR 14",
+            "en": "PR 14"
+          },
           "href": "https://github.com/stubxai/stubx-agent/pull/14",
-          "note": { "es": "Fusionada el 2026-10-09. El inglés sigue pendiente de revisión humana.", "en": "Merged on 2026-10-09. English is still waiting for human review." }
+          "note": {
+            "es": "Fusionada el 2026-10-09. El inglés sigue pendiente de revisión humana.",
+            "en": "Merged on 2026-10-09. English is still waiting for human review."
+          }
         },
         {
-          "label": { "es": "Glosario", "en": "Glossary" },
+          "label": {
+            "es": "Glosario",
+            "en": "Glossary"
+          },
           "path": "lab/library/glossary.json",
-          "note": { "es": "Términos de la misión.", "en": "Terms used by the mission." }
+          "note": {
+            "es": "Términos de la misión.",
+            "en": "Terms used by the mission."
+          }
         },
         {
-          "label": { "es": "Registro lingüístico", "en": "Language record" },
+          "label": {
+            "es": "Registro lingüístico",
+            "en": "Language record"
+          },
           "path": "lab/library/revision.json",
-          "note": { "es": "El inglés figura como pendiente.", "en": "English is marked pending." }
+          "note": {
+            "es": "El inglés figura como pendiente.",
+            "en": "English is marked pending."
+          }
         }
       ],
       "history": [
@@ -269,7 +374,10 @@
     {
       "id": "U08",
       "version": "0.1.0",
-      "title": { "es": "Accesibilidad básica de los borradores", "en": "Basic accessibility of the drafts" },
+      "title": {
+        "es": "Accesibilidad básica de los borradores",
+        "en": "Basic accessibility of the drafts"
+      },
       "status": "en_curso",
       "webPublished": false,
       "scope": {
@@ -285,19 +393,37 @@
       },
       "evidence": [
         {
-          "label": { "es": "PR 14", "en": "PR 14" },
+          "label": {
+            "es": "PR 14",
+            "en": "PR 14"
+          },
           "href": "https://github.com/stubxai/stubx-agent/pull/14",
-          "note": { "es": "Fusionada el 2026-10-09. La pasada cubre estos borradores y no certifica toda la web.", "en": "Merged on 2026-10-09. The pass covers these drafts and does not certify the whole website." }
+          "note": {
+            "es": "Fusionada el 2026-10-09. La pasada cubre estos borradores y no certifica toda la web.",
+            "en": "Merged on 2026-10-09. The pass covers these drafts and does not certify the whole website."
+          }
         },
         {
-          "label": { "es": "Pruebas de las páginas", "en": "Page tests" },
+          "label": {
+            "es": "Pruebas de las páginas",
+            "en": "Page tests"
+          },
           "path": "lab/test/pages.test.ts",
-          "note": { "es": "Recursos locales, contraste y controles con nombre.", "en": "Local resources, contrast, and named controls." }
+          "note": {
+            "es": "Recursos locales, contraste y controles con nombre.",
+            "en": "Local resources, contrast, and named controls."
+          }
         },
         {
-          "label": { "es": "Service worker del borrador", "en": "Draft service worker" },
+          "label": {
+            "es": "Service worker del borrador",
+            "en": "Draft service worker"
+          },
           "path": "site-drafts/lab/sw.js",
-          "note": { "es": "Solo bajo /lab/, red primero, sin portada ni páginas de avisos.", "en": "Only under /lab/, network first, without the homepage or notice pages." }
+          "note": {
+            "es": "Solo bajo /lab/, red primero, sin portada ni páginas de avisos.",
+            "en": "Only under /lab/, network first, without the homepage or notice pages."
+          }
         }
       ],
       "history": [
@@ -320,7 +446,10 @@
     {
       "id": "U02",
       "version": "1.0.0",
-      "title": { "es": "STUBX Studio", "en": "STUBX Studio" },
+      "title": {
+        "es": "STUBX Studio",
+        "en": "STUBX Studio"
+      },
       "status": "en_revision",
       "webPublished": true,
       "scope": {
@@ -336,9 +465,15 @@
       },
       "evidence": [
         {
-          "label": { "es": "Editor", "en": "Editor" },
+          "label": {
+            "es": "Editor",
+            "en": "Editor"
+          },
           "path": "web/v2/studio/index.html",
-          "note": { "es": "Está en stubxai.com/studio.", "en": "It is at stubxai.com/studio." }
+          "note": {
+            "es": "Está en stubxai.com/studio.",
+            "en": "It is at stubxai.com/studio."
+          }
         }
       ],
       "history": [
@@ -361,12 +496,15 @@
     {
       "id": "U04",
       "version": "1",
-      "title": { "es": "Contribuciones útiles", "en": "Useful contributions" },
+      "title": {
+        "es": "Contribuciones útiles",
+        "en": "Useful contributions"
+      },
       "status": "en_revision",
       "webPublished": false,
       "scope": {
-        "es": "Canal de contribuciones preparado para stubxai.com/contribuir. El 2026-10-10 esa dirección responde y la página dice que no está construida.",
-        "en": "Contributions channel prepared for stubxai.com/contribuir. On 2026-10-10 that address answers and the page says it is not built."
+        "es": "Canal en el repositorio para un fallo que se puede repetir, un texto confuso, una traducción o una prueba de accesibilidad. Cualquier token de Solana puede ser el ejemplo del fallo. La página no pide cuenta ni guarda datos. No está en stubxai.com.",
+        "en": "A channel in the repository for a repeatable bug, confusing text, a translation, or an accessibility check. Any Solana token can be the example of the bug. The page does not ask for an account and does not store data. It is not on stubxai.com."
       },
       "owner": "Equipo del repositorio",
       "reviewer": "Pendiente de una persona distinta del autor, antes de publicar.",
@@ -377,33 +515,99 @@
       },
       "evidence": [
         {
-          "label": { "es": "Página de contribuciones", "en": "Contributions page" },
-          "href": "https://github.com/stubxai/stubx-agent/pull/28",
+          "label": {
+            "es": "Página Contribuir",
+            "en": "Contribute page"
+          },
+          "path": "web/v2/contribuir/index.html",
           "note": {
-            "es": "El canal está en esa propuesta de cambio. Esta copia del tablero no incluye esos archivos. Al desplegarla, la columna stubxai.com pasa a sí.",
-            "en": "The channel is in that change proposal. This copy of the board does not include those files. When it is deployed, the stubxai.com column becomes yes."
+            "es": "Sin formulario. Enlaza con GitHub.",
+            "en": "No form. It links to GitHub."
+          }
+        },
+        {
+          "label": {
+            "es": "Plantilla de fallo",
+            "en": "Bug template"
+          },
+          "path": ".github/ISSUE_TEMPLATE/informe-fallo.yml",
+          "note": {
+            "es": "Versión, pasos, resultado y evidencia.",
+            "en": "Version, steps, result, and evidence."
+          }
+        },
+        {
+          "label": {
+            "es": "Plantilla de mejora",
+            "en": "Improvement template"
+          },
+          "path": ".github/ISSUE_TEMPLATE/mejora.yml",
+          "note": {
+            "es": "Explicación, traducción o accesibilidad.",
+            "en": "Explanation, translation, or accessibility."
+          }
+        },
+        {
+          "label": {
+            "es": "Plantilla de propuesta",
+            "en": "Proposal template"
+          },
+          "path": ".github/PULL_REQUEST_TEMPLATE.md",
+          "note": {
+            "es": "GitHub la muestra al abrir una propuesta.",
+            "en": "GitHub shows it when a proposal is opened."
+          }
+        },
+        {
+          "label": {
+            "es": "Plantilla descargable",
+            "en": "Downloadable template"
+          },
+          "path": "web/v2/contribuir/plantilla.md",
+          "note": {
+            "es": "La web no la recibe.",
+            "en": "The website does not receive it."
           }
         }
       ],
       "history": [
         {
           "on": "2026-10-09",
-          "change": { "es": "Anotada como propuesta. No se ha empezado.", "en": "Recorded as a proposal. Not started." }
+          "change": {
+            "es": "Anotada como propuesta. No se ha empezado.",
+            "en": "Recorded as a proposal. Not started."
+          }
         },
         {
           "on": "2026-10-10",
-          "change": { "es": "stubxai.com/contribuir responde y la página dice que no está construida. Sigue sin publicar.", "en": "stubxai.com/contribuir answers and the page says it is not built. Still not published." }
+          "change": {
+            "es": "Canal en el repositorio: página, plantillas de issue y plantilla de propuesta. Sigue fuera de stubxai.com.",
+            "en": "Channel in the repository: page, issue templates, and proposal template. Still absent from stubxai.com."
+          }
         },
         {
           "on": "2026-10-10",
-          "change": { "es": "El registro queda listo. Al desplegar la página, la columna stubxai.com pasa a sí. El historial anterior se conserva.", "en": "The record is ready. When the page is deployed, the stubxai.com column becomes yes. The earlier history is kept." }
+          "change": {
+            "es": "El canal está en este repositorio. stubxai.com/contribuir responde y la página dice que no está construida. Sigue sin publicar.",
+            "en": "The channel is in this repository. stubxai.com/contribuir answers and the page says it is not built. Still not published."
+          }
+        },
+        {
+          "on": "2026-10-10",
+          "change": {
+            "es": "El registro queda listo. Al desplegar la página, la columna stubxai.com pasa a sí. El historial anterior se conserva.",
+            "en": "The record is ready. When the page is deployed, the stubxai.com column becomes yes. The earlier history is kept."
+          }
         }
       ]
     },
     {
       "id": "U05",
       "version": "0",
-      "title": { "es": "Cuaderno personal", "en": "Personal notebook" },
+      "title": {
+        "es": "Cuaderno personal",
+        "en": "Personal notebook"
+      },
       "status": "propuesta",
       "webPublished": false,
       "scope": {
@@ -421,14 +625,20 @@
       "history": [
         {
           "on": "2026-10-09",
-          "change": { "es": "Anotada como propuesta. No se ha empezado.", "en": "Recorded as a proposal. Not started." }
+          "change": {
+            "es": "Anotada como propuesta. No se ha empezado.",
+            "en": "Recorded as a proposal. Not started."
+          }
         }
       ]
     },
     {
       "id": "U07",
       "version": "0",
-      "title": { "es": "Comparación y simulación avanzada", "en": "Advanced comparison and simulation" },
+      "title": {
+        "es": "Comparación y simulación avanzada",
+        "en": "Advanced comparison and simulation"
+      },
       "status": "propuesta",
       "webPublished": false,
       "scope": {
@@ -446,18 +656,27 @@
       "history": [
         {
           "on": "2026-10-09",
-          "change": { "es": "Anotada como propuesta. No se ha empezado.", "en": "Recorded as a proposal. Not started." }
+          "change": {
+            "es": "Anotada como propuesta. No se ha empezado.",
+            "en": "Recorded as a proposal. Not started."
+          }
         },
         {
           "on": "2026-10-10",
-          "change": { "es": "Verify ya está en la web. stubxai.com/comparar no existe. Esta ficha sigue como idea.", "en": "Verify is already on the website. stubxai.com/comparar does not exist. This item stays an idea." }
+          "change": {
+            "es": "Verify ya está en la web. stubxai.com/comparar no existe. Esta ficha sigue como idea.",
+            "en": "Verify is already on the website. stubxai.com/comparar does not exist. This item stays an idea."
+          }
         }
       ]
     },
     {
       "id": "U09",
       "version": "0",
-      "title": { "es": "Pares de Pump e informes reutilizables", "en": "Pump pairs and reusable reports" },
+      "title": {
+        "es": "Pares de Pump e informes reutilizables",
+        "en": "Pump pairs and reusable reports"
+      },
       "status": "propuesta",
       "webPublished": false,
       "scope": {
@@ -475,11 +694,17 @@
       "history": [
         {
           "on": "2026-10-09",
-          "change": { "es": "Anotada como propuesta. No se ha empezado.", "en": "Recorded as a proposal. Not started." }
+          "change": {
+            "es": "Anotada como propuesta. No se ha empezado.",
+            "en": "Recorded as a proposal. Not started."
+          }
         },
         {
           "on": "2026-10-10",
-          "change": { "es": "stubxai.com/pares no existe. Sigue como idea.", "en": "stubxai.com/pares does not exist. It stays an idea." }
+          "change": {
+            "es": "stubxai.com/pares no existe. Sigue como idea.",
+            "en": "stubxai.com/pares does not exist. It stays an idea."
+          }
         }
       ]
     }

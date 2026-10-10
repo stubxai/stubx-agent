@@ -150,14 +150,11 @@ jobs:
       - name: Install
         run: npm ci
 
-      - name: Browsers
-        run: npx --yes playwright@1.64.0 install --with-deps chromium webkit
-
-      - name: Playwright core
-        run: npm install --no-save --no-package-lock playwright-core@1.64.0
+      - name: Install browsers
+        run: npx playwright install --with-deps chromium webkit
 
       - name: Playwright
-        run: node test/tablero.playwright.mjs
+        run: npx playwright test
 
   secrets:
     name: gitleaks

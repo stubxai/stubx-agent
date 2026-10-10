@@ -34,9 +34,10 @@
     "logs:status": "tsc && node dist/src/cli.js logs:status",
     "logs:daily": "tsc && node dist/src/cli.js logs:daily",
     "verify:all": "tsc && node scripts/verify-all.mjs",
-    "test:ui": "node test/tablero.playwright.mjs"
+    "test:ui": "playwright test"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.0",
     "@types/node": "^22.19.0",
     "typescript": "^7.0.2"
   }
