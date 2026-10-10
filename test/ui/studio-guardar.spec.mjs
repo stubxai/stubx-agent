@@ -108,16 +108,13 @@ async function expectFinalPng(page, bytes) {
   expect(bytes.subarray(1, 4).toString()).toBe("PNG");
   expect(bytes.includes(Buffer.from("Community content, unofficial. Not from @stubxai."))).toBe(true);
   const img = await decodePng(new Uint8Array(bytes));
-  const canvas = await page.evaluate(() => {
+  const preview = await page.evaluate(() => {
     const c = document.getElementById("vista");
-    const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data;
-    return { width: c.width, height: c.height, rgba: Array.from(d) };
+    return { width: c.width, height: c.height };
   });
-  expect([img.width, img.height]).toEqual([canvas.width, canvas.height]);
   expect(img.width).toBeGreaterThanOrEqual(1080);
-  let diff = 0;
-  for (let i = 0; i < img.rgba.length; i++) if (Math.abs(img.rgba[i] - canvas.rgba[i]) > 2) diff++;
-  expect(diff / img.rgba.length).toBeLessThan(0.001);
+  expect(img.width).toBeGreaterThan(preview.width);
+  expect(img.height / img.width).toBeCloseTo(preview.height / preview.width, 1);
   // Banda superior y pie: filas con texto (no un color plano).
   const rowVaries = (y) => {
     const set = new Set();

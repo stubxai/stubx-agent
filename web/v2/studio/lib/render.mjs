@@ -44,6 +44,30 @@ function hexColor(hex) {
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255, 255];
 }
 
+const backdropCache = new Map();
+
+function backdropOf(width, height, fill, backgroundId) {
+  const key = `${width}x${height}|${backgroundId || ""}|${fill[0]},${fill[1]},${fill[2]}`;
+  const cached = backdropCache.get(key);
+  if (cached) return new Uint8ClampedArray(cached);
+  const rgba = new Uint8ClampedArray(width * height * 4);
+  fillRect(rgba, width, height, 0, 0, width, height, fill);
+  if (backgroundId) paintBackground(rgba, width, height, backgroundId);
+  if (backdropCache.size >= 8) backdropCache.delete(backdropCache.keys().next().value);
+  backdropCache.set(key, new Uint8ClampedArray(rgba));
+  return rgba;
+}
+
+async function breathe(options) {
+  if (!options?.preview && !options?.cooperative) return;
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  if (typeof options.alive === "function" && !options.alive()) {
+    const error = new Error("cancelled");
+    error.name = "AbortError";
+    throw error;
+  }
+}
+
 function fillRect(rgba, width, height, x, y, w, h, color) {
   const x0 = Math.max(0, Math.floor(x));
   const y0 = Math.max(0, Math.floor(y));
@@ -186,11 +210,10 @@ export async function renderCard(options) {
   const width = options.width;
   const height = options.height;
   const lang = options.lang === "en" ? "en" : "es";
-  const rgba = new Uint8ClampedArray(width * height * 4);
   const fill = hexColor(options.fill ?? "#0a090d");
   const ink = hexColor(options.ink ?? "#fff3f5");
-  fillRect(rgba, width, height, 0, 0, width, height, fill);
-  if (options.backgroundId) paintBackground(rgba, width, height, options.backgroundId);
+  const rgba = backdropOf(width, height, fill, options.backgroundId);
+  await breathe(options);
 
   const headline = headlineById(options.headline);
   const [noticeFont, bodyFont, titleFont] = await Promise.all([
@@ -265,7 +288,9 @@ export async function renderCard(options) {
   const bodyFit = fitFace(bodyFont, options.body ?? "", bodyZone, Math.max(18, height * 0.04), Math.max(14, Math.round(height * 0.02)));
   const tokenFit = fitFace(bodyFont, tokenText, tokenZone, Math.max(14, Math.round(height * 0.028)), 12);
   placeText(rgba, width, height, titleFont, titleFit, titleZone, "title", glyphs, titleLook);
+  await breathe(options);
   placeText(rgba, width, height, bodyFont, bodyFit, bodyZone, "body", glyphs, { fill: inkRgb, shadow: 0.05, shadowAlpha: 0.75 });
+  await breathe(options);
   placeText(rgba, width, height, bodyFont, tokenFit, tokenZone, "token", glyphs, { fill: inkRgb });
 
   fillRect(rgba, width, height, mark.plateX, mark.plateY, mark.plateW, mark.plateH, [WM_PLATE[0], WM_PLATE[1], WM_PLATE[2], 255]);
@@ -298,7 +323,7 @@ export async function renderCard(options) {
     fill: [FOOTER_FG[0], FOOTER_FG[1], FOOTER_FG[2]],
   });
 
-  const png = await encodePng(rgba, width, height, PNG_COMMENT);
+  const png = options.png === false ? new Uint8Array() : await encodePng(rgba, width, height, PNG_COMMENT);
   const noticeGlyphs = glyphs.filter((glyph) => glyph.role === "notice");
   const noticeLineCount = new Set(noticeGlyphs.map((glyph) => Math.round(glyph.y))).size;
   return {

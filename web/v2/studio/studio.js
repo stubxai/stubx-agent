@@ -109,6 +109,7 @@ function choiceButton(pressed, label, thumb) {
     img.alt = "";
     img.width = thumb.width;
     img.height = thumb.height;
+    img.decoding = "async";
     button.append(img);
   }
   const name = document.createElement("span");
@@ -129,7 +130,7 @@ function paintChoices() {
     button.addEventListener("click", () => {
       backgroundId = item.id;
       paintChoices();
-      schedule();
+      schedule("change");
     });
     bgBox.append(button);
   }
@@ -141,7 +142,7 @@ function paintChoices() {
       button.addEventListener("click", () => {
         headlineId = item.id;
         paintChoices();
-        schedule();
+        schedule("change");
       });
       typeBox.append(button);
     }
@@ -198,6 +199,83 @@ function tokenName() {
   return clipToken(tokenInput.value);
 }
 
+const PREVIEW_MAX = 540;
+const carga = document.getElementById("vista-carga");
+let renderToken = 0;
+let raf = 0;
+let fontWarm = null;
+
+function warmFonts() {
+  if (fontWarm) return fontWarm;
+  const families = ["Inter Studio", "Silkscreen Studio", "Studio Anton", "Studio Bangers", "Studio Audiowide", "Studio Pixel", "Studio Archivo"];
+  if (!document.fonts?.load) {
+    fontWarm = Promise.resolve();
+    return fontWarm;
+  }
+  fontWarm = Promise.all(families.map((family) => document.fonts.load(`16px "${family}"`))).then(() => {}).catch(() => {});
+  return fontWarm;
+}
+
+function previewSize() {
+  const full = format();
+  const box = canvas.parentElement?.getBoundingClientRect();
+  const cssW = Math.max(1, box?.width || 320);
+  const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 3));
+  let width = cssW * dpr;
+  let height = width * (full.height / full.width);
+  const edge = Math.max(width, height);
+  if (edge > PREVIEW_MAX) {
+    const scale = PREVIEW_MAX / edge;
+    width *= scale;
+    height *= scale;
+  }
+  width = Math.max(1, Math.min(full.width, Math.round(width)));
+  height = Math.max(1, Math.min(full.height, Math.round(height)));
+  return { width, height };
+}
+
+function cardOptions(size) {
+  const code = lang();
+  const bg = background();
+  const name = tokenName();
+  const stubxName = isStubxToken(name);
+  const avatar = stubxName ? avatarItem() : null;
+  const origins = customLogo || !avatar ? [bg?.aiOrigin].filter(Boolean) : [bg?.aiOrigin, avatar?.aiOrigin].filter(Boolean);
+  return {
+    width: size.width,
+    height: size.height,
+    lang: code,
+    title: titleInput.value,
+    body: bodyInput.value,
+    token: name,
+    fill: bg?.fill ?? "#0a090d",
+    ink: bg?.ink ?? "#fff3f5",
+    backgroundId: bg?.id,
+    headline: headlineById(headlineId).id,
+    origins,
+    zones: templates.zones,
+    avatar: customLogo ?? (avatar ? images.get(avatar.id) ?? null : null),
+  };
+}
+
+function showPreview(card) {
+  const pixels = new Uint8ClampedArray(card.rgba);
+  const image = new ImageData(pixels, card.width, card.height);
+  if (typeof OffscreenCanvas === "function") {
+    const off = new OffscreenCanvas(card.width, card.height);
+    off.getContext("2d").putImageData(image, 0, 0);
+    canvas.width = card.width;
+    canvas.height = card.height;
+    const bitmap = off.transferToImageBitmap();
+    canvas.getContext("2d").drawImage(bitmap, 0, 0);
+    bitmap.close?.();
+    return;
+  }
+  canvas.width = card.width;
+  canvas.height = card.height;
+  canvas.getContext("2d").putImageData(image, 0, 0);
+}
+
 function persist() {
   saveDraft(localStorage, {
     templateId,
@@ -212,36 +290,24 @@ function persist() {
   });
 }
 
-async function draw() {
+async function draw(token) {
   const code = lang();
   const max = limits();
   titleCount.textContent = `${titleInput.value.length} / ${max.title}`;
   bodyCount.textContent = `${bodyInput.value.length} / ${max.body}`;
   tokenCount.textContent = `${tokenName().length} / ${TOKEN_MAX}`;
-  const bg = background();
   const name = tokenName();
-  const stubxName = isStubxToken(name);
-  const avatar = stubxName ? avatarItem() : null;
-  const origins = customLogo || !avatar ? [bg?.aiOrigin].filter(Boolean) : [bg?.aiOrigin, avatar?.aiOrigin].filter(Boolean);
+  await warmFonts();
+  if (token !== renderToken) return;
   const card = await renderCard({
-    width: format().width,
-    height: format().height,
-    lang: code,
-    title: titleInput.value,
-    body: bodyInput.value,
-    token: name,
-    fill: bg?.fill ?? "#0a090d",
-    ink: bg?.ink ?? "#fff3f5",
-    backgroundId: bg?.id,
-    headline: headlineById(headlineId).id,
-    origins,
-    zones: templates.zones,
-    avatar: customLogo ?? (avatar ? images.get(avatar.id) ?? null : null),
+    ...cardOptions(previewSize()),
+    preview: true,
+    png: false,
+    alive: () => token === renderToken,
   });
+  if (token !== renderToken) return;
   latest = card;
-  canvas.width = card.width;
-  canvas.height = card.height;
-  canvas.getContext("2d").putImageData(new ImageData(card.rgba, card.width, card.height), 0, 0);
+  showPreview(card);
   const allowed = exportAllowed(titleInput.value, bodyInput.value, undefined, name);
   const hits = [...analyze(name).hits, ...analyze(titleInput.value).hits, ...analyze(bodyInput.value).hits];
   blockNotice.hidden = allowed;
@@ -256,6 +322,8 @@ async function draw() {
   noticeLabel.textContent = card.noticeText;
   vistaTexto.append(noticeLabel);
   userLive.textContent = [name, titleInput.value, bodyInput.value, card.noticeText, card.label].filter(Boolean).join(". ");
+  if (carga) carga.hidden = true;
+  canvas.removeAttribute("aria-busy");
   persist();
   prepare();
   placePreview();
@@ -285,20 +353,19 @@ function placePreview() {
 // La imagen se prepara antes del toque: iOS solo deja compartir o abrir una pestaña
 // si se hace en el mismo gesto, sin esperas largas.
 function prepare() {
-  const id = ++drawCount;
+  drawCount += 1;
   ready = null;
-  if (download.disabled) return;
-  exportedBlob().then((blob) => {
-    if (id === drawCount) {
-      ready = blob;
-      readyFor = id;
-    }
-  }).catch(() => {});
 }
 
 async function currentBlob() {
   if (ready && readyFor === drawCount) return ready;
-  return exportedBlob();
+  const token = renderToken;
+  const blob = await exportedBlob(token);
+  if (blob && token === renderToken) {
+    ready = blob;
+    readyFor = drawCount;
+  }
+  return blob;
 }
 
 function showSaveNotice() {
@@ -334,14 +401,37 @@ async function shareFile(blob) {
   }
 }
 
-function schedule() {
+function schedule(kind) {
   clearTimeout(timer);
+  cancelAnimationFrame(raf);
+  const token = ++renderToken;
+  ready = null;
+  const typing = kind === "input";
+  if (!typing && carga) {
+    canvas.setAttribute("aria-busy", "true");
+    carga.hidden = false;
+  }
   timer = setTimeout(() => {
-    draw().catch(() => {
-      loadNotice.hidden = false;
-      download.disabled = true;
+    raf = requestAnimationFrame(() => {
+      const slow = setTimeout(() => {
+        if (token === renderToken && carga) {
+          canvas.setAttribute("aria-busy", "true");
+          carga.hidden = false;
+        }
+      }, 100);
+      draw(token).catch((error) => {
+        if (error?.name === "AbortError") return;
+        loadNotice.hidden = false;
+        download.disabled = true;
+      }).finally(() => {
+        clearTimeout(slow);
+        if (token === renderToken && carga) {
+          carga.hidden = true;
+          canvas.removeAttribute("aria-busy");
+        }
+      });
     });
-  }, 60);
+  }, typing ? 160 : 0);
 }
 
 async function loadImages() {
@@ -352,10 +442,27 @@ async function loadImages() {
   }));
 }
 
-async function exportedBlob() {
+function blobFrom(canvas, rgba, width, height) {
+  canvas.width = width;
+  canvas.height = height;
+  canvas.getContext("2d").putImageData(new ImageData(rgba, width, height), 0, 0);
+  return new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+}
+
+async function exportedBlob(token) {
   if (!exportAllowed(titleInput.value, bodyInput.value, undefined, tokenName()) || !latest?.fits) return null;
-  const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
-  const bytes = blob ? new Uint8Array(await blob.arrayBuffer()) : latest.png;
+  const full = format();
+  const card = await renderCard({
+    ...cardOptions(full),
+    png: false,
+    cooperative: true,
+    alive: () => token === renderToken,
+  });
+  if (!card?.fits || token !== renderToken) return null;
+  const board = document.createElement("canvas");
+  const blob = await blobFrom(board, new Uint8ClampedArray(card.rgba), card.width, card.height);
+  if (!blob || token !== renderToken) return null;
+  const bytes = new Uint8Array(await blob.arrayBuffer());
   return new Blob([injectComment(bytes, PNG_COMMENT)], { type: "image/png" });
 }
 
@@ -389,16 +496,16 @@ document.querySelectorAll("[data-tab]").forEach((button) => {
 });
 titleInput.addEventListener("input", () => {
   dirty = true;
-  schedule();
+  schedule("input");
 });
 bodyInput.addEventListener("input", () => {
   dirty = true;
-  schedule();
+  schedule("input");
 });
 tokenInput.maxLength = TOKEN_MAX;
 tokenInput.addEventListener("input", () => {
   paintChoices();
-  schedule();
+  schedule("input");
 });
 function hideLogoErrors() {
   logoNotice.hidden = true;

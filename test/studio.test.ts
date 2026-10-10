@@ -1073,7 +1073,7 @@ describe("studio", () => {
     assert.equal(aiLabel(["ai", "mascota"], "es"), AI_LABEL.ai.es);
 
     const catalog = JSON.parse(readStudio("catalog.json")) as {
-      items: { archivo: string; licencia: string | { es: string; en: string }; permitido: boolean; aiOrigin: string; sha256: string }[];
+      items: { archivo: string; tipo?: string; licencia: string | { es: string; en: string }; permitido: boolean; aiOrigin: string; sha256: string }[];
     };
     const origins = new Set(catalog.items.map((item) => item.aiOrigin));
     assert.deepEqual([...origins].sort(), ["mascota", "ninguno"]);
@@ -1082,6 +1082,7 @@ describe("studio", () => {
       assert.ok(["ai", "mascota", "ninguno"].includes(item.aiOrigin), item.archivo);
       const bytes = readFileSync(path.join(studioRoot(), item.archivo));
       assert.equal(createHash("sha256").update(bytes).digest("hex"), item.sha256, item.archivo);
+      if (item.tipo === "fondo") assert.ok(bytes.length < 120_000, item.archivo);
     }
     const reglas = readStudio("reglas/index.html");
     for (const item of catalog.items) {
