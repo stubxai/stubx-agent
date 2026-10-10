@@ -345,14 +345,51 @@ describe("web v2", () => {
   });
 
   test("unbuilt modules stay explanatory", () => {
-    for (const rel of ["cuaderno/index.html", "contribuir/index.html"]) {
-      const html = read(rel);
-      assert.match(html, /No construido/);
-      assert.match(html, /Not built/);
-      assert.equal(/<form\b/.test(html), false, rel);
-      assert.equal(/<input\b/.test(html), false, rel);
-      assert.equal(/type="file"/.test(html), false, rel);
-    }
+    const html = read("cuaderno/index.html");
+    assert.match(html, /No construido/);
+    assert.match(html, /Not built/);
+    assert.equal(/<form\b/.test(html), false);
+    assert.equal(/<input\b/.test(html), false);
+    assert.equal(/type="file"/.test(html), false);
+  });
+
+  test("contributions link to GitHub and collect nothing", () => {
+    const html = read("contribuir/index.html");
+    const home = read("index.html");
+    assert.match(home, /Abrir contribuciones/);
+    assert.match(home, /Open contributions/);
+    const articles = [...home.matchAll(/<article class="(card|slot)">([\s\S]*?)<\/article>/g)];
+    const contrib = articles.find((item) => item[2]?.includes("Contribuir"));
+    assert.equal(contrib?.[1], "card");
+    assert.match(html, /<h1>[\s\S]*Contribuir/);
+    assert.match(html, /Contribute/);
+    assert.match(html, /No es una auditoría ni una recomendación/);
+    assert.match(html, /This is not an audit or a recommendation/);
+    assert.match(html, /Cripto de alto riesgo · Puedes perderlo todo · No es consejo de inversión\./);
+    assert.match(html, /High-risk crypto · You could lose everything · Not investment advice\./);
+    assert.match(html, /https:\/\/github\.com\/stubxai\/stubx-agent\/issues\/new\?template=informe-fallo\.yml/);
+    assert.match(html, /https:\/\/github\.com\/stubxai\/stubx-agent\/issues\/new\?template=mejora\.yml/);
+    assert.match(html, /https:\/\/github\.com\/stubxai\/stubx-agent\/compare/);
+    assert.match(html, /href="\/contribuir\/plantilla\.md"/);
+    assert.match(html, /mailto:stubxai\.hq@gmail\.com/);
+    assert.match(html, /security\/policy/);
+    assert.match(html, /aria-current="page"/);
+    assert.match(html, /data-set-lang="en"/);
+    assert.equal(/<form\b/.test(html), false);
+    assert.equal(/<input\b/.test(html), false);
+    assert.equal(/<textarea\b/.test(html), false);
+    assert.equal(/type="email"/.test(html), false);
+    assert.equal(/type="file"/.test(html), false);
+    const meta = html.match(/Content-Security-Policy" content="([^"]+)"/)?.[1] ?? "";
+    assert.deepEqual(cspHosts(meta), []);
+    assert.match(meta, /connect-src 'self'/);
+    assert.equal(meta.includes("frame-ancestors"), false);
+    assert.equal(read("_headers").includes("/contribuir/"), false);
+    assert.match(read("sitemap.xml"), /https:\/\/stubxai\.com\/contribuir\//);
+    const plantilla = read("contribuir/plantilla.md");
+    assert.match(plantilla, /La web no recibe este archivo/);
+    assert.match(plantilla, /This website does not receive this file/);
+    assert.equal(/@/.test(plantilla), false);
   });
 
   test("verify reads any mint live and keeps the dated cards", () => {
