@@ -349,7 +349,7 @@ function bootVerify() {
     return view;
   }
 
-  function run(force) {
+  function run(force, forgetBlocked) {
     if (inFlight) return;
     if (input.value.trim() === "") {
       apply(emptyView(), false);
@@ -387,6 +387,7 @@ function bootVerify() {
       apply(pauseView(normalized), true);
       return;
     }
+    if (forgetBlocked) clearRpcBlocks();
     if (currentAbort) currentAbort.abort();
     var controller = new AbortController();
     currentAbort = controller;
@@ -478,7 +479,7 @@ function bootVerify() {
     if (target && target.id === "leer-cuentas") readSample();
     if (target && target.id === "reintentar") {
       if (last && last.mint) memory.delete(last.mint);
-      run(true);
+      run(true, true);
     }
   });
 

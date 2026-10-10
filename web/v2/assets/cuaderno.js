@@ -8,6 +8,7 @@ import {
   PUBLICNODE_RPC,
   DISCLAIMER,
   OFFICIAL_MINT,
+  clearBlockedMethods,
   isAllowedRpcUrl,
   isMintAddress,
   readMint,
@@ -249,7 +250,7 @@ function showRetry(message, retryMint) {
     button.type = "button";
     button.id = "reintentar";
     button.textContent = t("retry");
-    button.addEventListener("click", () => consult(retryMint));
+    button.addEventListener("click", () => consult(retryMint, true));
     node.append(document.createTextNode(" "), button);
   }
 }
@@ -273,7 +274,7 @@ function announceSaved(extra, retryMint) {
     button.type = "button";
     button.id = "reintentar";
     button.textContent = t("retry");
-    button.addEventListener("click", () => consult(retryMint));
+    button.addEventListener("click", () => consult(retryMint, true));
     node.append(document.createTextNode(" "), button);
   }
   revealAboveBar(node);
@@ -614,7 +615,7 @@ async function persist(record) {
   return true;
 }
 
-async function consult(mint) {
+async function consult(mint, forgetBlocked = false) {
   const button = document.getElementById("consultar");
   const input = document.getElementById("direccion-cuaderno");
   if (button) button.disabled = true;
@@ -637,6 +638,7 @@ async function consult(mint) {
     if (button) button.disabled = false;
     return;
   }
+  if (forgetBlocked) clearBlockedMethods();
   try {
     const result = await readMint({
       mint,

@@ -501,6 +501,70 @@ describe("lector y cuaderno", () => {
     assert.equal(calls.filter((item) => item.endsWith("getMultipleAccounts")).length, 2);
   });
 
+  test("un 403 recordado caduca a los 10 minutos y Reintentar lo borra dentro del cupo", async () => {
+    const { read } = await modules();
+    const calls: string[] = [];
+    let now = Date.parse(WHEN);
+    const transport = async (endpoint: string, body: string) => {
+      const method = (JSON.parse(body) as { method: string }).method;
+      calls.push(`${new URL(endpoint).hostname} ${method}`);
+      if (method === "getMultipleAccounts") {
+        return rpcOk([
+          account(read.TOKEN_PROGRAM, mintBytes()),
+          account(read.METADATA_PROGRAM, metadataBytes("USDC", "USDC", "https://example.invalid/meta")),
+          null,
+        ]);
+      }
+      if (method === "getTokenSupply" || method === "getTokenLargestAccounts") return { status: 403, body: "" };
+      throw new Error(method);
+    };
+    const readAt = () => read.readMint({
+      mint: CA,
+      now: () => new Date(now),
+      sleep: async () => undefined,
+      mono: () => 0,
+      minIntervalMs: 0,
+      maxRetries: 0,
+      timeoutMs: 50,
+      endpoint: read.DEFAULT_RPC,
+      transport,
+    });
+    const supplyCalls = () => calls.filter((item) => item.endsWith("getTokenSupply")).length;
+    await readAt();
+    await readAt();
+    assert.equal(supplyCalls(), 1);
+    now += 599_999;
+    await readAt();
+    assert.equal(supplyCalls(), 1);
+    now += 1;
+    await readAt();
+    assert.equal(supplyCalls(), 2);
+    read.clearBlockedMethods();
+    await readAt();
+    assert.equal(supplyCalls(), 3);
+
+    const source = readFileSync(path.join(repoRoot(), "web/v2/assets/cuaderno.js"), "utf8");
+    const consult = source.slice(source.indexOf("async function consult"), source.indexOf("async function saveNote"));
+    const denied = consult.indexOf("if (!slot.allowed)");
+    const clear = consult.indexOf("if (forgetBlocked) clearBlockedMethods()");
+    assert.match(consult, /takeQuerySlot\(\s*queryStamps,\s*Date\.now\(\),\s*6,\s*60000\s*\)/);
+    assert.ok(consult.indexOf("takeQuerySlot") < denied);
+    assert.match(consult.slice(denied, clear), /return;/);
+    assert.ok(clear < consult.indexOf("readMint"));
+    assert.match(source, /addEventListener\("click", \(\) => consult\(retryMint, true\)\)/);
+    assert.match(source, /addEventListener\("click", \(\) => consult\(record\.card\.mint\)\)/);
+
+    const verifyUi = readFileSync(path.join(repoRoot(), "lab/client/verify-ui.js"), "utf8");
+    const run = verifyUi.slice(verifyUi.indexOf("function run(force, forgetBlocked)"), verifyUi.indexOf("function readSample"));
+    const verifyDenied = run.indexOf("if (!slot.allowed)");
+    const verifyClear = run.indexOf("if (forgetBlocked) clearRpcBlocks()");
+    assert.match(run, /takeQuerySlot\(stamps, now, 6, 60000\)/);
+    assert.ok(verifyDenied < verifyClear);
+    assert.match(run.slice(verifyDenied, verifyClear), /return;/);
+    assert.ok(verifyClear < run.indexOf("readAnyMint({"));
+    assert.match(verifyUi, /run\(true, true\)/);
+  });
+
   test("getTokenSupply y las cuentas grandes no se piden a publicnode", async () => {
     const { read } = await modules();
     const hosts: Record<string, string[]> = { getTokenSupply: [], getTokenLargestAccounts: [], getMultipleAccounts: [] };
@@ -984,7 +1048,7 @@ describe("lector y cuaderno", () => {
     assert.ok(consult.indexOf("isAllowedRpcUrl") < consult.indexOf("takeQuerySlot"));
     assert.ok(consult.indexOf("isMintAddress") < consult.indexOf("takeQuerySlot"));
     assert.ok(consult.indexOf("takeQuerySlot") < consult.indexOf("readMint"));
-    assert.match(source, /addEventListener\("click", \(\) => consult\(retryMint\)\)/);
+    assert.match(source, /addEventListener\("click", \(\) => consult\(retryMint, true\)\)/);
     assert.match(source, /Se han hecho 6 lecturas en un minuto/);
   });
 });

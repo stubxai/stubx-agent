@@ -1603,7 +1603,8 @@ async function httpTransport(endpoint, body, timeoutMs, signal) {
         return { status: 0, body: "" };
     }
 }
-const blockedRpcMethods = new Set();
+const RPC_BLOCK_MS = 10 * 60 * 1000;
+const blockedRpcMethods = new Map();
 function rpcBlockKey(endpoint, method) {
     try {
         return `${new URL(endpoint).origin} ${method}`;
@@ -1612,11 +1613,19 @@ function rpcBlockKey(endpoint, method) {
         return `${endpoint} ${method}`;
     }
 }
-function rememberRpcBlock(endpoint, method) {
-    blockedRpcMethods.add(rpcBlockKey(endpoint, method));
+function rememberRpcBlock(endpoint, method, nowMs = Date.now()) {
+    blockedRpcMethods.set(rpcBlockKey(endpoint, method), nowMs + RPC_BLOCK_MS);
 }
-function isRpcBlocked(endpoint, method) {
-    return blockedRpcMethods.has(rpcBlockKey(endpoint, method));
+function isRpcBlocked(endpoint, method, nowMs = Date.now()) {
+    const key = rpcBlockKey(endpoint, method);
+    const until = blockedRpcMethods.get(key);
+    if (until === undefined)
+        return false;
+    if (nowMs >= until) {
+        blockedRpcMethods.delete(key);
+        return false;
+    }
+    return true;
 }
 function clearRpcBlocks() {
     blockedRpcMethods.clear();
@@ -1701,7 +1710,8 @@ class RpcClient {
                 fetchedAt: this.now().toISOString(),
             };
         }
-        if (isRpcBlocked(this.endpoint, method)) {
+        const nowMs = this.now().getTime();
+        if (isRpcBlocked(this.endpoint, method, nowMs)) {
             return {
                 ok: false,
                 method,
@@ -1726,7 +1736,7 @@ class RpcClient {
                     continue;
                 }
                 if (response.status === 403) {
-                    rememberRpcBlock(this.endpoint, method);
+                    rememberRpcBlock(this.endpoint, method, nowMs);
                     return { ok: false, method, error: "HTTP 403", httpStatus: 403, fetchedAt };
                 }
                 if (response.status < 200 || response.status >= 300) {
@@ -3074,7 +3084,7 @@ function bootVerify() {
     return view;
   }
 
-  function run(force) {
+  function run(force, forgetBlocked) {
     if (inFlight) return;
     if (input.value.trim() === "") {
       apply(emptyView(), false);
@@ -3112,6 +3122,7 @@ function bootVerify() {
       apply(pauseView(normalized), true);
       return;
     }
+    if (forgetBlocked) clearRpcBlocks();
     if (currentAbort) currentAbort.abort();
     var controller = new AbortController();
     currentAbort = controller;
@@ -3203,7 +3214,7 @@ function bootVerify() {
     if (target && target.id === "leer-cuentas") readSample();
     if (target && target.id === "reintentar") {
       if (last && last.mint) memory.delete(last.mint);
-      run(true);
+      run(true, true);
     }
   });
 

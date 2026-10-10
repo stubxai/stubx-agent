@@ -90,7 +90,8 @@ export async function httpTransport(
   }
 }
 
-const blockedRpcMethods = new Set<string>();
+const RPC_BLOCK_MS = 10 * 60 * 1000;
+const blockedRpcMethods = new Map<string, number>();
 
 export function rpcBlockKey(endpoint: string, method: string): string {
   try {
@@ -100,12 +101,19 @@ export function rpcBlockKey(endpoint: string, method: string): string {
   }
 }
 
-export function rememberRpcBlock(endpoint: string, method: string): void {
-  blockedRpcMethods.add(rpcBlockKey(endpoint, method));
+export function rememberRpcBlock(endpoint: string, method: string, nowMs = Date.now()): void {
+  blockedRpcMethods.set(rpcBlockKey(endpoint, method), nowMs + RPC_BLOCK_MS);
 }
 
-export function isRpcBlocked(endpoint: string, method: string): boolean {
-  return blockedRpcMethods.has(rpcBlockKey(endpoint, method));
+export function isRpcBlocked(endpoint: string, method: string, nowMs = Date.now()): boolean {
+  const key = rpcBlockKey(endpoint, method);
+  const until = blockedRpcMethods.get(key);
+  if (until === undefined) return false;
+  if (nowMs >= until) {
+    blockedRpcMethods.delete(key);
+    return false;
+  }
+  return true;
 }
 
 export function clearRpcBlocks(): void {
@@ -211,7 +219,8 @@ export class RpcClient {
         fetchedAt: this.now().toISOString(),
       };
     }
-    if (isRpcBlocked(this.endpoint, method)) {
+    const nowMs = this.now().getTime();
+    if (isRpcBlocked(this.endpoint, method, nowMs)) {
       return {
         ok: false,
         method,
@@ -236,7 +245,7 @@ export class RpcClient {
           continue;
         }
         if (response.status === 403) {
-          rememberRpcBlock(this.endpoint, method);
+          rememberRpcBlock(this.endpoint, method, nowMs);
           return { ok: false, method, error: "HTTP 403", httpStatus: 403, fetchedAt };
         }
         if (response.status < 200 || response.status >= 300) {

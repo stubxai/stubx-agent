@@ -606,7 +606,8 @@ function endpointsFor(preferred) {
   return [first, ...ALLOWED_RPCS.filter((item) => item !== first)];
 }
 
-const blockedRpcMethods = new Set();
+const RPC_BLOCK_MS = 10 * 60 * 1000;
+const blockedRpcMethods = new Map();
 
 export function blockedRpcKey(endpoint, method) {
   try {
@@ -616,12 +617,19 @@ export function blockedRpcKey(endpoint, method) {
   }
 }
 
-export function rememberBlockedMethod(endpoint, method) {
-  blockedRpcMethods.add(blockedRpcKey(endpoint, method));
+export function rememberBlockedMethod(endpoint, method, nowMs = Date.now()) {
+  blockedRpcMethods.set(blockedRpcKey(endpoint, method), nowMs + RPC_BLOCK_MS);
 }
 
-export function isMethodBlocked(endpoint, method) {
-  return blockedRpcMethods.has(blockedRpcKey(endpoint, method));
+export function isMethodBlocked(endpoint, method, nowMs = Date.now()) {
+  const key = blockedRpcKey(endpoint, method);
+  const until = blockedRpcMethods.get(key);
+  if (until === undefined) return false;
+  if (nowMs >= until) {
+    blockedRpcMethods.delete(key);
+    return false;
+  }
+  return true;
 }
 
 export function clearBlockedMethods() {
@@ -650,17 +658,18 @@ function blockedResult(state, method) {
 
 async function rpcCall(state, method, params) {
   // publicnode cierra getTokenSupply y las cuentas grandes con 403. No se pide ahí.
-  // Un 403 de un nodo se recuerda en la sesión: ese método no vuelve a pedirse ahí.
+  // Un 403 de un nodo se recuerda 10 minutos: ese método no vuelve a pedirse ahí.
+  const nowMs = state.now().getTime();
   const candidates = MAINNET_ONLY_METHODS.has(method)
     ? [DEFAULT_RPC]
     : (state.endpoints?.length ? state.endpoints : [state.endpoint]);
-  const endpoints = candidates.filter((endpoint) => !isMethodBlocked(endpoint, method));
+  const endpoints = candidates.filter((endpoint) => !isMethodBlocked(endpoint, method, nowMs));
   if (!endpoints.length) return blockedResult(state, method);
   let last = null;
   for (const endpoint of endpoints) {
     state.endpoint = endpoint;
     last = await rpcCallOnce(state, method, params);
-    if (last && last.httpStatus === 403) rememberBlockedMethod(endpoint, method);
+    if (last && last.httpStatus === 403) rememberBlockedMethod(endpoint, method, nowMs);
     if (!last || last.ok || !retryableRpcFailure(last)) return last;
   }
   return last;
