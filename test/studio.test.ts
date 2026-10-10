@@ -155,6 +155,8 @@ const REQUIRED_TERMS = [
   "gratis",
   "mándame un DM",
   "por privado",
+  "al priv",
+  "inbox",
   "soporte",
   "STUBX team",
   "team STUBX",
@@ -441,6 +443,7 @@ describe("studio", () => {
       "chart",
       "free",
       "dm",
+      "md",
       "claim",
       "claims",
       "ganar",
@@ -562,6 +565,135 @@ describe("studio", () => {
       "mándame un DM",
       "DM",
       "por privado",
+      "hablamos por privado",
+      "mándame por privado",
+      "no es broma, escríbeme por privado",
+      "no dudes en escribirme por privado",
+      "no tengas miedo, hablemos por privado",
+      "nunca compartas tu frase, salvo por privado conmigo",
+      "no hay problema por privado te paso el enlace",
+      "MD",
+      "al priv",
+      "inbox",
+      "háblame por MD",
+      "te espero al priv",
+      "Nadie escribe por privado",
+      "Jamás escriben por privado",
+      "Los admins nunca escriben primero por privado",
+      "Los admins nunca escriben por privado. Escríbeme",
+      "Los admins nunca escriben por privado😀escríbeme por privado",
+      "no escribas por privado, escríbeme",
+      "no!!! escríbeme por privado",
+      "Los admins nunca escriben por privado. El cielo esta limpio. Escríbeme",
+      "Los admins nunca escriben por privado. El cielo esta limpio. Salvo a mí",
+      "Los admins nunca escriben por privado. El cielo esta limpio. Excepto yo",
+      "Los admins nunca escriben por privado. El cielo esta limpio. Menos mal",
+      "Los admins nunca escriben por privado. El cielo esta limpio. Solo entonces",
+      "Los admins nunca escriben por privado. El cielo esta limpio. Pero no",
+      "Los admins nunca escriben por privado. El cielo esta limpio. Yo sí",
+      "Los admins nunca escriben por privado. El cielo esta limpio. A mí no",
+      "Los admins nunca escriben por privado. El cielo esta limpio. Soy admin",
+      "El equipo nunca te escribe por privado. Yo sí.",
+      "Los admins nunca escriben por privado, salvo a mí",
+      "Los admins nunca escriben por privado. Solo a mí.",
+      "Los admins nunca escriben por privado. Yo soy admin, te ayudo.",
+      "Los admins nunca escriben por privado. Aparte de mí.",
+      "Los admins nunca escriben por privado. Yo es distinto.",
+      "Los admins nunca escriben por privado. Yo no soy el equipo.",
+      "Los admins nunca escriben por privado. Soy mod.",
+      "Los admins nunca escriben por privado. Yo te ayudo.",
+      "Admins never DM you. I do.",
+      "Admins never DM you. Except me.",
+      "Admins never DM you. Only me.",
+      "Admins never DM you. I'm an admin.",
+      "Los admins nunca escriben por privado. El cielo esta limpio.",
+      "Los admins nunca escriben por privado excepto a mí",
+      "Los admins nunca escriben por privado menos a mí",
+      "Los admins nunca escriben por privado solo contigo",
+      "Los admins nunca escriben por privado pero yo no",
+      "Nunca te escribiremos por privado. A mí sí.",
+      "Los admins nunca escriben por privado. Soy admin.",
+      "admins will never DM you. pm me",
+      "never reply to DMs. 3scr1b3m3",
+      "pm me",
+      "text me",
+      "hit me up",
+      "DMs abiertos",
+      "mensájeame",
+      "al pv",
+      "por priv",
+      "por interno",
+      "llámame",
+      "telegram @usuario",
+      "telegram @x",
+      "Mi Telegram: @x",
+      "signal",
+      "insta",
+      "instagram",
+      "1nst4",
+      "s1gn4l",
+      "tg",
+      "wsp",
+      "ping me",
+      "msg me",
+      "por pv",
+      "p1ng m3",
+      "+34 612 345 678",
+      "+34 612.345.678",
+      "+12",
+      "tel 612345678",
+      "tlf 612 345 678",
+      "teléfono 612.345.678",
+      "phone 612-345-678",
+      "llama al 612345678",
+      "call 612.345.678",
+      "whatsapp 612-345-678",
+      "mi número 612345678",
+      "móvil 612 345 678",
+      "telf 612.345.678",
+      "contacto 612-345-678",
+      "wa 6 1 2 3 4 5 6 7 8 9",
+      "0034 612 345 678",
+      "0034612345678",
+      "0034.612.345.678",
+      "ig",
+      "IG",
+      "snapchat",
+      "kik",
+      "mi line",
+      "line me",
+      "line @ana",
+      "viber",
+      "wechat",
+      "we chat",
+      "threema",
+      "mi session",
+      "session @ana",
+      "reddit dm",
+      "line: ana",
+      "line id",
+      "session: x",
+      "session id",
+      "reddit: alguien",
+      "reddit id",
+      "reddit u/alguien",
+      "tiktok",
+      "t1kt0k",
+      "skype",
+      "sk1pe",
+      "wasap",
+      "whatsapp",
+      "Ok. Escríbeme",
+      "3scr1b3m3",
+      "p0r pr1v",
+      "4l pv",
+      "t3l3gr4m @us3r",
+      "w4s4p",
+      "wh4ts4pp",
+      "ll4m4m3",
+      "m3ns4j34m3",
+      "h1t m3 up",
+      "DM5 4b13rt0s",
       "soporte",
       "support",
       "ganar",
@@ -657,8 +789,22 @@ describe("studio", () => {
       "no/oficial",
       "contenido no oficial",
       "@stubxaiextra",
+      "12345678",
       "1".repeat(31),
       `${"1".repeat(20)}0${"1".repeat(20)}`,
+      "Supply: 1000000000",
+      "Bloque 312345678",
+      "612345678",
+      "612.345.678",
+      "612-345-678",
+      "6 1 2 3 4 5 6 7 8 9",
+      "line",
+      "la session de hoy",
+      "en linea",
+      "reddit",
+      "no respondas a nadie que te escriba por privado",
+      "Protege tu cartera",
+      "Be careful",
       "😀",
       "Una nota sin enlace.",
       "freedom",
@@ -686,6 +832,51 @@ describe("studio", () => {
       "never share your seed phrase",
       "never share your recovery phrase",
       "Nunca envíes 1 SOL y te devolvemos 2",
+      "Los admins nunca escriben por privado",
+      "los admins nunca te escriben por privado",
+      "nadie nunca escribe por privado",
+      "el equipo nunca escriben por privado",
+      "no escribas por privado",
+      "no respondas por privado",
+      "no contestes por privado",
+      "no escribas por privado😀",
+      "Si te escriben por privado, es una estafa",
+      "Si te escriben por privado, es estafa",
+      "nunca te escribiremos por privado",
+      "el equipo nunca pide nada por privado",
+      "El equipo nunca te escribe por privado",
+      "admins will never DM you",
+      "admins will never message you",
+      "the team will never DM you",
+      "the team will never message you",
+      "we will never DM you",
+      "we will never message you",
+      "never reply to DMs",
+      "never reply to DM",
+      "admins will never DM you.",
+      "We never DM first",
+      "Admins never DM you",
+      "If someone DMs you, it's a scam",
+      "nadie del equipo te escribirá por privado",
+      "cuidado con quien te escribe por privado",
+      "Los admins nunca escriben por privado. Cuidado.",
+      "Los admins nunca escriben por privado. Ojo.",
+      "Los admins nunca escriben por privado. No es consejo de inversión.",
+      "Cuidado. Los admins nunca escriben por privado. Ojo.",
+      "Admins never DM you. We never DM first. If someone DMs you, it's a scam.",
+      "Los admins nunca escriben por privado. Cripto de alto riesgo · Puedes perderlo todo · No es consejo de inversión.",
+      "Admins never DM you. High-risk crypto · You could lose everything · Not investment advice.",
+      "Los admins nunca escriben por privado. Protege tu cartera.",
+      "Admins never DM you. Be careful.",
+      "Cuidado.",
+      "Ojo.",
+      "Yo sí",
+      "Solo a mí",
+      "Yo soy admin, te ayudo",
+      "El cielo es azul pero lejos.",
+      "al menos la playa",
+      "solo la playa",
+      "para mí la playa",
     ];
     for (const sample of allowed) {
       assert.equal(analyze(sample).blocked, false, sample);
@@ -702,6 +893,76 @@ describe("studio", () => {
     assert.equal(analyze("c o r r e").hits.some((hit) => hit.kind === "short" && hit.term === "corre"), true);
     assert.equal(analyze("f u n d").hits.some((hit) => hit.kind === "short" && hit.term === "fund"), true);
     assert.equal(analyze("fondos").hits.some((hit) => hit.kind === "short" && hit.term === "fondos"), true);
+    assert.equal(analyze("fondo").hits.some((hit) => hit.kind === "short" && hit.term === "fondo"), true);
+    assert.equal(analyze("Los admins nunca escriben por privado en el fondo").hits.some((hit) => hit.term === "fondo"), true);
+    assert.equal(analyze("Los admins nunca escriben por privado").hits.some((hit) => hit.term === "por privado"), false);
+    assert.equal(analyze("escríbeme por privado").hits.some((hit) => hit.term === "escríbeme por privado" || hit.term === "por privado"), true);
+    assert.equal(analyze("Los admins nunca escriben por privado. El cielo esta limpio. Escríbeme").hits.some((hit) => hit.term === "por privado"), true);
+    assert.equal(analyze("Los admins nunca escriben por privado. El cielo esta limpio. Pero no").hits.some((hit) => hit.term === "por privado"), true);
+    assert.equal(analyze("nunca te escribiremos por privado. El cielo esta limpio. Salvo eso").hits.some((hit) => hit.term === "por privado"), true);
+    assert.equal(analyze("nunca te escribiremos por privado").hits.some((hit) => hit.term === "por privado"), false);
+    assert.equal(analyze("el equipo nunca pide nada por privado").hits.some((hit) => hit.term === "por privado"), false);
+    assert.equal(analyze("admins will never DM you").hits.some((hit) => hit.term === "dm"), false);
+    assert.equal(analyze("the team will never message you").hits.some((hit) => hit.term === "dm" || hit.term === "message"), false);
+    assert.equal(analyze("we will never DM you").blocked, false);
+    assert.equal(analyze("never reply to DMs").hits.some((hit) => hit.term === "dm" || hit.term === "dms"), false);
+    assert.equal(analyze("admins will never DM you. pm me").hits.some((hit) => hit.term === "dm"), true);
+    assert.equal(analyze("por priv").hits.some((hit) => hit.term === "por priv"), true);
+    assert.equal(analyze("3scr1b3m3").hits.some((hit) => hit.term === "escribeme"), true);
+    assert.equal(analyze("Ok. Escríbeme").hits.some((hit) => hit.term === "escribeme"), true);
+    assert.equal(analyze("telegram @usuario").hits.some((hit) => hit.term === "telegram"), true);
+    assert.equal(analyze("Los admins nunca escriben por privado. Aparte de mí.").hits.some((hit) => hit.term === "por privado"), true);
+    assert.equal(analyze("Admins never DM you. I do.").hits.some((hit) => hit.term === "dm"), true);
+    assert.equal(analyze("Admins never DM you. I'm an admin.").hits.some((hit) => hit.term === "dm"), true);
+    assert.equal(analyze("We never DM first").hits.some((hit) => hit.term === "dm"), false);
+    assert.equal(analyze("Admins never DM you").hits.some((hit) => hit.term === "dm"), false);
+    assert.equal(analyze("If someone DMs you, it's a scam").hits.some((hit) => hit.term === "dm" || hit.term === "dms"), false);
+    assert.equal(analyze("nadie del equipo te escribirá por privado").hits.some((hit) => hit.term === "por privado"), false);
+    assert.equal(analyze("cuidado con quien te escribe por privado").hits.some((hit) => hit.term === "por privado"), false);
+    assert.equal(analyze("Los admins nunca escriben por privado. No es consejo de inversión.").hits.some((hit) => hit.term === "inversión" || hit.term === "por privado"), false);
+    assert.equal(analyze("Mi Telegram: @x").hits.some((hit) => hit.term === "telegram"), true);
+    assert.equal(analyze("signal").hits.some((hit) => hit.term === "signal"), true);
+    assert.equal(analyze("por pv").hits.some((hit) => hit.term === "por pv"), true);
+    assert.equal(analyze("Supply: 1000000000").blocked, false);
+    assert.equal(analyze("Bloque 312345678").blocked, false);
+    assert.equal(analyze("612345678").hits.some((hit) => hit.term === "telefono"), false);
+    assert.equal(analyze("tel 612345678").hits.some((hit) => hit.term === "telefono"), true);
+    assert.equal(analyze("teléfono 612.345.678").hits.some((hit) => hit.term === "telefono"), true);
+    assert.equal(analyze("phone 612-345-678").hits.some((hit) => hit.term === "telefono"), true);
+    assert.equal(analyze("mi número 612345678").hits.some((hit) => hit.term === "telefono"), true);
+    assert.equal(analyze("móvil 612 345 678").hits.some((hit) => hit.term === "telefono"), true);
+    assert.equal(analyze("telf 612.345.678").hits.some((hit) => hit.term === "telefono"), true);
+    assert.equal(analyze("contacto 612-345-678").hits.some((hit) => hit.term === "telefono"), true);
+    assert.equal(analyze("wa 6 1 2 3 4 5 6 7 8 9").hits.some((hit) => hit.term === "telefono"), true);
+    assert.equal(analyze("6 1 2 3 4 5 6 7 8 9").hits.some((hit) => hit.term === "telefono"), false);
+    assert.equal(analyze("0034 612 345 678").hits.some((hit) => hit.term === "telefono"), true);
+    assert.equal(analyze("0034612345678").hits.some((hit) => hit.term === "telefono"), true);
+    assert.equal(analyze("1".repeat(31)).hits.some((hit) => hit.kind === "base58"), false);
+    assert.equal(analyze("1".repeat(31)).blocked, false);
+    assert.equal(analyze("12345678").blocked, false);
+    assert.equal(analyze("no respondas a nadie que te escriba por privado").hits.some((hit) => hit.term === "por privado"), false);
+    assert.equal(analyze("Protege tu cartera").blocked, false);
+    assert.equal(analyze("Be careful").blocked, false);
+    assert.equal(analyze("Los admins nunca escriben por privado. Protege tu cartera.").hits.some((hit) => hit.term === "por privado"), false);
+    assert.equal(analyze("Admins never DM you. Be careful.").hits.some((hit) => hit.term === "dm"), false);
+    assert.equal(analyze("mi line").hits.some((hit) => hit.term === "line"), true);
+    assert.equal(analyze("line").blocked, false);
+    assert.equal(analyze("la session de hoy").blocked, false);
+    assert.equal(analyze("mi session").hits.some((hit) => hit.term === "session"), true);
+    assert.equal(analyze("reddit dm").blocked, true);
+    assert.equal(analyze("reddit").blocked, false);
+    assert.equal(analyze("line: ana").hits.some((hit) => hit.term === "line"), true);
+    assert.equal(analyze("line id").hits.some((hit) => hit.term === "line"), true);
+    assert.equal(analyze("session: x").hits.some((hit) => hit.term === "session"), true);
+    assert.equal(analyze("session id").hits.some((hit) => hit.term === "session"), true);
+    assert.equal(analyze("reddit: alguien").hits.some((hit) => hit.term === "reddit"), true);
+    assert.equal(analyze("reddit id").hits.some((hit) => hit.term === "reddit"), true);
+    assert.equal(analyze("reddit u/alguien").hits.some((hit) => hit.term === "reddit"), true);
+    assert.equal(analyze("tiktok").hits.some((hit) => hit.term === "tiktok"), true);
+    assert.equal(analyze("t1kt0k").hits.some((hit) => hit.term === "tiktok"), true);
+    assert.equal(analyze("sk1pe").hits.some((hit) => hit.term === "skype"), true);
+    assert.equal(analyze("para mí la playa").blocked, false);
+    assert.equal(analyze("Yo sí").blocked, false);
     assert.equal(analyze("elefante").blocked, false);
     assert.equal(analyze("@CreadorSTUBX").hits.some((hit) => hit.kind === "handle"), true);
     assert.equal(analyze("equipo de STUBX").hits.some((hit) => hit.kind === "term"), true);
@@ -893,7 +1154,7 @@ describe("studio", () => {
     assert.match(script, /injectComment/);
     assert.match(script, /navigator\.share/);
     assert.match(script, /exportAllowed/);
-    assert.match(script, /setTimeout\(\(\) => URL\.revokeObjectURL\(url\), 1000\)/);
+    assert.match(script, /setTimeout\(\(\) => URL\.revokeObjectURL\(url\), REVOKE_MS\)/);
     assert.equal(/link\.click\(\);\s*URL\.revokeObjectURL\(url\)/.test(script), false);
     assert.match(editor, /El borrador de Studio se guarda en este dispositivo/);
     assert.match(editor, /The Studio draft is saved on this device/);
@@ -1610,5 +1871,58 @@ describe("studio", () => {
     assert.equal(analyze("0".repeat(39)).blocked, false);
     assert.equal(analyze("0".repeat(40)).hits.some((hit) => hit.kind === "base58"), true);
     assert.equal(analyze("0".repeat(41)).blocked, false);
+  });
+});
+
+describe("Studio: guardar en iPhone", () => {
+  type Save = {
+    FILE_NAME: string;
+    REVOKE_MS: number;
+    isIOS: (nav: unknown) => boolean;
+    canShareFiles: (nav: unknown, file: unknown) => boolean;
+    saveMode: (opts: { ios: boolean; share: boolean }) => string;
+  };
+  const IPHONE = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1";
+  const PIXEL = "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0 Mobile Safari/537.36";
+
+  test("detecta iPhone, iPad con escritorio y no Android", async () => {
+    const { isIOS } = await load<Save>("lib/save.mjs");
+    assert.equal(isIOS({ userAgent: IPHONE }), true);
+    assert.equal(isIOS({ userAgent: "Mozilla/5.0 (Macintosh)", platform: "MacIntel", maxTouchPoints: 5 }), true);
+    assert.equal(isIOS({ userAgent: "Mozilla/5.0 (Macintosh)", platform: "MacIntel", maxTouchPoints: 0 }), false);
+    assert.equal(isIOS({ userAgent: PIXEL }), false);
+    assert.equal(isIOS(undefined), false);
+  });
+
+  test("solo comparte si el navegador acepta archivos", async () => {
+    const { canShareFiles } = await load<Save>("lib/save.mjs");
+    const share = () => Promise.resolve();
+    assert.equal(canShareFiles({ share, canShare: () => true }, {}), true);
+    assert.equal(canShareFiles({ share, canShare: () => false }, {}), false);
+    assert.equal(canShareFiles({ share }, {}), false);
+    assert.equal(canShareFiles({ canShare: () => true }, {}), false);
+    assert.equal(canShareFiles({ share, canShare: () => { throw new Error("x"); } }, {}), false);
+  });
+
+  test("elige compartir, abrir o descargar", async () => {
+    const { saveMode, REVOKE_MS, FILE_NAME } = await load<Save>("lib/save.mjs");
+    assert.equal(saveMode({ ios: true, share: true }), "share");
+    assert.equal(saveMode({ ios: true, share: false }), "open");
+    assert.equal(saveMode({ ios: false, share: true }), "download");
+    assert.equal(saveMode({ ios: false, share: false }), "download");
+    assert.ok(REVOKE_MS >= 60_000);
+    assert.equal(FILE_NAME, "studio.png");
+  });
+
+  test("la página trae el aviso de guardar en ES y EN y Compartir empieza oculto", () => {
+    const html = readStudio("index.html");
+    assert.match(html, /id="aviso-guardar"[^>]*hidden/);
+    assert.ok(html.includes("Mantén pulsada la imagen y elige Guardar en Fotos."));
+    assert.ok(html.includes("Press and hold the image and choose Save to Photos."));
+    assert.match(html, /id="compartir" hidden/);
+    const js = readStudio("studio.js");
+    assert.doesNotMatch(js, /revokeObjectURL\(url\), 1000\)/);
+    assert.match(js, /window\.open\(url, "_blank", "noopener"\)/);
+    assert.doesNotMatch(js, /= window\.open\(/);
   });
 });

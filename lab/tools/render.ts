@@ -340,7 +340,7 @@ function renderLab(repoRoot: string, cards: readonly CardSummary[], mission: Mis
 ${howDetails(HOW_LAB)}
 <div id="mision-app" data-mission="${escapeHtml(mission.id)}"></div>
 <div class="estatica" id="mision-estatica"><p class="nota">${both({ es: "Sin JavaScript se pueden leer los pasos, las explicaciones y la biblioteca. El progreso local necesita el script de esta misma carpeta.", en: "Without JavaScript the steps, explanations, and library can still be read. Local progress needs the script in this same folder." })}</p>${staticSteps}</div>
-<details class="biblioteca-extra" id="biblioteca"><summary>${both({ es: "Para quien quiera más detalle", en: "For anyone who wants more detail" })}</summary><h2>${both({ es: "Biblioteca", en: "Library" })}</h2><p class="muted">${both({ es: revision.enStatus, en: revision.enStatusEn || revision.enStatus })}</p><div class="fichas">${terms}</div><h2>${both({ es: "Guías", en: "Guides" })}</h2><div class="fichas">${guideSection(repoRoot)}</div></details>
+<details class="biblioteca-extra" id="biblioteca"><summary>${both({ es: "Para quien quiera más detalle", en: "For anyone who wants more detail" })}</summary><h2>${both({ es: "Biblioteca", en: "Library" })}</h2><p><a href="/aprender/">${both({ es: "Biblioteca para cualquier token", en: "Library for any token" })}</a></p><p class="muted">${both({ es: revision.enStatus, en: revision.enStatusEn || revision.enStatus })}</p><div class="fichas">${terms}</div><h2>${both({ es: "Guías", en: "Guides" })}</h2><div class="fichas">${guideSection(repoRoot)}</div></details>
 <dialog id="ayuda" aria-labelledby="ayuda-titulo"><h2 id="ayuda-titulo"></h2><div id="ayuda-cuerpo"></div><form method="dialog"><button type="submit" id="ayuda-cerrar">${both({ es: "Cerrar", en: "Close" })}</button></form></dialog>`;
   return shell({
     title: "STUBX Lab · misión 1 · borrador",
@@ -421,8 +421,11 @@ const PERSON_EN: Record<string, string> = {
 };
 
 const MILESTONE_EN: Record<string, string> = {
+  "[0.1.0] — 2026-10-10": "[0.1.0] — 2026-10-10",
   "2026-10-09 · Medición de uso: ninguna en el cliente":
     "2026-10-09 · Usage measurement: none on the client",
+  "2026-09-26 · Esqueleto público (queda dentro de 0.1.0)":
+    "2026-09-26 · Public skeleton (part of 0.1.0)",
   "2026-10-09 · Verify lee cualquier mint, solo lectura, sin publicar":
     "2026-10-09 · Verify reads any mint, read-only, unpublished",
   "2026-10-09 · Verify y Lab: lectura visible en el móvil":
@@ -435,6 +438,8 @@ const MILESTONE_EN: Record<string, string> = {
   "2026-10-05 · PPM: casilla Wallet → no aplica": "2026-10-05 · PPM: Wallet check → not applicable",
   "2026-10-05 · PPM: casilla Logs marcada": "2026-10-05 · PPM: Logs check marked",
   "Sin publicar": "Unpublished",
+  "2026-10-09 · Biblioteca y cuaderno de solo lectura":
+    "2026-10-09 · Read-only library and notebook",
 };
 
 function personLabel(value: string): Localized {

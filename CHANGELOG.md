@@ -1,5 +1,66 @@
 # Changelog
 
+## 2026-10-10 · Biblioteca y cuaderno publicados
+
+- `/cuaderno` está en stubxai.com/cuaderno desde el 2026-10-10 (PR #24). El tablero marca U05 como publicado. La dirección viaja en el fragmento `#a=` y se limpia al leerla; no llega al servidor ni queda en el historial.
+- `/aprender` sigue en stubxai.com/aprender con los enlaces de Verify y Lab de la PR #24.
+
+## [0.1.0] — 2026-10-10
+
+Lo que hay en este repositorio hasta el 2026-10-10. El paquete `@stubx/agents` sigue en `0.1.0`. El tag anotado `v0.1.0` está preparado y **no está creado**. Cómo crearlo a mano, y por qué esta entrega no lo hace: [docs/releases/v0.1.0/TAG.md](docs/releases/v0.1.0/TAG.md).
+
+Notas de la versión: [español](docs/releases/v0.1.0/NOTAS.es.md) · [English](docs/releases/v0.1.0/NOTAS.en.md).
+
+Esta entrada resume. No reescribe el detalle fechado que sigue debajo.
+
+### Verify
+
+- Componente aparte, de solo lectura: CLI `verify`, fichas JSON, Markdown y HTML, y pruebas sin red. No firma, no envía y no custodia. El agente de `src/` sigue sin contactar ningún RPC.
+- Ejemplos fechados del 2026-10-08 y del 2026-10-09, incluida la ficha oficial releída y los ejemplos añadidos ese día. Una ficha parcial no rellena el hueco.
+- En la web v2, `/verify` es Verify universal, desplegado (merge `2434636`). Lee en el navegador, solo lectura, cualquier mint SPL o Token-2022, y también compara con las fichas fechadas.
+
+### Lab
+
+- Misión 1, cinco pasos, para distinguir la dirección del nombre. El progreso se queda en el navegador. No pide cartera ni pago. Está en stubxai.com/lab desde el 2026-10-09.
+- Glosario y tres guías, en stubxai.com/aprender. El inglés de esa biblioteca sigue pendiente de revisión humana: si no coincide, manda el español.
+
+### Web v2
+
+- Misma navegación, mismos estilos y el mismo cambio de idioma en las páginas de `web/v2/`. Verify y Lab van dentro de ese cascarón, no en otra web.
+- Pie vigente: «Cripto de alto riesgo · Puedes perderlo todo · No es consejo de inversión.» / «High-risk crypto · You could lose everything · Not investment advice.»
+- `web/v2/` es la web publicada en stubxai.com desde el 2026-10-09 (merge `ed1c7759`). `web/current/` es la copia anterior, para volver atrás.
+- Studio está desplegado (PR #20 y #26) y se indexa. Verify universal está desplegado (merge `2434636`). El cuaderno no forma parte de este despliegue.
+- Esta entrada no despliega `web/v2/`. stubxai.com no cambia por este documento. La v2 ya está desplegada desde el 2026-10-09.
+- Este repositorio no inserta medición de visitas ni cookies. Cloudflare Web Analytics debe estar apagado en el panel de la zona (sin baliza en el HTML servido el 2026-10-10).
+
+### Publicado en stubxai.com
+
+Lo que el tablero de main da por abierto en la web, más lo fusionado después en Studio. Esta lista no despliega nada.
+
+- El tablero está en stubxai.com/tablero (PR #27). La columna de la web dice sí solo si la función se abre hoy.
+- Contribuir está en stubxai.com/contribuir desde el 2026-10-10 (PR #28; el tablero lo marca publicado en #32). La página no pide cuenta ni guarda datos.
+- El ejemplo educativo fijo de una curva está en stubxai.com/comparar desde el 2026-10-10 (PR #29; el tablero lo anota en #32). No lee una dirección.
+- En main, el logo de Studio acepta JPG, PNG y WebP, queda en 16 MP y no guarda el PNG inflado (PR #30). El menú marca Studio.
+- En iPhone, guardar en Studio usa compartir o una pestaña, con aviso en español e inglés y revocación a los 60 segundos (PR #33). La pestaña de respaldo lleva `noopener`.
+- La medición de uso no está en el cliente (PR #23, fusionada en main). El detalle es la entrada de debajo y [docs/medicion-uso.md](docs/medicion-uso.md).
+- La lectura de la curva está en stubxai.com/pares desde el 2026-10-10 (PR #31). El tablero la da por publicada.
+
+### Indexación
+
+- `web/v2/robots.txt` (v3, 2026-10-09) permite el rastreo general y publica el sitemap. Los rastreadores de entrenamiento de IA que esa lista nombra quedan en `Disallow`.
+- `web/v2/sitemap.xml` lista las páginas públicas con `lastmod`.
+- No hay `noindex` global. `X-Robots-Tag: noindex, nofollow` queda en el service worker de Lab, los JSON, el manifiesto y la 404.
+- `web/v2/` es la web publicada en stubxai.com desde el 2026-10-09 (merge `ed1c7759`). `web/current/` es la copia anterior, para volver atrás. La v2 ya está desplegada desde el 2026-10-09.
+
+### Texto retirado
+
+- En README y LIMITS, la frase retirada «Memecoin experimental · puedes perderlo todo…» pasa al pie vigente. En inglés, «could», no «can».
+
+## 2026-10-09 · Biblioteca y cuaderno de solo lectura
+
+- `/aprender` explica, para cualquier token de Solana, la dirección, los permisos, las extensiones de Token-2022 y la curva. El único ejemplo con un token real es la dirección oficial de STUBX. Verify y Lab enlazan a esos términos sin borrar lo escrito ni el progreso local.
+- `/cuaderno` lee un mint con los mismos orígenes y la misma lista de métodos que Verify universal, guarda la ficha y la nota en este navegador, compara dos consultas de la misma dirección y permite exportar, importar y borrar. Una ficha antigua dice la hora y que puede haber cambiado. No conecta una cartera.
+
 ## 2026-10-09 · Medición de uso: ninguna en el cliente
 
 - Este proyecto no añade baliza, cookie ni script de terceros, y no guarda la IP (Cloudflare la recibe como alojamiento). Tampoco un contador agregado: la petición llevaría la IP al alojamiento aunque el programa no la escriba.
@@ -89,9 +150,9 @@ Fase P3: simulacro del kill-switch.
 - README y THREAT-MODEL: según confirmó su propietario el 26-09-2026, la cuenta de GitHub `stubxai` tiene activada la 2FA (no verificable desde fuera).
 - La casilla «Kill-switch» del PPM sigue sin marcar hasta tener al menos 2 simulacros públicos seguidos en verde y revisión.
 
-## 0.1.0 — 2026-09-26
+## 2026-09-26 · Esqueleto público (queda dentro de 0.1.0)
 
-Primera publicación del esqueleto público (fases P1 y P2).
+Primera publicación del esqueleto público (fases P1 y P2). El número de versión del paquete no cambia: esto es el origen de `0.1.0`, no otra versión.
 
 - Paquete `@stubx/agents` con licencia MIT. Sin dependencias de ejecución.
 - Dispatcher con lista cerrada de acciones. Un nombre de firma o de envío se rechaza aunque alguien lo añada a la lista.

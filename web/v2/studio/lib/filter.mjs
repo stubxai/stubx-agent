@@ -268,6 +268,230 @@ function maskNegatedAdvice(text) {
   return out;
 }
 
+const PRIVATE_SPLIT = /[.!?;:,¡¿…\n]+|\p{Extended_Pictographic}+/gu;
+const PRIVATE_ALLOWED = [
+  /^(?:los admins|nadie|el equipo) nunca(?: te)? escriben? por privado$/,
+  /^no (?:respondas|contestes|escribas) por privado$/,
+  /^si te escriben por privado es(?: una)? estafa$/,
+  /^nunca te escribiremos por privado$/,
+  /^el equipo nunca pide nada por privado$/,
+  /^nadie del equipo te escribira por privado$/,
+  /^cuidado con quien te escribe por privado$/,
+  /^(?:admins|the team|we) will never (?:dm|message) you$/,
+  /^admins never dm you$/,
+  /^we never dm first$/,
+  /^never reply to dms?$/,
+  /^if someone dms you its a scam$/,
+  /^no respondas a nadie que te escriba por privado$/,
+];
+/** Frases fijas que pueden acompañar a un aviso. Cualquier otra anula el permiso. */
+const PRIVATE_NEUTRAL = new Set([
+  "cuidado",
+  "ojo",
+  "no es consejo de inversion",
+  "cripto de alto riesgo",
+  "puedes perderlo todo",
+  "cripto de alto riesgo puedes perderlo todo no es consejo de inversion",
+  "high risk crypto",
+  "you could lose everything",
+  "not investment advice",
+  "high risk crypto you could lose everything not investment advice",
+  "protege tu cartera",
+  "be careful",
+]);
+/** Canal o invitación. «por priv» y «al priv» no tragan «privado». */
+const INVITE_RULES = [
+  ["escribeme", /(?:^| )(?:escribirme|escribeme|escribanme|escribidme|escribanos)(?: |$)/],
+  ["hablemos", /(?:^| )(?:hablemos|hablame|habladme)(?: |$)/],
+  ["mandame", /(?:^| )(?:mandame|contactame|pasame|enviame)(?: |$)/],
+  ["mensajeame", /(?:^| )mensajeame(?: |$)/],
+  ["llamame", /(?:^| )llamame(?: |$)/],
+  ["conmigo", /(?:^| )conmigo(?: |$)/],
+  ["inbox", /(?:^| )inbox(?: |$)/],
+  ["te paso", /(?:^| )te paso(?: |$)/],
+  ["al priv", /(?:^| )al priv(?: |$)/],
+  ["al pv", /(?:^| )al pv(?: |$)/],
+  ["por priv", /(?:^| )por priv(?: |$)/],
+  ["por pv", /(?:^| )por pv(?: |$)/],
+  ["por interno", /(?:^| )por interno(?: |$)/],
+  ["pm me", /(?:^| )pm me(?: |$)/],
+  ["text me", /(?:^| )text me(?: |$)/],
+  ["hit me up", /(?:^| )hit me up(?: |$)/],
+  ["ping me", /(?:^| )ping me(?: |$)/],
+  ["msg me", /(?:^| )msg me(?: |$)/],
+  ["DMs abiertos", /(?:^| )dms? abiertos(?: |$)/],
+  ["wasap", /(?:^| )wasap(?: |$)/],
+  ["whatsapp", /(?:^| )whatsapp(?: |$)/],
+  ["signal", /(?:^| )signal(?: |$)/],
+  ["instagram", /(?:^| )instagram(?: |$)/],
+  ["insta", /(?:^| )insta(?: |$)/],
+  ["tg", /(?:^| )tg(?: |$)/],
+  ["wsp", /(?:^| )wsp(?: |$)/],
+  ["telegram", /(?:^| )telegram(?: |$)/],
+  ["ig", /(?:^| )ig(?: |$)/],
+  ["snapchat", /(?:^| )snapchat(?: |$)/],
+  ["kik", /(?:^| )kik(?: |$)/],
+  ["viber", /(?:^| )viber(?: |$)/],
+  ["wechat", /(?:^| )(?:wechat|we chat)(?: |$)/],
+  ["threema", /(?:^| )threema(?: |$)/],
+  // El 1 ocupa la y de skype; el leet general lo convierte en i («skipe»).
+  ["skype", /(?:^| )sk(?:y|1|i)pe(?: |$)/],
+  ["tiktok", /(?:^| )tiktok(?: |$)/],
+  ["reddit dm", /(?:^| )reddit dms?(?: |$)/],
+  ["dm", /(?:^| )dm(?: |$)/],
+  ["dms", /(?:^| )dms(?: |$)/],
+  ["md", /(?:^| )md(?: |$)/],
+];
+const TELEGRAM_AT = /(?:^|[^a-z0-9])telegram\s*@\s*[a-z0-9_]+/;
+const CONTEXT_CHANNEL = ["line", "session"];
+const CONTEXT_CUE = /(?:^|[^a-z0-9])(?:mi|por|me|dm|add|mensaje|contact\w*|escrib\w*|al)(?![a-z0-9])|@/;
+const MARKED_CHANNEL = ["line", "session", "reddit"];
+const PHONE_DIGITS = /(?:\d[ \t.\-]*){8}\d/;
+const PHONE_CUE = /(?:^|[^a-z0-9])(?:mi\s+numero|telefono|llamame|whatsapp|contacto|movil|wasap|phone|telf|llama|call|tlf|tel|wsp|wa)(?![a-z0-9])/g;
+
+function canonSentence(text) {
+  return text.replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function leetDigits(text) {
+  return text
+    .replaceAll("0", "o")
+    .replaceAll("3", "e")
+    .replaceAll("4", "a")
+    .replaceAll("5", "s")
+    .replaceAll("1", "i");
+}
+
+function isClosedPrivate(text) {
+  return PRIVATE_ALLOWED.some((pattern) => pattern.test(canonSentence(text)));
+}
+
+function isNeutralPhrase(text) {
+  return PRIVATE_NEUTRAL.has(canonSentence(text));
+}
+
+function splitPrivate(text) {
+  const pieces = [];
+  let last = 0;
+  for (const match of text.matchAll(PRIVATE_SPLIT)) {
+    pieces.push({ text: text.slice(last, match.index), sep: match[0] });
+    last = match.index + match[0].length;
+  }
+  pieces.push({ text: text.slice(last), sep: "" });
+  return pieces;
+}
+
+function allowIndexes(pieces) {
+  const allow = new Set();
+  for (let i = 0; i < pieces.length; i += 1) {
+    if (isClosedPrivate(pieces[i].text)) allow.add(i);
+  }
+  for (let i = 0; i < pieces.length - 1; i += 1) {
+    if (!pieces[i].sep.includes(",")) continue;
+    const joined = `${pieces[i].text} ${pieces[i + 1].text}`;
+    if (!isClosedPrivate(joined)) continue;
+    allow.add(i);
+    allow.add(i + 1);
+  }
+  return allow;
+}
+
+function phraseForms(text) {
+  return [canonSentence(text), canonSentence(leet(text, "i"))].filter(Boolean);
+}
+
+function inviteTerms(text) {
+  const found = new Set();
+  for (const form of phraseForms(text)) {
+    for (const [term, re] of INVITE_RULES) {
+      if (re.test(form)) found.add(term);
+    }
+  }
+  if (TELEGRAM_AT.test(text) || TELEGRAM_AT.test(leetDigits(text))) found.add("telegram");
+  for (const term of contextualChannels(text)) found.add(term);
+  for (const term of markedChannels(text)) found.add(term);
+  return found;
+}
+
+function contextualChannels(text) {
+  const found = new Set();
+  const forms = [text, leet(text, "i"), leetDigits(text)];
+  for (const form of forms) {
+    for (const word of CONTEXT_CHANNEL) {
+      const re = new RegExp(`(?:^|[^a-z0-9])${word}(?![a-z0-9])`, "g");
+      for (const match of form.matchAll(re)) {
+        const at = match.index ?? 0;
+        const around = form.slice(Math.max(0, at - 32), at + word.length + 20);
+        if (CONTEXT_CUE.test(around)) found.add(word);
+      }
+    }
+  }
+  return found;
+}
+
+function markedChannels(text) {
+  const found = new Set();
+  const forms = [text, leet(text, "i"), leetDigits(text)];
+  for (const form of forms) {
+    for (const word of MARKED_CHANNEL) {
+      const boundary = `(?:^|[^a-z0-9])${word}(?![a-z0-9])`;
+      if (new RegExp(`${boundary}\\s*:`).test(form)) found.add(word);
+      if (new RegExp(`${boundary}\\s+id(?![a-z0-9])`).test(form)) found.add(word);
+      if (new RegExp(`${boundary}\\s+u/`).test(form)) found.add(word);
+    }
+  }
+  return found;
+}
+
+function hasIntlZero(text) {
+  const re = /(?:^|[^a-z0-9])(00(?:[ \t.\-]*\d){7,})/g;
+  for (const match of text.matchAll(re)) {
+    if (/[1-9]/.test(match[1])) return true;
+  }
+  return false;
+}
+
+function hasPhone(text) {
+  if (/(?:^|[^a-z0-9])\+(?:[ \t.\-]*\d)+/.test(text)) return true;
+  if (hasIntlZero(text)) return true;
+  for (const match of text.matchAll(new RegExp(PHONE_CUE.source, "g"))) {
+    const at = match.index ?? 0;
+    const around = text.slice(Math.max(0, at - 24), at + match[0].length + 40);
+    if (PHONE_DIGITS.test(around)) return true;
+  }
+  return false;
+}
+
+function blankPrivatePhrase(text) {
+  return text.replace(/(^|[^a-z0-9])(por(?:[^a-z0-9]+)?privado)(?![a-z0-9])/g, (full, lead, match) => `${lead}${" ".repeat(match.length)}`);
+}
+
+function blankEnglishPrivate(text) {
+  return text.replace(/(^|[^a-z0-9])(md|dms?|message)(?![a-z0-9])/g, (full, lead, match) => `${lead}${" ".repeat(match.length)}`);
+}
+
+/**
+ * «por privado» y «DM» solo se tapan si cada frase del texto es un aviso cerrado
+ * o una frase neutra fija. Cualquier otra frase deja el canal a la vista.
+ */
+function reviewPrivate(text) {
+  const pieces = splitPrivate(text);
+  const allow = allowIndexes(pieces);
+  const pure = pieces.every((piece, index) => {
+    if (!canonSentence(piece.text)) return true;
+    return allow.has(index) || isNeutralPhrase(piece.text);
+  });
+  const permit = pure && allow.size > 0;
+  const hits = permit ? [] : [...inviteTerms(text)];
+  if (!permit) return { text, hits };
+  const masked = pieces.map((piece, index) => {
+    if (!canonSentence(piece.text)) return piece.text + piece.sep;
+    if (!allow.has(index)) return `${" ".repeat(piece.text.length)}${piece.sep}`;
+    return blankEnglishPrivate(blankPrivatePhrase(piece.text)) + piece.sep;
+  }).join("");
+  return { text: masked, hits };
+}
+
 function maskWarnings(text) {
   const phrases = [...WARNING_SAFE].sort((a, b) => b.length - a.length);
   return text.split(/(?<=[.!?;:\n])/).map((sentence) => {
@@ -486,7 +710,10 @@ export function analyze(text, list = blocklist) {
   for (const word of plainWords) {
     if (DELIVERY.has(word)) pushHit(hits, seen, "term", word);
   }
-  const advised = maskWarnings(maskNegatedAdvice(maskExceptions(folded)));
+  if (hasPhone(folded)) pushHit(hits, seen, "term", "telefono");
+  const priv = reviewPrivate(maskWarnings(maskNegatedAdvice(maskExceptions(folded))));
+  for (const term of priv.hits) pushHit(hits, seen, "term", term);
+  const advised = priv.text;
   if (hasSolDouble(advised) || hasSendSolBack(advised) || hasTypoDouble(advised)) pushHit(hits, seen, "term", "sol");
   const short = new Set((list.shortWords ?? []).map((word) => termKey(word)));
   const variants = [advised, leet(advised, "i"), leet(advised, "l")];

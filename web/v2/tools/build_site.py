@@ -376,7 +376,7 @@ def home() -> str:
 </div>
 <div class="grid-3 tool-grid">
 <article class="card"><p class="estado-pill">{t("En este navegador · 2026-10-09", "In this browser · 2026-10-09")}</p><h3>Studio</h3><p>{t("Crea una imagen para tu token, sin cuenta. Los recursos de STUBX vienen por defecto. El nombre, el logo y la exportación se quedan en este navegador.", "Create an image for your token, without an account. STUBX assets start as the default. The name, the logo, and the export stay in this browser.")}</p><p><a href="/studio/">{t("Abrir Studio", "Open Studio")}</a></p></article>
-<article class="slot"><p class="estado-pill">{t("No construido · 2026-10-09", "Not built · 2026-10-09")}</p><h3>{t("Cuaderno", "Notebook")}</h3><p>{t("No hay notas ni historial de consultas. Lab solo guarda el progreso de la misión.", "There are no notes and no query history. Lab only stores mission progress.")}</p><p><a href="/cuaderno/">{t("Ver qué falta", "See what is missing")}</a></p></article>
+<article class="card"><p class="estado-pill">{t("Solo lectura · 2026-10-09", "Read-only · 2026-10-09")}</p><h3>{t("Cuaderno", "Notebook")}</h3><p>{t("Guarda en este navegador la lectura de cualquier token de Solana, con una nota aparte. No conecta una cartera.", "It saves a reading of any Solana token in this browser, with a separate note. It does not connect a wallet.")}</p><p><a href="/cuaderno/">{t("Abrir el cuaderno", "Open the notebook")}</a></p></article>
 <article class="card"><p class="estado-pill">{t("Canal · 2026-10-10", "Channel · 2026-10-10")}</p><h3>{t("Contribuir", "Contribute")}</h3><p>{t("Informa un fallo o una mejora de estas herramientas. Cualquier token de Solana puede ser el ejemplo. No hay formulario, ni cuenta, ni datos personales: el informe se abre en GitHub.", "Report a bug or an improvement to these tools. Any Solana token can be the example. There is no form, no account, and no personal data: the report opens on GitHub.")}</p><p><a href="/contribuir/">{t("Abrir contribuciones", "Open contributions")}</a></p></article>
 </div>
 <div class="grid-3 tool-grid">
@@ -1212,6 +1212,9 @@ def headers() -> str:
   X-Robots-Tag: noindex, nofollow
 /404.html
   X-Robots-Tag: noindex, nofollow
+/cuaderno/*
+  ! Content-Security-Policy
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self' https://solana-rpc.publicnode.com https://api.mainnet-beta.solana.com; manifest-src 'self'; media-src 'none'; frame-src 'none'; worker-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests
 """
 
 
@@ -1302,6 +1305,7 @@ def sitemap() -> str:
         ("https://stubxai.com/marca/", "2026-10-09"),
         ("https://stubxai.com/build/", "2026-10-09"),
         ("https://stubxai.com/aprender/", "2026-10-09"),
+        ("https://stubxai.com/cuaderno/", "2026-10-09"),
         ("https://stubxai.com/contribuir/", "2026-10-10"),
         ("https://stubxai.com/archivo", "2026-10-03"),
     ]
@@ -1353,15 +1357,7 @@ def main() -> None:
     write_page("aprender/index.html", "aprender", "STUBX · Aprender", "STUBX · Learn", "Glosario y guías de la misión, 2026-10-09.", "Mission glossary and guides, 2026-10-09.", aprender())
     # U02 vive en web/v2/studio/ y no se regenera desde aquí: el editor, el catálogo y las reglas
     # se mantienen a mano. Un rebuild no debe borrar esa carpeta.
-    write_page(
-        "cuaderno/index.html",
-        "cuaderno",
-        "STUBX · Cuaderno",
-        "STUBX · Notebook",
-        "El cuaderno no está construido.",
-        "The notebook is not built.",
-        slot("Cuaderno", "Notebook", "No hay lista de consultas, ni importar, ni exportar, ni borrar notas. U05 es una propuesta.", "There is no query list, no import, no export, and no way to delete notes. U05 is a proposal.", "tarea-U05"),
-    )
+    # El cuaderno de web/v2/cuaderno/ también está escrito a mano. Regenerarlo lo sustituiría por un hueco.
     write_page(
         "contribuir/index.html",
         "contribuir",

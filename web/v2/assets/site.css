@@ -369,6 +369,7 @@ html.js .estatica { display: none; }
   .resultado h2 { font-size: 1.35rem; }
   button, summary, .consulta button, .consulta input { min-height: 44px; }
 }
+
 @font-face {
   font-family: Inter;
   font-style: normal;
@@ -1111,14 +1112,25 @@ body:has(a[href="/lab/"][aria-current="page"]) #aviso-version,
 body:has(a[href="/tablero/"][aria-current="page"]) #aviso-version { order: 3; }
 body:has(a[href="/verify/"][aria-current="page"]) .herramienta { display: contents; }
 body:has(a[href="/verify/"][aria-current="page"]) form.consulta,
-body:has(a[href="/pares/"][aria-current="page"]) form.consulta { order: 2; }
+body:has(a[href="/pares/"][aria-current="page"]) form.consulta,
+body:has(a[href="/cuaderno/"][aria-current="page"]) form.consulta { order: 2; }
 body:has(a[href="/verify/"][aria-current="page"]) main > .lede,
 body:has(a[href="/lab/"][aria-current="page"]) main > .lede,
 body:has(a[href="/pares/"][aria-current="page"]) main > .lede,
 body:has(a[href="/studio/"][aria-current="page"]) main > .lede,
 body:has(a[href="/aprender/"][aria-current="page"]) main > .lede,
+body:has(a[href="/aprender/"][aria-current="page"]) main > .source,
+body:has(a[href="/cuaderno/"][aria-current="page"]) main > .lede,
 body:has(a[href="/contribuir/"][aria-current="page"]) main > .lede,
 body:has(a[href="/comparar/"][aria-current="page"]) main > .lede { order: 4; }
+body:has(a[href="/aprender/"][aria-current="page"]) nav.ayuda-terminos { order: 2; }
+body:has(a[href="/verify/"][aria-current="page"]) nav.ayuda-terminos { order: 4; }
+body:has(a[href="/aprender/"][aria-current="page"]) main > p.nota,
+body:has(a[href="/cuaderno/"][aria-current="page"]) main > p.sello,
+body:has(a[href="/cuaderno/"][aria-current="page"]) main > p:nth-of-type(2) { order: 3; }
+body:has(a[href="/aprender/"][aria-current="page"]) main > p:nth-of-type(4),
+body:has(a[href="/cuaderno/"][aria-current="page"]) main > p:nth-of-type(4),
+body:has(a[href="/cuaderno/"][aria-current="page"]) main > p:has(> a[href="/aprender/"]) { order: 5; }
 body:has(a[href="/verify/"][aria-current="page"]) main > .aviso-fijo { order: 5; }
 body:has(a[href="/verify/"][aria-current="page"]) main > details.como,
 body:has(a[href="/lab/"][aria-current="page"]) main > details.como { order: 6; }
@@ -1310,12 +1322,14 @@ article.slot:has(> h1) a {
   font-weight: 700;
   text-decoration: none;
 }
-body:has(a[href="/aprender/"][aria-current="page"]) .grid-2 > .card {
+body:has(a[href="/aprender/"][aria-current="page"]) .grid-2 > .card,
+body:has(a[href="/aprender/"][aria-current="page"]) main > article.card {
   position: relative;
   padding-left: 4.3rem;
   border-left: 6px solid var(--muted);
 }
-body:has(a[href="/aprender/"][aria-current="page"]) .grid-2 > .card::before {
+body:has(a[href="/aprender/"][aria-current="page"]) .grid-2 > .card::before,
+body:has(a[href="/aprender/"][aria-current="page"]) main > article.card::before {
   content: "";
   position: absolute;
   top: 1rem;
@@ -1370,13 +1384,15 @@ article.slot:has(> h1) {
 article.slot:has(> h1)::before { content: none; }
 @media (min-width: 48.01rem) {
   body:has(a[href="/verify/"][aria-current="page"]) main > h1,
-  body:has(a[href="/pares/"][aria-current="page"]) main > h1 {
+  body:has(a[href="/pares/"][aria-current="page"]) main > h1,
+  body:has(a[href="/cuaderno/"][aria-current="page"]) main > h1 {
     margin-bottom: -0.9rem;
     border-bottom: 0;
     border-radius: 1.35rem 1.35rem 0 0;
   }
   body:has(a[href="/verify/"][aria-current="page"]) form.consulta,
-  body:has(a[href="/pares/"][aria-current="page"]) form.consulta {
+  body:has(a[href="/pares/"][aria-current="page"]) form.consulta,
+  body:has(a[href="/cuaderno/"][aria-current="page"]) form.consulta {
     margin-top: 0;
     padding: 1rem 1.15rem 1.15rem;
     border: 3px solid var(--tone);
@@ -1431,4 +1447,119 @@ footer.site::before {
     background-image: none;
   }
   .ficha, .tarea, .paso { padding-left: 4.1rem; }
+}
+
+/* Lo que llegó de main: Biblioteca, Cuaderno y las acciones de Studio, con el mismo sistema. */
+.ayuda-terminos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.75rem;
+}
+.ayuda-terminos a {
+  display: flex;
+  align-items: center;
+  min-height: 4.4rem;
+  padding: 0.85rem 1rem;
+  border: 2px solid var(--tone);
+  border-radius: 1rem;
+  background: var(--bg-elev);
+  color: var(--cream);
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 180ms var(--ease), border-color 180ms var(--ease), box-shadow 180ms var(--ease);
+}
+.ayuda-terminos a:hover {
+  border-color: var(--gem);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(4, 13, 31, 0.35), 0 0 0 3px rgba(27, 235, 145, 0.35);
+}
+.sello,
+body:has(a[href="/aprender/"][aria-current="page"]) main > p.nota {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(142, 172, 207, 0.5);
+  border-left: 6px solid var(--attention);
+  border-radius: 1rem;
+  background: var(--abyss);
+  color: var(--text);
+}
+.nota-personal {
+  display: grid;
+  gap: 0.5rem;
+  margin: 1rem 0;
+  padding: 0.9rem 1rem;
+  border: 2px solid var(--line);
+  border-left: 6px solid var(--attention);
+  border-radius: 1rem;
+  background: var(--abyss);
+}
+textarea.nota, .consulta select, select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.65rem 0.8rem;
+  font: inherit;
+  color: var(--text);
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+}
+textarea.nota { min-height: 6rem; }
+.cuaderno-acciones { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+.cuaderno-acciones button,
+.cuaderno-acciones a,
+.cuaderno-acciones label.file,
+body:has(a[href="/cuaderno/"][aria-current="page"]) #comparar,
+body:has(a[href="/cuaderno/"][aria-current="page"]) #borrar-confirmar,
+body:has(a[href="/cuaderno/"][aria-current="page"]) #borrar-cancelar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 4.4rem;
+  padding: 0.85rem 1.1rem;
+  border-width: 2px;
+  border-radius: 1rem;
+}
+input[type="file"] { min-height: 44px; max-width: 100%; }
+.comparacion { display: grid; gap: 0.75rem; }
+.comparacion article, .comparacion p { min-width: 0; margin: 0; }
+.comparacion p {
+  padding: 0.85rem 1rem;
+  border: 2px solid var(--tone);
+  border-radius: 1rem;
+  background: var(--bg-elev);
+}
+article.consulta-guardada {
+  padding: 1rem 1rem 1rem 1.1rem;
+  border: 2px solid var(--tone);
+  border-left: 8px solid var(--tone);
+  border-radius: 1rem;
+  background: var(--bg-elev);
+}
+body:has(a[href="/studio/"][aria-current="page"]) .opciones button,
+body:has(a[href="/studio/"][aria-current="page"]) .fila button,
+body:has(a[href="/studio/"][aria-current="page"]) #quitar-logo {
+  min-height: 4.6rem;
+  padding: 0.9rem 1.1rem;
+  border-width: 2px;
+  border-radius: 1rem;
+  transition: transform 180ms var(--ease), border-color 180ms var(--ease), box-shadow 180ms var(--ease), background-color 180ms var(--ease);
+}
+body:has(a[href="/studio/"][aria-current="page"]) .opciones button:hover,
+body:has(a[href="/studio/"][aria-current="page"]) .fila button:hover,
+body:has(a[href="/studio/"][aria-current="page"]) #quitar-logo:hover { transform: translateY(-2px); }
+body:has(a[href="/studio/"][aria-current="page"]) .opciones button[aria-pressed="true"] {
+  background: var(--cream);
+  color: var(--accent-ink);
+  border-color: var(--cream);
+  box-shadow: 0 0 0 3px rgba(249, 230, 208, 0.35);
+}
+body:has(a[href="/studio/"][aria-current="page"]) .fila button.primary {
+  box-shadow: 0 0 0 3px rgba(255, 45, 111, 0.4);
+}
+@media (min-width: 48.01rem) {
+  .comparacion { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 599px) {
+  .cuaderno-acciones { display: grid; }
+  .cuaderno-acciones button, .cuaderno-acciones a, .cuaderno-acciones label.file { width: 100%; }
 }
