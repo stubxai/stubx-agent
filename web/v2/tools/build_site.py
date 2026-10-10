@@ -8,12 +8,43 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import sys
 import urllib.parse
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 REPO = ROOT.parents[1]
+
+def aviso_guardar() -> dict[str, str]:
+    """El texto vive solo en web/v2/shared/aviso-guardar.js."""
+    raw = subprocess.check_output(
+        [
+            "node",
+            "--input-type=module",
+            "-e",
+            "import { AVISO_GUARDAR } from './web/v2/shared/aviso-guardar.js'; process.stdout.write(JSON.stringify(AVISO_GUARDAR));",
+        ],
+        cwd=REPO,
+        text=True,
+    )
+    data = json.loads(raw)
+    if "[" in data["es"] or "[" in data["en"] or "PROVEEDOR" in data["es"] or "PROVIDER" in data["en"]:
+        raise SystemExit("el aviso de Guardar todavía tiene un marcador")
+    return data
+
+AVISO = aviso_guardar()
+
+def apply_aviso(text: str) -> str:
+    return text.replace("__AVISO_ES__", AVISO["es"]).replace("__AVISO_EN__", AVISO["en"])
+
+def aviso_html() -> str:
+    return (
+        '<p id="aviso-guardar" class="aviso-fijo privacidad">'
+        f'<span class="lang es" lang="es">{html.escape(AVISO["es"])}</span>'
+        f'<span class="lang en" lang="en">{html.escape(AVISO["en"])}</span>'
+        "</p>"
+    )
 CA = "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump"
 CREATOR = "77RKUqMprQHDSkhFBpC1REU1kE9aM1uw189orHo7wypD"
 PERSONAL = "2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX"
@@ -329,7 +360,7 @@ def keep_committed_aprender_spacing(text: str) -> str:
 def write_page(rel: str, current: str, title_es: str, title_en: str, desc_es: str, desc_en: str, body: str, scripts: list[str] | None = None, narrow: bool = False, worker: bool = False, absolute: bool = False, connect: str | None = None, modules: list[str] | None = None) -> None:
     path = ROOT / rel
     path.parent.mkdir(parents=True, exist_ok=True)
-    text = shell(rel, current, title_es, title_en, desc_es, desc_en, body, scripts or [], narrow, worker, absolute, connect, modules)
+    text = apply_aviso(shell(rel, current, title_es, title_en, desc_es, desc_en, body, scripts or [], narrow, worker, absolute, connect, modules))
     if rel == "aprender/index.html":
         text = keep_committed_aprender_spacing(text)
     path.write_text(text, encoding="utf-8")
@@ -455,6 +486,10 @@ def prepare_tool(name: str) -> str:
     )
     raw = raw.replace('<section id="resultado"', '<section id="resultado" tabindex="-1"', 1)
     if name == "verify":
+        raw = re.sub(r'<p class="aviso-fijo privacidad">.*?</p>', "", raw, count=1, flags=re.S)
+        raw = re.sub(r'<p id="aviso-guardar" class="aviso-fijo privacidad">.*?</p>', "", raw, count=1, flags=re.S)
+        field = '<input id="direccion-token" name="direccion" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done">'
+        raw = raw.replace(field, field + "\n" + aviso_html(), 1)
         extra = (
             '<p><button type="button" id="ver-lectura-caida">'
             + t(
@@ -463,8 +498,8 @@ def prepare_tool(name: str) -> str:
             )
             + "</button></p><p class=\"source\">"
             + t(
-                "Ese botón no hace una consulta nueva. Enseña el aviso de lectura no disponible. La dirección escrita se queda en el campo y no se guarda en este sitio.",
-                "That button does not make a new query. It shows the reading-unavailable notice. The address you typed stays in the field and is not stored on this site.",
+                "Ese botón no hace una consulta nueva. Enseña el aviso de lectura no disponible. La dirección escrita se queda en el campo y ese botón no la guarda.",
+                "That button does not make a new query. It shows the reading-unavailable notice. The address you typed stays in the field and that button does not save it.",
             )
             + "</p>"
         )
@@ -536,7 +571,7 @@ def methodology() -> str:
 <h2>{t("Qué hace Verify aquí", "What Verify does here")}</h2>
 <ul class="clean">
 <li>{t("Acepta una dirección y comprueba el formato. El nombre del token no sirve.", "It accepts an address and checks the format. The token name is not enough.")}</li>
-<li>{t("Si la dirección es de Solana, la lee en directo y solo en lectura. Tu navegador consulta directamente un servicio público de Solana (api.mainnet-beta.solana.com o solana-rpc.publicnode.com), solo en lectura. Este sitio no guarda la dirección, pero ese servicio recibe la dirección y tu IP según sus propias condiciones. Las fichas fechadas siguen: la oficial releída el 2026-10-09, con la cuenta personal publicada 2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX, los clones ERYyy y FMNb de ese día, los tres clones y el contraste USDC del 2026-10-08, y dos ejemplos 0x sin verificar en la cadena. Commit 86df576 del 2026-10-09. La PR 14 se fusionó en main el 2026-10-09.", "If the address is on Solana, it reads it live and read-only. Your browser queries a public Solana service directly (api.mainnet-beta.solana.com or solana-rpc.publicnode.com), read-only. This site does not store the address, but that service receives the address and your IP under its own terms. The dated cards remain: the official one read again on 2026-10-09, including the published personal account 2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX, the ERYyy and FMNb clones from that day, the three clones and the USDC contrast from 2026-10-08, and two 0x examples that are not verified on-chain. Commit 86df576 of 2026-10-09. PR 14 was merged into main on 2026-10-09.")}</li>
+<li>{t("Si la dirección es de Solana, la lee en directo y solo en lectura. __AVISO_ES__ Las fichas fechadas siguen: la oficial releída el 2026-10-09, con la cuenta personal publicada 2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX, los clones ERYyy y FMNb de ese día, los tres clones y el contraste USDC del 2026-10-08, y dos ejemplos 0x sin verificar en la cadena. Commit 86df576 del 2026-10-09. La PR 14 se fusionó en main el 2026-10-09.", "If the address is on Solana, it reads it live and read-only. __AVISO_EN__ The dated cards remain: the official one read again on 2026-10-09, including the published personal account 2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX, the ERYyy and FMNb clones from that day, the three clones and the USDC contrast from 2026-10-08, and two 0x examples that are not verified on-chain. Commit 86df576 of 2026-10-09. PR 14 was merged into main on 2026-10-09.")}</li>
 <li>{t("Si el servicio no responde, lo dice y no inventa un resultado. Una dirección 0x no se lee como mint de Solana.", "If the service does not respond, it says so and does not invent a result. A 0x address is not read as a Solana mint.")}</li>
 <li>{t("«Esta dirección es la del registro de STUBX» significa que la dirección coincide con el registro. No es una garantía permanente ni una auditoría.", "“This address is the one in the STUBX registry” means the address matches the registry. It is not a permanent guarantee or an audit.")}</li>
 <li>{t("«Se parece a STUBX, pero no es la CA oficial» dice que el nombre o el símbolo se parece y el mint es otro. No dice quién lo hizo ni con qué intención.", "“Looks like STUBX, but it is not the official CA” says the name or the symbol looks similar and the mint is a different one. It does not say who did it or why.")}</li>
@@ -669,7 +704,7 @@ def legal() -> str:
 <li>{t("Este proyecto no guarda la IP. Cloudflare, como alojamiento, recibe la IP de cada visita y la trata según su propia política (registros del servidor que este proyecto no consulta ni exporta).", "This project does not store the IP address. Cloudflare, as the host, receives each visitor's IP and processes it under its own policy (server logs that this project does not query or export).")}</li>
 <li>{t("El selector de idioma guarda stubx-lab-lang en este navegador. Se puede borrar desde el propio navegador.", "The language switch stores stubx-lab-lang in this browser. You can delete it in the browser itself.")}</li>
 <li>{t("Lab guarda stubx-lab-mision-01 solo si haces la misión. Es progreso local, sin puntuación y sin valor. Se puede borrar.", "Lab stores stubx-lab-mision-01 only if you do the mission. It is local progress, with no score and no value. It can be deleted.")}</li>
-<li>{t("Tu navegador consulta directamente un servicio público de Solana (api.mainnet-beta.solana.com o solana-rpc.publicnode.com), solo en lectura. Este sitio no guarda la dirección, pero ese servicio recibe la dirección y tu IP según sus propias condiciones.", "Your browser queries a public Solana service directly (api.mainnet-beta.solana.com or solana-rpc.publicnode.com), read-only. This site does not store the address, but that service receives the address and your IP under its own terms.")}</li>
+<li>{t("__AVISO_ES__", "__AVISO_EN__")}</li>
 <li>{t("El service worker solo se registra en Lab, con alcance /lab/. No guarda la portada ni las páginas de avisos. Recargar trae esta copia.", "The service worker registers only on Lab, with scope /lab/. It does not store the home page or the notice pages. Reloading fetches this copy.")}</li>
 </ul>
 <h2>{t("Contacto", "Contact")}</h2>
@@ -1040,8 +1075,8 @@ def pares() -> str:
 <p>{t("Escribir una dirección no avala ese token. No conecta carteras, no firma y no envía.", "Writing an address does not endorse that token. It does not connect a wallet, it does not sign, and it does not send.")}</p>
 <p>{t("Un emparejamiento no es una colaboración ni un respaldo.", "A pairing is not a collaboration or an endorsement.")}</p>
 {source(
-    f"La lectura usa primero {origins}. Si el primero no responde, prueba el siguiente. Esos servicios reciben la dirección y la IP según sus condiciones. Esta página no guarda la dirección. El enlace de metadatos se muestra como texto y no se abre.",
-    f"The read uses {origins_en}, in that order. If the first one does not answer, it tries the next. Those services receive the address and the IP under their own terms. This page does not store the address. The metadata link is shown as text and is not opened.",
+    f"La lectura usa primero {origins}. Si el primero no responde, prueba el siguiente. Esos servicios reciben la dirección y la IP según sus condiciones. Esta página no escribe el Cuaderno. El enlace de metadatos se muestra como texto y no se abre.",
+    f"The read uses {origins_en}, in that order. If the first one does not answer, it tries the next. Those services receive the address and the IP under their own terms. This page does not write the Notebook. The metadata link is shown as text and is not opened.",
 )}
 <form id="consulta" class="consulta" action="#">
 <label for="direccion-token">{t("Dirección del token", "Token address")}</label>

@@ -1,0 +1,52 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { describe, test } from "node:test";
+import { pathToFileURL } from "node:url";
+import { repoRoot } from "../src/paths.js";
+
+const OLD_ES = "Este sitio no guarda la dirección.";
+const OLD_EN = "This site does not store the address, but";
+
+describe("aviso de Guardar", () => {
+  test("el texto aprobado está en un solo módulo y nombra los dos RPC", async () => {
+    const root = repoRoot();
+    const mod = (await import(pathToFileURL(path.join(root, "web/v2/shared/aviso-guardar.js")).href)) as {
+      AVISO_GUARDAR: { es: string; en: string };
+    };
+    const aviso = mod.AVISO_GUARDAR;
+    assert.equal(aviso.es.includes("["), false);
+    assert.equal(aviso.en.includes("["), false);
+    assert.equal(aviso.es.includes("PROVEEDOR"), false);
+    assert.equal(aviso.en.includes("PROVIDER"), false);
+    assert.match(aviso.es, /solana-rpc\.publicnode\.com y api\.mainnet-beta\.solana\.com/);
+    assert.match(aviso.en, /solana-rpc\.publicnode\.com and api\.mainnet-beta\.solana\.com/);
+    assert.match(aviso.es, /«Guardar esta consulta»/);
+    assert.match(aviso.en, /"Save this lookup"/);
+    const verify = readFileSync(path.join(root, "web/v2/verify/index.html"), "utf8");
+    const formStart = verify.indexOf('<form id="consulta"');
+    const formEnd = verify.indexOf("</form>", formStart);
+    const form = verify.slice(formStart, formEnd);
+    assert.equal(form.includes('id="aviso-guardar"'), true);
+    assert.equal(form.includes(aviso.es), true);
+    assert.equal(form.includes("solana-rpc.publicnode.com and api.mainnet-beta.solana.com"), true);
+    assert.equal(form.includes("Save this lookup"), true);
+    const folded = verify.slice(verify.indexOf('<details class="como"'), verify.indexOf("</details>", verify.indexOf('<details class="como"')));
+    assert.equal(folded.includes(aviso.es), false);
+    assert.equal(verify.includes(OLD_ES), false);
+    assert.equal(verify.includes("__AVISO_"), false);
+    for (const rel of ["web/v2/legal/index.html", "web/v2/methodology/index.html", "web/v2/pares/index.html"]) {
+      const html = readFileSync(path.join(root, rel), "utf8");
+      assert.equal(html.includes(OLD_ES), false, rel);
+      assert.equal(html.includes(OLD_EN), false, rel);
+      assert.equal(html.includes("__AVISO_"), false, rel);
+    }
+    const actions = readFileSync(path.join(root, "web/v2/assets/verificar-acciones.mjs"), "utf8");
+    const save = actions.slice(actions.indexOf("function saveQuery"), actions.indexOf("async function comparePrevious"));
+    assert.equal(save.includes("readMint"), false);
+    assert.equal(save.includes("fetch("), false);
+    const click = actions.slice(actions.indexOf('closest("#entender-resultado")'));
+    assert.equal(click.includes("GUIAS.has(href)"), true);
+    assert.equal(click.includes('getAttribute("data-guia") ||'), false);
+  });
+});

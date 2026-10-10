@@ -42,8 +42,8 @@ export const AUDIT_NOTICE: Localized = {
 };
 
 export const PRIVACY_NOTICE: Localized = {
-  es: "Tu navegador consulta directamente un servicio público de Solana (api.mainnet-beta.solana.com o solana-rpc.publicnode.com), solo en lectura. Este sitio no guarda la dirección, pero ese servicio recibe la dirección y tu IP según sus propias condiciones.",
-  en: "Your browser queries a public Solana service directly (api.mainnet-beta.solana.com or solana-rpc.publicnode.com), read-only. This site does not store the address, but that service receives the address and your IP under its own terms.",
+  es: "La lectura es directa y solo en lectura.",
+  en: "The read is live and read-only.",
 };
 
 export type FactState = "ok" | "ausente" | "fallo" | "no_consultado";
@@ -71,6 +71,7 @@ export type LiveReading = {
   missingState?: "ok" | "falta";
   identity?: Localized | null;
   report?: Localized;
+  shown?: Record<string, unknown> | null;
 };
 
 export type ReadMintInput = {
@@ -434,6 +435,7 @@ async function readWith(
       fetchedAt: packed.fetchedAt,
       sources: sourceRows(rpc),
       canSample: false,
+      shown: { kind: "ausente", mint, consultedAt: packed.fetchedAt, slot: packed.slot },
       missing: loc(
         "Faltan datos: la cuenta: ausente comprobado.",
         "Missing data: the account: confirmed absent.",
@@ -479,6 +481,7 @@ async function readWith(
       fetchedAt: packed.fetchedAt,
       sources: sourceRows(rpc),
       canSample: false,
+      shown: { kind: "no_mint", mint, consultedAt: packed.fetchedAt, slot: packed.slot },
     };
   }
   const decoded = decodeMint(mintInfo.owner, mintInfo.data);
@@ -492,7 +495,20 @@ async function readWith(
         "The account belongs to a token program, but its bytes could not be split. Permissions are not invented.",
       ),
     );
-    return { ...unread, ok: true, endpointHost: hostOf(rpc.lastEndpoint), usedFallback: rpc.usedFallback, slot: packed.slot };
+    return {
+      ...unread,
+      ok: true,
+      endpointHost: hostOf(rpc.lastEndpoint),
+      usedFallback: rpc.usedFallback,
+      slot: packed.slot,
+      shown: {
+        kind: "ilegible",
+        mint,
+        consultedAt: packed.fetchedAt,
+        slot: packed.slot,
+        program: mintInfo.owner === TOKEN_2022_PROGRAM ? "token-2022" : "spl-token",
+      },
+    };
   }
   const supply = await optionalMainnetSupply(mint, input);
   rememberSlot(supply, slots);
@@ -710,6 +726,55 @@ async function readWith(
     `Qué se comprobó: ${checkedEs.length ? checkedEs.join(", ") : "ningún dato con valor leído"}. Qué pide atención: ${attentionEs.length ? attentionEs.join(", ") : "ninguna señal de atención"}. Qué falta: ${missing.es}`,
     `What was checked: ${checkedEn.length ? checkedEn.join(", ") : "no fact with a read value"}. What needs attention: ${attentionEn.length ? attentionEn.join(", ") : "no attention signal"}. What is missing: ${missing.en}`,
   );
+  const metadataMutable = metadataState === "fallo"
+    ? "fallo"
+    : metaplex?.mutable === true || decoded.tokenMetadata?.updateAuthority
+      ? "si"
+      : metaplex?.mutable === false
+        ? "no"
+        : metadataState === "ausente"
+          ? "ausente"
+          : "no";
+  const supplyAmount = supply.ok && /^\d+$/.test(supply.value.amount) ? supply.value.amount : null;
+  const shown = {
+    kind: "mint",
+    mint,
+    consultedAt: packed.fetchedAt,
+    slot: slots.size === 1 ? ([...slots][0] ?? packed.slot) : packed.slot,
+    program: decoded.standard,
+    decimals: decoded.decimals,
+    supplyAccount: decoded.supplyRaw.toString(),
+    supplyRpc: supplyAmount,
+    supplyRpcStatus: supplyAmount === null ? "fallo" : "verificado",
+    mintAuthority: decoded.mintAuthority,
+    freezeAuthority: decoded.freezeAuthority,
+    name: names[0] ?? null,
+    symbol: symbols[0] ?? null,
+    uri: uri || null,
+    metadataStatus: metadataState === "ok" ? "verificado" : metadataState,
+    uriStatus: uriState === "ok" ? "verificado" : uriState,
+    metadataMutable,
+    extensions: decoded.extensions.map((item) => ({
+      type: item.type,
+      name: item.name,
+      status: item.supported ? "verificado" : "no_soportada",
+    })),
+    extensionsStatus: decoded.standard === "spl-token" ? "no_aplica" : decoded.extensionsParsed ? "verificado" : "fallo",
+    largestStatus: largestState === "ok" ? "ok" : largestState,
+    curve: !curveInfo
+      ? { present: false, status: "ausente", virtualToken: null, virtualQuote: null, realToken: null, realQuote: null, complete: null }
+      : !bonding
+        ? { present: null, status: "fallo", virtualToken: null, virtualQuote: null, realToken: null, realQuote: null, complete: null }
+        : {
+            present: true,
+            status: "verificado",
+            virtualToken: bonding.virtualTokenReserves.toString(),
+            virtualQuote: bonding.virtualQuoteReserves.toString(),
+            realToken: bonding.realTokenReserves.toString(),
+            realQuote: bonding.realQuoteReserves.toString(),
+            complete: bonding.complete,
+          },
+  };
   return {
     ok: true,
     kind: "lectura",
@@ -741,6 +806,7 @@ async function readWith(
     missingState: missingItems.length ? "falta" : "ok",
     identity,
     report,
+    shown,
   };
 }
 

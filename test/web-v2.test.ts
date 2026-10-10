@@ -429,7 +429,7 @@ describe("web v2", () => {
     assert.match(html, /2026-10-09/);
     assert.match(html, /USD Coin/);
     assert.match(html, /No es una auditoría, ni una recomendación, ni un aval/);
-    assert.match(html, /ese servicio recibe la dirección y tu IP/);
+    assert.match(html, /Solo si pulsas «Guardar esta consulta»/);
     assert.equal(html.includes("Esta página no consulta la red"), false);
     assert.equal(html.includes("\uFFFD"), false);
     assert.match(html, /assets\/verify\.js/);

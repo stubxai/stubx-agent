@@ -4,7 +4,7 @@
  */
 import { formatAmount } from "../shared/amount.js";
 import { compareRecords, pickPrevious, staleLine, validateCard, withinStoreLimit } from "../shared/notebook-model.js";
-import { PUBLICNODE_RPC, isAllowedRpcUrl, readMint } from "../shared/solana-read.js";
+import { cardFromShown } from "../shared/solana-read.js";
 
 const DB_NAME = "stubx-cuaderno";
 const STORE = "records";
@@ -22,7 +22,7 @@ const COPY = {
     unknownTitle: "Lo que no se puede determinar",
     noChange: "No hay un cambio en los datos leídos en las dos consultas.",
     db: "Este navegador no dejó guardar el cuaderno.",
-    fail: "No se pudo leer la red para guardar. No se ha inventado un resultado.",
+    fail: "No hay una lectura en pantalla para guardar. Pulsa Comprobar y espera el resultado.",
     full: "Este navegador ya tiene el máximo de fichas.",
     left: "Esta consulta",
     right: "La anterior",
@@ -42,7 +42,7 @@ const COPY = {
     unknownTitle: "What cannot be determined",
     noChange: "There is no change in the facts read on both queries.",
     db: "This browser did not allow the notebook to be saved.",
-    fail: "The network could not be read in order to save. No result was invented.",
+    fail: "There is no reading on screen to save. Press Check and wait for the result.",
     full: "This browser already has the maximum number of cards.",
     left: "This query",
     right: "The previous one",
@@ -101,24 +101,18 @@ function dbPut(db, record) {
   });
 }
 
-async function browserTransport(endpoint, body, timeoutMs) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body,
-      signal: controller.signal,
-    });
-    return { status: response.status, body: await response.text() };
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-let lastSaved = null;
+let shown = null;
 let lastView = null;
+
+document.addEventListener("stubx-lectura", (event) => {
+  shown = event && event.detail ? event.detail : null;
+});
+
+const GUIAS = new Set([
+  "/aprender/#guia-identificar",
+  "/aprender/#guia-permisos",
+  "/aprender/#guia-liquidez",
+]);
 
 function box() {
   return document.getElementById("comparacion-verify");
@@ -201,40 +195,29 @@ function paintComparison(current, previous, compared) {
   if (changes) changes.scrollIntoView({ block: "nearest" });
 }
 
-async function readCurrent(mint) {
-  if (lastSaved && lastSaved.card.mint === mint) return lastSaved;
-  if (!isAllowedRpcUrl(PUBLICNODE_RPC)) return null;
-  const result = await readMint({
-    mint,
-    endpoint: PUBLICNODE_RPC,
-    transport: browserTransport,
-    minIntervalMs: 2000,
-  });
-  if (!result.card) return null;
-  return { id: crypto.randomUUID(), note: "", card: result.card, source: "leida" };
+function recordOnScreen(mint) {
+  const card = cardFromShown(shown);
+  if (!card || card.mint !== mint) return null;
+  const checked = validateCard(card);
+  if (!checked.ok) return null;
+  return { id: crypto.randomUUID(), note: "", card: checked.card, source: "leida" };
 }
 
 async function saveQuery(mint) {
   say(t("saving"));
   try {
-    const record = await readCurrent(mint);
+    const record = recordOnScreen(mint);
     if (!record) {
-      say(t("fail"));
-      return;
-    }
-    const checked = validateCard(record.card);
-    if (!checked.ok) {
       say(t("fail"));
       return;
     }
     const db = await openDb();
     const existing = await dbAll(db);
-    if (!existing.some((item) => item.id === record.id) && !withinStoreLimit(existing.length, 1)) {
+    if (!withinStoreLimit(existing.length, 1)) {
       say(t("full"));
       return;
     }
-    await dbPut(db, { id: record.id, note: "", card: checked.card });
-    lastSaved = { id: record.id, note: "", card: checked.card };
+    await dbPut(db, { id: record.id, note: "", card: record.card });
     say(t("saved"));
   } catch {
     say(t("db"));
@@ -244,7 +227,7 @@ async function saveQuery(mint) {
 async function comparePrevious(mint, focusChanges) {
   say(t("saving"));
   try {
-    const current = await readCurrent(mint);
+    const current = recordOnScreen(mint);
     if (!current) {
       say(t("fail"));
       return;
@@ -277,8 +260,8 @@ document.addEventListener("click", (event) => {
   const understand = target.closest("#entender-resultado");
   if (understand) {
     event.preventDefault();
-    const href = understand.getAttribute("data-guia") || "/aprender/#guia-identificar";
-    location.assign(href);
+    const href = understand.getAttribute("data-guia");
+    if (href !== null && GUIAS.has(href)) location.assign(href);
     return;
   }
   const save = target.closest("#guardar-consulta");

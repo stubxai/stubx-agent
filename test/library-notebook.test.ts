@@ -26,6 +26,7 @@ interface ReadModule {
   isAllowedRpcUrl: (value: string) => boolean;
   blankCard: (mint: string, consultedAt: string, errors: unknown[]) => Card;
   readMint: (options: Record<string, unknown>) => Promise<{ ok: boolean; card: Card | null }>;
+  cardFromShown: (shown: Record<string, unknown>) => Card | null;
 }
 
 interface Card {
@@ -237,6 +238,40 @@ describe("lector y cuaderno", () => {
     assert.equal(result.card?.freezeAuthority?.status, "verificado");
     assert.equal(result.card?.partial, true);
     assert.equal(model.validateCard(result.card as Card).ok, true);
+  });
+
+  test("guardar usa la lectura de pantalla y un permiso ilegible queda en fallo", async () => {
+    const { read, model } = await modules();
+    const shown = {
+      kind: "mint",
+      mint: CA,
+      consultedAt: WHEN,
+      slot: 7,
+      program: "spl-token",
+      decimals: 6,
+      supplyAccount: "1000",
+      supplyRpc: null,
+      supplyRpcStatus: "fallo",
+      mintAuthority: { state: "no_decodificable", address: null },
+      freezeAuthority: { state: "revocada", address: null },
+      name: "STB",
+      symbol: "STB",
+      uri: "https://example.invalid/meta",
+      metadataStatus: "verificado",
+      uriStatus: "verificado",
+      metadataMutable: "no",
+      extensions: [],
+      extensionsStatus: "no_aplica",
+      largestStatus: "fallo",
+      curve: { present: false, status: "ausente", virtualToken: null, virtualQuote: null, realToken: null, realQuote: null, complete: null },
+    };
+    const card = read.cardFromShown(shown);
+    assert.ok(card);
+    assert.equal(card?.mintAuthority?.status, "fallo");
+    assert.equal(card?.freezeAuthority?.status, "verificado");
+    assert.equal(card?.supplyAccount, "1000");
+    assert.equal(model.validateCard(card as Card).ok, true);
+    assert.equal(read.cardFromShown({ ...shown, consultedAt: "ayer" }), null);
   });
 
   test("429, cuenta ausente, no-mint y dirección inválida no inventan un cero", async () => {

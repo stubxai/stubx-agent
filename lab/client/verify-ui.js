@@ -121,8 +121,14 @@ function paintVerify(out, view) {
     }
     var understand = verifyEl("a", { id: "entender-resultado", href: guide, "data-guia": guide });
     understand.textContent = lang === "en" ? "Understand this result" : "Entender este resultado";
+    var notice = document.getElementById("aviso-guardar");
+    if (notice) {
+      var copy = notice.cloneNode(true);
+      copy.removeAttribute("id");
+      actions.append(copy);
+    }
     actions.append(
-      actionButton("guardar-consulta", "Guardar esta consulta", "Save this query"),
+      actionButton("guardar-consulta", "Guardar esta consulta", "Save this lookup"),
       actionButton("comparar-anterior", "Comparar con la anterior", "Compare with the previous one"),
       actionButton("ver-cambio", "Ver qué cambió", "See what changed"),
       understand,
@@ -189,6 +195,7 @@ function bootVerify() {
 
   function apply(view, reveal) {
     last = view;
+    document.dispatchEvent(new CustomEvent("stubx-lectura", { detail: view && view.shown ? view.shown : null }));
     paintVerify(out, view);
     input.setAttribute("aria-invalid", view.kind === "invalida" ? "true" : "false");
     if (reveal && view.kind !== "vacio" && view.kind !== "comprobando") revealVerdict();

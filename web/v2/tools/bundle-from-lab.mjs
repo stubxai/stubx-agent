@@ -154,7 +154,7 @@ const snapshot = {
   missionBundle: "assets/mission.js",
   browserApi: "modules/verify/lookup.mjs",
   cards: "modules/verify/cards.json",
-  note: `Bundle regenerado desde lab/ en ${commit}, rama feat/verify-universal, PR 21. La página /verify/ lee en el navegador, solo lectura, con los servicios públicos de limits.json. Este sitio no guarda la dirección, pero ese servicio recibe la dirección y la IP según sus propias condiciones. La ficha oficial incluye la cuenta personal publicada ${PERSONAL}. inBranch significa que el commit citado es ancestro de esta rama. Esta copia no está publicada.`,
+  note: `Bundle regenerado desde lab/ en ${commit}, rama feat/verify-universal, PR 21. La página /verify/ lee en el navegador, solo lectura, con los servicios públicos de limits.json. El aviso de Guardar está en web/v2/shared/aviso-guardar.js. La ficha oficial incluye la cuenta personal publicada ${PERSONAL}. inBranch significa que el commit citado es ancestro de esta rama. Esta copia no está publicada.`,
 };
 writeFileSync(path.join(root, "web/v2/modules/snapshot.json"), `${JSON.stringify(snapshot, null, 2)}\n`);
 console.log(`Bundle regenerado desde lab/ ${commit}.`);
