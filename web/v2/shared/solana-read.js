@@ -474,7 +474,13 @@ export function blankCard(mint, consultedAt, errors) {
 }
 
 function authorityField(value) {
-  if (!value) return unavailableAuthority();
+  if (!value || (value.state !== "revocada" && value.state !== "activa")) {
+    return {
+      state: value && value.state === "no_decodificable" ? "no_decodificable" : "no_disponible",
+      address: null,
+      status: "fallo",
+    };
+  }
   return { state: value.state, address: value.address, status: "verificado" };
 }
 
@@ -695,6 +701,7 @@ export async function readMint(options) {
   card.supplyAccount = decoded.supplyRaw;
   card.mintAuthority = authorityField(decoded.mintAuthority);
   card.freezeAuthority = authorityField(decoded.freezeAuthority);
+  if (card.mintAuthority.status === "fallo" || card.freezeAuthority.status === "fallo") card.partial = true;
   card.extensions = decoded.extensions.items;
   card.extensionsStatus = decoded.extensions.status;
   if (metadataAccount) {

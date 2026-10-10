@@ -39,6 +39,8 @@ interface Card {
   supplyAccount: string | null;
   program?: string;
   mint: string;
+  mintAuthority?: { state: string; status: string };
+  freezeAuthority?: { state: string; status: string };
 }
 
 interface ModelModule {
@@ -167,6 +169,10 @@ describe("lector y cuaderno", () => {
     assert.equal(decoded?.supplyRaw, "4242");
     assert.equal(decoded?.mintAuthority.state, "revocada");
     assert.equal(decoded?.freezeAuthority.state, "activa");
+    const unreadable = Buffer.from(mintBytes());
+    unreadable.writeUInt32LE(2, 0);
+    const broken = read.decodeMintAccount(read.TOKEN_PROGRAM, unreadable);
+    assert.equal(broken?.mintAuthority.state, "no_decodificable");
     const meta = read.decodeMetadataAccount(metadataBytes("<script>alert(1)</script>", "ABC", "https://evil.example/phish", 1));
     assert.ok(meta);
     assert.equal(meta?.name.includes("<"), false);
@@ -199,6 +205,36 @@ describe("lector y cuaderno", () => {
     assert.equal(result.card?.uri.text, "https://evil.example/phish");
     assert.equal(JSON.stringify(result.card).includes("uiAmount"), false);
     assert.deepEqual(calls, ["getMultipleAccounts", "getTokenSupply", "getTokenLargestAccounts"]);
+  });
+
+  test("un permiso que no se puede leer se guarda como fallo", async () => {
+    const { read, model } = await modules();
+    const bytes = Buffer.from(mintBytes());
+    bytes.writeUInt32LE(2, 0);
+    const result = await read.readMint({
+      mint: CA,
+      ...fastClock(),
+      transport: async (_endpoint: string, body: string) => {
+        const parsed = JSON.parse(body) as { method: string };
+        if (parsed.method === "getMultipleAccounts") {
+          return rpcOk([
+            account(read.TOKEN_PROGRAM, bytes),
+            account(read.METADATA_PROGRAM, metadataBytes("STB", "STB", "https://example.invalid/meta")),
+            null,
+          ]);
+        }
+        if (parsed.method === "getTokenSupply") return { status: 403, body: JSON.stringify({ jsonrpc: "2.0", id: 1, error: { message: "indexed request blocked" } }) };
+        if (parsed.method === "getTokenLargestAccounts") return { status: 429, body: "{}" };
+        throw new Error(parsed.method);
+      },
+    });
+    assert.equal(result.ok, true);
+    assert.equal(result.card?.mintAuthority?.state, "no_decodificable");
+    assert.equal(result.card?.mintAuthority?.status, "fallo");
+    assert.notEqual(result.card?.mintAuthority?.status, "verificado");
+    assert.equal(result.card?.freezeAuthority?.status, "verificado");
+    assert.equal(result.card?.partial, true);
+    assert.equal(model.validateCard(result.card as Card).ok, true);
   });
 
   test("429, cuenta ausente, no-mint y dirección inválida no inventan un cero", async () => {
