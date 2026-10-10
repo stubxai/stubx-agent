@@ -268,32 +268,60 @@ function maskNegatedAdvice(text) {
   return out;
 }
 
-function isPrivateAsk(word) {
-  if (REQUEST.has(word)) return true;
-  return /^(?:escrib|mand|habl|contact|pas|envi|mensaje|message|inbox|dm)/.test(word) && /(?:me|nos)$/.test(word);
+const PRIVATE_SPLIT = /[.!?;:,¡¿…\n]+|\p{Extended_Pictographic}+/gu;
+const PRIVATE_ALLOWED = [
+  /^(?:los admins|nadie|el equipo) nunca(?: te)? escriben? por privado$/,
+  /^no (?:respondas|contestes|escribas) por privado$/,
+  /^si te escriben por privado es(?: una)? estafa$/,
+];
+const PRIVATE_INVITE = /(?:^| )(?:escribirme|escribeme|escribanme|escribidme|escribanos|hablemos|hablame|habladme|mandame|contactame|pasame|enviame|conmigo|inbox|dm|md|te paso|al priv)(?: |$)/;
+
+function canonSentence(text) {
+  return text.replace(/[^a-z0-9]+/g, " ").trim();
 }
 
-function privatePhraseIsSafe(words, at) {
-  const before = words.slice(0, at);
-  let bareAsk = false;
-  for (let i = 0; i < before.length; i += 1) {
-    if (!isPrivateAsk(before[i])) continue;
-    const earlier = before.slice(0, i);
-    if (!earlier.some((word) => NEGATION.has(word))) bareAsk = true;
-  }
-  if (bareAsk) return false;
-  if (words.some((word) => NEGATION.has(word))) return true;
-  return words.some((word) => WARNING_CUE.has(word) || WARNING_END.has(word));
+function isClosedPrivate(text) {
+  const sentence = canonSentence(text);
+  return PRIVATE_ALLOWED.some((pattern) => pattern.test(sentence));
 }
 
+function hasInvitation(text) {
+  return PRIVATE_INVITE.test(canonSentence(text));
+}
+
+function blankPrivatePhrase(text) {
+  return text.replace(/(^|[^a-z0-9])(por(?:[^a-z0-9]+)?privado)(?![a-z0-9])/g, (full, lead, match) => `${lead}${" ".repeat(match.length)}`);
+}
+
+/** Solo deja pasar «por privado» si la frase entera es uno de los avisos cerrados y no invita. */
 function maskPrivateContext(text) {
-  return text.split(/(?<=[.!?;:\n])/).map((sentence) => {
-    const words = wordList(sentence);
-    return sentence.replace(/(^|[^a-z0-9])(por(?:[^a-z0-9]+)?privado)(?![a-z0-9])/g, (full, lead, match, offset) => {
-      const at = wordList(sentence.slice(0, offset + lead.length)).length;
-      if (!privatePhraseIsSafe(words, at)) return full;
-      return `${lead}${" ".repeat(match.length)}`;
-    });
+  const pieces = [];
+  let last = 0;
+  for (const match of text.matchAll(PRIVATE_SPLIT)) {
+    pieces.push({ text: text.slice(last, match.index), sep: match[0] });
+    last = match.index + match[0].length;
+  }
+  pieces.push({ text: text.slice(last), sep: "" });
+  const allow = pieces.map((piece) => {
+    const body = canonSentence(piece.text);
+    return Boolean(body) && isClosedPrivate(body) && !hasInvitation(body);
+  });
+  const acrossComma = pieces.map(() => false);
+  for (let i = 0; i < pieces.length - 1; i += 1) {
+    if (!pieces[i].sep.includes(",")) continue;
+    const joined = `${pieces[i].text} ${pieces[i + 1].text}`;
+    if (!isClosedPrivate(joined) || hasInvitation(joined)) continue;
+    if (hasInvitation(pieces[i - 1]?.text ?? "") || hasInvitation(pieces[i + 2]?.text ?? "")) continue;
+    acrossComma[i] = true;
+    acrossComma[i + 1] = true;
+  }
+  for (let i = 0; i < pieces.length; i += 1) {
+    if (!allow[i]) continue;
+    if (hasInvitation(pieces[i - 1]?.text ?? "") || hasInvitation(pieces[i + 1]?.text ?? "")) allow[i] = false;
+  }
+  return pieces.map((piece, index) => {
+    const body = allow[index] || acrossComma[index] ? blankPrivatePhrase(piece.text) : piece.text;
+    return body + piece.sep;
   }).join("");
 }
 
