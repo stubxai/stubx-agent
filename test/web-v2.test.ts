@@ -313,8 +313,8 @@ describe("web v2", () => {
     assert.match(home, /See the example/);
     assert.match(html, /Ejemplo hipotético, no leído de la cadena/);
     assert.match(html, /Hypothetical example, not read from the chain/);
-    assert.match(html, /Lectura de datos públicos\. No es una comparación de calidad, ni una recomendación, ni un aval\. STUBX no tiene relación con estos tokens salvo la CA oficial\./);
-    assert.match(html, /Public data reading\. It is not a quality comparison, a recommendation, or an endorsement\. STUBX has no relationship with these tokens except the official CA\./);
+    assert.match(html, /Ejemplo educativo\. No es una comparación de calidad, ni una recomendación, ni un aval\. STUBX no tiene relación con ningún token de este ejemplo\./);
+    assert.match(html, /Educational example\. It is not a quality comparison, a recommendation, or an endorsement\. STUBX has no relationship with any token in this example\./);
     assert.equal(/<form\b/.test(html), false);
     assert.equal(/<input\b/.test(html), false);
     assert.equal(html.includes("assets/comparar.mjs"), false);

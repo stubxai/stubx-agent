@@ -572,15 +572,15 @@
       "status": "en_revision",
       "webPublished": false,
       "scope": {
-        "es": "Curva de ejemplo fija, fechada el 2026-10-10, marcada como no leída de la cadena. Sin dirección y sin cotización. No está en stubxai.com. Hace falta un abogado antes de publicarla.",
-        "en": "A fixed example curve, dated 2026-10-10, marked as not read from the chain. No address and no quote. It is not on stubxai.com. A lawyer has to see it before publication."
+        "es": "Ejemplo educativo fijo de una curva, fechado el 2026-10-10 y no leído de la cadena. Sin dirección. No está en stubxai.com.",
+        "en": "A fixed educational example of a curve, dated 2026-10-10 and not read from the chain. No address. It is not on stubxai.com."
       },
       "owner": "Equipo del repositorio",
-      "reviewer": "Pendiente de una persona distinta del autor, antes de publicar.",
+      "reviewer": "Revisado por Legal.",
       "reviewedOn": "2026-10-10",
       "block": {
-        "es": "No publicar hasta que lo vea un abogado. El 2026-10-10, stubxai.com/comparar no existe.",
-        "en": "Do not publish until a lawyer sees it. On 2026-10-10, stubxai.com/comparar does not exist."
+        "es": "Ejemplo educativo fijo, revisado por Legal. Cualquier versión con datos reales necesitará una revisión nueva. Hoy stubxai.com/comparar no existe.",
+        "en": "Fixed educational example, reviewed by Legal. Any version with real data will need a new review. Today stubxai.com/comparar does not exist."
       },
       "evidence": [
         {
@@ -608,6 +608,13 @@
           "change": {
             "es": "El ejemplo fijo sustituye a la calculadora. No hay dirección ni lectura de la cadena. Sigue fuera de stubxai.com.",
             "en": "The fixed example replaces the calculator. There is no address and no chain read. Still absent from stubxai.com."
+          }
+        },
+        {
+          "on": "2026-10-10",
+          "change": {
+            "es": "Legal revisa este ejemplo educativo fijo. Cualquier versión con datos reales necesitará una revisión nueva. Sigue fuera de stubxai.com.",
+            "en": "Legal reviews this fixed educational example. Any version with real data will need a new review. Still absent from stubxai.com."
           }
         }
       ]

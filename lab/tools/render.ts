@@ -417,9 +417,12 @@ const PERSON_EN: Record<string, string> = {
   "Pendiente de una prueba con lector de pantalla por otra persona.":
     "Pending a screen-reader test by another person.",
   "No aplica todavía.": "Not applicable yet.",
+  "Revisado por Legal.": "Reviewed by Legal.",
 };
 
 const MILESTONE_EN: Record<string, string> = {
+  "2026-10-09 · Medición de uso: ninguna en el cliente":
+    "2026-10-09 · Usage measurement: none on the client",
   "2026-10-09 · Verify lee cualquier mint, solo lectura, sin publicar":
     "2026-10-09 · Verify reads any mint, read-only, unpublished",
   "2026-10-09 · Verify y Lab: lectura visible en el móvil":

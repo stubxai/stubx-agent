@@ -5,9 +5,9 @@ const shots = "/opt/cursor/artifacts/screenshots";
 const FOOTER_ES = "Cripto de alto riesgo · Puedes perderlo todo · No es consejo de inversión.";
 const FOOTER_EN = "High-risk crypto · You could lose everything · Not investment advice.";
 const WARNING_ES =
-  "Lectura de datos públicos. No es una comparación de calidad, ni una recomendación, ni un aval. STUBX no tiene relación con estos tokens salvo la CA oficial.";
+  "Ejemplo educativo. No es una comparación de calidad, ni una recomendación, ni un aval. STUBX no tiene relación con ningún token de este ejemplo.";
 const WARNING_EN =
-  "Public data reading. It is not a quality comparison, a recommendation, or an endorsement. STUBX has no relationship with these tokens except the official CA.";
+  "Educational example. It is not a quality comparison, a recommendation, or an endorsement. STUBX has no relationship with any token in this example.";
 
 test.beforeAll(() => {
   mkdirSync(shots, { recursive: true });

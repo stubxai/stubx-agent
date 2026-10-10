@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, test } from "node:test";
 import { pathToFileURL } from "node:url";
 import { repoRoot } from "../src/paths.js";
 
-const mathUrl = pathToFileURL(path.join(repoRoot(), "web/v2/modules/curve-math.mjs")).href;
+const mathUrl = pathToFileURL(path.join(repoRoot(), "comparar/curve-math.mjs")).href;
 
 const LIVE = {
   virtualToken: 1059122445097276n,
@@ -93,7 +93,9 @@ describe("cálculo de la curva", () => {
 describe("el módulo no trae envío ni firma", () => {
   test("el texto del cálculo y de la lectura no nombra esas llamadas", () => {
     const root = repoRoot();
-    for (const rel of ["web/v2/modules/curve-math.mjs", "web/v2/modules/chain-read.mjs"]) {
+    assert.equal(existsSync(path.join(root, "web/v2/modules/curve-math.mjs")), false);
+    assert.equal(existsSync(path.join(root, "web/v2/modules/chain-read.mjs")), false);
+    for (const rel of ["comparar/curve-math.mjs", "comparar/chain-read.mjs"]) {
       const text = readFileSync(path.join(root, rel), "utf8");
       assert.equal(text.includes("sendTransaction"), false, rel);
       assert.equal(text.includes("signTransaction"), false, rel);

@@ -374,7 +374,7 @@ def home() -> str:
 <article class="slot"><p class="estado-pill">{t("No construido · 2026-10-09", "Not built · 2026-10-09")}</p><h3>{t("Contribuir", "Contribute")}</h3><p>{t("No hay formulario ni entrega de archivos. No se piden aportaciones.", "There is no form and no file upload. Contributions are not being requested.")}</p><p><a href="/contribuir/">{t("Ver qué falta", "See what is missing")}</a></p></article>
 </div>
 <div class="grid-3">
-<article class="card"><p class="estado-pill">{t("Ejemplo · 2026-10-10", "Example · 2026-10-10")}</p><h3>{t("Comparar", "Compare")}</h3><p>{t("Un ejemplo fijo de cómo se lee una curva. No usa una dirección y no cotiza. Sigue en borrador: hace falta un abogado antes de publicarlo.", "A fixed example of how a curve is read. It does not use an address and it does not quote. It stays a draft: a lawyer has to see it before publication.")}</p><p><a href="/comparar/">{t("Ver el ejemplo", "See the example")}</a></p></article>
+<article class="card"><p class="estado-pill">{t("Ejemplo · 2026-10-10", "Example · 2026-10-10")}</p><h3>{t("Comparar", "Compare")}</h3><p>{t("Ejemplo educativo fijo de cómo se lee una curva. No usa una dirección. Legal ya lo revisó. Cualquier versión con datos reales necesitará una revisión nueva.", "Fixed educational example of how a curve is read. It does not use an address. Legal has already reviewed it. Any version with real data will need a new review.")}</p><p><a href="/comparar/">{t("Ver el ejemplo", "See the example")}</a></p></article>
 </div>
 <section id="transparencia">
 <h2>{t("Transparencia", "Transparency")}</h2>
@@ -587,7 +587,8 @@ def legal() -> str:
 </ul>
 <h2>{t("Privacidad", "Privacy")}</h2>
 <ul class="clean">
-<li>{t("No hay cuentas, formularios, analítica ni cookies.", "There are no accounts, forms, analytics, or cookies.")}</li>
+<li>{t("No hay cuentas ni formularios. Cloudflare Web Analytics debe estar apagado en el panel de la zona. Este repositorio no lo inserta y el HTML servido el 2026-10-10 no lleva la baliza.", "There are no accounts or forms. Cloudflare Web Analytics must be off in the zone dashboard. This repository does not insert it, and the HTML served on 2026-10-10 does not contain the beacon.")}</li>
+<li>{t("Este proyecto no guarda la IP. Cloudflare, como alojamiento, recibe la IP de cada visita y la trata según su propia política (registros del servidor que este proyecto no consulta ni exporta).", "This project does not store the IP address. Cloudflare, as the host, receives each visitor's IP and processes it under its own policy (server logs that this project does not query or export).")}</li>
 <li>{t("El selector de idioma guarda stubx-lab-lang en este navegador. Se puede borrar desde el propio navegador.", "The language switch stores stubx-lab-lang in this browser. You can delete it in the browser itself.")}</li>
 <li>{t("Lab guarda stubx-lab-mision-01 solo si haces la misión. Es progreso local, sin puntuación y sin valor. Se puede borrar.", "Lab stores stubx-lab-mision-01 only if you do the mission. It is local progress, with no score and no value. It can be deleted.")}</li>
 <li>{t("Tu navegador consulta directamente un servicio público de Solana (api.mainnet-beta.solana.com o solana-rpc.publicnode.com), solo en lectura. Este sitio no guarda la dirección, pero ese servicio recibe la dirección y tu IP según sus propias condiciones.", "Your browser queries a public Solana service directly (api.mainnet-beta.solana.com or solana-rpc.publicnode.com), read-only. This site does not store the address, but that service receives the address and your IP under its own terms.")}</li>
@@ -932,7 +933,7 @@ def avances() -> str:
 def comparar() -> str:
     return f"""
 <h1>{t("Ejemplo de una curva", "Curve example")}</h1>
-<p><strong>{t("Lectura de datos públicos. No es una comparación de calidad, ni una recomendación, ni un aval. STUBX no tiene relación con estos tokens salvo la CA oficial.", "Public data reading. It is not a quality comparison, a recommendation, or an endorsement. STUBX has no relationship with these tokens except the official CA.")}</strong></p>
+<p><strong>{t("Ejemplo educativo. No es una comparación de calidad, ni una recomendación, ni un aval. STUBX no tiene relación con ningún token de este ejemplo.", "Educational example. It is not a quality comparison, a recommendation, or an endorsement. STUBX has no relationship with any token in this example.")}</strong></p>
 <p class="lede">{t("Ejemplo hipotético, no leído de la cadena. Fecha del ejemplo: 2026-10-10.", "Hypothetical example, not read from the chain. Example date: 2026-10-10.")}</p>
 <p>{t("Una curva abierta junta dos cantidades virtuales: la de la moneda del token y la de SOL. Si una se mueve, la otra se mueve en el sentido contrario. Esta página no calcula ese movimiento.", "An open curve pairs two virtual amounts: the token currency and SOL. If one moves, the other moves the other way. This page does not calculate that move.")}</p>
 <p>{t("Cuando la curva está completa, ese paso ya no cabe. Si no hay curva, no hay cantidades que mostrar. Aquí las cantidades son redondas y de ejemplo.", "When the curve is complete, that step no longer fits. If there is no curve, there are no amounts to show. Here the amounts are round numbers, and they are an example.")}</p>
