@@ -12,7 +12,7 @@ export const MAX_NOTE = 2_000;
 
 const CURVE_KEYS = ["present", "status", "virtualToken", "virtualQuote", "realToken", "realQuote", "complete"];
 
-const CARD_KEYS = [
+const CARD_KEYS_V1 = [
   "schema",
   "schemaVersion",
   "rulesVersion",
@@ -43,8 +43,25 @@ const CARD_KEYS = [
   "disclaimer",
 ];
 
+const CARD_KEYS_V2 = [
+  ...CARD_KEYS_V1.slice(0, CARD_KEYS_V1.indexOf("officialStubx")),
+  "largestStatus",
+  "officialStubx",
+  "disclaimer",
+];
+
 const RECORD_KEYS = ["id", "note", "card"];
-const STATUSES = new Set(["verificado", "inferido", "no_disponible", "no_aplica", "no_soportada"]);
+const STATUSES = new Set([
+  "verificado",
+  "inferido",
+  "ok",
+  "ausente",
+  "fallo",
+  "no_consultado",
+  "no_disponible",
+  "no_aplica",
+  "no_soportada",
+]);
 const PROGRAMS = new Set(["spl-token", "token-2022", "no_es_mint", "no_disponible"]);
 const ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/;
 const ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
@@ -99,8 +116,10 @@ function amount(value) {
 }
 
 export function validateCard(card) {
-  if (!sameKeys(card, CARD_KEYS)) return fail("La ficha no tiene la forma esperada.", "The card does not have the expected shape.");
-  if (card.schema !== CARD_SCHEMA || card.schemaVersion !== CARD_VERSION) {
+  const version = card && card.schemaVersion;
+  const keys = version === 1 ? CARD_KEYS_V1 : version === 2 ? CARD_KEYS_V2 : null;
+  if (!keys || !sameKeys(card, keys)) return fail("La ficha no tiene la forma esperada.", "The card does not have the expected shape.");
+  if (card.schema !== CARD_SCHEMA || (version !== 1 && version !== CARD_VERSION)) {
     return fail("La versión de la ficha no es la de este cuaderno.", "The card version is not the one this notebook uses.");
   }
   if (card.rulesVersion !== "0.1.0" || card.network !== "solana") {
@@ -133,8 +152,11 @@ export function validateCard(card) {
   if (!textField(card.name) || !textField(card.symbol) || !textField(card.uri)) {
     return fail("Un texto de metadatos no tiene la forma esperada.", "A metadata text does not have the expected shape.");
   }
-  if (!["si", "no", "no_disponible", "no_aplica"].includes(card.metadataMutable)) {
+  if (!["si", "no", "no_disponible", "no_aplica", "ausente", "fallo"].includes(card.metadataMutable)) {
     return fail("La mutabilidad no está en la lista.", "Mutability is not on the list.");
+  }
+  if (version === 2 && !STATUSES.has(card.largestStatus)) {
+    return fail("El estado de las cuentas grandes no está en la lista.", "The large-account status is not on the list.");
   }
   if (!Array.isArray(card.extensions) || card.extensions.length > 40 || !STATUSES.has(card.extensionsStatus)) {
     return fail("Las extensiones no tienen la forma esperada.", "Extensions do not have the expected shape.");

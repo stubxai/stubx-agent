@@ -187,6 +187,7 @@ describe("lector y cuaderno", () => {
           ]);
         }
         if (parsed.method === "getTokenSupply") return rpcOk({ amount: "1000", decimals: 6, uiAmount: null, uiAmountString: "skip" });
+        if (parsed.method === "getTokenLargestAccounts") return rpcOk([]);
         throw new Error(parsed.method);
       },
     });
@@ -197,8 +198,7 @@ describe("lector y cuaderno", () => {
     assert.equal(result.card?.name.text?.includes("<"), false);
     assert.equal(result.card?.uri.text, "https://evil.example/phish");
     assert.equal(JSON.stringify(result.card).includes("uiAmount"), false);
-    assert.deepEqual(calls, ["getMultipleAccounts", "getTokenSupply"]);
-    assert.equal(calls.includes("getTokenLargestAccounts"), false);
+    assert.deepEqual(calls, ["getMultipleAccounts", "getTokenSupply", "getTokenLargestAccounts"]);
   });
 
   test("429, cuenta ausente, no-mint y dirección inválida no inventan un cero", async () => {
@@ -608,5 +608,28 @@ describe("lector y cuaderno", () => {
     assert.equal(leaked.url(), "/aprender/#direccion");
     leaked.links[0]?.click();
     assert.equal(leaked.links[0]?.href, "/verify/");
+  });
+
+  test("un dato vacío no se llama verificado y un 403 no se llama ausencia", async () => {
+    const facts = (await import(pathToFileURL(path.join(repoRoot(), "web/v2/shared/fact-state.js")).href)) as {
+      factLine: (status: string, value: unknown, lang: string) => string;
+      factState: (status: string, value: unknown) => string;
+      missingFacts: (items: Array<{ label: string; state: string }>, lang: string) => { text: string };
+    };
+    assert.equal(facts.factState("verificado", ""), "ausente");
+    assert.equal(facts.factLine("verificado", "", "es"), "ausente comprobado");
+    assert.equal(facts.factLine("verificado", "", "es").includes("verificado"), false);
+    assert.equal(facts.factLine("verificado", "", "es").includes("no disponible"), false);
+    assert.equal(facts.factLine("fallo", null, "es"), "consulta fallida");
+    assert.equal(facts.factLine("no_consultado", null, "en"), "not queried");
+    assert.equal(facts.factLine("ok", null, "es"), "leído");
+    const summary = facts.missingFacts(
+      [
+        { label: "Enlace", state: "ausente" },
+        { label: "Cuentas", state: "fallo" },
+      ],
+      "es",
+    );
+    assert.match(summary.text, /Faltan datos: Enlace: ausente comprobado; Cuentas: consulta fallida/);
   });
 });

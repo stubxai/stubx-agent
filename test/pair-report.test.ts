@@ -120,6 +120,12 @@ describe("informe de pares", () => {
     assert.match(card, new RegExp(FOOTER_ES.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
     assert.match(card, /generado con stubxai.com\/verify/);
     assert.equal(/\b(verificado|seguro|aprobado|socio)\b/i.test(card), false);
+    assert.match(card, /creator_fee_basis_points/);
+    const plain = lines.map((line: { text: string }) => line.text).join("\n");
+    assert.match(plain, /Puede no coincidir con la comisión de una operación concreta; consulta la documentación de Pump\.fun\./);
+    assert.match(card.replaceAll("\n", " "), /Puede no coincidir con la comisión de una operación concreta; consulta la documentación de Pump\.fun\./);
+    assert.equal(/comisión de creación/i.test(card), false);
+    assert.equal(/se cobraría/i.test(card), false);
     const official = snapshotLines(evidenceRecord({ ...evidence, mint: OFFICIAL }), "en");
     const english = official.map((line: { text: string }) => line.text).join("\n");
     assert.match(english, /This address matches the published STUBX CA\./);

@@ -23,7 +23,7 @@ export const ALLOWED_METHODS = Object.freeze([
   "getSlot",
 ]);
 export const CARD_SCHEMA = "stubx.notebook.card";
-export const CARD_VERSION = 1;
+export const CARD_VERSION = 2;
 export const DISCLAIMER = Object.freeze({
   es: "No es una auditoría ni una recomendación. Muestra datos públicos de la cadena en el momento indicado; no dice si un token es bueno, seguro o una buena compra.",
   en: "It is not an audit or a recommendation. It shows public chain data at the time stated; it does not say whether a token is good, safe, or a good purchase.",
@@ -421,13 +421,18 @@ function parseAccount(value) {
 function emptyCurve() {
   return {
     present: null,
-    status: "no_disponible",
+    status: "no_consultado",
     virtualToken: null,
     virtualQuote: null,
     realToken: null,
     realQuote: null,
     complete: null,
   };
+}
+
+function textFact(text) {
+  if (typeof text !== "string" || text.length === 0) return { text: null, status: "ausente" };
+  return { text, status: "verificado" };
 }
 
 function unavailableAuthority() {
@@ -462,6 +467,7 @@ export function blankCard(mint, consultedAt, errors) {
     extensions: [],
     extensionsStatus: "no_disponible",
     curve: emptyCurve(),
+    largestStatus: "no_consultado",
     officialStubx: mint === OFFICIAL_MINT,
     disclaimer: DISCLAIMER,
   };
@@ -487,7 +493,7 @@ function endpointsFor(preferred) {
 function retryableRpcFailure(result) {
   const status = result?.httpStatus ?? null;
   if (status === 403 || status === 429 || status === 408 || (status !== null && status >= 500)) return true;
-  return /429|403|too many|rate limit|timeout|timed out|tiempo de espera|network|fetch failed|ECONN|ENET|ENOTFOUND|socket|access forbidden|aborted/i.test(
+  return /429|403|too many|rate limit|timeout|timed out|tiempo de espera|network|fetch failed|ECONN|ENET|ENOTFOUND|socket|access forbidden|aborted|personal token|indexed request|request blocked/i.test(
     result?.error ?? "",
   );
 }
@@ -608,6 +614,15 @@ export async function readMint(options) {
   ]);
   if (!accounts.ok) {
     errors.push({ method: accounts.method, httpStatus: accounts.httpStatus, message: accounts.error, at: accounts.fetchedAt });
+    card.programStatus = "fallo";
+    card.name.status = "fallo";
+    card.symbol.status = "fallo";
+    card.uri.status = "fallo";
+    card.metadataMutable = "fallo";
+    card.slotStatus = "fallo";
+    card.curve = { ...emptyCurve(), status: "fallo" };
+    card.supplyRpcStatus = "no_consultado";
+    card.largestStatus = "no_consultado";
     return { ok: false, error: "partial", card };
   }
   if (accounts.slot !== null) {
@@ -645,6 +660,7 @@ export async function readMint(options) {
     card.metadataMutable = "no_aplica";
     card.extensionsStatus = "no_aplica";
     card.supplyRpcStatus = "no_aplica";
+    card.largestStatus = "no_aplica";
     card.mintAuthority = { state: "no_aplica", address: null, status: "no_aplica" };
     card.freezeAuthority = { state: "no_aplica", address: null, status: "no_aplica" };
     card.curve = { ...emptyCurve(), present: false, status: "no_aplica" };
@@ -662,10 +678,13 @@ export async function readMint(options) {
     card.uri.status = "no_aplica";
     card.metadataMutable = "no_aplica";
     card.supplyRpcStatus = "no_aplica";
+    card.largestStatus = "no_aplica";
     card.extensionsStatus = "no_aplica";
     card.curve = curveAccount
       ? { ...emptyCurve(), ...decodeCurveAccount(curveAccount.owner, curveAccount.data) }
-      : { ...emptyCurve(), present: false, status: "verificado" };
+      : { ...emptyCurve(), present: false, status: "ausente" };
+    if (card.curve.present === false) card.curve.status = "ausente";
+    if (card.curve.status === "no_disponible") card.curve.status = "fallo";
     return { ok: true, error: null, card };
   }
   card.isMint = true;
@@ -681,11 +700,15 @@ export async function readMint(options) {
   if (metadataAccount) {
     const meta = decodeMetadataAccount(metadataAccount.data);
     if (meta) {
-      card.name = { text: meta.name, status: "verificado" };
-      card.symbol = { text: meta.symbol, status: "verificado" };
-      card.uri = { text: meta.uri, status: "verificado" };
-      card.metadataMutable = meta.mutable ?? "no_disponible";
+      card.name = textFact(meta.name);
+      card.symbol = textFact(meta.symbol);
+      card.uri = textFact(meta.uri);
+      card.metadataMutable = meta.mutable === "si" || meta.mutable === "no" ? meta.mutable : "ausente";
     } else {
+      card.name = { text: null, status: "fallo" };
+      card.symbol = { text: null, status: "fallo" };
+      card.uri = { text: null, status: "fallo" };
+      card.metadataMutable = "fallo";
       errors.push({
         method: "getMultipleAccounts",
         httpStatus: 200,
@@ -694,10 +717,10 @@ export async function readMint(options) {
       });
     }
   } else {
-    card.name.status = "no_disponible";
-    card.symbol.status = "no_disponible";
-    card.uri.status = "no_disponible";
-    card.metadataMutable = "no_disponible";
+    card.name = { text: null, status: "ausente" };
+    card.symbol = { text: null, status: "ausente" };
+    card.uri = { text: null, status: "ausente" };
+    card.metadataMutable = "ausente";
   }
   if (card.name.text === null && decoded.standard === "token-2022") {
     const pointer = decoded.extensions.metadataPointer;
@@ -710,22 +733,24 @@ export async function readMint(options) {
         at: accounts.fetchedAt,
       });
     } else if (embedded) {
-      card.name = { text: embedded.name, status: "verificado" };
-      card.symbol = { text: embedded.symbol, status: "verificado" };
-      card.uri = { text: embedded.uri, status: "verificado" };
-      card.metadataMutable = embedded.mutable;
+      card.name = textFact(embedded.name);
+      card.symbol = textFact(embedded.symbol);
+      card.uri = textFact(embedded.uri);
+      card.metadataMutable = embedded.mutable === "si" || embedded.mutable === "no" ? embedded.mutable : "ausente";
     }
   }
   if (curveAccount) {
     const curve = decodeCurveAccount(curveAccount.owner, curveAccount.data);
     card.curve = { ...emptyCurve(), ...curve };
+    if (curve.present === false) card.curve.status = "ausente";
+    if (curve.status === "no_disponible") card.curve.status = "fallo";
   } else {
-    card.curve = { ...emptyCurve(), present: false, status: "verificado" };
+    card.curve = { ...emptyCurve(), present: false, status: "ausente" };
   }
   const supply = await rpcCall(state, "getTokenSupply", [mint, { commitment: "confirmed" }]);
   if (!supply.ok) {
     errors.push({ method: supply.method, httpStatus: supply.httpStatus, message: supply.error, at: supply.fetchedAt });
-    card.supplyRpcStatus = "no_disponible";
+    card.supplyRpcStatus = "fallo";
     card.partial = true;
   } else {
     const amount = supply.value && supply.value.value && supply.value.value.amount;
@@ -743,9 +768,25 @@ export async function readMint(options) {
         message: "El suministro no vino como un entero. No se pone un cero.",
         at: supply.fetchedAt,
       });
-      card.supplyRpcStatus = "no_disponible";
+      card.supplyRpcStatus = "fallo";
       card.partial = true;
     }
+  }
+  const largest = await rpcCall(state, "getTokenLargestAccounts", [mint, { commitment: "confirmed" }]);
+  const largestRows = largest.ok && largest.value && Array.isArray(largest.value.value) ? largest.value.value : null;
+  if (!largest.ok || !largestRows) {
+    errors.push({
+      method: largest.method || "getTokenLargestAccounts",
+      httpStatus: largest.httpStatus,
+      message: largest.ok ? "La muestra no vino como una lista. No se pone un cero." : largest.error,
+      at: largest.fetchedAt,
+    });
+    card.largestStatus = "fallo";
+    card.partial = true;
+  } else if (largestRows.length === 0) {
+    card.largestStatus = "ausente";
+  } else {
+    card.largestStatus = "ok";
   }
   card.partial = card.partial || errors.length > 0 || card.extensionsStatus === "no_disponible";
   return { ok: errors.length === 0, error: errors.length ? "partial" : null, card };

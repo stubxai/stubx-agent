@@ -1,6 +1,7 @@
 /**
  * Cuaderno local. Solo lectura, sin cartera y sin ejecutar el JSON importado.
  */
+import { factLine, factState, missingFacts } from "../shared/fact-state.js";
 import {
   PUBLICNODE_RPC,
   DISCLAIMER,
@@ -64,12 +65,14 @@ const COPY = {
     decimals: "Decimales",
     name: "Nombre",
     symbol: "Símbolo",
-    uri: "URI de metadatos",
+    uri: "Enlace de metadatos",
     mutable: "Metadatos mutables",
     extensions: "Extensiones",
     curve: "Curva",
-    slot: "Slot",
+    slot: "Momento de la red",
+    largest: "Cuentas con más tokens",
     errors: "Qué no se pudo leer",
+    technical: "Detalles técnicos",
     yes: "sí",
     no: "no",
     revoked: "revocada",
@@ -124,12 +127,14 @@ const COPY = {
     decimals: "Decimals",
     name: "Name",
     symbol: "Symbol",
-    uri: "Metadata URI",
+    uri: "Metadata link",
     mutable: "Mutable metadata",
     extensions: "Extensions",
     curve: "Curve",
-    slot: "Slot",
+    slot: "Network moment",
+    largest: "Largest token accounts",
     errors: "What could not be read",
+    technical: "Technical details",
     yes: "yes",
     no: "no",
     revoked: "revoked",
@@ -286,16 +291,29 @@ function shown(value) {
   return visibleText(value);
 }
 
-function row(list, label, value, status) {
+function plain(status, value) {
+  const state = factState(status, value);
+  if (state === "ok") {
+    if (value === null || value === undefined || value === "") return factLine(status, value, lang());
+    if (value === true) return t("yes");
+    if (value === false) return t("no");
+    return factLine(status, shown(value), lang());
+  }
+  return factLine(status, value, lang());
+}
+
+function dataRow(list, label, status, value) {
   const term = text("dt", label);
-  const detail = text("dd", status ? `${shown(value)} · ${statusLabel(status)}` : shown(value));
+  const detail = text("dd", plain(status, value));
+  detail.dataset.estado = factState(status, value);
   list.append(term, detail);
+  return { label, state: factState(status, value) };
 }
 
 function renderCard(card) {
   const article = el("article", { class: "ficha" });
   article.append(text("p", staleLine(card.consultedAt, lang()), { class: "sello" }));
-  article.append(text("p", card.officialStubx ? t("official") : t("notOfficial")));
+  article.append(text("p", card.officialStubx ? t("official") : t("notOfficial"), { class: "franja-identidad" }));
   if (card.partial) article.append(text("p", t("partial"), { class: "nota" }));
   article.append(text("p", DISCLAIMER[lang()], { class: "nota" }));
   const code = el("code", { class: "mint" });
@@ -304,43 +322,53 @@ function renderCard(card) {
   mintLine.append(code);
   article.append(mintLine);
   const list = el("dl");
-  row(list, t("program"), programLabel(card.program), card.programStatus);
+  const facts = [];
+  const supplyStatus = card.supplyAccount !== null && card.supplyAccount !== undefined ? "verificado" : card.isMint ? "ausente" : card.supplyRpcStatus;
+  facts.push(dataRow(list, t("program"), card.programStatus, programLabel(card.program)));
   const mintAuth = card.mintAuthority.address
     ? `${authorityLabel(card.mintAuthority)} · ${card.mintAuthority.address}`
     : authorityLabel(card.mintAuthority);
   const freezeAuth = card.freezeAuthority.address
     ? `${authorityLabel(card.freezeAuthority)} · ${card.freezeAuthority.address}`
     : authorityLabel(card.freezeAuthority);
-  row(list, t("mintAuth"), mintAuth, card.mintAuthority.status);
-  row(list, t("freezeAuth"), freezeAuth, card.freezeAuthority.status);
-  row(list, t("supplyAccount"), card.supplyAccount, card.isMint ? "verificado" : card.supplyRpcStatus);
-  row(list, t("supplyRpc"), card.supplyRpc, card.supplyRpcStatus);
-  row(list, t("decimals"), card.decimals, card.decimals === null ? "no_disponible" : "verificado");
-  row(list, t("name"), card.name.text, card.name.status);
-  row(list, t("symbol"), card.symbol.text, card.symbol.status);
-  row(list, t("uri"), card.uri.text, card.uri.status);
-  const mutable = card.metadataMutable === "si" ? t("yes") : card.metadataMutable === "no" ? t("no") : statusLabel(card.metadataMutable);
-  row(list, t("mutable"), mutable);
-  const extensionText = card.extensions.length
-    ? card.extensions.map((item) => `${item.name} (${statusLabel(item.status)})`).join(", ")
-    : null;
-  row(list, t("extensions"), extensionText, card.extensionsStatus);
+  facts.push(dataRow(list, t("mintAuth"), card.mintAuthority.status, mintAuth));
+  facts.push(dataRow(list, t("freezeAuth"), card.freezeAuthority.status, freezeAuth));
+  facts.push(dataRow(list, t("supplyAccount"), supplyStatus, card.supplyAccount));
+  facts.push(dataRow(list, t("supplyRpc"), card.supplyRpcStatus, card.supplyRpc));
+  facts.push(dataRow(list, t("decimals"), card.decimals === null ? "ausente" : "verificado", card.decimals));
+  facts.push(dataRow(list, t("name"), card.name.status, card.name.text));
+  facts.push(dataRow(list, t("symbol"), card.symbol.status, card.symbol.text));
+  facts.push(dataRow(list, t("uri"), card.uri.status, card.uri.text));
+  const mutableValue = card.metadataMutable === "si" ? t("yes") : card.metadataMutable === "no" ? t("no") : null;
+  const mutableStatus = mutableValue ? "verificado" : card.metadataMutable;
+  facts.push(dataRow(list, t("mutable"), mutableStatus, mutableValue));
+  const extensionText = card.extensions.length ? card.extensions.map((item) => item.name).join(", ") : null;
+  facts.push(dataRow(list, t("extensions"), card.extensionsStatus, extensionText));
   const curve = card.curve;
-  const curveText = curve.present
-    ? `${t("yes")} · ${curve.realToken ?? t("none")} / ${curve.virtualToken ?? t("none")}`
-    : curve.present;
-  row(list, t("curve"), curveText, curve.status);
-  row(list, t("slot"), card.slot, card.slotStatus);
-  article.append(list);
+  const curveValue = curve.present === true ? t("yes") : curve.present === false ? null : null;
+  facts.push(dataRow(list, t("curve"), curve.present === true ? curve.status : curve.status, curveValue));
+  facts.push(dataRow(list, t("largest"), card.largestStatus || "no_consultado", null));
+  const summary = missingFacts(facts, lang());
+  const summaryNode = text("p", summary.text, { class: "resumen-datos" });
+  summaryNode.dataset.estado = summary.state;
+  article.append(summaryNode, list);
   article.append(text("p", t("untrusted"), { class: "muted" }));
+  const details = el("details", { class: "tecnico" });
+  const summaryTech = el("summary");
+  summaryTech.textContent = t("technical");
+  const tech = el("dl");
+  dataRow(tech, t("slot"), card.slotStatus, card.slot);
+  dataRow(tech, t("supplyAccount"), supplyStatus, card.supplyAccount);
+  dataRow(tech, t("supplyRpc"), card.supplyRpcStatus, card.supplyRpc);
   if (card.errors.length) {
-    article.append(text("h3", t("errors")));
     const errors = el("ul");
     for (const item of card.errors) {
       errors.append(text("li", `${item.at} · ${item.method} · ${item.message}`));
     }
-    article.append(errors);
+    tech.append(errors);
   }
+  details.append(summaryTech, tech);
+  article.append(details);
   return article;
 }
 

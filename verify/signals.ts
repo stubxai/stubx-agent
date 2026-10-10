@@ -46,6 +46,10 @@ export const PRIVACY_NOTICE: Localized = {
   en: "Your browser queries a public Solana service directly (api.mainnet-beta.solana.com or solana-rpc.publicnode.com), read-only. This site does not store the address, but that service receives the address and your IP under its own terms.",
 };
 
+export type FactState = "ok" | "ausente" | "fallo" | "no_consultado";
+
+export type ReadingFact = { id: string; label: Localized; state: FactState };
+
 export type LiveReading = {
   ok: boolean;
   kind: "lectura" | "limite" | "tiempo" | "red" | "invalida";
@@ -62,6 +66,10 @@ export type LiveReading = {
   fetchedAt: string | null;
   sources: ReadSource[];
   canSample: boolean;
+  facts?: ReadingFact[];
+  missing?: Localized;
+  missingState?: "ok" | "falta";
+  identity?: Localized | null;
 };
 
 export type ReadMintInput = {
@@ -425,6 +433,15 @@ async function readWith(
       fetchedAt: packed.fetchedAt,
       sources: sourceRows(rpc),
       canSample: false,
+      missing: loc(
+        "Faltan datos: la cuenta: ausente comprobado.",
+        "Missing data: the account: confirmed absent.",
+      ),
+      missingState: "falta",
+      identity: loc(
+        `Identidad del proyecto, aparte de este análisis: la CA oficial de STUBX es ${OFFICIAL_CA}.`,
+        `Project identity, separate from this analysis: the official STUBX CA is ${OFFICIAL_CA}.`,
+      ),
     };
   }
   if (!isMintAccount(mintInfo.owner, mintInfo.data)) {
@@ -514,12 +531,12 @@ async function readWith(
         ? supplyMatches
           ? `Hay ${byteSupply} tokens, con ${decoded.decimals} decimales, leídos de los bytes del mint. La lectura extra coincide.`
           : `Los bytes del mint dicen ${byteSupply} con ${decoded.decimals} decimales, y la lectura extra no coincide. Se muestra la cifra de los bytes. No se calculan porcentajes.`
-        : `Hay ${byteSupply} tokens, con ${decoded.decimals} decimales, leídos de los bytes del mint. La lectura extra del suministro no respondió. Eso no cambia esta cifra.`,
+        : `Hay ${byteSupply} tokens, con ${decoded.decimals} decimales, leídos de los bytes del mint. La consulta extra del suministro es una consulta fallida: no respondió. Eso no cambia esta cifra y no es una ausencia.`,
       supply.ok
         ? supplyMatches
           ? `There are ${byteSupply} tokens, with ${decoded.decimals} decimals, read from the mint bytes. The extra read matches.`
           : `The mint bytes say ${byteSupply} with ${decoded.decimals} decimals, and the extra read does not match. The figure shown is the one from the bytes. Percentages are not calculated.`
-        : `There are ${byteSupply} tokens, with ${decoded.decimals} decimals, read from the mint bytes. The extra supply read did not respond. That does not change this figure.`,
+        : `There are ${byteSupply} tokens, with ${decoded.decimals} decimals, read from the mint bytes. The extra supply query is a failed query: it did not respond. That does not change this figure and it is not an absence.`,
     ),
   });
   signals.push(authoritySignal("emision", decoded.mintAuthority, likeness.inRegistry));
@@ -537,15 +554,35 @@ async function readWith(
       ),
     });
   }
-  signals.push({
-    id: "cuentas",
-    level: "neutro",
-    title: loc("Cuentas con tokens", "Token accounts"),
-    explain: loc(
-      "La muestra de las 20 cuentas con más tokens no se pide sola: los servicios públicos suelen rechazarla. Se puede intentar aparte. Si falla, no es una concentración de cero.",
-      "The sample of the 20 largest token accounts is not requested on its own: public services often refuse it. It can be tried separately. If it fails, it is not zero concentration.",
-    ),
-  });
+  const largest = await rpc.getTokenLargestAccounts(mint);
+  let largestState: FactState = "fallo";
+  if (!largest.ok) {
+    largestState = "fallo";
+    signals.push({
+      id: "cuentas",
+      level: "atencion",
+      title: loc("Cuentas con tokens", "Token accounts"),
+      explain: loc(
+        "La consulta de las cuentas con más tokens ha fallado. Es una consulta fallida, no una ausencia y no una concentración de cero.",
+        "The query for the largest token accounts failed. It is a failed query, not an absence and not zero concentration.",
+      ),
+    });
+  } else if (largest.value.length === 0) {
+    largestState = "ausente";
+    signals.push({
+      id: "cuentas",
+      level: "neutro",
+      title: loc("Cuentas con tokens", "Token accounts"),
+      explain: loc(
+        "La consulta respondió y la muestra volvió vacía. Es una ausencia comprobada de esa muestra, no una concentración de cero y no un censo.",
+        "The query responded and the sample came back empty. That sample is confirmed absent. It is not zero concentration and it is not a census.",
+      ),
+    });
+  } else {
+    largestState = "ok";
+    const sample = await accountSample(rpc, mint, mintInfo.owner, curve, largest, null);
+    signals.push(sample.signal);
+  }
   signals.push(curveSignal(curveInfo, bonding));
   const copyByName = !likeness.inRegistry && likeness.signals.some((item) => /^nombre |^símbolo /.test(item));
   if (likeness.inRegistry) {
@@ -568,17 +605,7 @@ async function readWith(
         `The name or the symbol looks like STUBX and the address is different. This does not say who created it or why. The only official CA is ${OFFICIAL_CA}.`,
       ),
     });
-  } else {
-    signals.push({
-      id: "registro",
-      level: "neutro",
-      title: loc("No es la dirección de STUBX del registro", "It is not the STUBX registry address"),
-      explain: loc(
-        "Este mint no está en el registro curado. Que no esté no significa que sea falso ni que sea una copia.",
-        "This mint is not in the curated registry. That does not mean it is fake, and it does not mean it is a copy.",
-      ),
-    });
-    if (likeness.signals.length > 0) {
+  } else if (likeness.signals.length > 0) {
       signals.push({
         id: "parecido",
         level: "atencion",
@@ -588,7 +615,6 @@ async function readWith(
           "A link or another fact matches the registry and the address is different. The match does not say who did it.",
         ),
       });
-    }
   }
   const hosts = new Set(sourceRows(rpc).map((item) => item.host));
   if (hosts.size > 1) {
@@ -632,6 +658,45 @@ async function readWith(
       };
   const displayName = clipForeign(names[0] || "", likeness.inRegistry);
   const displaySymbol = clipForeign(symbols[0] || "", likeness.inRegistry);
+  const metadataState: FactState = !metaInfo && !decoded.tokenMetadata ? "ausente" : metaplex || decoded.tokenMetadata ? "ok" : "fallo";
+  const uriState: FactState = metadataState === "fallo" ? "fallo" : uri ? "ok" : "ausente";
+  const facts: ReadingFact[] = [
+    { id: "suministro", label: loc("Suministro en los bytes del mint", "Supply in the mint bytes"), state: "ok" },
+    {
+      id: "suministro-extra",
+      label: loc("Consulta extra del suministro", "Extra supply query"),
+      state: supply.ok ? "ok" : "fallo",
+    },
+    { id: "metadatos", label: loc("Metadatos", "Metadata"), state: metadataState },
+    { id: "enlace", label: loc("Enlace de metadatos", "Metadata link"), state: uriState },
+    { id: "cuentas", label: loc("Cuentas con más tokens", "Largest token accounts"), state: largestState },
+    {
+      id: "curva",
+      label: loc("Curva", "Curve"),
+      state: !curveInfo ? "ausente" : bonding ? "ok" : "fallo",
+    },
+  ];
+  const missingItems = facts.filter((item) => item.state !== "ok");
+  const word = (state: FactState, code: "es" | "en") =>
+    state === "ausente"
+      ? code === "en" ? "confirmed absent" : "ausente comprobado"
+      : state === "fallo"
+        ? code === "en" ? "failed query" : "consulta fallida"
+        : code === "en" ? "not queried" : "no consultado";
+  const missing = missingItems.length
+    ? loc(
+        `Faltan datos: ${missingItems.map((item) => `${item.label.es}: ${word(item.state, "es")}`).join("; ")}.`,
+        `Missing data: ${missingItems.map((item) => `${item.label.en}: ${word(item.state, "en")}`).join("; ")}.`,
+      )
+    : loc("No falta ningún dato pedido en esta lectura.", "No requested fact is missing in this reading.");
+  const identity = loc(
+    likeness.inRegistry
+      ? `Identidad del proyecto: esta dirección (${mint}) es la CA oficial de STUBX.`
+      : `Identidad del proyecto, aparte de este análisis: la CA oficial de STUBX es ${OFFICIAL_CA}.`,
+    likeness.inRegistry
+      ? `Project identity: this address (${mint}) is the official STUBX CA.`
+      : `Project identity, separate from this analysis: the official STUBX CA is ${OFFICIAL_CA}.`,
+  );
   return {
     ok: true,
     kind: "lectura",
@@ -657,7 +722,11 @@ async function readWith(
     slot: slots.size === 1 ? [...slots][0] ?? packed.slot : packed.slot,
     fetchedAt: packed.fetchedAt,
     sources: sourceRows(rpc),
-    canSample: true,
+    canSample: largestState === "fallo",
+    facts,
+    missing,
+    missingState: missingItems.length ? "falta" : "ok",
+    identity,
   };
 }
 
@@ -856,10 +925,10 @@ function metadataSignals(
       {
         id: "metadatos",
         level: "neutro",
-        title: loc("Sin metadatos en las fuentes leídas", "No metadata in the sources read"),
+        title: loc("Metadatos: ausente comprobado", "Metadata: confirmed absent"),
         explain: loc(
-          "No había cuenta Metaplex ni metadatos de Token-2022. El nombre puede vivir fuera de esta lectura.",
-          "There was no Metaplex account and no Token-2022 metadata. The name may live outside this reading.",
+          "Se pidió la cuenta de metadatos y no estaba. Es una ausencia comprobada, no una consulta fallida. El nombre puede vivir fuera de esta lectura.",
+          "The metadata account was requested and it was not there. That is a confirmed absence, not a failed query. The name may live outside this reading.",
         ),
       },
     ];
@@ -875,8 +944,8 @@ function metadataSignals(
     tone: official ? undefined : "ajeno",
     title: loc(name ? `Nombre: ${visibleName}` : "Nombre no leído", name ? `Name: ${visibleName}` : "Name not read"),
     explain: loc(
-      `Símbolo: ${symbol ? clipForeign(symbol, official) : "no leído"}. URI: ${uri ? clipForeign(uri, official) : "no leída"}. El nombre es un texto. La dirección es otra cosa.`,
-      `Symbol: ${symbol ? clipForeign(symbol, official) : "not read"}. URI: ${uri ? clipForeign(uri, official) : "not read"}. The name is text. The address is something else.`,
+      `Símbolo: ${symbol ? clipForeign(symbol, official) : "ausente comprobado"}. Enlace de metadatos: ${uri ? clipForeign(uri, official) : "ausente comprobado"}. El nombre es un texto. La dirección es otra cosa.`,
+      `Symbol: ${symbol ? clipForeign(symbol, official) : "confirmed absent"}. Metadata link: ${uri ? clipForeign(uri, official) : "confirmed absent"}. The name is text. The address is something else.`,
     ),
   });
   const update = tokenMeta?.updateAuthority || (metaplex ? metaplex.updateAuthority : null);

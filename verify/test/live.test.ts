@@ -163,8 +163,8 @@ describe("lectura universal con RPC simulado", () => {
     assert.equal(reading.title.es, "Lectura de este token");
     assert.equal(reading.signals.find((item) => item.id === "congelacion")?.level, "riesgo");
     assert.equal(reading.signals.find((item) => item.id === "emision")?.level, "atencion");
-    assert.match(reading.signals.find((item) => item.id === "cuentas")?.explain.es ?? "", /no se pide sola/);
-    assert.match(reading.signals.find((item) => item.id === "cuentas")?.explain.es ?? "", /concentración de cero/);
+    assert.match(reading.signals.find((item) => item.id === "cuentas")?.explain.es ?? "", /No es un censo/);
+    assert.equal(/no se pide sola/.test(reading.signals.find((item) => item.id === "cuentas")?.explain.es ?? ""), false);
     assert.equal(/scam|recomendado|\bseguro\b/i.test(textOf(reading)), false);
   });
 
@@ -205,7 +205,9 @@ describe("lectura universal con RPC simulado", () => {
     assert.equal(reading.signals.find((item) => item.id === "congelacion")?.level, "ok");
     assert.match(reading.rows.map((row) => row.label.es).join(" "), /Momento/);
     assert.match(reading.rows.map((row) => row.value.es).join(" "), /slot 1/);
-    assert.equal(reading.canSample, true);
+    assert.equal(reading.canSample, false);
+    assert.match(reading.missing?.es ?? "", /ausente comprobado|No falta/);
+    assert.equal((reading.identity?.es ?? "").includes(mint), true);
   });
 
   test("una cuenta ausente y una que no es mint no se rellenan", async () => {
@@ -436,7 +438,7 @@ describe("lectura universal con RPC simulado", () => {
     assert.equal(reading.signals.find((item) => item.id === "emision")?.level, "ok");
   });
 
-  test("la lectura automática no pide las cuentas más grandes", async () => {
+  test("la lectura automática pide las cuentas más grandes y un fallo aparte no es un censo", async () => {
     const sample = fixture("revoked-mint");
     const methods: string[] = [];
     const accounts = new Map<string, AccountFixture | null>([
@@ -462,7 +464,7 @@ describe("lectura universal con RPC simulado", () => {
       minIntervalMs: 0,
       sleep: async () => {},
     });
-    assert.equal(methods.includes("getTokenLargestAccounts"), false);
+    assert.equal(methods.includes("getTokenLargestAccounts"), true);
     assert.equal(methods.includes("getTokenSupply"), true);
     const sampleRead = await readLargestAccounts({
       mint: sample.mint,

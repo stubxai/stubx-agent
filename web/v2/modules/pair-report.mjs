@@ -96,13 +96,26 @@ export function evidenceRecord(input) {
   };
 }
 
-function feeText(lang, labelEs, labelEn, bps) {
+export const GLOBAL_FEE_ACCOUNT = "4wTV1YmiEkRvAtNtsSGPtUrqRYQMe5SKy2uB4Jjaxnjf";
+export const FEE_CAVEAT = {
+  es: "Puede no coincidir con la comisión de una operación concreta; consulta la documentación de Pump.fun.",
+  en: "It may not match the fee of a specific trade; check the Pump.fun documentation.",
+};
+
+function feeText(lang, field, offset, bps) {
+  const caveat = lang === "en" ? FEE_CAVEAT.en : FEE_CAVEAT.es;
   if (bps === null) {
     return lang === "en"
-      ? `${labelEn}: not available. Zero is not used in its place.`
-      : `${labelEs}: no disponible. No se pone cero en su lugar.`;
+      ? `Pump.fun Global account ${GLOBAL_FEE_ACCOUNT}, field ${field}, offset ${offset}: not read. Zero is not used in its place. ${caveat}`
+      : `Cuenta Global de Pump.fun ${GLOBAL_FEE_ACCOUNT}, campo ${field}, desplazamiento ${offset}: no se leyó. No se pone cero en su lugar. ${caveat}`;
   }
-  return lang === "en" ? `${labelEn}: ${bps} basis points.` : `${labelEs}: ${bps} diezmilésimas.`;
+  const percent = (bps / 100).toLocaleString(lang === "en" ? "en-GB" : "es-ES", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  return lang === "en"
+    ? `Read on the Pump.fun Global account ${GLOBAL_FEE_ACCOUNT}, field ${field}, offset ${offset}: ${bps} basis points (${percent}%). ${caveat}`
+    : `Leído en la cuenta Global de Pump.fun ${GLOBAL_FEE_ACCOUNT}, campo ${field}, desplazamiento ${offset}: ${bps} diezmilésimas (${percent} %). ${caveat}`;
 }
 
 export function snapshotLines(evidence, lang) {
@@ -136,18 +149,17 @@ export function snapshotLines(evidence, lang) {
     { size: "body", text: name },
     { size: "body", text: base },
     { size: "body", text: curve[evidence.curve] ?? curve.no_disponible },
-    { size: "body", text: feeText(en ? "en" : "es", "Comisión del protocolo", "Protocol fee", evidence.protocolFeeBps) },
-    { size: "body", text: feeText(en ? "en" : "es", "Comisión de creación", "Creation fee", evidence.creatorFeeBps) },
+    { size: "body", text: feeText(en ? "en" : "es", "fee_basis_points", 105, evidence.protocolFeeBps) },
+    { size: "body", text: feeText(en ? "en" : "es", "creator_fee_basis_points", 154, evidence.creatorFeeBps) },
     { size: "body", text: en ? "A pairing is not a collaboration or an endorsement." : "Un emparejamiento no es una colaboración ni un respaldo." },
     { size: "body", text: en ? "The hash detects changes against this evidence. It does not certify that it is true." : "El hash detecta cambios respecto a esta evidencia. No certifica que sea verdad." },
     { size: "small", text: en ? FOOTER.en : FOOTER.es },
     { size: "small", text: "generado con stubxai.com/verify" },
   ];
-  if (evidence.slot === null || evidence.slot === undefined) {
-    lines.splice(10, 0, { size: "body", text: en ? "Slot: not available." : "Slot: no disponible." });
-  } else {
-    lines.splice(10, 0, { size: "body", text: `Slot: ${evidence.slot}` });
-  }
+  const slotLine = evidence.slot === null || evidence.slot === undefined
+    ? { size: "small", text: en ? "Technical detail. Network moment: not read." : "Detalle técnico. Momento de la red: no se leyó." }
+    : { size: "small", text: en ? `Technical detail. Network moment: ${evidence.slot}.` : `Detalle técnico. Momento de la red: ${evidence.slot}.` };
+  lines.push(slotLine);
   return lines;
 }
 
