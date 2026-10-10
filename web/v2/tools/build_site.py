@@ -347,7 +347,7 @@ def home() -> str:
 <source media="(min-width: 900px)" srcset="assets/hero-talon-1000.webp" type="image/webp">
 <img src="assets/hero-talon-movil-800.webp" width="800" height="750" alt="{html.escape("Agente Talón, personaje de STUBX: ticket rosa con una gema verde. Ilustración con elementos generados con IA. / Agente Talón, the STUBX character: a pink ticket with a green gem. Illustration with AI-generated elements.")}">
 </picture>
-<figcaption>{t("Agente Talón. Ilustración con elementos generados con IA. No es un sello de aprobación.", "Agente Talón. Illustration with AI-generated elements. It is not a seal of approval.")}</figcaption>
+<figcaption>{t("Agente Talón. No es un sello de aprobación.", "Agente Talón. It is not a seal of approval.")}</figcaption>
 </figure>
 </section>
 <section class="ca-panel" id="contrato" aria-labelledby="ca-title">
@@ -456,7 +456,34 @@ def prepare_tool(name: str) -> str:
             + "</p>"
         )
         raw = raw.replace("</form>", "</form>\n" + extra, 1)
-    return raw
+    return fold_aviso(raw)
+
+
+def fold_aviso(raw: str) -> str:
+    """Deja la primera línea del aviso fuera del desplegable, sin cambiar su texto."""
+    marker = '<div class="aviso" data-disclaimer="si">'
+    start = raw.find(marker)
+    if start < 0:
+        return raw
+    end = raw.find("</div>", start)
+    if end < 0:
+        return raw
+    block = raw[start:end]
+    first_end = block.find("</p>")
+    if first_end < 0:
+        return raw
+    head = block[: first_end + 4]
+    rest = block[first_end + 4 :]
+    if not rest.strip() or 'class="aviso-mas"' in block:
+        return raw
+    summary = (
+        '<details class="aviso-mas"><summary>'
+        + t("Leer el aviso completo", "Read the full notice")
+        + "</summary>"
+        + rest
+        + "</details>"
+    )
+    return raw[:start] + head + summary + raw[end:]
 
 
 def methodology() -> str:

@@ -369,7 +369,6 @@ html.js .estatica { display: none; }
   .resultado h2 { font-size: 1.35rem; }
   button, summary, .consulta button, .consulta input { min-height: 44px; }
 }
-
 @font-face {
   font-family: Inter;
   font-style: normal;
@@ -1027,4 +1026,409 @@ footer.site .mica,
   .hero-actions a.primary { width: 100%; min-height: 3.75rem; }
   .hero-actions a:not(.primary) { width: auto; justify-self: start; }
   .tool-grid > :is(.card, .slot) { min-height: 0; }
+}
+
+/* Tercera pasada: hero por herramienta, tarjetas con estado y pie en columnas. */
+main h1 {
+  display: block;
+  min-height: 8.5rem;
+  margin: 0 0 1rem;
+  padding: 1.35rem 8.4rem 1.35rem 1.35rem;
+  overflow-wrap: break-word;
+  word-break: normal;
+  color: var(--cream);
+  font-family: Silkscreen, var(--font);
+  font-size: clamp(1.45rem, 3.3vw, 2.45rem);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  border: 3px solid var(--tone);
+  border-radius: 1.35rem;
+  background-color: var(--abyss);
+  background-image:
+    url("talon-avatar-256.webp"),
+    radial-gradient(ellipse 48% 90% at 100% 0%, var(--tone-glow), transparent 58%),
+    radial-gradient(ellipse 36% 70% at 0% 100%, rgba(27, 235, 145, 0.16), transparent 52%),
+    linear-gradient(155deg, #140818 0%, var(--abyss) 58%, var(--bg) 100%);
+  background-repeat: no-repeat;
+  background-position: right 1.05rem center, center, center, center;
+  background-size: 6.4rem 6.4rem, auto, auto, auto;
+  box-shadow: 0 0 0 5px var(--tone-glow), 0 18px 40px rgba(4, 13, 31, 0.4);
+}
+main h1::before { content: none; display: none; width: 0; height: 0; margin: 0; border: 0; box-shadow: none; }
+main h1::after { content: none; display: none; }
+.hero h1 {
+  min-height: 0;
+  padding: 0;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: clamp(1.95rem, 4.5vw, 3.45rem);
+  font-weight: 650;
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+  background: none;
+  background-image: none;
+}
+body:has(a[href="/verify/"][aria-current="page"]) main,
+body:has(a[href="/lab/"][aria-current="page"]) main,
+body:has(a[href="/tablero/"][aria-current="page"]) main,
+body:has(a[href="/studio/"][aria-current="page"]) main,
+body:has(a[href="/pares/"][aria-current="page"]) main,
+body:has(a[href="/comparar/"][aria-current="page"]) main,
+body:has(a[href="/contribuir/"][aria-current="page"]) main,
+body:has(a[href="/aprender/"][aria-current="page"]) main,
+body:has(a[href="/cuaderno/"][aria-current="page"]) main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+body:has(a[href="/verify/"][aria-current="page"]) main > *,
+body:has(a[href="/lab/"][aria-current="page"]) main > *,
+body:has(a[href="/tablero/"][aria-current="page"]) main > *,
+body:has(a[href="/studio/"][aria-current="page"]) main > *,
+body:has(a[href="/pares/"][aria-current="page"]) main > *,
+body:has(a[href="/comparar/"][aria-current="page"]) main > *,
+body:has(a[href="/contribuir/"][aria-current="page"]) main > *,
+body:has(a[href="/aprender/"][aria-current="page"]) main > *,
+body:has(a[href="/cuaderno/"][aria-current="page"]) main > * { order: 8; }
+body:has(a[href="/verify/"][aria-current="page"]) main > h1,
+body:has(a[href="/lab/"][aria-current="page"]) main > h1,
+body:has(a[href="/tablero/"][aria-current="page"]) main > h1,
+body:has(a[href="/studio/"][aria-current="page"]) main > h1,
+body:has(a[href="/pares/"][aria-current="page"]) main > h1,
+body:has(a[href="/comparar/"][aria-current="page"]) main > h1,
+body:has(a[href="/contribuir/"][aria-current="page"]) main > h1,
+body:has(a[href="/aprender/"][aria-current="page"]) main > h1,
+body:has(a[href="/cuaderno/"][aria-current="page"]) main > h1 { order: 1; }
+body:has(a[href="/verify/"][aria-current="page"]) main > .aviso,
+body:has(a[href="/lab/"][aria-current="page"]) main > .aviso,
+body:has(a[href="/tablero/"][aria-current="page"]) main > .aviso,
+body:has(a[href="/verify/"][aria-current="page"]) #aviso-red,
+body:has(a[href="/lab/"][aria-current="page"]) #aviso-red,
+body:has(a[href="/tablero/"][aria-current="page"]) #aviso-red,
+body:has(a[href="/verify/"][aria-current="page"]) #aviso-version,
+body:has(a[href="/lab/"][aria-current="page"]) #aviso-version,
+body:has(a[href="/tablero/"][aria-current="page"]) #aviso-version { order: 3; }
+body:has(a[href="/verify/"][aria-current="page"]) .herramienta { display: contents; }
+body:has(a[href="/verify/"][aria-current="page"]) form.consulta,
+body:has(a[href="/pares/"][aria-current="page"]) form.consulta { order: 2; }
+body:has(a[href="/verify/"][aria-current="page"]) main > .lede,
+body:has(a[href="/lab/"][aria-current="page"]) main > .lede,
+body:has(a[href="/pares/"][aria-current="page"]) main > .lede,
+body:has(a[href="/studio/"][aria-current="page"]) main > .lede,
+body:has(a[href="/aprender/"][aria-current="page"]) main > .lede,
+body:has(a[href="/contribuir/"][aria-current="page"]) main > .lede,
+body:has(a[href="/comparar/"][aria-current="page"]) main > .lede { order: 4; }
+body:has(a[href="/verify/"][aria-current="page"]) main > .aviso-fijo { order: 5; }
+body:has(a[href="/verify/"][aria-current="page"]) main > details.como,
+body:has(a[href="/lab/"][aria-current="page"]) main > details.como { order: 6; }
+body:has(a[href="/verify/"][aria-current="page"]) .herramienta > p { order: 7; }
+body:has(a[href="/verify/"][aria-current="page"]) #resultado,
+body:has(a[href="/pares/"][aria-current="page"]) #resultado { order: 8; }
+body:has(a[href="/verify/"][aria-current="page"]) main > details.tecnico { order: 9; }
+body:has(a[href="/lab/"][aria-current="page"]) #mision-app,
+body:has(a[href="/lab/"][aria-current="page"]) .estatica { order: 5; }
+body:has(a[href="/studio/"][aria-current="page"]) .plantillas { order: 2; }
+body:has(a[href="/contribuir/"][aria-current="page"]) main > p:nth-of-type(-n+3) { order: 3; }
+body:has(a[href="/contribuir/"][aria-current="page"]) main > .btn-row { order: 5; }
+body:has(a[href="/pares/"][aria-current="page"]) main > p:has(strong),
+body:has(a[href="/comparar/"][aria-current="page"]) main > p:has(strong) { order: 3; }
+body:has(a[href="/tablero/"][aria-current="page"]) main > p { order: 4; }
+body:has(a[href="/tablero/"][aria-current="page"]) .grupos { order: 5; }
+body:has(a[href="/aprender/"][aria-current="page"]) main > p:has(> a[href="/lab/"]) { order: 2; }
+body:has(a[href="/comparar/"][aria-current="page"]) main > dl { order: 5; }
+.aviso[data-disclaimer="si"] > p:first-child { margin: 0; color: var(--cream); font-weight: 650; }
+.aviso-mas { margin: 0.6rem 0 0; padding: 0; border: 0; background: transparent; box-shadow: none; }
+.aviso-mas summary {
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  max-width: 100%;
+  min-height: 44px;
+  margin: 0;
+  padding: 0.4rem 0.95rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--cream);
+  background: var(--bg-elev);
+}
+.aviso-mas p { margin: 0.65rem 0 0; }
+main > h2::before,
+main > section > h2::before,
+main > article > h2::before,
+.tareas > section > h2::before,
+#mision-app h2::before {
+  content: "";
+  display: block;
+  height: 14px;
+  margin: 0 0 0.7rem;
+  background-image:
+    radial-gradient(circle, var(--gem) 3px, transparent 3.4px),
+    radial-gradient(circle, var(--pink) 3px, transparent 3.4px);
+  background-size: 18px 14px, 18px 14px;
+  background-position: 0 center, 9px center;
+  background-repeat: repeat-x;
+}
+.ficha, .tarea, .paso, .senal, .feedback, #mision-app section {
+  border-radius: 1rem;
+  transition: transform 180ms var(--ease), border-color 180ms var(--ease), box-shadow 180ms var(--ease);
+}
+.ficha, .tarea, .paso {
+  position: relative;
+  padding: 1rem 1rem 1rem 4.5rem;
+  border-left: 8px solid var(--tone);
+}
+.ficha::before, .tarea::before, .paso::before {
+  content: "";
+  position: absolute;
+  top: 0.95rem;
+  left: 0.8rem;
+  width: 2.7rem;
+  height: 2.7rem;
+  border: 2px solid var(--tone);
+  border-radius: 0.65rem;
+  background: url("talon-avatar-96.webp") center / cover no-repeat;
+  box-shadow: 0 0 0 3px var(--tone-glow);
+}
+.ficha:hover, .tarea:hover, .paso:hover { transform: translateY(-3px); }
+.tarea[data-status="en_revision"] { border-left-color: var(--attention); }
+.tarea[data-status="en_curso"] { border-left-color: var(--gem); }
+.tarea[data-status="propuesta"] { border-left-color: var(--line); }
+.resultado[data-luz="ok"] { box-shadow: 0 0 0 3px rgba(200, 245, 220, 0.45), var(--shadow); }
+.resultado[data-luz="atencion"] { box-shadow: 0 0 0 3px rgba(255, 227, 173, 0.45), var(--shadow); }
+.resultado[data-luz="riesgo"] { box-shadow: 0 0 0 3px rgba(255, 208, 220, 0.5), var(--shadow); }
+.feedback.encaja { border-color: var(--gem); border-left-width: 8px; box-shadow: 0 0 0 3px rgba(27, 235, 145, 0.35); }
+.feedback.no-encaja { border-color: var(--attention); border-left-width: 8px; box-shadow: 0 0 0 3px rgba(255, 227, 173, 0.4); }
+.senal[data-nivel="ok"] { border-left-color: var(--ok); }
+.senal[data-nivel="atencion"] { border-left-color: var(--attention); }
+.senal[data-nivel="riesgo"] { border-left-color: var(--risk); }
+.pasos { gap: 0.6rem; }
+.pasos button {
+  min-width: 3.35rem;
+  min-height: 3.35rem;
+  border-width: 2px;
+  border-radius: 0.85rem;
+  color: var(--cream);
+  font-family: Silkscreen, var(--font);
+  font-size: 1.05rem;
+  transition: transform 180ms var(--ease), border-color 180ms var(--ease), box-shadow 180ms var(--ease), background-color 180ms var(--ease);
+}
+.pasos button[aria-current="step"] {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(255, 45, 111, 0.45);
+}
+.pasos button:not(:disabled):not([aria-current="step"]) {
+  border-color: var(--gem);
+  box-shadow: inset 0 -4px 0 var(--gem);
+}
+.pasos button:disabled {
+  border-style: dashed;
+  color: var(--muted);
+  background: transparent;
+  box-shadow: none;
+}
+.pasos button:not(:disabled):hover { transform: translateY(-2px); }
+#mision-app .opciones, .paso ul {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0.4rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+#mision-app .opciones button, .paso li {
+  min-height: 4.75rem;
+  padding: 0.95rem 1.1rem;
+  border: 2px solid var(--line);
+  border-radius: 1rem;
+  background: var(--bg-elev);
+  color: var(--text);
+  text-align: left;
+  font-size: 1.05rem;
+  line-height: 1.4;
+  transition: transform 180ms var(--ease), border-color 180ms var(--ease), box-shadow 180ms var(--ease);
+}
+#mision-app .opciones button:hover, .paso li:hover {
+  border-color: var(--gem);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(4, 13, 31, 0.35), 0 0 0 3px rgba(27, 235, 145, 0.35);
+}
+#mision-app h3, .paso > h4 {
+  margin: 0.35rem 0 0.7rem;
+  padding: 0.85rem 1rem;
+  border: 2px solid var(--tone);
+  border-radius: 0.95rem;
+  background: var(--abyss);
+  color: var(--cream);
+  font-size: 1.15rem;
+}
+body:has(a[href="/studio/"][aria-current="page"]) .plantillas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.75rem;
+}
+body:has(a[href="/studio/"][aria-current="page"]) .plantillas button {
+  min-height: 5rem;
+  padding: 0.95rem 1rem;
+  border-width: 2px;
+  border-radius: 1rem;
+  text-align: left;
+  transition: transform 180ms var(--ease), border-color 180ms var(--ease), box-shadow 180ms var(--ease), background-color 180ms var(--ease);
+}
+body:has(a[href="/studio/"][aria-current="page"]) .plantillas button:hover { transform: translateY(-2px); }
+body:has(a[href="/studio/"][aria-current="page"]) .plantillas button[aria-pressed="true"] {
+  background: var(--cream);
+  color: var(--accent-ink);
+  border-color: var(--cream);
+  box-shadow: 0 0 0 3px rgba(249, 230, 208, 0.35);
+}
+.btn-row a {
+  min-height: 4.6rem;
+  padding: 0.9rem 1.15rem;
+  border-width: 2px;
+  border-radius: 1rem;
+}
+.btn-row a.primary { box-shadow: 0 0 0 3px rgba(255, 45, 111, 0.4); }
+body:has(a[href="/tablero/"][aria-current="page"]) .grupos a {
+  min-height: 4.4rem;
+  padding: 0.8rem 1.1rem;
+  border-width: 2px;
+  border-radius: 1rem;
+  background: var(--bg-elev);
+  font-weight: 700;
+}
+body:has(a[href="/aprender/"][aria-current="page"]) main > p:has(> a[href="/lab/"]) a,
+article.slot:has(> h1) a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 3.6rem;
+  padding: 0.8rem 1.25rem;
+  border-radius: 999px;
+  background: var(--gem);
+  color: var(--accent-ink);
+  font-weight: 700;
+  text-decoration: none;
+}
+body:has(a[href="/aprender/"][aria-current="page"]) .grid-2 > .card {
+  position: relative;
+  padding-left: 4.3rem;
+  border-left: 6px solid var(--muted);
+}
+body:has(a[href="/aprender/"][aria-current="page"]) .grid-2 > .card::before {
+  content: "";
+  position: absolute;
+  top: 1rem;
+  left: 0.85rem;
+  width: 2.45rem;
+  height: 2.45rem;
+  border: 2px solid var(--muted);
+  border-radius: 0.6rem;
+  background: url("talon-avatar-96.webp") center / cover no-repeat;
+}
+body:has(a[href="/pares/"][aria-current="page"]) main > p:has(strong),
+body:has(a[href="/comparar/"][aria-current="page"]) main > p:has(strong),
+body:has(a[href="/contribuir/"][aria-current="page"]) main > p:has(strong) {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(142, 172, 207, 0.5);
+  border-left: 6px solid var(--attention);
+  border-radius: 1rem;
+  background: var(--abyss);
+  color: var(--text);
+}
+body:has(a[href="/comparar/"][aria-current="page"]) dl { display: grid; gap: 0.75rem; }
+body:has(a[href="/comparar/"][aria-current="page"]) dt {
+  margin: 0;
+  padding: 0.8rem 1rem 0.2rem;
+  border: 2px solid var(--risk);
+  border-bottom: 0;
+  border-radius: 1rem 1rem 0 0;
+  background: var(--bg-elev);
+  color: var(--cream);
+}
+body:has(a[href="/comparar/"][aria-current="page"]) dd {
+  margin: 0;
+  padding: 0.15rem 1rem 0.9rem;
+  border: 2px solid var(--risk);
+  border-top: 0;
+  border-radius: 0 0 1rem 1rem;
+  background: var(--abyss);
+  color: var(--cream);
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+article.slot:has(> h1) {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+article.slot:has(> h1)::before { content: none; }
+@media (min-width: 48.01rem) {
+  body:has(a[href="/verify/"][aria-current="page"]) main > h1,
+  body:has(a[href="/pares/"][aria-current="page"]) main > h1 {
+    margin-bottom: -0.9rem;
+    border-bottom: 0;
+    border-radius: 1.35rem 1.35rem 0 0;
+  }
+  body:has(a[href="/verify/"][aria-current="page"]) form.consulta,
+  body:has(a[href="/pares/"][aria-current="page"]) form.consulta {
+    margin-top: 0;
+    padding: 1rem 1.15rem 1.15rem;
+    border: 3px solid var(--tone);
+    border-top: 1px solid rgba(249, 230, 208, 0.28);
+    border-radius: 0 0 1.35rem 1.35rem;
+    background: var(--abyss);
+    box-shadow: 0 16px 36px rgba(4, 13, 31, 0.35);
+  }
+}
+footer.site {
+  margin-top: 2.8rem;
+  border-top: 0;
+  background:
+    radial-gradient(ellipse 42% 80% at 0% 0%, rgba(251, 67, 127, 0.18), transparent 62%),
+    radial-gradient(ellipse 36% 70% at 100% 100%, rgba(27, 235, 145, 0.12), transparent 58%),
+    var(--abyss);
+}
+footer.site::before {
+  content: "";
+  display: block;
+  height: 16px;
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(circle, var(--gem) 3px, transparent 3.5px),
+    radial-gradient(circle, var(--pink) 3px, transparent 3.5px);
+  background-size: 18px 16px, 18px 16px;
+  background-position: 0 center, 9px center;
+  background-repeat: repeat-x;
+}
+@media (min-width: 900px) {
+  footer.site .wrap {
+    grid-template-columns: 1.35fr 1fr 1fr;
+    gap: 0.9rem 1.25rem;
+    align-items: start;
+  }
+  footer.site p:first-child,
+  footer.site p.mica,
+  footer.site p:last-child { grid-column: 1 / -1; }
+}
+@media (max-width: 48rem) {
+  main h1 {
+    min-height: 0;
+    padding: 1rem 5.2rem 1rem 0.95rem;
+    font-size: clamp(1.28rem, 5.6vw, 1.7rem);
+    background-size: 4.1rem 4.1rem, auto, auto, auto;
+    background-position: right 0.7rem center, center, center, center;
+  }
+  .hero h1 {
+    min-height: 0;
+    padding: 0;
+    font-size: clamp(1.8rem, 8vw, 2.35rem);
+    background-image: none;
+  }
+  .ficha, .tarea, .paso { padding-left: 4.1rem; }
 }
