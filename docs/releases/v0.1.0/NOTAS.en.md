@@ -33,8 +33,8 @@ A card does not say whether a token is good, safe, or a good purchase.
 
 - It lives in `web/v2/`. Home, Verify, Lab, board, methodology, security, risks, legal, proofs, status, supply, channels, brand, versions, learn, and the post archive.
 - The language switch is in the header. The legal footer is the same on every page of `web/v2/`. Web v2 was deployed to stubxai.com on 2026-10-09, outside these notes. These notes do not deploy or change it.
-- Studio, the notebook, and contribute are visible, and they say they are not built. There is no button pretending to save or send them.
-- The recoverable copy of what was already published remains in `web/current/`.
+- `web/v2/` is the website published on stubxai.com since 2026-10-09 (merge `ed1c7759`). `web/current/` is the earlier copy, kept so it can be put back.
+- Studio, the notebook, and the `noindex` of specific routes are not fixed in this note. If the Studio pull request or the notebook pull request merges before the tag, this paragraph has to be rewritten to match what stubxai.com serves that day.
 
 ## Indexing
 
@@ -42,8 +42,8 @@ Done on 2026-10-09:
 
 - `web/v2/robots.txt` allows crawling and points at `https://stubxai.com/sitemap.xml`. It asks the AI training crawlers named in that file not to use the content.
 - `web/v2/sitemap.xml` lists the public URLs, with a `lastmod` date.
-- Public pages in `web/v2/` do not carry `noindex`. `X-Robots-Tag` does apply to the Lab service worker, the JSON files, the manifest, the 404 page, and `/studio/`.
-- `web/current/` still uses `noindex`. Web v2 was deployed to stubxai.com on 2026-10-09, outside these notes. These notes do not deploy or change it.
+- Public pages in `web/v2/` do not carry `noindex`. `X-Robots-Tag` does apply to the Lab service worker, the JSON files, the manifest, and the 404 page.
+- `web/v2/` is the website published on stubxai.com since 2026-10-09 (merge `ed1c7759`). `web/current/` is the earlier copy, kept so it can be put back. Web v2 was deployed to stubxai.com on 2026-10-09, outside these notes. These notes do not deploy or change it.
 
 ## What this version does not do
 

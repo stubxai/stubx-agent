@@ -31,8 +31,8 @@ Una ficha no dice si un token es bueno, seguro o una buena compra.
 
 - Vive en `web/v2/`. Portada, Verify, Lab, tablero, metodología, seguridad, riesgos, legal, pruebas, estado, reparto, canales, marca, versiones, aprender y el archivo de posts.
 - El cambio de idioma está en la cabecera. El pie legal es el mismo en todas las páginas de `web/v2/`. La web v2 se desplegó en stubxai.com el 2026-10-09, fuera de estas notas. Estas notas no la despliegan ni la cambian.
-- Studio, el cuaderno y contribuir se ven, y dicen que no están construidos. No hay un botón que finja guardarlos o enviarlos.
-- La copia recuperable de lo que ya estaba publicado sigue en `web/current/`.
+- `web/v2/` es la web publicada en stubxai.com desde el 2026-10-09 (merge `ed1c7759`). `web/current/` es la copia anterior, para volver atrás.
+- Studio, el cuaderno y el `noindex` de rutas concretas no se fijan en esta nota. Si entran la PR de Studio o la del cuaderno antes del tag, hay que reescribir este párrafo con lo que stubxai.com sirva ese día.
 
 ## Indexación
 
@@ -40,8 +40,8 @@ Hecho el 2026-10-09:
 
 - `web/v2/robots.txt` deja rastrear el sitio y señala `https://stubxai.com/sitemap.xml`. Pide a los rastreadores de entrenamiento de IA nombrados en ese archivo que no usen el contenido.
 - `web/v2/sitemap.xml` enumera las URLs públicas, con fecha `lastmod`.
-- Las páginas públicas de `web/v2/` no llevan `noindex`. Sí lo llevan, con `X-Robots-Tag`, el service worker de Lab, los JSON, el manifiesto, la página 404 y `/studio/`.
-- `web/current/` sigue con `noindex`. La web v2 se desplegó en stubxai.com el 2026-10-09, fuera de estas notas. Estas notas no la despliegan ni la cambian.
+- Las páginas públicas de `web/v2/` no llevan `noindex`. Sí lo llevan, con `X-Robots-Tag`, el service worker de Lab, los JSON, el manifiesto y la página 404.
+- `web/v2/` es la web publicada en stubxai.com desde el 2026-10-09 (merge `ed1c7759`). `web/current/` es la copia anterior, para volver atrás. La web v2 se desplegó en stubxai.com el 2026-10-09, fuera de estas notas. Estas notas no la despliegan ni la cambian.
 
 ## Lo que esta versión no hace
 

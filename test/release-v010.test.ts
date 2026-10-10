@@ -22,6 +22,9 @@ describe("v0.1.0 notes, without a tag", () => {
     assert.match(log, /robots\.txt/);
     assert.match(log, /sitemap\.xml/);
     assert.match(log, /Esta entrada no despliega `web\/v2\/`\. stubxai.com no cambia por este documento\. La v2 ya está desplegada desde el 2026-10-09\./);
+    assert.match(log, /`web\/v2\/` es la web publicada en stubxai.com desde el 2026-10-09 \(merge `ed1c7759`\)/);
+    assert.equal(log.includes("no están construidos"), false);
+    assert.equal(/\/studio\//.test(log.slice(0, log.indexOf("## 2026-10-09 · Verify y Lab"))), false);
     assert.match(log, /Este repositorio no inserta medición de visitas ni cookies\. Cloudflare Web Analytics debe estar apagado en el panel de la zona \(sin baliza en el HTML servido el 2026-10-10\)\./);
     assert.match(log, /no está creado/);
     assert.match(log, /2026-09-26 · Esqueleto público/);
@@ -45,6 +48,14 @@ describe("v0.1.0 notes, without a tag", () => {
     assert.match(en, /This repository inserts no visit measurement or cookies\. Cloudflare Web Analytics must be off in the zone dashboard \(no beacon in the HTML served on 2026-10-10\)\./);
     assert.equal(es.includes("vista previa"), false);
     assert.equal(en.toLowerCase().includes("preview"), false);
+    assert.match(es, /`web\/v2\/` es la web publicada en stubxai.com desde el 2026-10-09 \(merge `ed1c7759`\)\. `web\/current\/` es la copia anterior, para volver atrás\./);
+    assert.match(en, /`web\/v2\/` is the website published on stubxai.com since 2026-10-09 \(merge `ed1c7759`\)\. `web\/current\/` is the earlier copy, kept so it can be put back\./);
+    assert.match(es, /hay que reescribir este párrafo/);
+    assert.match(en, /this paragraph has to be rewritten/);
+    assert.equal(es.includes("no están construidos"), false);
+    assert.equal(en.includes("not built"), false);
+    assert.equal(es.includes("/studio/"), false);
+    assert.equal(en.includes("/studio/"), false);
     assert.match(es, /Puedes perderlo todo/);
     assert.match(en, /You could lose everything/);
     assert.equal(en.includes("You can lose"), false);
