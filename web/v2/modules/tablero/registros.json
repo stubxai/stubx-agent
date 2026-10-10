@@ -510,8 +510,8 @@
       "reviewer": "Pendiente de una persona distinta del autor, antes de publicar.",
       "reviewedOn": "2026-10-10",
       "block": {
-        "es": "Publicar en stubxai.com necesita autorización. El canal no está en la web.",
-        "en": "Publishing on stubxai.com needs authorization. The channel is not on the website."
+        "es": "Listo para marcar En stubxai.com como sí cuando se despliegue la página. Hoy la función no se abre en la web.",
+        "en": "Ready to mark On stubxai.com as yes when the page is deployed. Today the function does not open on the website."
       },
       "evidence": [
         {
@@ -590,6 +590,13 @@
           "change": {
             "es": "El canal está en este repositorio. stubxai.com/contribuir responde y la página dice que no está construida. Sigue sin publicar.",
             "en": "The channel is in this repository. stubxai.com/contribuir answers and the page says it is not built. Still not published."
+          }
+        },
+        {
+          "on": "2026-10-10",
+          "change": {
+            "es": "El registro queda listo. Al desplegar la página, la columna stubxai.com pasa a sí. El historial anterior se conserva.",
+            "en": "The record is ready. When the page is deployed, the stubxai.com column becomes yes. The earlier history is kept."
           }
         }
       ]

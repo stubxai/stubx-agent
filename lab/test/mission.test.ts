@@ -294,6 +294,7 @@ describe("tablero", () => {
     assert.equal(byId.get("U04")?.status, "en_revision");
     assert.ok((byId.get("U04")?.evidence.length ?? 0) > 0);
     assert.equal(byId.get("U04")?.webPublished, false);
+    assert.match(byId.get("U04")?.block?.es ?? "", /Listo para marcar En stubxai.com como sí cuando se despliegue la página/);
     for (const id of ["U05", "U07", "U09"]) {
       assert.equal(byId.get(id)?.status, "propuesta", id);
       assert.equal(byId.get(id)?.evidence.length, 0, id);

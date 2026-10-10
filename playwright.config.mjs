@@ -17,8 +17,29 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
   },
   projects: [
-    { name: "pixel-7", use: { ...devices["Pixel 7"] } },
-    { name: "iphone-14", use: { ...devices["iPhone 14"] } },
+    {
+      name: "mobile",
+      use: {
+        ...devices["Desktop Chrome"],
+        viewport: { width: 390, height: 844 },
+        deviceScaleFactor: 2,
+        isMobile: true,
+        hasTouch: true,
+        userAgent: devices["Pixel 7"].userAgent,
+      },
+    },
+    {
+      name: "mobile-webkit",
+      use: {
+        ...devices["Desktop Chrome"],
+        viewport: { width: 390, height: 844 },
+        deviceScaleFactor: 2,
+        isMobile: true,
+        hasTouch: true,
+        defaultBrowserType: "webkit",
+        userAgent: devices["iPhone 14"].userAgent,
+      },
+    },
     {
       name: "desktop",
       use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 } },
