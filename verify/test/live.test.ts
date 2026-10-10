@@ -679,6 +679,40 @@ describe("lectura universal con RPC simulado", () => {
     assert.equal(/reserva|\breserve\b|\bfondo\b/i.test(explain), false);
   });
 
+  test("un token que no es de Pump.fun deja la curva fuera de lo que falta", async () => {
+    const usdc = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+    const sample = fixture("revoked-mint");
+    const reading = await readAnyMint({
+      mint: usdc,
+      registry,
+      endpoints: ["https://rpc-a.invalid"],
+      transport: transportFor({
+        slot: sample.slot,
+        accounts: new Map([
+          [usdc, sample.mintAccount],
+          [metadataPda(usdc), null],
+          [bondingCurvePda(usdc), null],
+        ]),
+        supply: { amount: "1000", decimals: 6 },
+        largest: [],
+      }),
+      maxRetries: 0,
+      minIntervalMs: 0,
+      sleep: async () => {},
+    });
+    const curve = reading.signals.find((item) => item.id === "curva");
+    assert.equal(curve?.title.es, "Curva");
+    assert.equal(curve?.title.en, "Curve");
+    assert.equal(curve?.explain.es, "No aplica: este token no se creó en Pump.fun");
+    assert.equal(curve?.explain.en, "Not applicable: this token was not created on Pump.fun");
+    assert.equal(reading.facts?.find((item) => item.id === "curva")?.state, "no_aplica");
+    assert.equal((reading.missing?.es ?? "").includes("Curva"), false);
+    assert.equal((reading.missing?.en ?? "").includes("Curve"), false);
+    assert.equal((reading.absent?.es ?? "").includes("Curva"), false);
+    assert.equal((reading.absent?.en ?? "").includes("Curve"), false);
+    assert.equal((reading.shown as { curve?: { status?: string } } | null)?.curve?.status, "no_aplica");
+  });
+
   test("un 429 del suministro se reintenta una vez y un corte de red no se propaga", async () => {
     const sample = fixture("revoked-mint");
     const accounts = new Map<string, AccountFixture | null>([

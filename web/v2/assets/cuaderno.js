@@ -21,6 +21,8 @@ import {
   compareRecords,
   comparedValueText,
   comparisonSummary,
+  curveComparisonValue,
+  CURVE_NOT_ON_PUMP,
   pickPrevious,
   readingOptionLabel,
   staleLine,
@@ -447,8 +449,16 @@ function renderCard(card) {
   const extensionText = card.extensions.length ? card.extensions.map((item) => item.name).join(", ") : null;
   facts.push(dataRow(list, t("extensions"), card.extensionsStatus, extensionText));
   const curve = card.curve;
-  const curveValue = curve.present === true ? t("yes") : curve.present === false ? null : null;
-  facts.push(dataRow(list, t("curve"), curve.present === true ? curve.status : curve.status, curveValue));
+  if (curve.status === "no_aplica") {
+    const term = text("dt", t("curve"));
+    const detail = text("dd", CURVE_NOT_ON_PUMP[lang()] || CURVE_NOT_ON_PUMP.es);
+    detail.dataset.estado = "no_aplica";
+    list.append(term, detail);
+    facts.push({ label: t("curve"), state: "no_aplica" });
+  } else {
+    const curveValue = curve.present === true ? t("yes") : null;
+    facts.push(dataRow(list, t("curve"), curve.status, curveValue));
+  }
   facts.push(dataRow(list, t("largest"), card.largestStatus || "no_consultado", null));
   const summary = missingFacts(facts, lang());
   if (summary.absentText) {
@@ -719,6 +729,9 @@ function renderComparison() {
   out.append(text("p", `${t("after")} · ${staleLine(newer.card.consultedAt, lang())}`, { class: "sello" }));
   if (compared.formatChanged) out.append(text("p", t("format")));
   const shownSide = (rowItem, side, card) => {
+    const state = side === "left" ? rowItem.leftState : rowItem.rightState;
+    const curveText = curveComparisonValue(rowItem.field.es, state, lang());
+    if (curveText) return curveText;
     const raw = side === "left" ? rowItem.left : rowItem.right;
     if (rowItem.amount && raw !== null) {
       const formatted = formatAmount(raw, card.decimals, lang());

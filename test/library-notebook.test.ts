@@ -50,6 +50,7 @@ interface Card {
   decimals?: number | null;
   mintAuthority?: { state: string; address?: string | null; status: string };
   freezeAuthority?: { state: string; address?: string | null; status: string };
+  curve?: { present: boolean | null; status: string };
 }
 
 interface ModelModule {
@@ -64,6 +65,7 @@ interface ModelModule {
   compareRecords: (left: { card: Card }, right: { card: Card }) => {
     ok: boolean;
     rows?: Array<{ field: { es: string }; same: boolean; verdict?: string; difference?: string | null }>;
+    unknown?: Array<{ field: { es: string } }>;
     unchanged?: Array<{ field: { es: string } }>;
     technical?: { slot: { left: number | null; right: number | null } };
   };
@@ -76,6 +78,8 @@ interface ModelModule {
   comparedValueText: (raw: string, lang: string) => string;
   supplyConfirmation: (card: Card) => { confirmed: boolean; reason: string };
   supplyNote: (card: Card, lang: string) => string | null;
+  CURVE_NOT_ON_PUMP: { es: string; en: string };
+  curveComparisonValue: (fieldEs: string, state: string, lang: string) => string | null;
 }
 
 async function modules(): Promise<{ read: ReadModule; model: ModelModule }> {
@@ -593,6 +597,80 @@ describe("lector y cuaderno", () => {
     assert.deepEqual(hosts.getTokenSupply, ["api.mainnet-beta.solana.com"]);
     assert.deepEqual(hosts.getTokenLargestAccounts, ["api.mainnet-beta.solana.com"]);
     assert.deepEqual(hosts.getMultipleAccounts, ["solana-rpc.publicnode.com"]);
+  });
+
+  test("en un token que no es de Pump.fun la curva no aplica y no entra en lo que falta", async () => {
+    const { read, model } = await modules();
+    const USDC = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+    const sentence = model.CURVE_NOT_ON_PUMP;
+    const transport = async (_endpoint: string, body: string) => {
+      const method = (JSON.parse(body) as { method: string }).method;
+      if (method === "getMultipleAccounts") {
+        return rpcOk([
+          account(read.TOKEN_PROGRAM, mintBytes()),
+          account(read.METADATA_PROGRAM, metadataBytes("USDC", "USDC", "https://example.invalid/meta")),
+          null,
+        ]);
+      }
+      if (method === "getTokenSupply") return rpcOk({ amount: "1000", decimals: 6, uiAmountString: "skip" });
+      if (method === "getTokenLargestAccounts") return rpcOk([]);
+      throw new Error(method);
+    };
+    const usdc = await read.readMint({ mint: USDC, ...fastClock(), endpoint: read.DEFAULT_RPC, maxRetries: 0, transport });
+    assert.equal(usdc.card?.curve?.status, "no_aplica");
+    assert.equal(usdc.card?.curve?.present, false);
+    const pump = await read.readMint({ mint: CA, ...fastClock(), endpoint: read.DEFAULT_RPC, maxRetries: 0, transport });
+    assert.equal(pump.card?.curve?.status, "ausente");
+    const foreign = await read.readMint({
+      mint: USDC,
+      ...fastClock(),
+      endpoint: read.DEFAULT_RPC,
+      maxRetries: 0,
+      transport: async (_endpoint: string, body: string) => {
+        const method = (JSON.parse(body) as { method: string }).method;
+        if (method === "getMultipleAccounts") {
+          return rpcOk([
+            account(read.TOKEN_PROGRAM, mintBytes()),
+            null,
+            account("11111111111111111111111111111111", Buffer.from([1, 2, 3])),
+          ]);
+        }
+        if (method === "getTokenSupply") return rpcOk({ amount: "1000", decimals: 6, uiAmountString: "skip" });
+        if (method === "getTokenLargestAccounts") return rpcOk([]);
+        throw new Error(method);
+      },
+    });
+    assert.equal(foreign.card?.curve?.status, "no_aplica");
+    const facts = (await import(pathToFileURL(path.join(repoRoot(), "web/v2/shared/fact-state.js")).href)) as {
+      missingFacts: (items: Array<{ label: string; state: string }>, lang: string) => { text: string; absentText: string };
+    };
+    const summary = facts.missingFacts(
+      [
+        { label: "Curva", state: "no_aplica" },
+        { label: "Cuentas", state: "fallo" },
+      ],
+      "es",
+    );
+    assert.equal(summary.text.includes("Curva"), false);
+    assert.equal(summary.absentText.includes("Curva"), false);
+    assert.match(summary.text, /Faltan datos: Cuentas/);
+    const leftCard = read.blankCard(USDC, WHEN, []);
+    const rightCard = read.blankCard(USDC, "2026-10-09T13:00:00.000Z", []);
+    for (const card of [leftCard, rightCard]) {
+      card.isMint = true;
+      card.curve = { present: false, status: "no_aplica" };
+    }
+    const compared = model.compareRecords({ card: leftCard }, { card: rightCard });
+    assert.equal(compared.ok, true);
+    const curveRows = (compared.rows ?? []).filter((row) => /curva/i.test(row.field.es));
+    assert.equal(curveRows.length, 4);
+    assert.equal(curveRows.every((row) => row.verdict === "igual"), true);
+    assert.equal((compared.unknown ?? []).some((row) => /curva/i.test(row.field.es)), false);
+    assert.equal(model.curveComparisonValue("Curva presente", "no_aplica", "es"), sentence.es);
+    assert.equal(model.curveComparisonValue("Cantidad real de tokens de la curva", "no_aplica", "en"), sentence.en);
+    assert.equal(model.curveComparisonValue("Nombre", "no_aplica", "es"), null);
+    assert.equal(sentence.es, "No aplica: este token no se creó en Pump.fun");
+    assert.equal(sentence.en, "Not applicable: this token was not created on Pump.fun");
   });
 
   test("solo se comparan dos fichas del mismo mint y la antigua no se presenta como actual", async () => {

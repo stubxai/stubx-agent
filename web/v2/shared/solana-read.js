@@ -418,6 +418,10 @@ function parseAccount(value) {
   };
 }
 
+function curveAbsent(mint) {
+  return { ...emptyCurve(), present: false, status: String(mint).endsWith("pump") ? "ausente" : "no_aplica" };
+}
+
 function emptyCurve() {
   return {
     present: null,
@@ -848,8 +852,8 @@ export async function readMint(options) {
     card.extensionsStatus = "no_aplica";
     card.curve = curveAccount
       ? { ...emptyCurve(), ...decodeCurveAccount(curveAccount.owner, curveAccount.data) }
-      : { ...emptyCurve(), present: false, status: "ausente" };
-    if (card.curve.present === false) card.curve.status = "ausente";
+      : curveAbsent(mint);
+    if (card.curve.present === false) card.curve = curveAbsent(mint);
     if (card.curve.status === "no_disponible") card.curve.status = "fallo";
     return { ok: true, error: null, card };
   }
@@ -909,10 +913,10 @@ export async function readMint(options) {
   if (curveAccount) {
     const curve = decodeCurveAccount(curveAccount.owner, curveAccount.data);
     card.curve = { ...emptyCurve(), ...curve };
-    if (curve.present === false) card.curve.status = "ausente";
+    if (curve.present === false) card.curve = curveAbsent(mint);
     if (curve.status === "no_disponible") card.curve.status = "fallo";
   } else {
-    card.curve = { ...emptyCurve(), present: false, status: "ausente" };
+    card.curve = curveAbsent(mint);
   }
   const supply = await rpcCall(state, "getTokenSupply", [mint, { commitment: "confirmed" }]);
   if (!supply.ok) {

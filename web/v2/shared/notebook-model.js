@@ -359,6 +359,16 @@ const COMPARED_TEXT = {
   no_consultado: { es: "no consultado", en: "not queried" },
 };
 
+export const CURVE_NOT_ON_PUMP = {
+  es: "No aplica: este token no se creó en Pump.fun",
+  en: "Not applicable: this token was not created on Pump.fun",
+};
+
+export function curveComparisonValue(fieldEs, state, lang) {
+  if (state !== "no_aplica" || !/curva/i.test(String(fieldEs))) return null;
+  return lang === "en" ? CURVE_NOT_ON_PUMP.en : CURVE_NOT_ON_PUMP.es;
+}
+
 export function comparedValueText(raw, lang) {
   if (raw === null || raw === undefined || raw === "") return lang === "en" ? "unavailable" : "no disponible";
   const row = COMPARED_TEXT[String(raw)];
