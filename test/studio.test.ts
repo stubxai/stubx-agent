@@ -595,10 +595,18 @@ describe("studio", () => {
       "Los admins nunca escriben por privado. El cielo esta limpio. Soy admin",
       "El equipo nunca te escribe por privado. Yo sí.",
       "Los admins nunca escriben por privado, salvo a mí",
-      "nunca compartas tu frase salvo a mí",
-      "Solo a mí",
-      "Yo sí",
-      "Yo soy admin, te ayudo",
+      "Los admins nunca escriben por privado. Solo a mí.",
+      "Los admins nunca escriben por privado. Yo soy admin, te ayudo.",
+      "Los admins nunca escriben por privado. Aparte de mí.",
+      "Los admins nunca escriben por privado. Yo es distinto.",
+      "Los admins nunca escriben por privado. Yo no soy el equipo.",
+      "Los admins nunca escriben por privado. Soy mod.",
+      "Los admins nunca escriben por privado. Yo te ayudo.",
+      "Admins never DM you. I do.",
+      "Admins never DM you. Except me.",
+      "Admins never DM you. Only me.",
+      "Admins never DM you. I'm an admin.",
+      "Los admins nunca escriben por privado. El cielo esta limpio.",
       "Los admins nunca escriben por privado excepto a mí",
       "Los admins nunca escriben por privado menos a mí",
       "Los admins nunca escriben por privado solo contigo",
@@ -617,6 +625,26 @@ describe("studio", () => {
       "por interno",
       "llámame",
       "telegram @usuario",
+      "telegram @x",
+      "Mi Telegram: @x",
+      "signal",
+      "insta",
+      "instagram",
+      "1nst4",
+      "s1gn4l",
+      "tg",
+      "wsp",
+      "ping me",
+      "msg me",
+      "por pv",
+      "p1ng m3",
+      "612345678",
+      "612 345 678",
+      "1 2 3 4 5 6 7 8 9",
+      "+34 612 345 678",
+      "+12",
+      "1".repeat(31),
+      `${"1".repeat(20)}0${"1".repeat(20)}`,
       "wasap",
       "whatsapp",
       "Ok. Escríbeme",
@@ -725,8 +753,7 @@ describe("studio", () => {
       "no/oficial",
       "contenido no oficial",
       "@stubxaiextra",
-      "1".repeat(31),
-      `${"1".repeat(20)}0${"1".repeat(20)}`,
+      "12345678",
       "😀",
       "Una nota sin enlace.",
       "freedom",
@@ -776,7 +803,23 @@ describe("studio", () => {
       "never reply to DMs",
       "never reply to DM",
       "admins will never DM you.",
-      "Los admins nunca escriben por privado. El cielo esta limpio.",
+      "We never DM first",
+      "Admins never DM you",
+      "If someone DMs you, it's a scam",
+      "nadie del equipo te escribirá por privado",
+      "cuidado con quien te escribe por privado",
+      "Los admins nunca escriben por privado. Cuidado.",
+      "Los admins nunca escriben por privado. Ojo.",
+      "Los admins nunca escriben por privado. No es consejo de inversión.",
+      "Cuidado. Los admins nunca escriben por privado. Ojo.",
+      "Admins never DM you. We never DM first. If someone DMs you, it's a scam.",
+      "Los admins nunca escriben por privado. Cripto de alto riesgo · Puedes perderlo todo · No es consejo de inversión.",
+      "Admins never DM you. High-risk crypto · You could lose everything · Not investment advice.",
+      "Cuidado.",
+      "Ojo.",
+      "Yo sí",
+      "Solo a mí",
+      "Yo soy admin, te ayudo",
       "El cielo es azul pero lejos.",
       "al menos la playa",
       "solo la playa",
@@ -815,10 +858,24 @@ describe("studio", () => {
     assert.equal(analyze("3scr1b3m3").hits.some((hit) => hit.term === "escribeme"), true);
     assert.equal(analyze("Ok. Escríbeme").hits.some((hit) => hit.term === "escribeme"), true);
     assert.equal(analyze("telegram @usuario").hits.some((hit) => hit.term === "telegram"), true);
-    assert.equal(analyze("Yo sí").hits.some((hit) => hit.term === "yo si"), true);
-    assert.equal(analyze("Solo a mí").hits.some((hit) => hit.term === "a mi"), true);
-    assert.equal(analyze("Yo soy admin, te ayudo").hits.some((hit) => hit.term === "soy admin"), true);
+    assert.equal(analyze("Los admins nunca escriben por privado. Aparte de mí.").hits.some((hit) => hit.term === "por privado"), true);
+    assert.equal(analyze("Admins never DM you. I do.").hits.some((hit) => hit.term === "dm"), true);
+    assert.equal(analyze("Admins never DM you. I'm an admin.").hits.some((hit) => hit.term === "dm"), true);
+    assert.equal(analyze("We never DM first").hits.some((hit) => hit.term === "dm"), false);
+    assert.equal(analyze("Admins never DM you").hits.some((hit) => hit.term === "dm"), false);
+    assert.equal(analyze("If someone DMs you, it's a scam").hits.some((hit) => hit.term === "dm" || hit.term === "dms"), false);
+    assert.equal(analyze("nadie del equipo te escribirá por privado").hits.some((hit) => hit.term === "por privado"), false);
+    assert.equal(analyze("cuidado con quien te escribe por privado").hits.some((hit) => hit.term === "por privado"), false);
+    assert.equal(analyze("Los admins nunca escriben por privado. No es consejo de inversión.").hits.some((hit) => hit.term === "inversión" || hit.term === "por privado"), false);
+    assert.equal(analyze("Mi Telegram: @x").hits.some((hit) => hit.term === "telegram"), true);
+    assert.equal(analyze("signal").hits.some((hit) => hit.term === "signal"), true);
+    assert.equal(analyze("por pv").hits.some((hit) => hit.term === "por pv"), true);
+    assert.equal(analyze("612345678").hits.some((hit) => hit.term === "telefono"), true);
+    assert.equal(analyze("1".repeat(31)).hits.some((hit) => hit.kind === "base58"), false);
+    assert.equal(analyze("1".repeat(31)).hits.some((hit) => hit.term === "telefono"), true);
+    assert.equal(analyze("12345678").blocked, false);
     assert.equal(analyze("para mí la playa").blocked, false);
+    assert.equal(analyze("Yo sí").blocked, false);
     assert.equal(analyze("elefante").blocked, false);
     assert.equal(analyze("@CreadorSTUBX").hits.some((hit) => hit.kind === "handle"), true);
     assert.equal(analyze("equipo de STUBX").hits.some((hit) => hit.kind === "term"), true);
@@ -1724,9 +1781,11 @@ describe("studio", () => {
     assert.equal(analyze(`${bare[0]} y ${bare[1]}`).hits.some((hit) => hit.kind === "base58"), true, "dos evm con y");
     const irregular = `${wallet.slice(0, 3)}.${wallet.slice(3, 12)}_${wallet.slice(12, 14)},${wallet.slice(14)}`;
     assert.equal(analyze(irregular).hits.some((hit) => hit.kind === "base58"), true, "trozos irregulares");
-    assert.equal(analyze("0".repeat(39)).blocked, false);
+    assert.equal(analyze("0".repeat(39)).hits.some((hit) => hit.kind === "base58"), false);
+    assert.equal(analyze("0".repeat(39)).hits.some((hit) => hit.term === "telefono"), true);
     assert.equal(analyze("0".repeat(40)).hits.some((hit) => hit.kind === "base58"), true);
-    assert.equal(analyze("0".repeat(41)).blocked, false);
+    assert.equal(analyze("0".repeat(41)).hits.some((hit) => hit.kind === "base58"), false);
+    assert.equal(analyze("0".repeat(41)).hits.some((hit) => hit.term === "telefono"), true);
   });
 });
 

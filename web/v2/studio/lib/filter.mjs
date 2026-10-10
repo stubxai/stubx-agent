@@ -275,14 +275,28 @@ const PRIVATE_ALLOWED = [
   /^si te escriben por privado es(?: una)? estafa$/,
   /^nunca te escribiremos por privado$/,
   /^el equipo nunca pide nada por privado$/,
+  /^nadie del equipo te escribira por privado$/,
+  /^cuidado con quien te escribe por privado$/,
   /^(?:admins|the team|we) will never (?:dm|message) you$/,
+  /^admins never dm you$/,
+  /^we never dm first$/,
   /^never reply to dms?$/,
+  /^if someone dms you its a scam$/,
 ];
-const ENGLISH_PRIVATE = [
-  /^(?:admins|the team|we) will never (?:dm|message) you$/,
-  /^never reply to dms?$/,
-];
-/** Invitación o canal. «por priv» y «al priv» no tragan «privado». */
+/** Frases fijas que pueden acompañar a un aviso. Cualquier otra anula el permiso. */
+const PRIVATE_NEUTRAL = new Set([
+  "cuidado",
+  "ojo",
+  "no es consejo de inversion",
+  "cripto de alto riesgo",
+  "puedes perderlo todo",
+  "cripto de alto riesgo puedes perderlo todo no es consejo de inversion",
+  "high risk crypto",
+  "you could lose everything",
+  "not investment advice",
+  "high risk crypto you could lose everything not investment advice",
+]);
+/** Canal o invitación. «por priv» y «al priv» no tragan «privado». */
 const INVITE_RULES = [
   ["escribeme", /(?:^| )(?:escribirme|escribeme|escribanme|escribidme|escribanos)(?: |$)/],
   ["hablemos", /(?:^| )(?:hablemos|hablame|habladme)(?: |$)/],
@@ -295,24 +309,27 @@ const INVITE_RULES = [
   ["al priv", /(?:^| )al priv(?: |$)/],
   ["al pv", /(?:^| )al pv(?: |$)/],
   ["por priv", /(?:^| )por priv(?: |$)/],
+  ["por pv", /(?:^| )por pv(?: |$)/],
   ["por interno", /(?:^| )por interno(?: |$)/],
   ["pm me", /(?:^| )pm me(?: |$)/],
   ["text me", /(?:^| )text me(?: |$)/],
   ["hit me up", /(?:^| )hit me up(?: |$)/],
+  ["ping me", /(?:^| )ping me(?: |$)/],
+  ["msg me", /(?:^| )msg me(?: |$)/],
   ["DMs abiertos", /(?:^| )dms? abiertos(?: |$)/],
   ["wasap", /(?:^| )wasap(?: |$)/],
   ["whatsapp", /(?:^| )whatsapp(?: |$)/],
+  ["signal", /(?:^| )signal(?: |$)/],
+  ["instagram", /(?:^| )instagram(?: |$)/],
+  ["insta", /(?:^| )insta(?: |$)/],
+  ["tg", /(?:^| )tg(?: |$)/],
+  ["wsp", /(?:^| )wsp(?: |$)/],
+  ["telegram", /(?:^| )telegram(?: |$)/],
   ["dm", /(?:^| )dm(?: |$)/],
   ["dms", /(?:^| )dms(?: |$)/],
   ["md", /(?:^| )md(?: |$)/],
 ];
-const TELEGRAM_INVITE = /(?:^|[^a-z0-9])telegram\s*@\s*[a-z0-9_]{2,}/;
-const IMPERSONATION = [
-  ["yo si", /(?:^| )yo si(?: |$)/],
-  ["a mi", /(?:^| )a mi(?: |$)/],
-  ["soy admin", /(?:^| )soy admin(?: |$)/],
-];
-const PRIVATE_VOID = /(?:^| )(?:salvo|excepto|menos|solo|pero|yo si|a mi|soy admin)(?: |$)/;
+const TELEGRAM_AT = /(?:^|[^a-z0-9])telegram\s*@\s*[a-z0-9_]+/;
 
 function canonSentence(text) {
   return text.replace(/[^a-z0-9]+/g, " ").trim();
@@ -328,13 +345,11 @@ function leetDigits(text) {
 }
 
 function isClosedPrivate(text) {
-  const sentence = canonSentence(text);
-  return PRIVATE_ALLOWED.some((pattern) => pattern.test(sentence));
+  return PRIVATE_ALLOWED.some((pattern) => pattern.test(canonSentence(text)));
 }
 
-function isEnglishPrivate(text) {
-  const sentence = canonSentence(text);
-  return ENGLISH_PRIVATE.some((pattern) => pattern.test(sentence));
+function isNeutralPhrase(text) {
+  return PRIVATE_NEUTRAL.has(canonSentence(text));
 }
 
 function splitPrivate(text) {
@@ -363,34 +378,27 @@ function allowIndexes(pieces) {
   return allow;
 }
 
+function phraseForms(text) {
+  return [canonSentence(text), canonSentence(leet(text, "i"))].filter(Boolean);
+}
+
 function inviteTerms(text) {
   const found = new Set();
-  const forms = [canonSentence(text), canonSentence(leet(text, "i"))];
-  for (const form of forms) {
-    if (!form) continue;
+  for (const form of phraseForms(text)) {
     for (const [term, re] of INVITE_RULES) {
       if (re.test(form)) found.add(term);
     }
   }
-  if (TELEGRAM_INVITE.test(text) || TELEGRAM_INVITE.test(leetDigits(text))) found.add("telegram");
+  if (TELEGRAM_AT.test(text) || TELEGRAM_AT.test(leetDigits(text))) found.add("telegram");
   return found;
 }
 
-function impersonationTerms(text) {
-  const found = new Set();
-  const forms = [canonSentence(text), canonSentence(leet(text, "i"))];
-  for (const form of forms) {
-    if (!form) continue;
-    for (const [term, re] of IMPERSONATION) {
-      if (re.test(form)) found.add(term);
-    }
+function hasPhone(text) {
+  if (/(?:^|[^a-z0-9])\+\s*\d/.test(text)) return true;
+  for (const match of text.matchAll(/(?:^|[^a-z0-9])(\d(?:[ \t]*\d)*)(?=$|[^a-z0-9])/g)) {
+    if (match[1].replace(/\s/g, "").length >= 9) return true;
   }
-  return found;
-}
-
-function hasPrivateVoid(text) {
-  const forms = [canonSentence(text), canonSentence(leet(text, "i"))];
-  return forms.some((form) => form && PRIVATE_VOID.test(form));
+  return false;
 }
 
 function blankPrivatePhrase(text) {
@@ -398,30 +406,29 @@ function blankPrivatePhrase(text) {
 }
 
 function blankEnglishPrivate(text) {
-  return text.replace(/(^|[^a-z0-9])(dms?|message)(?![a-z0-9])/g, (full, lead, match) => `${lead}${" ".repeat(match.length)}`);
+  return text.replace(/(^|[^a-z0-9])(md|dms?|message)(?![a-z0-9])/g, (full, lead, match) => `${lead}${" ".repeat(match.length)}`);
 }
 
 /**
- * «por privado» y el aviso inglés de DM solo se tapan si la frase es un aviso
- * cerrado. Una invitación en cualquier parte, o salvo/excepto/menos/solo/pero/
- * yo sí/a mí/soy admin, anula el aviso.
+ * «por privado» y «DM» solo se tapan si cada frase del texto es un aviso cerrado
+ * o una frase neutra fija. Cualquier otra frase deja el canal a la vista.
  */
 function reviewPrivate(text) {
   const pieces = splitPrivate(text);
   const allow = allowIndexes(pieces);
-  const outside = pieces.filter((_, index) => !allow.has(index)).map((piece) => piece.text).join(" ");
-  const outsideTerms = inviteTerms(outside);
-  const voided = outsideTerms.size > 0 || hasPrivateVoid(text);
-  const hits = new Set(impersonationTerms(text));
-  for (const term of voided ? inviteTerms(text) : outsideTerms) hits.add(term);
-  if (voided) return { text, hits: [...hits] };
+  const pure = pieces.every((piece, index) => {
+    if (!canonSentence(piece.text)) return true;
+    return allow.has(index) || isNeutralPhrase(piece.text);
+  });
+  const permit = pure && allow.size > 0;
+  const hits = permit ? [] : [...inviteTerms(text)];
+  if (!permit) return { text, hits };
   const masked = pieces.map((piece, index) => {
-    if (!allow.has(index)) return piece.text + piece.sep;
-    let body = blankPrivatePhrase(piece.text);
-    if (isEnglishPrivate(piece.text)) body = blankEnglishPrivate(body);
-    return body + piece.sep;
+    if (!canonSentence(piece.text)) return piece.text + piece.sep;
+    if (!allow.has(index)) return `${" ".repeat(piece.text.length)}${piece.sep}`;
+    return blankEnglishPrivate(blankPrivatePhrase(piece.text)) + piece.sep;
   }).join("");
-  return { text: masked, hits: [...hits] };
+  return { text: masked, hits };
 }
 
 function maskWarnings(text) {
@@ -642,6 +649,7 @@ export function analyze(text, list = blocklist) {
   for (const word of plainWords) {
     if (DELIVERY.has(word)) pushHit(hits, seen, "term", word);
   }
+  if (hasPhone(folded)) pushHit(hits, seen, "term", "telefono");
   const priv = reviewPrivate(maskWarnings(maskNegatedAdvice(maskExceptions(folded))));
   for (const term of priv.hits) pushHit(hits, seen, "term", term);
   const advised = priv.text;
