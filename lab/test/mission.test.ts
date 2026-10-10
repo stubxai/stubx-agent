@@ -293,8 +293,8 @@ describe("tablero", () => {
     assert.ok((byId.get("U02")?.evidence.length ?? 0) > 0);
     assert.equal(byId.get("U04")?.status, "en_revision");
     assert.ok((byId.get("U04")?.evidence.length ?? 0) > 0);
-    assert.equal(byId.get("U04")?.webPublished, false);
-    assert.match(byId.get("U04")?.block?.es ?? "", /Listo para marcar En stubxai.com como sí cuando se despliegue la página/);
+    assert.equal(byId.get("U04")?.webPublished, true);
+    assert.match(byId.get("U04")?.block?.es ?? "", /Publicada en stubxai.com\/contribuir el 2026-10-10/);
     assert.equal(byId.get("U07")?.status, "en_revision");
     assert.ok((byId.get("U07")?.evidence.length ?? 0) > 0);
     assert.equal(byId.get("U07")?.webPublished, false);
@@ -306,7 +306,7 @@ describe("tablero", () => {
       assert.equal(byId.get(id)?.status, "propuesta", id);
       assert.equal(byId.get(id)?.evidence.length, 0, id);
     }
-    const onWeb = new Set(["VERIFY", "U01", "U02", "U03", "U06"]);
+    const onWeb = new Set(["VERIFY", "U01", "U02", "U03", "U04", "U06"]);
     for (const task of board.tasks) {
       assert.equal(task.webPublished, onWeb.has(task.id), task.id);
       assert.ok(task.history.length > 0, task.id);

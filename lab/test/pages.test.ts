@@ -192,9 +192,10 @@ describe("páginas estáticas", () => {
     assert.equal(board.includes("Nada de esta página está publicado"), false);
     assert.equal(board.includes("Hoy ninguna lo está"), false);
     assert.match(board, /Ejemplo educativo fijo, revisado por Legal/);
-    assert.match(board, /Listo para marcar En stubxai.com como sí cuando se despliegue la página/);
+    assert.match(board, /Publicada en stubxai.com\/contribuir el 2026-10-10/);
+    assert.equal(board.includes("Hoy stubxai.com/comparar no existe"), false);
     assert.match(board, /2026-10-09 · Usage measurement: none on the client/);
-    assert.match(board, /id="tarea-U04" data-status="en_revision" data-web="no"/);
+    assert.match(board, /id="tarea-U04" data-status="en_revision" data-web="si"/);
     assert.equal(board.includes("Hace falta un abogado"), false);
     assert.match(board, /https:\/\/github.com\/stubxai\/stubx-agent\/pull\/13/);
     assert.match(board, /lab\/test\/mission\.test\.ts/);

@@ -501,17 +501,17 @@
         "en": "Useful contributions"
       },
       "status": "en_revision",
-      "webPublished": false,
+      "webPublished": true,
       "scope": {
-        "es": "Canal en el repositorio para un fallo que se puede repetir, un texto confuso, una traducción o una prueba de accesibilidad. Cualquier token de Solana puede ser el ejemplo del fallo. La página no pide cuenta ni guarda datos. No está en stubxai.com.",
-        "en": "A channel in the repository for a repeatable bug, confusing text, a translation, or an accessibility check. Any Solana token can be the example of the bug. The page does not ask for an account and does not store data. It is not on stubxai.com."
+        "es": "Canal en el repositorio para un fallo que se puede repetir, un texto confuso, una traducción o una prueba de accesibilidad. Cualquier token de Solana puede ser el ejemplo del fallo. La página no pide cuenta ni guarda datos. Está en stubxai.com/contribuir.",
+        "en": "A channel in the repository for a repeatable bug, confusing text, a translation, or an accessibility check. Any Solana token can be the example of the bug. The page does not ask for an account and does not store data. It is on stubxai.com/contribuir."
       },
       "owner": "Equipo del repositorio",
       "reviewer": "Pendiente de una persona distinta del autor, antes de publicar.",
       "reviewedOn": "2026-10-10",
       "block": {
-        "es": "Listo para marcar En stubxai.com como sí cuando se despliegue la página. Hoy la función no se abre en la web.",
-        "en": "Ready to mark On stubxai.com as yes when the page is deployed. Today the function does not open on the website."
+        "es": "Publicada en stubxai.com/contribuir el 2026-10-10.",
+        "en": "Published at stubxai.com/contribuir on 2026-10-10."
       },
       "evidence": [
         {
@@ -598,6 +598,13 @@
             "es": "El registro queda listo. Al desplegar la página, la columna stubxai.com pasa a sí. El historial anterior se conserva.",
             "en": "The record is ready. When the page is deployed, the stubxai.com column becomes yes. The earlier history is kept."
           }
+        },
+        {
+          "on": "2026-10-10",
+          "change": {
+            "es": "Publicada en stubxai.com/contribuir. La columna stubxai.com pasa a sí.",
+            "en": "Published at stubxai.com/contribuir. The stubxai.com column becomes yes."
+          }
         }
       ]
     },
@@ -649,8 +656,8 @@
       "reviewer": "Revisado por Legal.",
       "reviewedOn": "2026-10-10",
       "block": {
-        "es": "Ejemplo educativo fijo, revisado por Legal. Cualquier versión con datos reales necesitará una revisión nueva. Hoy stubxai.com/comparar no existe.",
-        "en": "Fixed educational example, reviewed by Legal. Any version with real data will need a new review. Today stubxai.com/comparar does not exist."
+        "es": "Ejemplo educativo fijo, revisado por Legal. Cualquier versión con datos reales necesitará una revisión nueva. El ejemplo educativo fijo está publicado en stubxai.com/comparar desde el 2026-10-10.",
+        "en": "Fixed educational example, reviewed by Legal. Any version with real data will need a new review. The fixed educational example is published at stubxai.com/comparar since 2026-10-10."
       },
       "evidence": [
         {

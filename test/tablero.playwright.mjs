@@ -71,11 +71,11 @@ async function check(page, name) {
   must(await page.locator('#plantilla a[href="/modules/tablero/plantilla.json"]').isVisible(), "enlace de la plantilla");
   must((await page.locator("footer").innerText()).includes(FOOTER_ES), "pie");
   must((await page.locator("form").count()) === 0, "formulario");
-  must((await page.locator('[data-web="si"]').count()) === 5, "publicado");
+  must((await page.locator('[data-web="si"]').count()) === 6, "publicado");
   must((await page.locator('[data-web="no"]').count()) > 0, "sin publicar");
   const boardText = await page.locator("main").innerText();
   must(boardText.includes("La columna stubxai.com dice sí solo si la función se puede abrir hoy en la web."), "columna");
-  must(boardText.includes("Listo para marcar En stubxai.com como sí cuando se despliegue la página."), "u04");
+  must(boardText.includes("Publicada en stubxai.com/contribuir el 2026-10-10."), "u04");
   must(boardText.includes("Ejemplo educativo fijo, revisado por Legal."), "legal");
   must(boardText.includes("2026-10-09 · Medición de uso: ninguna en el cliente"), "medicion");
   must(!boardText.includes("Nada de esta página está publicado"), "frase falsa");
