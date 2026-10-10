@@ -37,14 +37,16 @@ interface Card {
   symbol?: { text: string | null; status?: string };
   uri: { text: string | null };
   supplyRpc: string | null;
+  supplyRpcStatus?: string;
   supplyAccount: string | null;
   program?: string;
   programStatus?: string;
   slot?: number | null;
   slotStatus?: string;
   mint: string;
-  decimals?: number | null;
   network?: string;
+  consultedAt?: string;
+  decimals?: number | null;
   mintAuthority?: { state: string; address?: string | null; status: string };
   freezeAuthority?: { state: string; address?: string | null; status: string };
 }
@@ -66,8 +68,13 @@ interface ModelModule {
   };
   pickPrevious: (records: Array<{ id: string; card: Card }>, card: Card, exceptId: string) => { id: string } | null;
   staleLine: (consultedAt: string, lang: string) => string;
-  formatReadingStamp: (consultedAt: string, lang: string) => string;
-  readingOptionLabel: (card: Card, lang: string) => string;
+  formatReadingStamp: (consultedAt: string, lang: string, withSeconds?: boolean) => string;
+  readingOptionLabel: (card: Card, lang: string, peers?: Card[]) => string;
+  comparisonSummary: (compared: { changes?: unknown[]; unchanged?: unknown[]; unknown?: unknown[] }, lang: string) => string;
+  supplyDirection: (difference: string, decimals: number, lang: string) => string | null;
+  comparedValueText: (raw: string, lang: string) => string;
+  supplyConfirmation: (card: Card) => { confirmed: boolean; reason: string };
+  supplyNote: (card: Card, lang: string) => string | null;
 }
 
 async function modules(): Promise<{ read: ReadModule; model: ModelModule }> {
@@ -510,9 +517,9 @@ describe("lector y cuaderno", () => {
     const usdc = model.compareRecords({ card: usdcLeft }, { card: usdcRight });
     const total = usdc.rows?.find((row) => row.field.es === "Suministro total");
     assert.equal(total?.verdict, "cambio");
-    assert.equal(total?.difference, (7723319021661631n - 7723351880366328n).toString());
+    assert.equal(total?.difference, (7723351880366328n - 7723319021661631n).toString());
     assert.equal(usdc.rows?.some((row) => row.field.es === "Slot" || row.field.es === "Momento de la red"), false);
-    assert.deepEqual(usdc.technical?.slot, { left: 11, right: 22 });
+    assert.deepEqual(usdc.technical?.slot, { left: 22, right: 11 });
     const unchangedNames = (usdc.unchanged ?? []).map((row) => row.field.es);
     assert.equal(unchangedNames.includes("Permiso de emisión"), true);
     assert.equal(unchangedNames.includes("Nombre"), true);
@@ -564,6 +571,68 @@ describe("lector y cuaderno", () => {
     assert.equal(model.staleLine(WHEN, "en"), `Checked on ${model.formatReadingStamp(WHEN, "en")} · this may have changed`);
     assert.equal(model.staleLine(WHEN, "es").includes("2026-10-09T"), false);
     assert.equal(model.staleLine(WHEN, "es").includes("actual"), false);
+  });
+
+  test("el resumen separa cambio, igual e indeterminado", async () => {
+    const { read, model } = await modules();
+    const line = (changed: number, same: number, unknown: number, lang = "es") => model.comparisonSummary({
+      changes: Array.from({ length: changed }),
+      unchanged: Array.from({ length: same }),
+      unknown: Array.from({ length: unknown }),
+    }, lang);
+    assert.equal(line(1, 0, 0), "1 dato cambió · 0 siguen igual · 0 no se pueden comparar porque faltan en alguna lectura");
+    assert.equal(line(0, 8, 0), "0 datos cambiaron · 8 siguen igual · 0 no se pueden comparar porque faltan en alguna lectura");
+    assert.equal(line(0, 0, 2), "0 datos cambiaron · 0 siguen igual · 2 no se pueden comparar porque faltan en alguna lectura");
+    assert.equal(line(1, 8, 0), "1 dato cambió · 8 siguen igual · 0 no se pueden comparar porque faltan en alguna lectura");
+    assert.equal(line(1, 0, 2), "1 dato cambió · 0 siguen igual · 2 no se pueden comparar porque faltan en alguna lectura");
+    assert.equal(line(0, 8, 2), "0 datos cambiaron · 8 siguen igual · 2 no se pueden comparar porque faltan en alguna lectura");
+    assert.equal(line(1, 8, 2), "1 dato cambió · 8 siguen igual · 2 no se pueden comparar porque faltan en alguna lectura");
+    assert.equal(line(1, 1, 1), "1 dato cambió · 1 sigue igual · 1 no se puede comparar porque falta en alguna lectura");
+    assert.equal(line(1, 8, 2, "en"), "1 fact changed · 8 stayed the same · 2 cannot be compared because they are missing from one reading");
+    assert.equal(line(0, 8, 2).includes("No hay un cambio"), false);
+    assert.equal(line(1, 0, 2).includes("no se puede determinar si cambió"), false);
+    assert.equal(model.supplyDirection("-32858704697", 6, "es"), "Bajó 32.858,704697 tokens");
+    assert.equal(model.supplyDirection("408850757", 6, "es"), "Subió 408,850757 tokens");
+    assert.equal(model.supplyDirection("-408850757", 6, "en"), "Fell 408.850757 tokens");
+    assert.equal(model.comparedValueText("si", "es"), "sí");
+    assert.equal(model.comparedValueText("spl-token", "es"), "SPL Token");
+    assert.equal(model.comparedValueText("token-2022", "en"), "Token-2022");
+    assert.equal(model.comparedValueText("no_decodificable", "es"), "no se pudo leer");
+    const earlier = "2026-10-10T20:49:07.000Z";
+    const later = "2026-10-10T20:49:40.000Z";
+    const first = read.blankCard(CA, earlier, []);
+    first.symbol = { text: "USDC" };
+    first.name = { text: "USD Coin" };
+    const second = read.blankCard(CA, later, []);
+    second.symbol = { text: "USDC" };
+    second.name = { text: "USD Coin" };
+    const seconds = String(new Date(earlier).getSeconds()).padStart(2, "0");
+    assert.match(model.readingOptionLabel(first, "es", [first, second]), new RegExp(`:${seconds}$`));
+    assert.equal(/\d{2}:\d{2}:\d{2}/.test(model.readingOptionLabel(first, "es", [first])), false);
+  });
+
+  test("el suministro total no queda verificado si la lectura extra falla o no coincide", async () => {
+    const { read, model } = await modules();
+    const card = read.blankCard(CA, WHEN, []);
+    card.isMint = true;
+    card.decimals = 6;
+    card.supplyAccount = "1000";
+    card.supplyRpc = null;
+    card.supplyRpcStatus = "fallo";
+    assert.equal(model.supplyConfirmation(card).confirmed, false);
+    assert.equal(model.supplyConfirmation(card).reason, "fallo");
+    assert.match(model.supplyNote(card, "es") ?? "", /El servicio público no respondió/);
+    assert.match(model.supplyNote(card, "es") ?? "", /no es una ausencia/);
+    assert.match(model.supplyNote(card, "en") ?? "", /does not match|not an absence|did not respond/);
+    card.supplyRpc = "999";
+    card.supplyRpcStatus = "verificado";
+    assert.equal(model.supplyConfirmation(card).confirmed, false);
+    assert.equal(model.supplyConfirmation(card).reason, "no_coincide");
+    assert.match(model.supplyNote(card, "es") ?? "", /no coincide/);
+    assert.match(model.supplyNote(card, "es") ?? "", /Se muestra la cifra de los bytes/);
+    card.supplyRpc = "1000";
+    assert.equal(model.supplyConfirmation(card).confirmed, true);
+    assert.equal(model.supplyNote(card, "es"), null);
   });
 
   test("el nombre de Token-2022 sale de la extensión si no hay cuenta Metaplex", async () => {

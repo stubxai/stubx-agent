@@ -16,9 +16,14 @@ import {
   MAX_NOTE,
   MAX_STORED,
   compareRecords,
+  comparedValueText,
+  comparisonSummary,
   pickPrevious,
   readingOptionLabel,
   staleLine,
+  supplyConfirmation,
+  supplyDirection,
+  supplyNote,
   toExport,
   validateCard,
   validateExport,
@@ -75,6 +80,7 @@ const COPY = {
     mutable: "Metadatos mutables",
     extensions: "Extensiones",
     curve: "Curva",
+    supplyExtra: "Consulta extra del suministro",
     slot: "Momento de la red",
     largest: "Cuentas con más tokens",
     errors: "Qué no se pudo leer",
@@ -89,13 +95,11 @@ const COPY = {
     notMint: "No es una cuenta de mint",
     unknownProgram: "no disponible",
     compareTitle: "Comparar consultas",
-    left: "Consulta A",
-    right: "Consulta B",
+    before: "Antes",
+    after: "Ahora",
     changed: "cambió",
     same: "igual",
     unknownState: "no se puede determinar",
-    unknownChange: "no se puede determinar si cambió",
-    difference: "Diferencia",
     unread: "no se leyó",
     utc: "Hora UTC",
     incomplete: "Lectura incompleta: se guardará marcando lo que falta",
@@ -103,7 +107,6 @@ const COPY = {
     changesTitle: "Qué cambió",
     unknownTitle: "Lo que no se puede determinar",
     unchangedTitle: "Lo que sigue igual",
-    noChange: "No hay un cambio en los datos leídos en las dos consultas.",
     rawAccount: "Valor en bruto del suministro en la cuenta",
     rawRpc: "Valor en bruto del suministro leído aparte",
     format: "La versión de la ficha no es la misma. Se comparan solo los campos que existen en las dos.",
@@ -152,6 +155,7 @@ const COPY = {
     mutable: "Mutable metadata",
     extensions: "Extensions",
     curve: "Curve",
+    supplyExtra: "Extra supply query",
     slot: "Network moment",
     largest: "Largest token accounts",
     errors: "What could not be read",
@@ -166,13 +170,11 @@ const COPY = {
     notMint: "Not a mint account",
     unknownProgram: "unavailable",
     compareTitle: "Compare queries",
-    left: "Query A",
-    right: "Query B",
+    before: "Before",
+    after: "Now",
     changed: "changed",
     same: "same",
     unknownState: "it cannot be determined",
-    unknownChange: "it cannot be determined whether it changed",
-    difference: "Difference",
     unread: "not read",
     utc: "UTC time",
     incomplete: "Incomplete reading: it will be saved marking what is missing",
@@ -180,7 +182,6 @@ const COPY = {
     changesTitle: "What changed",
     unknownTitle: "What cannot be determined",
     unchangedTitle: "What stayed the same",
-    noChange: "There is no change in the facts read on both queries.",
     rawAccount: "Raw supply on the account",
     rawRpc: "Raw supply read separately",
     format: "The card version is not the same. Only fields that exist on both are compared.",
@@ -420,16 +421,7 @@ function renderCard(card) {
   article.append(mintLine);
   const list = el("dl");
   const facts = [];
-  const accountKnown = card.supplyAccount !== null && card.supplyAccount !== undefined && card.supplyAccount !== "";
-  const rpcKnown = card.supplyRpcStatus === "verificado" && typeof card.supplyRpc === "string" && card.supplyRpc !== "";
-  const supplyRaw = accountKnown ? card.supplyAccount : rpcKnown ? card.supplyRpc : null;
-  const supplyStatus = accountKnown || rpcKnown
-    ? "verificado"
-    : card.isMint === false && card.supplyRpcStatus === "no_aplica"
-      ? "no_aplica"
-      : card.isMint
-        ? "fallo"
-        : card.supplyRpcStatus;
+  const supplyCheck = supplyConfirmation(card);
   facts.push(dataRow(list, t("program"), card.programStatus, programLabel(card.program)));
   const mintAuth = card.mintAuthority.address
     ? `${authorityLabel(card.mintAuthority)} · ${card.mintAuthority.address}`
@@ -439,7 +431,7 @@ function renderCard(card) {
     : authorityLabel(card.freezeAuthority);
   facts.push(dataRow(list, t("mintAuth"), card.mintAuthority.status, mintAuth));
   facts.push(dataRow(list, t("freezeAuth"), card.freezeAuthority.status, freezeAuth));
-  facts.push(dataRow(list, t("supplyAccount"), supplyStatus, amountText(supplyRaw, card.decimals, supplyStatus)));
+  appendSupply(list, facts, card, supplyCheck);
   facts.push(dataRow(list, t("decimals"), card.decimals === null ? "ausente" : "verificado", card.decimals));
   facts.push(dataRow(list, t("name"), card.name.status, card.name.text));
   facts.push(dataRow(list, t("symbol"), card.symbol.status, card.symbol.text));
@@ -472,7 +464,7 @@ function renderCard(card) {
   const utcTerm = text("dt", t("utc"));
   const utcValue = text("dd", card.consultedAt);
   tech.append(utcTerm, utcValue);
-  dataRow(tech, t("rawAccount"), supplyStatus, card.supplyAccount);
+  dataRow(tech, t("rawAccount"), supplyCheck.account ? "verificado" : "fallo", card.supplyAccount);
   dataRow(tech, t("rawRpc"), card.supplyRpcStatus, card.supplyRpc);
   if (card.errors.length) {
     const errors = el("ul");
@@ -484,6 +476,23 @@ function renderCard(card) {
   details.append(summaryTech, tech);
   article.append(details);
   return article;
+}
+
+function appendSupply(list, facts, card, check) {
+  const note = supplyNote(card, lang());
+  if (!check.account && !check.extra) {
+    const status = check.reason === "no_aplica" ? "no_aplica" : "fallo";
+    facts.push(dataRow(list, t("supplyAccount"), status, null));
+    return;
+  }
+  const raw = check.account || check.extra;
+  const term = text("dt", t("supplyAccount"));
+  const detail = text("dd", amountText(raw, card.decimals, "verificado"));
+  detail.dataset.estado = check.confirmed ? "ok" : "fallo";
+  list.append(term, detail);
+  if (note) list.append(text("dd", note, { class: "nota" }));
+  facts.push({ label: t("supplyAccount"), state: check.account || check.confirmed ? "ok" : "fallo" });
+  if (check.reason === "fallo" && check.account) facts.push({ label: t("supplyExtra"), state: "fallo" });
 }
 
 function sameReading(left, right) {
@@ -498,6 +507,11 @@ function pairFor(list, leftId, rightId) {
   if (leftRec && (!rightRec || rightRec.id === leftRec.id || !sameReading(leftRec, rightRec))) {
     rightRec = pickPrevious(list, leftRec.card, leftRec.id);
   }
+  if (leftRec && rightRec && String(leftRec.card.consultedAt) > String(rightRec.card.consultedAt)) {
+    const newer = leftRec;
+    leftRec = rightRec;
+    rightRec = newer;
+  }
   const rightChoices = leftRec
     ? list.filter((item) => item.id !== leftRec.id && sameReading(leftRec, item))
     : [];
@@ -508,14 +522,15 @@ function pairFor(list, leftId, rightId) {
   };
 }
 
-function fillSelect(select, list, selected) {
+function fillSelect(select, list, selected, peers) {
   select.replaceChildren();
   const blank = el("option", { value: "" });
   blank.textContent = "—";
   select.append(blank);
+  const cards = (peers || list).map((item) => item.card);
   for (const record of list) {
     const option = el("option", { value: record.id });
-    option.textContent = readingOptionLabel(record.card, lang());
+    option.textContent = readingOptionLabel(record.card, lang(), cards);
     select.append(option);
   }
   select.value = selected && list.some((item) => item.id === selected) ? selected : "";
@@ -526,8 +541,8 @@ function paintSelects(list, leftId, rightId) {
   const right = document.getElementById("comparar-derecha");
   if (!left || !right) return;
   const pair = pairFor(list, leftId, rightId);
-  fillSelect(left, list, pair.leftId);
-  fillSelect(right, pair.rightChoices, pair.rightId);
+  fillSelect(left, list, pair.leftId, list);
+  fillSelect(right, pair.rightChoices, pair.rightId, list);
 }
 
 function renderRecords(records) {
@@ -675,9 +690,13 @@ function renderComparison() {
     out.append(text("p", compared.error[lang()], { class: "campo-error" }));
     return;
   }
+  const older = compared.older || left;
+  const newer = compared.newer || right;
   out.append(text("h3", t("compareTitle")));
-  out.append(text("p", staleLine(left.card.consultedAt, lang()), { class: "sello" }));
-  out.append(text("p", staleLine(right.card.consultedAt, lang()), { class: "sello" }));
+  const counted = text("p", comparisonSummary(compared, lang()), { class: "resumen-comparacion" });
+  out.append(counted);
+  out.append(text("p", `${t("before")} · ${staleLine(older.card.consultedAt, lang())}`, { class: "sello" }));
+  out.append(text("p", `${t("after")} · ${staleLine(newer.card.consultedAt, lang())}`, { class: "sello" }));
   if (compared.formatChanged) out.append(text("p", t("format")));
   const shownSide = (rowItem, side, card) => {
     const raw = side === "left" ? rowItem.left : rowItem.right;
@@ -685,9 +704,7 @@ function renderComparison() {
       const formatted = formatAmount(raw, card.decimals, lang());
       if (formatted) return formatted;
     }
-    if (raw === "true") return t("yes");
-    if (raw === "false") return t("no");
-    return raw ?? t("none");
+    return comparedValueText(raw, lang());
   };
   const gridFor = (rows, verdict) => {
     const grid = el("div", { class: "comparacion" });
@@ -695,21 +712,19 @@ function renderComparison() {
     for (const rowItem of rows) {
       const article = el("article", { class: "ficha", "data-veredicto": verdict });
       article.append(text("h3", rowItem.field[lang()]));
-      article.append(text("p", `${t("left")}: ${shownSide(rowItem, "left", left.card)}`));
-      article.append(text("p", `${t("right")}: ${shownSide(rowItem, "right", right.card)}`));
+      article.append(text("p", `${t("before")}: ${shownSide(rowItem, "left", older.card)}`));
+      article.append(text("p", `${t("after")}: ${shownSide(rowItem, "right", newer.card)}`));
       if (rowItem.difference && verdict === "cambio") {
-        const delta = formatAmount(rowItem.difference, left.card.decimals, lang());
-        if (delta) article.append(text("p", `${t("difference")}: ${delta}`, { class: "nota" }));
+        const delta = supplyDirection(rowItem.difference, older.card.decimals, lang());
+        if (delta) article.append(text("p", delta, { class: "nota" }));
       }
       article.append(text("p", word, { class: verdict === "cambio" ? "nota" : "muted", "data-estado": verdict }));
       grid.append(article);
     }
     return grid;
   };
-  if (!compared.changes.length) out.append(text("p", t("noChange")));
-  else out.append(text("h3", t("changesTitle")), gridFor(compared.changes, "cambio"));
+  if (compared.changes.length) out.append(text("h3", t("changesTitle")), gridFor(compared.changes, "cambio"));
   if (compared.unknown.length) {
-    out.append(text("p", t("unknownChange"), { class: "nota", "data-veredicto": "indeterminado" }));
     const unknown = el("details", { class: "aviso-mas grupo-desconocido", open: "open" });
     const summary = el("summary");
     summary.textContent = t("unknownTitle");
@@ -728,14 +743,14 @@ function renderComparison() {
   techSummary.textContent = t("technical");
   const techList = el("dl");
   const slotText = (value) => (value === null || value === undefined ? t("unread") : String(value));
-  techList.append(text("dt", t("slot")), text("dd", `${t("left")}: ${slotText(compared.technical.slot.left)} · ${t("right")}: ${slotText(compared.technical.slot.right)}`));
-  techList.append(text("dt", t("utc")), text("dd", `${t("left")}: ${compared.technical.consultedAt.left} · ${t("right")}: ${compared.technical.consultedAt.right}`));
+  techList.append(text("dt", t("slot")), text("dd", `${t("before")}: ${slotText(compared.technical.slot.left)} · ${t("after")}: ${slotText(compared.technical.slot.right)}`));
+  techList.append(text("dt", t("utc")), text("dd", `${t("before")}: ${compared.technical.consultedAt.left} · ${t("after")}: ${compared.technical.consultedAt.right}`));
   tech.append(techSummary, techList);
   out.append(tech);
   if (compared.notes.left || compared.notes.right) {
     const notes = el("div", { class: "nota-personal" });
-    notes.append(text("p", `${t("left")}: ${compared.notes.left}`));
-    notes.append(text("p", `${t("right")}: ${compared.notes.right}`));
+    notes.append(text("p", `${t("before")}: ${compared.notes.left}`));
+    notes.append(text("p", `${t("after")}: ${compared.notes.right}`));
     out.append(notes);
   }
   out.append(entenderNav(lang()));

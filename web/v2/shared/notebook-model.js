@@ -2,6 +2,7 @@
  * Esquema, comparación e importación del cuaderno.
  * El texto importado no se ejecuta. Una ficha guardada no es una lectura actual.
  */
+import { formatAmount } from "./amount.js";
 import { factState } from "./fact-state.js";
 import { CARD_SCHEMA, CARD_VERSION, DISCLAIMER, OFFICIAL_MINT, isMintAddress } from "./solana-read.js";
 
@@ -340,6 +341,108 @@ function totalSupply(card) {
   return { raw: null, state: "fallo" };
 }
 
+const COMPARED_TEXT = {
+  "spl-token": { es: "SPL Token", en: "SPL Token" },
+  "token-2022": { es: "Token-2022", en: "Token-2022" },
+  no_es_mint: { es: "No es una cuenta de mint", en: "Not a mint account" },
+  no_disponible: { es: "no disponible", en: "unavailable" },
+  si: { es: "sí", en: "yes" },
+  no: { es: "no", en: "no" },
+  true: { es: "sí", en: "yes" },
+  false: { es: "no", en: "no" },
+  activa: { es: "activa", en: "active" },
+  revocada: { es: "revocada", en: "revoked" },
+  no_decodificable: { es: "no se pudo leer", en: "could not be read" },
+  no_aplica: { es: "no aplica", en: "not applicable" },
+  ausente: { es: "ausente comprobado", en: "confirmed absent" },
+  fallo: { es: "consulta fallida", en: "failed query" },
+  no_consultado: { es: "no consultado", en: "not queried" },
+};
+
+export function comparedValueText(raw, lang) {
+  if (raw === null || raw === undefined || raw === "") return lang === "en" ? "unavailable" : "no disponible";
+  const row = COMPARED_TEXT[String(raw)];
+  if (!row) return String(raw);
+  return lang === "en" ? row.en : row.es;
+}
+
+export function supplyConfirmation(card) {
+  const account = supplyDigits(card && card.supplyAccount);
+  const extra = card && card.supplyRpcStatus === "verificado" ? supplyDigits(card.supplyRpc) : null;
+  if (account && extra && account === extra) return { confirmed: true, reason: "coincide", account, extra };
+  if (account && extra) return { confirmed: false, reason: "no_coincide", account, extra };
+  if (account) return { confirmed: false, reason: "fallo", account, extra: null };
+  if (extra) return { confirmed: true, reason: "coincide", account: null, extra };
+  if (card && card.supplyRpcStatus === "no_aplica" && card.isMint === false) {
+    return { confirmed: false, reason: "no_aplica", account: null, extra: null };
+  }
+  return { confirmed: false, reason: "fallo", account: null, extra: null };
+}
+
+export function supplyNote(card, lang) {
+  const check = supplyConfirmation(card);
+  if (check.reason !== "fallo" && check.reason !== "no_coincide") return null;
+  if (!check.account || !Number.isInteger(card.decimals)) return null;
+  const formatted = formatAmount(check.account, card.decimals, lang);
+  if (!formatted) return null;
+  const figure = formatted.replace(/ tokens$/, "");
+  const en = lang === "en";
+  if (check.reason === "no_coincide") {
+    return en
+      ? `The mint bytes say ${figure} with ${card.decimals} decimals, and the extra read does not match. The figure shown is the one from the bytes. Percentages are not calculated.`
+      : `Los bytes del mint dicen ${figure} con ${card.decimals} decimales, y la lectura extra no coincide. Se muestra la cifra de los bytes. No se calculan porcentajes.`;
+  }
+  const service = en
+    ? "The public service did not respond, try again in a minute."
+    : "El servicio público no respondió, prueba otra vez en un minuto.";
+  return en
+    ? `There are ${figure} tokens, with ${card.decimals} decimals, read from the mint bytes. ${service} That does not change this figure and it is not an absence.`
+    : `Hay ${figure} tokens, con ${card.decimals} decimales, leídos de los bytes del mint. ${service} Eso no cambia esta cifra y no es una ausencia.`;
+}
+
+export function supplyDirection(difference, decimals, lang) {
+  if (difference === null || difference === undefined || difference === "") return null;
+  let value;
+  try {
+    value = BigInt(difference);
+  } catch {
+    return null;
+  }
+  if (value === 0n) return null;
+  const absolute = formatAmount((value < 0n ? -value : value).toString(), decimals, lang);
+  if (!absolute) return null;
+  if (lang === "en") return value < 0n ? `Fell ${absolute}` : `Rose ${absolute}`;
+  return value < 0n ? `Bajó ${absolute}` : `Subió ${absolute}`;
+}
+
+function countClause(count, one, many) {
+  return count === 1 ? one : many.replace("#", String(count));
+}
+
+export function comparisonSummary(compared, lang) {
+  const changed = Array.isArray(compared && compared.changes) ? compared.changes.length : 0;
+  const same = Array.isArray(compared && compared.unchanged) ? compared.unchanged.length : 0;
+  const unknown = Array.isArray(compared && compared.unknown) ? compared.unknown.length : 0;
+  if (lang === "en") {
+    const change = countClause(changed, "1 fact changed", "# facts changed");
+    const stay = countClause(same, "1 stayed the same", "# stayed the same");
+    const miss = countClause(
+      unknown,
+      "1 cannot be compared because it is missing from one reading",
+      "# cannot be compared because they are missing from one reading",
+    );
+    return `${change} · ${stay} · ${miss}`;
+  }
+  const change = countClause(changed, "1 dato cambió", "# datos cambiaron");
+  const stay = countClause(same, "1 sigue igual", "# siguen igual");
+  const miss = countClause(
+    unknown,
+    "1 no se puede comparar porque falta en alguna lectura",
+    "# no se pueden comparar porque faltan en alguna lectura",
+  );
+  return `${change} · ${stay} · ${miss}`;
+}
+
 function supplyRow(left, right) {
   const a = totalSupply(left.card);
   const b = totalSupply(right.card);
@@ -379,6 +482,11 @@ export function compareRecords(left, right) {
       "Only two queries of the same network and address can be compared.",
     );
   }
+  if (String(left.card.consultedAt) > String(right.card.consultedAt)) {
+    const newer = left;
+    left = right;
+    right = newer;
+  }
   const rows = COMPARE_FIELDS.map(([path, statusPath, es, en, amount]) => {
     const a = readPath(left.card, path);
     const b = readPath(right.card, path);
@@ -416,6 +524,8 @@ export function compareRecords(left, right) {
       consultedAt: { left: left.card.consultedAt, right: right.card.consultedAt },
     },
     notes: { left: left.note, right: right.note },
+    older: left,
+    newer: right,
   };
 }
 
@@ -435,23 +545,31 @@ export function staleLine(consultedAt, lang) {
   return `Consultado el ${local} · puede haber cambiado`;
 }
 
-export function formatReadingStamp(consultedAt, lang) {
+export function formatReadingStamp(consultedAt, lang, withSeconds = false) {
   const date = new Date(consultedAt);
   if (Number.isNaN(date.getTime())) return formatLocal(consultedAt, lang);
-  return new Intl.DateTimeFormat(lang === "en" ? "en-GB" : "es-ES", {
+  const options = {
     day: "numeric",
     month: "short",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  }).format(date).replace(/[\u202f\u00a0]/g, " ");
+  };
+  if (withSeconds) options.second = "2-digit";
+  return new Intl.DateTimeFormat(lang === "en" ? "en-GB" : "es-ES", options).format(date).replace(/[\u202f\u00a0]/g, " ");
 }
 
-export function readingOptionLabel(card, lang) {
+export function readingOptionLabel(card, lang, peers = []) {
   const symbol = card && card.symbol && typeof card.symbol.text === "string" ? card.symbol.text.trim() : "";
   const name = card && card.name && typeof card.name.text === "string" ? card.name.text.trim() : "";
   const title = (symbol || name || `${String(card && card.mint ? card.mint : "").slice(0, 4)}…`).slice(0, 24);
-  return `${title} · ${formatReadingStamp(card.consultedAt, lang)}`;
+  const minute = formatReadingStamp(card.consultedAt, lang, false);
+  const crowded = (Array.isArray(peers) ? peers : []).some((other) => {
+    if (!other || other === card) return false;
+    if (other.mint !== card.mint || other.network !== card.network) return false;
+    return formatReadingStamp(other.consultedAt, lang, false) === minute;
+  });
+  return `${title} · ${formatReadingStamp(card.consultedAt, lang, crowded)}`;
 }
 
 export function formatLocal(consultedAt, lang) {

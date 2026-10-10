@@ -4,7 +4,7 @@
  */
 import { formatAmount } from "../shared/amount.js";
 import { ENTENDER, entenderNav } from "../shared/entender.js";
-import { compareRecords, pickPrevious, staleLine, validateCard, withinStoreLimit } from "../shared/notebook-model.js";
+import { compareRecords, comparedValueText, comparisonSummary, pickPrevious, staleLine, supplyDirection, validateCard, withinStoreLimit } from "../shared/notebook-model.js";
 import { cardFromShown } from "../shared/solana-read.js";
 
 const DB_NAME = "stubx-cuaderno";
@@ -17,14 +17,12 @@ const COPY = {
     open: "Abrir Cuaderno",
     none: "No hay una consulta anterior de esta dirección en esta red.",
     compare: "Comparar consultas",
-    unknown: "no se puede determinar si cambió",
     unknownState: "no se puede determinar",
     changed: "cambió",
     same: "igual",
     changes: "Qué cambió",
     unknownTitle: "Lo que no se puede determinar",
     unchangedTitle: "Lo que sigue igual",
-    difference: "Diferencia",
     unread: "no se leyó",
     utc: "Hora UTC",
     slot: "Momento de la red",
@@ -32,12 +30,11 @@ const COPY = {
     incomplete: "Lectura incompleta: se guardará marcando lo que falta",
     emptySave: "No hay una lectura para guardar. No se ha guardado una ficha vacía.",
     wait: "La lectura no ha terminado. Espera a que aparezca el resultado.",
-    noChange: "No hay un cambio en los datos leídos en las dos consultas.",
     db: "Este navegador no dejó guardar el cuaderno.",
     fail: "No hay una lectura en pantalla para guardar. Pulsa Comprobar y espera el resultado.",
     full: "Este navegador ya tiene el máximo de fichas.",
-    left: "Esta consulta",
-    right: "La anterior",
+    before: "Antes",
+    after: "Ahora",
     yes: "sí",
     no: "no",
     missing: "no disponible",
@@ -48,14 +45,12 @@ const COPY = {
     open: "Open Notebook",
     none: "There is no earlier query of this address on this network.",
     compare: "Compare queries",
-    unknown: "it cannot be determined whether it changed",
     unknownState: "it cannot be determined",
     changed: "changed",
     same: "same",
     changes: "What changed",
     unknownTitle: "What cannot be determined",
     unchangedTitle: "What stayed the same",
-    difference: "Difference",
     unread: "not read",
     utc: "UTC time",
     slot: "Network moment",
@@ -63,12 +58,11 @@ const COPY = {
     incomplete: "Incomplete reading: it will be saved marking what is missing",
     emptySave: "There is no reading to save. An empty card was not saved.",
     wait: "The reading has not finished. Wait until the result appears.",
-    noChange: "There is no change in the facts read on both queries.",
     db: "This browser did not allow the notebook to be saved.",
     fail: "There is no reading on screen to save. Press Check and wait for the result.",
     full: "This browser already has the maximum number of cards.",
-    left: "This query",
-    right: "The previous one",
+    before: "Before",
+    after: "Now",
     yes: "yes",
     no: "no",
     missing: "unavailable",
@@ -187,12 +181,10 @@ function sideText(row, side, card) {
     const formatted = formatAmount(raw, card.decimals, lang());
     if (formatted) return formatted;
   }
-  if (raw === "true") return t("yes");
-  if (raw === "false") return t("no");
-  return raw ?? t("missing");
+  return comparedValueText(raw, lang());
 }
 
-function gridFor(rows, verdict, current, previous) {
+function gridFor(rows, verdict, older, newer) {
   const grid = document.createElement("div");
   grid.className = "comparacion";
   const word = verdict === "cambio" ? t("changed") : verdict === "igual" ? t("same") : t("unknownState");
@@ -203,16 +195,16 @@ function gridFor(rows, verdict, current, previous) {
     const title = document.createElement("h3");
     title.textContent = row.field[lang()];
     const left = document.createElement("p");
-    left.textContent = `${t("left")}: ${sideText(row, "left", current.card)}`;
+    left.textContent = `${t("before")}: ${sideText(row, "left", older.card)}`;
     const right = document.createElement("p");
-    right.textContent = `${t("right")}: ${sideText(row, "right", previous.card)}`;
+    right.textContent = `${t("after")}: ${sideText(row, "right", newer.card)}`;
     article.append(title, left, right);
     if (row.difference && verdict === "cambio") {
-      const delta = formatAmount(row.difference, current.card.decimals, lang());
+      const delta = supplyDirection(row.difference, older.card.decimals, lang());
       if (delta) {
         const diff = document.createElement("p");
         diff.className = "nota";
-        diff.textContent = `${t("difference")}: ${delta}`;
+        diff.textContent = delta;
         article.append(diff);
       }
     }
@@ -229,35 +221,35 @@ function gridFor(rows, verdict, current, previous) {
 function paintComparison(current, previous, compared) {
   const node = box();
   if (!node) return;
+  const older = compared.older || previous;
+  const newer = compared.newer || current;
   node.replaceChildren();
   const title = document.createElement("h3");
   title.textContent = t("compare");
-  const when = document.createElement("p");
-  when.className = "sello";
-  when.textContent = staleLine(previous.card.consultedAt, lang());
-  node.append(title, when);
-  if (!compared.changes.length) {
-    const empty = document.createElement("p");
-    empty.textContent = t("noChange");
-    node.append(empty);
-  } else {
+  const counted = document.createElement("p");
+  counted.className = "resumen-comparacion";
+  counted.textContent = comparisonSummary(compared, lang());
+  const before = document.createElement("p");
+  before.className = "sello";
+  before.textContent = `${t("before")} · ${staleLine(older.card.consultedAt, lang())}`;
+  const after = document.createElement("p");
+  after.className = "sello";
+  after.textContent = `${t("after")} · ${staleLine(newer.card.consultedAt, lang())}`;
+  node.append(title, counted, before, after);
+  if (compared.changes.length) {
     const heading = document.createElement("h3");
     heading.id = "que-cambio";
     heading.textContent = t("changes");
-    node.append(heading, gridFor(compared.changes, "cambio", current, previous));
+    node.append(heading, gridFor(compared.changes, "cambio", older, newer));
   }
   if (compared.unknown.length) {
-    const lead = document.createElement("p");
-    lead.className = "nota";
-    lead.dataset.veredicto = "indeterminado";
-    lead.textContent = t("unknown");
     const details = document.createElement("details");
     details.open = true;
     details.className = "aviso-mas grupo-desconocido";
     const summary = document.createElement("summary");
     summary.textContent = t("unknownTitle");
-    details.append(summary, gridFor(compared.unknown, "indeterminado", current, previous));
-    node.append(lead, details);
+    details.append(summary, gridFor(compared.unknown, "indeterminado", older, newer));
+    node.append(details);
   }
   if (compared.unchanged.length) {
     const sameBox = document.createElement("details");
@@ -265,7 +257,7 @@ function paintComparison(current, previous, compared) {
     sameBox.className = "aviso-mas grupo-igual";
     const summary = document.createElement("summary");
     summary.textContent = t("unchangedTitle");
-    sameBox.append(summary, gridFor(compared.unchanged, "igual", current, previous));
+    sameBox.append(summary, gridFor(compared.unchanged, "igual", older, newer));
     node.append(sameBox);
   }
   const tech = document.createElement("details");
@@ -277,11 +269,11 @@ function paintComparison(current, previous, compared) {
   slotName.textContent = t("slot");
   const slotValue = document.createElement("dd");
   const slotText = (value) => (value === null || value === undefined ? t("unread") : String(value));
-  slotValue.textContent = `${t("left")}: ${slotText(compared.technical.slot.left)} · ${t("right")}: ${slotText(compared.technical.slot.right)}`;
+  slotValue.textContent = `${t("before")}: ${slotText(compared.technical.slot.left)} · ${t("after")}: ${slotText(compared.technical.slot.right)}`;
   const timeName = document.createElement("dt");
   timeName.textContent = t("utc");
   const timeValue = document.createElement("dd");
-  timeValue.textContent = `${t("left")}: ${compared.technical.consultedAt.left} · ${t("right")}: ${compared.technical.consultedAt.right}`;
+  timeValue.textContent = `${t("before")}: ${compared.technical.consultedAt.left} · ${t("after")}: ${compared.technical.consultedAt.right}`;
   list.append(slotName, slotValue, timeName, timeValue);
   tech.append(techSummary, list);
   node.append(tech, entenderNav(lang()));
