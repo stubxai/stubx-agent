@@ -53,19 +53,32 @@ type RpcClientOptions = {
   sleep?: (ms: number) => Promise<void>;
   random?: () => number;
   monoNow?: () => number;
+  signal?: AbortSignal;
 };
 
-export async function httpTransport(endpoint: string, body: string, timeoutMs: number): Promise<{ status: number; body: string }> {
+export async function httpTransport(
+  endpoint: string,
+  body: string,
+  timeoutMs: number,
+  signal?: AbortSignal,
+): Promise<{ status: number; body: string }> {
+  const headers: Record<string, string> = {
+    "content-type": "application/json",
+    accept: "application/json",
+  };
+  if (typeof navigator === "undefined") {
+    headers["user-agent"] = "stubx-verify/0.1";
+  }
   const response = await fetch(endpoint, {
     method: "POST",
-    headers: {
-      "content-type": "application/json",
-      accept: "application/json",
-      "user-agent": "stubx-verify/0.1",
-    },
+    headers,
     body,
-    signal: AbortSignal.timeout(timeoutMs),
-  });
+    signal: signal ? AbortSignal.any([AbortSignal.timeout(timeoutMs), signal]) : AbortSignal.timeout(timeoutMs),
+    cache: "no-store",
+    credentials: "omit",
+    referrerPolicy: "no-referrer",
+    redirect: "error",
+  } as RequestInit);
   const raw = new Uint8Array(await response.arrayBuffer());
   if (raw.byteLength > 5_000_000) {
     return { status: response.status, body: "" };
@@ -89,7 +102,8 @@ export class RpcClient {
 
   constructor(options: RpcClientOptions) {
     this.endpoint = options.endpoint;
-    this.transport = options.transport ?? httpTransport;
+    this.transport =
+      options.transport ?? ((endpoint, body, timeoutMs) => httpTransport(endpoint, body, timeoutMs, options.signal));
     this.timeoutMs = options.timeoutMs ?? 8000;
     this.maxRetries = options.maxRetries ?? 2;
     this.backoffBaseMs = options.backoffBaseMs ?? 500;
@@ -307,6 +321,18 @@ function parseTokenAmount(value: unknown): TokenAmount {
 }
 
 function decodeBase64(value: string): Uint8Array {
-  const buf = Buffer.from(value, "base64");
-  return new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
+  const binary = atob(value);
+  const out = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) {
+    out[i] = binary.charCodeAt(i);
+  }
+  return out;
 }
+
+export type ChainReader = {
+  getSlot(): Promise<RpcResult<number>>;
+  getAccountInfo(address: string): Promise<RpcResult<AccountInfo | null>>;
+  getMultipleAccounts(addresses: readonly string[]): Promise<RpcResult<(AccountInfo | null)[]>>;
+  getTokenSupply(mint: string): Promise<RpcResult<TokenAmount>>;
+  getTokenLargestAccounts(mint: string): Promise<RpcResult<LargestAccount[]>>;
+};

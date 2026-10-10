@@ -12,7 +12,7 @@ Esta entrada resume. No reescribe el detalle fechado que sigue debajo.
 
 - Componente aparte, de solo lectura: CLI `verify`, fichas JSON, Markdown y HTML, y pruebas sin red. No firma, no envía y no custodia. El agente de `src/` sigue sin contactar ningún RPC.
 - Ejemplos fechados del 2026-10-08 y del 2026-10-09, incluida la ficha oficial releída y los ejemplos añadidos ese día. Una ficha parcial no rellena el hueco.
-- En la web v2, `/verify` compara con esas fichas. No es una lectura en vivo.
+- En la web v2, `/verify` es Verify universal, desplegado (merge `2434636`). Lee en el navegador, solo lectura, cualquier mint SPL o Token-2022, y también compara con las fichas fechadas.
 
 ### Lab
 
@@ -24,7 +24,7 @@ Esta entrada resume. No reescribe el detalle fechado que sigue debajo.
 - Misma navegación, mismos estilos y el mismo cambio de idioma en las páginas de `web/v2/`. Verify y Lab van dentro de ese cascarón, no en otra web.
 - Pie vigente: «Cripto de alto riesgo · Puedes perderlo todo · No es consejo de inversión.» / «High-risk crypto · You could lose everything · Not investment advice.»
 - `web/v2/` es la web publicada en stubxai.com desde el 2026-10-09 (merge `ed1c7759`). `web/current/` es la copia anterior, para volver atrás.
-- Studio, el cuaderno y el `noindex` de rutas concretas no se fijan en esta nota. Si entran la PR de Studio o la del cuaderno antes del tag, hay que reescribir este párrafo con lo que stubxai.com sirva ese día.
+- Studio está desplegado (PR #20 y #26) y se indexa. Verify universal está desplegado (merge `2434636`). El cuaderno no forma parte de este despliegue.
 - Esta entrada no despliega `web/v2/`. stubxai.com no cambia por este documento. La v2 ya está desplegada desde el 2026-10-09.
 - Este repositorio no inserta medición de visitas ni cookies. Cloudflare Web Analytics debe estar apagado en el panel de la zona (sin baliza en el HTML servido el 2026-10-10).
 
@@ -39,12 +39,12 @@ Esta entrada resume. No reescribe el detalle fechado que sigue debajo.
 
 - En README y LIMITS, la frase retirada «Memecoin experimental · puedes perderlo todo…» pasa al pie vigente. En inglés, «could», no «can».
 
-## 2026-10-09 · Verify y Lab: lectura visible en el móvil
+## 2026-10-09 · Verify lee cualquier mint, solo lectura, sin publicar
 
-- En menos de 600 px la cabecera deja de quedarse fija. Tras Comprobar, la página se desplaza al veredicto y el foco va al titular.
-- Una dirección válida que no es la oficial y no tiene ficha dice «No es la dirección oficial» y muestra la oficial. Si mide lo mismo, marca los caracteres que cambian. Las fichas conocidas siguen mostrando su ficha. El campo vacío avisa en línea. La dirección no válida incluye un ejemplo.
-- `frame-ancestors` queda solo en `_headers`. El beacon de Cloudflare Web Analytics no se toca aquí: hay que apagarlo en el panel de la zona.
-- Cada pregunta del Lab lleva una frase llana. El número largo de la curva sale en Detalles. El glosario del paso lista sus términos. El avance espera a «Siguiente paso». El pie tiene enlaces de 44 px, la biblioteca va plegada y la pantalla final tiene «Empezar de nuevo».
+- La página `/verify` lee en el navegador, sin backend, cualquier mint SPL o Token-2022. El primer servicio es `https://solana-rpc.publicnode.com`, que responde desde el navegador. Si ese devuelve 403, 429 o se agota el tiempo, se prueba `https://api.mainnet-beta.solana.com`: ese fallo es del servicio, no del mint ni de su autoridad. Una respuesta rechazada no se anota como fuente de ese dato. Si los dos fallan, la página dice «No se pudo comprobar» y no inventa cifras. `connect-src` de `/*` se queda en `'self'`. Solo `/verify/` y `/verify/*` abren esos dos orígenes, con `! Content-Security-Policy`.
+- El aviso fijo y el de privacidad dicen que no es una auditoría ni un aval, y que el servicio público recibe la dirección y la IP. No hay puntuación de seguro, recomendado ni estafa.
+- Un nombre o un símbolo parecido a STUBX, ya plegado (NFKC, homoglifos y sin invisibles), sale en ámbar: «Se parece a STUBX, pero no es la CA oficial». El titular del resto de mints sigue siendo «Lectura de este token», con la línea «No es la dirección oficial de STUBX.» solo en ese caso. La muestra de cuentas no se pide sola.
+- En menos de 600 px la cabecera deja de quedarse fija y el veredicto se desplaza a la vista. El campo vacío avisa en línea. `frame-ancestors` queda solo en `_headers`. Hay como máximo 6 lecturas por minuto y una memoria de 60 segundos en la pestaña. La PR 14 ya está en main (2026-10-09). Esta vista previa no se despliega antes del 2026-10-20.
 
 ## 2026-10-09 · Revisión de seguridad de Verify y Lab (borrador, sin publicar)
 

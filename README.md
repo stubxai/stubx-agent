@@ -80,6 +80,8 @@ npm run verify:all
 
 `verify:all` ejecuta en orden `test`, `scan:forbidden`, `drill:killswitch`, `logs:verify` y `logs:status`. No usa red ni secretos y no añade capacidades al agente: solo junta comprobaciones que ya existen. `npm test` también ejecuta las pruebas de `lab/` (misión, biblioteca y páginas de `site-drafts/`).
 
+El test anti-nombre de Studio lee `STUBX_NAME_DENYLIST`. Si esa lista no está, el test se omite con un aviso y el resto de la suite sigue. Este repositorio no guarda esa lista. Seguridad hace esa comprobación a mano antes de cada merge.
+
 ## STUBX Lab (borrador, sin publicar)
 
 [`lab/`](lab/README.md) es la primera misión educativa y la biblioteca mínima en español e inglés. [`site-drafts/`](site-drafts/README.md) tiene las páginas estáticas `/verify`, `/lab` y `/tablero`, generadas desde el repositorio y listas para copiar a la web cuando haya autorización. No están publicadas y no sustituyen las páginas que ya existen. `npm run lab:build` las regenera.

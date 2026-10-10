@@ -11,7 +11,7 @@ English wording of product pages that came from the Lab library is still pending
 Four pieces. All of them read or teach. None of them asks for a wallet, a seed phrase, or a payment.
 
 1. **The agent** (`src/`). A closed list of actions. It has no keys. It does not sign, custody, or send transactions. It does not call mainnet.
-2. **Verify**. Reads public mint data and writes a card with a date and a source. On the website, the demo uses cards that are already stored. Opening the page does not query the network.
+2. **Verify**. Reads public mint data and writes a card with a date and a source. On the website, Verify universal is deployed (merge `2434636`): `/verify` reads any SPL or Token-2022 mint in the browser, read-only, and also compares it with the dated cards.
 3. **Lab**. A short mission that practices the difference between a token’s name and its address. Progress stays in the browser.
 4. **Web v2**. The same pages, in Spanish and in English, with the same navigation. Web v2 was deployed to stubxai.com on 2026-10-09, outside these notes. These notes do not deploy or change it.
 
@@ -19,7 +19,7 @@ Four pieces. All of them read or teach. None of them asks for a wallet, a seed p
 
 - Directory `verify/`. The command reads public data only when someone runs it on purpose. Read methods sit on a closed list. If a fact does not arrive, the card leaves it unavailable. It does not invent a zero or a revoked authority.
 - Dated examples live in `verify/examples/2026-10-08/` and `verify/examples/2026-10-09/`. The official STUBX mint card was read again on 2026-10-09.
-- `web/v2/verify/` takes a pasted address and compares it with those cards. If the address is not valid, or it is not on the list, the page says so. The list is not a census.
+- `web/v2/verify/` takes a pasted address. Verify universal, deployed (merge `2434636`), reads it in the browser, read-only, when it is an SPL or Token-2022 mint, and also compares it with the dated cards. If the address is not valid, the page says so. The card list is not a census.
 
 A card does not say whether a token is good, safe, or a good purchase.
 
@@ -34,7 +34,7 @@ A card does not say whether a token is good, safe, or a good purchase.
 - It lives in `web/v2/`. Home, Verify, Lab, board, methodology, security, risks, legal, proofs, status, supply, channels, brand, versions, learn, and the post archive.
 - The language switch is in the header. The legal footer is the same on every page of `web/v2/`. Web v2 was deployed to stubxai.com on 2026-10-09, outside these notes. These notes do not deploy or change it.
 - `web/v2/` is the website published on stubxai.com since 2026-10-09 (merge `ed1c7759`). `web/current/` is the earlier copy, kept so it can be put back.
-- Studio, the notebook, and the `noindex` of specific routes are not fixed in this note. If the Studio pull request or the notebook pull request merges before the tag, this paragraph has to be rewritten to match what stubxai.com serves that day.
+- Studio is deployed (pull requests #20 and #26) and it is indexable. Verify universal is deployed (merge `2434636`). The notebook is not part of this deployment.
 
 ## Indexing
 

@@ -24,7 +24,10 @@ describe("v0.1.0 notes, without a tag", () => {
     assert.match(log, /Esta entrada no despliega `web\/v2\/`\. stubxai.com no cambia por este documento\. La v2 ya está desplegada desde el 2026-10-09\./);
     assert.match(log, /`web\/v2\/` es la web publicada en stubxai.com desde el 2026-10-09 \(merge `ed1c7759`\)/);
     assert.equal(log.includes("no están construidos"), false);
-    assert.equal(/\/studio\//.test(log.slice(0, log.indexOf("## 2026-10-09 · Verify y Lab"))), false);
+    assert.equal(log.includes("hay que reescribir"), false);
+    assert.equal(log.includes("No es una lectura en vivo"), false);
+    assert.match(log, /Studio está desplegado \(PR #20 y #26\) y se indexa\. Verify universal está desplegado \(merge `2434636`\)\./);
+    assert.match(log, /En la web v2, `\/verify` es Verify universal, desplegado \(merge `2434636`\)\./);
     assert.match(log, /Este repositorio no inserta medición de visitas ni cookies\. Cloudflare Web Analytics debe estar apagado en el panel de la zona \(sin baliza en el HTML servido el 2026-10-10\)\./);
     assert.match(log, /no está creado/);
     assert.match(log, /2026-09-26 · Esqueleto público/);
@@ -50,8 +53,14 @@ describe("v0.1.0 notes, without a tag", () => {
     assert.equal(en.toLowerCase().includes("preview"), false);
     assert.match(es, /`web\/v2\/` es la web publicada en stubxai.com desde el 2026-10-09 \(merge `ed1c7759`\)\. `web\/current\/` es la copia anterior, para volver atrás\./);
     assert.match(en, /`web\/v2\/` is the website published on stubxai.com since 2026-10-09 \(merge `ed1c7759`\)\. `web\/current\/` is the earlier copy, kept so it can be put back\./);
-    assert.match(es, /hay que reescribir este párrafo/);
-    assert.match(en, /this paragraph has to be rewritten/);
+    assert.match(es, /Studio está desplegado \(PR #20 y #26\) y se indexa\. Verify universal está desplegado \(merge `2434636`\)\. El cuaderno no forma parte de este despliegue\./);
+    assert.match(en, /Studio is deployed \(pull requests #20 and #26\) and it is indexable\. Verify universal is deployed \(merge `2434636`\)\. The notebook is not part of this deployment\./);
+    assert.match(es, /cualquier mint SPL o Token-2022/);
+    assert.match(en, /any SPL or Token-2022 mint/);
+    assert.equal(es.includes("hay que reescribir"), false);
+    assert.equal(en.includes("this paragraph has to be rewritten"), false);
+    assert.equal(es.includes("no consulta la red"), false);
+    assert.equal(en.includes("does not query the network"), false);
     assert.equal(es.includes("no están construidos"), false);
     assert.equal(en.includes("not built"), false);
     assert.equal(es.includes("/studio/"), false);

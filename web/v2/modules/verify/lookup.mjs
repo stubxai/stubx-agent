@@ -29,12 +29,12 @@ const COPY = {
         },
     },
     copia: {
-        light: "riesgo",
-        lightLabel: { es: "Posible copia", en: "Possible copy" },
-        title: { es: "Cuidado: posible copia", en: "Careful: possible copy" },
+        light: "atencion",
+        lightLabel: { es: "Se parece a STUBX, pero no es la CA oficial", en: "Looks like STUBX, but it is not the official CA" },
+        title: { es: "Se parece a STUBX, pero no es la CA oficial", en: "Looks like STUBX, but it is not the official CA" },
         support: {
-            es: "El nombre se parece, pero la dirección no es la del registro. Esto no dice quién lo hizo.",
-            en: "The name looks similar, but the address is not the registry one. This does not say who did it.",
+            es: `El nombre o el símbolo se parece a STUBX y la dirección es otra. Esto no dice quién lo creó ni con qué intención. La única CA oficial es ${OFFICIAL_MINT}.`,
+            en: `The name or the symbol looks like STUBX and the address is different. This does not say who created it or why. The only official CA is ${OFFICIAL_MINT}.`,
         },
     },
     otra: {
@@ -51,8 +51,8 @@ const COPY = {
         lightLabel: { es: "Sin ficha", en: "No card" },
         title: { es: "No se pudo comprobar", en: "Could not be checked" },
         support: {
-            es: "No está entre las fichas de ejemplo. La lista no es completa y esta página no consulta la red, así que no rellena el hueco.",
-            en: "It is not among the example cards. The list is not complete and this page does not query the network, so it does not fill the gap.",
+            es: "No está entre las fichas de ejemplo. La lista no es completa y no hay lectura en directo de esta dirección, así que no rellena el hueco.",
+            en: "It is not among the example cards. The list is not complete and there is no live reading of this address, so it does not fill the gap.",
         },
     },
     lectura_caida: {
@@ -149,8 +149,8 @@ function officialMintOf(cards) {
     return cards.find((card) => card.role === "registro")?.mint ?? OFFICIAL_MINT;
 }
 const NOT_OFFICIAL_GAP = {
-    es: "No hay ficha de ejemplo. La lista no es completa y esta página no consulta la red, así que no rellena el hueco.",
-    en: "There is no example card. The list is not complete and this page does not query the network, so it does not fill the gap.",
+    es: "No hay ficha de ejemplo. La lista no es completa y no hay lectura en directo de esta dirección, así que no rellena el hueco.",
+    en: "There is no example card. The list is not complete and there is no live reading of this address, so it does not fill the gap.",
 };
 function notOfficialView(mint, official) {
     const caseOnly = mint !== official && mint.toLowerCase() === official.toLowerCase();
@@ -282,4 +282,20 @@ export function classifyAddress(raw, cards, source, evm = []) {
         }
     }
     return notOfficialView(mint, official);
+}
+const DATED_CARD_NOTE = pair("Es la ficha del 2026-10-09. No es una lectura en directo.", "It is the 2026-10-09 card. It is not a live reading.");
+/** La ficha fechada sigue, pero un fallo de los dos RPC no la pinta como lectura en verde. */
+export function reserveWhenLiveFails(view) {
+    if (view.kind !== "oficial")
+        return view;
+    const previous = view.partialNote;
+    return {
+        ...view,
+        light: "neutro",
+        lightLabel: pair("No se pudo comprobar en directo", "Could not check live"),
+        title: pair("No se pudo comprobar en directo", "Could not check live"),
+        partialNote: previous
+            ? pair(`${DATED_CARD_NOTE.es} ${previous.es}`, `${DATED_CARD_NOTE.en} ${previous.en}`)
+            : DATED_CARD_NOTE,
+    };
 }

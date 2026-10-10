@@ -9,7 +9,7 @@ Esto no es una auditoría ni un consejo de inversión. Cripto de alto riesgo · 
 Cuatro piezas, todas de lectura o de aprendizaje. Ninguna pide una cartera, una semilla ni un pago.
 
 1. **El agente** (`src/`). Lista cerrada de acciones. No tiene claves, no firma, no custodia y no envía transacciones. No llama a la red principal.
-2. **Verify**. Comprueba datos públicos de un mint y deja una ficha con fecha y fuente. En la web, la demo usa fichas ya guardadas: no consulta la red al abrir la página.
+2. **Verify**. Comprueba datos públicos de un mint y deja una ficha con fecha y fuente. En la web, Verify universal está desplegado (merge `2434636`): `/verify` lee en el navegador, solo lectura, cualquier mint SPL o Token-2022, y también compara con las fichas fechadas.
 3. **Lab**. Una misión corta para practicar la diferencia entre el nombre de un token y su dirección. El progreso se queda en el navegador.
 4. **La web v2**. Las mismas páginas, en español y en inglés, con la misma navegación. La web v2 se desplegó en stubxai.com el 2026-10-09, fuera de estas notas. Estas notas no la despliegan ni la cambian.
 
@@ -17,7 +17,7 @@ Cuatro piezas, todas de lectura o de aprendizaje. Ninguna pide una cartera, una 
 
 - Carpeta `verify/`. El comando lee datos públicos si alguien lo ejecuta a propósito. Métodos de lectura en lista cerrada. Si un dato no llega, la ficha lo deja en no disponible: no inventa un cero ni una autoridad revocada.
 - Ejemplos fechados en `verify/examples/2026-10-08/` y `verify/examples/2026-10-09/`. La ficha oficial del mint de STUBX está releída el 2026-10-09.
-- En `web/v2/verify/` se pega una dirección y se compara con esas fichas. Si la dirección no es válida, o no está en la lista, la página lo dice. La lista no es un censo.
+- En `web/v2/verify/` se pega una dirección. Verify universal, desplegado (merge `2434636`), la lee en el navegador, solo lectura, si es un mint SPL o Token-2022, y también la compara con las fichas fechadas. Si la dirección no es válida, la página lo dice. La lista de fichas no es un censo.
 
 Una ficha no dice si un token es bueno, seguro o una buena compra.
 
@@ -32,7 +32,7 @@ Una ficha no dice si un token es bueno, seguro o una buena compra.
 - Vive en `web/v2/`. Portada, Verify, Lab, tablero, metodología, seguridad, riesgos, legal, pruebas, estado, reparto, canales, marca, versiones, aprender y el archivo de posts.
 - El cambio de idioma está en la cabecera. El pie legal es el mismo en todas las páginas de `web/v2/`. La web v2 se desplegó en stubxai.com el 2026-10-09, fuera de estas notas. Estas notas no la despliegan ni la cambian.
 - `web/v2/` es la web publicada en stubxai.com desde el 2026-10-09 (merge `ed1c7759`). `web/current/` es la copia anterior, para volver atrás.
-- Studio, el cuaderno y el `noindex` de rutas concretas no se fijan en esta nota. Si entran la PR de Studio o la del cuaderno antes del tag, hay que reescribir este párrafo con lo que stubxai.com sirva ese día.
+- Studio está desplegado (PR #20 y #26) y se indexa. Verify universal está desplegado (merge `2434636`). El cuaderno no forma parte de este despliegue.
 
 ## Indexación
 
