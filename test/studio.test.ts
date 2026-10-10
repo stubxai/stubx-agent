@@ -713,6 +713,8 @@ describe("studio", () => {
     assert.match(reglas, /If you use another token’s name or logo: you need the right to use them/);
     assert.match(reglas, /STUBX solo ofrece la herramienta: no revisa, no avala ni promociona ese token/);
     assert.match(reglas, /STUBX only offers the tool: it does not review, endorse or promote that token/);
+    assert.match(reglas, /No uses el nombre, la imagen ni los datos de personas reales sin su permiso, tampoco los del equipo de STUBX\./);
+    assert.match(reglas, /Do not use the name, image or personal data of real people without their permission, including the STUBX team\./);
     assert.match(reglas, /ai: «Imagen generada con IA»/);
     assert.match(reglas, /ai: “AI-generated image”/);
     assert.match(editor, /Usa solo un logo que tengas derecho a usar\. Si se hizo con IA, indícalo al publicar\./);
