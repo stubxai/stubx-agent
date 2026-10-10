@@ -610,31 +610,61 @@
     },
     {
       "id": "U05",
-      "version": "0",
+      "version": "1",
       "title": {
         "es": "Cuaderno personal",
         "en": "Personal notebook"
       },
-      "status": "propuesta",
-      "webPublished": false,
+      "status": "en_revision",
+      "webPublished": true,
       "scope": {
-        "es": "Idea para guardar consultas en el dispositivo. Lab solo guarda el progreso de la misión, no un cuaderno de fichas.",
-        "en": "Idea for storing queries on the device. Lab only stores mission progress, not a notebook of cards."
+        "es": "Cuaderno en este navegador: lee un mint con la misma lista de métodos que Verify universal, guarda la ficha y la nota en el dispositivo, compara dos consultas de la misma dirección y permite exportar, importar y borrar. No pide firmar. Está en stubxai.com/cuaderno desde el 2026-10-10.",
+        "en": "Notebook in this browser: reads a mint with the same method list as universal Verify, stores the card and note on the device, compares two reads of the same address, and lets you export, import, and delete. It never asks you to sign. It is on stubxai.com/cuaderno since 2026-10-10."
       },
-      "owner": "Sin asignar",
-      "reviewer": "No aplica todavía.",
-      "reviewedOn": null,
+      "owner": "Equipo del repositorio",
+      "reviewer": "Pendiente de una persona distinta del autor, antes de publicar.",
+      "reviewedOn": "2026-10-10",
       "block": {
-        "es": "El plan la condiciona a que alguien necesite guardar resultados.",
-        "en": "The plan waits until someone needs to keep results."
+        "es": "Publicado en stubxai.com/cuaderno el 2026-10-10.",
+        "en": "Published at stubxai.com/cuaderno on 2026-10-10."
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "label": {
+            "es": "Página",
+            "en": "Page"
+          },
+          "path": "web/v2/cuaderno/index.html",
+          "note": {
+            "es": "Solo lectura. La dirección viaja en el fragmento #a= y se limpia al leerla.",
+            "en": "Read-only. The address travels in the #a= fragment and is cleared once read."
+          }
+        },
+        {
+          "label": {
+            "es": "PR 24",
+            "en": "PR 24"
+          },
+          "href": "https://github.com/stubxai/stubx-agent/pull/24",
+          "note": {
+            "es": "Biblioteca y cuaderno.",
+            "en": "Library and notebook."
+          }
+        }
+      ],
       "history": [
         {
           "on": "2026-10-09",
           "change": {
             "es": "Anotada como propuesta. No se ha empezado.",
             "en": "Recorded as a proposal. Not started."
+          }
+        },
+        {
+          "on": "2026-10-10",
+          "change": {
+            "es": "Publicado en stubxai.com/cuaderno. La columna stubxai.com pasa a sí.",
+            "en": "Published at stubxai.com/cuaderno. The stubxai.com column becomes yes."
           }
         }
       ]
@@ -647,10 +677,10 @@
         "en": "Hypothetical curve example"
       },
       "status": "en_revision",
-      "webPublished": false,
+      "webPublished": true,
       "scope": {
-        "es": "Ejemplo educativo fijo de una curva, fechado el 2026-10-10 y no leído de la cadena. Sin dirección. No está en stubxai.com.",
-        "en": "A fixed educational example of a curve, dated 2026-10-10 and not read from the chain. No address. It is not on stubxai.com."
+        "es": "Ejemplo educativo fijo de una curva, fechado el 2026-10-10 y no leído de la cadena. Sin dirección. Está en stubxai.com/comparar desde el 2026-10-10.",
+        "en": "A fixed educational example of a curve, dated 2026-10-10 and not read from the chain. No address. It is on stubxai.com/comparar since 2026-10-10."
       },
       "owner": "Equipo del repositorio",
       "reviewer": "Revisado por Legal.",
@@ -693,6 +723,13 @@
             "es": "Legal revisa este ejemplo educativo fijo. Cualquier versión con datos reales necesitará una revisión nueva. Sigue fuera de stubxai.com.",
             "en": "Legal reviews this fixed educational example. Any version with real data will need a new review. Still absent from stubxai.com."
           }
+        },
+        {
+          "on": "2026-10-10",
+          "change": {
+            "es": "La columna de la web pasa a sí. El ejemplo está en stubxai.com/comparar desde el 2026-10-10.",
+            "en": "The website column becomes yes. The example is on stubxai.com/comparar since 2026-10-10."
+          }
         }
       ]
     },
@@ -704,17 +741,17 @@
         "en": "Curve reading"
       },
       "status": "en_revision",
-      "webPublished": false,
+      "webPublished": true,
       "scope": {
-        "es": "Lectura de la moneda base y del estado de la curva, tal como están en la cadena. Cualquier mint. Sin firma y sin envío. No está en stubxai.com.",
-        "en": "A reading of the base currency and the curve state, as they are on chain. Any mint. No signing and no sending. It is not on stubxai.com."
+        "es": "Lectura de la moneda base y del estado de la curva, tal como están en la cadena. Cualquier mint. Sin firma y sin envío. Está en stubxai.com/pares desde el 2026-10-10.",
+        "en": "A reading of the base currency and the curve state, as they are on chain. Any mint. No signing and no sending. It is on stubxai.com/pares since 2026-10-10."
       },
       "owner": "Equipo del repositorio",
       "reviewer": "Pendiente de una persona distinta del autor, antes de publicar.",
       "reviewedOn": "2026-10-10",
       "block": {
-        "es": "No publicar hasta una prueba en el móvil y una autorización explícita. El 2026-10-10, stubxai.com/pares no existe.",
-        "en": "Do not publish until a mobile test and an explicit authorization. On 2026-10-10, stubxai.com/pares does not exist."
+        "es": "Publicada en stubxai.com/pares el 2026-10-10.",
+        "en": "Published at stubxai.com/pares on 2026-10-10."
       },
       "evidence": [
         {
@@ -724,8 +761,8 @@
           },
           "path": "web/v2/pares/index.html",
           "note": {
-            "es": "Lectura de solo lectura en la web v2. No está en stubxai.com.",
-            "en": "Read-only page in web v2. It is not on stubxai.com."
+            "es": "Lectura de solo lectura en stubxai.com/pares desde el 2026-10-10.",
+            "en": "Read-only page at stubxai.com/pares since 2026-10-10."
           }
         },
         {
@@ -771,6 +808,13 @@
           "change": {
             "es": "El título pasa a lectura de la curva. Sigue fuera de stubxai.com.",
             "en": "The title becomes curve reading. Still absent from stubxai.com."
+          }
+        },
+        {
+          "on": "2026-10-10",
+          "change": {
+            "es": "La columna de la web pasa a sí. La lectura de la curva está en stubxai.com/pares desde el 2026-10-10.",
+            "en": "The website column becomes yes. Curve reading is on stubxai.com/pares since 2026-10-10."
           }
         }
       ]

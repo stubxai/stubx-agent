@@ -2,7 +2,9 @@
 
 Esqueleto público del agente de **STUBX** (`@stubx/agents`, v0.1.0; nombre interno del paquete; no tiene relación con la cuenta @stubx de X).
 
-> Prototipo. Memecoin experimental · puedes perderlo todo · no es consejo de inversión. El agente no tiene claves, no firma, no custodia y no envía transacciones.
+> Prototipo. Cripto de alto riesgo · Puedes perderlo todo · No es consejo de inversión. El agente no tiene claves, no firma, no custodia y no envía transacciones.
+
+Qué incluye esta versión, sin tag creado: [CHANGELOG.md](CHANGELOG.md) y las notas [en español](docs/releases/v0.1.0/NOTAS.es.md) y [en inglés](docs/releases/v0.1.0/NOTAS.en.md).
 
 [![killswitch-drill](https://github.com/stubxai/stubx-agent/actions/workflows/killswitch-drill.yml/badge.svg)](https://github.com/stubxai/stubx-agent/actions/workflows/killswitch-drill.yml)
 
@@ -139,7 +141,7 @@ Informes de seguridad: [SECURITY.md](SECURITY.md). No hay recompensa económica.
 
 ## English
 
-Public skeleton of the STUBX agent. Prototype. Experimental memecoin · you can lose everything · not investment advice. The agent holds no keys: it does not sign, custody, exchange, or send transactions.
+Public skeleton of the STUBX agent. Prototype. High-risk crypto · You could lose everything · Not investment advice. The agent holds no keys: it does not sign, custody, exchange, or send transactions. What this version includes, with the tag left uncreated: [CHANGELOG.md](CHANGELOG.md) and the notes [in Spanish](docs/releases/v0.1.0/NOTAS.es.md) and [in English](docs/releases/v0.1.0/NOTAS.en.md).
 
 Official channels: [x.com/stubxai](https://x.com/stubxai), https://stubxai.com/ (the old address, superb-horse-9036f5.netlify.app, is recorded in the token metadata and redirects with a 301), stubxai.hq@gmail.com.
 
