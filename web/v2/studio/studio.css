@@ -23,7 +23,16 @@
 .studio-app { font-family: "Inter Studio", system-ui, sans-serif; }
 .studio-app h1, .studio-app h2 { font-family: "Silkscreen Studio", system-ui, sans-serif; }
 .vista-caja { max-width: 28rem; margin: 0 0 1rem; }
-canvas#vista { display: block; width: 100%; height: auto; background: #071422; }
+canvas#vista {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--bg, #071422);
+  border: 3px solid var(--accent, #ff2d6f);
+  border-radius: var(--radius, 1.05rem);
+  box-shadow: 0 0 0 5px rgba(27, 235, 145, 0.45);
+}
+.vista-caja { border-radius: var(--radius, 1.05rem); }
 .plantillas, .opciones, .tabs, .fila { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .plantillas { margin: 0 0 1rem; }
 .plantillas button, .opciones button, .tabs button, .fila button, #quitar-logo { min-height: 44px; min-width: 44px; }
