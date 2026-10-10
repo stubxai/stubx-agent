@@ -296,6 +296,8 @@ const PRIVATE_NEUTRAL = new Set([
   "you could lose everything",
   "not investment advice",
   "high risk crypto you could lose everything not investment advice",
+  "protege tu cartera",
+  "be careful",
 ]);
 /** Canal o invitación. «por priv» y «al priv» no tragan «privado». */
 const INVITE_RULES = [
@@ -332,7 +334,9 @@ const INVITE_RULES = [
   ["viber", /(?:^| )viber(?: |$)/],
   ["wechat", /(?:^| )(?:wechat|we chat)(?: |$)/],
   ["threema", /(?:^| )threema(?: |$)/],
-  ["skype", /(?:^| )skype(?: |$)/],
+  // El 1 ocupa la y de skype; el leet general lo convierte en i («skipe»).
+  ["skype", /(?:^| )sk(?:y|1|i)pe(?: |$)/],
+  ["tiktok", /(?:^| )tiktok(?: |$)/],
   ["reddit dm", /(?:^| )reddit dms?(?: |$)/],
   ["dm", /(?:^| )dm(?: |$)/],
   ["dms", /(?:^| )dms(?: |$)/],
@@ -341,7 +345,9 @@ const INVITE_RULES = [
 const TELEGRAM_AT = /(?:^|[^a-z0-9])telegram\s*@\s*[a-z0-9_]+/;
 const CONTEXT_CHANNEL = ["line", "session"];
 const CONTEXT_CUE = /(?:^|[^a-z0-9])(?:mi|por|me|dm|add|mensaje|contact\w*|escrib\w*|al)(?![a-z0-9])|@/;
+const MARKED_CHANNEL = ["line", "session", "reddit"];
 const PHONE_DIGITS = /(?:\d[ \t.\-]*){8}\d/;
+const PHONE_CUE = /(?:^|[^a-z0-9])(?:mi\s+numero|telefono|llamame|whatsapp|contacto|movil|wasap|phone|telf|llama|call|tlf|tel|wsp|wa)(?![a-z0-9])/g;
 
 function canonSentence(text) {
   return text.replace(/[^a-z0-9]+/g, " ").trim();
@@ -403,6 +409,7 @@ function inviteTerms(text) {
   }
   if (TELEGRAM_AT.test(text) || TELEGRAM_AT.test(leetDigits(text))) found.add("telegram");
   for (const term of contextualChannels(text)) found.add(term);
+  for (const term of markedChannels(text)) found.add(term);
   return found;
 }
 
@@ -422,10 +429,32 @@ function contextualChannels(text) {
   return found;
 }
 
+function markedChannels(text) {
+  const found = new Set();
+  const forms = [text, leet(text, "i"), leetDigits(text)];
+  for (const form of forms) {
+    for (const word of MARKED_CHANNEL) {
+      const boundary = `(?:^|[^a-z0-9])${word}(?![a-z0-9])`;
+      if (new RegExp(`${boundary}\\s*:`).test(form)) found.add(word);
+      if (new RegExp(`${boundary}\\s+id(?![a-z0-9])`).test(form)) found.add(word);
+      if (new RegExp(`${boundary}\\s+u/`).test(form)) found.add(word);
+    }
+  }
+  return found;
+}
+
+function hasIntlZero(text) {
+  const re = /(?:^|[^a-z0-9])(00(?:[ \t.\-]*\d){7,})/g;
+  for (const match of text.matchAll(re)) {
+    if (/[1-9]/.test(match[1])) return true;
+  }
+  return false;
+}
+
 function hasPhone(text) {
   if (/(?:^|[^a-z0-9])\+(?:[ \t.\-]*\d)+/.test(text)) return true;
-  const cue = /(?:^|[^a-z0-9])(?:tlf|telefono|tel|llamame|llama|call|phone|whatsapp|wasap|wsp)(?![a-z0-9])/g;
-  for (const match of text.matchAll(cue)) {
+  if (hasIntlZero(text)) return true;
+  for (const match of text.matchAll(new RegExp(PHONE_CUE.source, "g"))) {
     const at = match.index ?? 0;
     const around = text.slice(Math.max(0, at - 24), at + match[0].length + 40);
     if (PHONE_DIGITS.test(around)) return true;

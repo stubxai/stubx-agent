@@ -648,6 +648,14 @@ describe("studio", () => {
       "llama al 612345678",
       "call 612.345.678",
       "whatsapp 612-345-678",
+      "mi número 612345678",
+      "móvil 612 345 678",
+      "telf 612.345.678",
+      "contacto 612-345-678",
+      "wa 6 1 2 3 4 5 6 7 8 9",
+      "0034 612 345 678",
+      "0034612345678",
+      "0034.612.345.678",
       "ig",
       "IG",
       "snapchat",
@@ -662,7 +670,17 @@ describe("studio", () => {
       "mi session",
       "session @ana",
       "reddit dm",
+      "line: ana",
+      "line id",
+      "session: x",
+      "session id",
+      "reddit: alguien",
+      "reddit id",
+      "reddit u/alguien",
+      "tiktok",
+      "t1kt0k",
       "skype",
+      "sk1pe",
       "wasap",
       "whatsapp",
       "Ok. Escríbeme",
@@ -779,6 +797,7 @@ describe("studio", () => {
       "612345678",
       "612.345.678",
       "612-345-678",
+      "6 1 2 3 4 5 6 7 8 9",
       "line",
       "la session de hoy",
       "en linea",
@@ -847,6 +866,8 @@ describe("studio", () => {
       "Admins never DM you. We never DM first. If someone DMs you, it's a scam.",
       "Los admins nunca escriben por privado. Cripto de alto riesgo · Puedes perderlo todo · No es consejo de inversión.",
       "Admins never DM you. High-risk crypto · You could lose everything · Not investment advice.",
+      "Los admins nunca escriben por privado. Protege tu cartera.",
+      "Admins never DM you. Be careful.",
       "Cuidado.",
       "Ojo.",
       "Yo sí",
@@ -908,18 +929,38 @@ describe("studio", () => {
     assert.equal(analyze("tel 612345678").hits.some((hit) => hit.term === "telefono"), true);
     assert.equal(analyze("teléfono 612.345.678").hits.some((hit) => hit.term === "telefono"), true);
     assert.equal(analyze("phone 612-345-678").hits.some((hit) => hit.term === "telefono"), true);
+    assert.equal(analyze("mi número 612345678").hits.some((hit) => hit.term === "telefono"), true);
+    assert.equal(analyze("móvil 612 345 678").hits.some((hit) => hit.term === "telefono"), true);
+    assert.equal(analyze("telf 612.345.678").hits.some((hit) => hit.term === "telefono"), true);
+    assert.equal(analyze("contacto 612-345-678").hits.some((hit) => hit.term === "telefono"), true);
+    assert.equal(analyze("wa 6 1 2 3 4 5 6 7 8 9").hits.some((hit) => hit.term === "telefono"), true);
+    assert.equal(analyze("6 1 2 3 4 5 6 7 8 9").hits.some((hit) => hit.term === "telefono"), false);
+    assert.equal(analyze("0034 612 345 678").hits.some((hit) => hit.term === "telefono"), true);
+    assert.equal(analyze("0034612345678").hits.some((hit) => hit.term === "telefono"), true);
     assert.equal(analyze("1".repeat(31)).hits.some((hit) => hit.kind === "base58"), false);
     assert.equal(analyze("1".repeat(31)).blocked, false);
     assert.equal(analyze("12345678").blocked, false);
     assert.equal(analyze("no respondas a nadie que te escriba por privado").hits.some((hit) => hit.term === "por privado"), false);
     assert.equal(analyze("Protege tu cartera").blocked, false);
     assert.equal(analyze("Be careful").blocked, false);
+    assert.equal(analyze("Los admins nunca escriben por privado. Protege tu cartera.").hits.some((hit) => hit.term === "por privado"), false);
+    assert.equal(analyze("Admins never DM you. Be careful.").hits.some((hit) => hit.term === "dm"), false);
     assert.equal(analyze("mi line").hits.some((hit) => hit.term === "line"), true);
     assert.equal(analyze("line").blocked, false);
     assert.equal(analyze("la session de hoy").blocked, false);
     assert.equal(analyze("mi session").hits.some((hit) => hit.term === "session"), true);
     assert.equal(analyze("reddit dm").blocked, true);
     assert.equal(analyze("reddit").blocked, false);
+    assert.equal(analyze("line: ana").hits.some((hit) => hit.term === "line"), true);
+    assert.equal(analyze("line id").hits.some((hit) => hit.term === "line"), true);
+    assert.equal(analyze("session: x").hits.some((hit) => hit.term === "session"), true);
+    assert.equal(analyze("session id").hits.some((hit) => hit.term === "session"), true);
+    assert.equal(analyze("reddit: alguien").hits.some((hit) => hit.term === "reddit"), true);
+    assert.equal(analyze("reddit id").hits.some((hit) => hit.term === "reddit"), true);
+    assert.equal(analyze("reddit u/alguien").hits.some((hit) => hit.term === "reddit"), true);
+    assert.equal(analyze("tiktok").hits.some((hit) => hit.term === "tiktok"), true);
+    assert.equal(analyze("t1kt0k").hits.some((hit) => hit.term === "tiktok"), true);
+    assert.equal(analyze("sk1pe").hits.some((hit) => hit.term === "skype"), true);
     assert.equal(analyze("para mí la playa").blocked, false);
     assert.equal(analyze("Yo sí").blocked, false);
     assert.equal(analyze("elefante").blocked, false);
