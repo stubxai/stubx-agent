@@ -1603,6 +1603,24 @@ async function httpTransport(endpoint, body, timeoutMs, signal) {
         return { status: 0, body: "" };
     }
 }
+const blockedRpcMethods = new Set();
+function rpcBlockKey(endpoint, method) {
+    try {
+        return `${new URL(endpoint).origin} ${method}`;
+    }
+    catch {
+        return `${endpoint} ${method}`;
+    }
+}
+function rememberRpcBlock(endpoint, method) {
+    blockedRpcMethods.add(rpcBlockKey(endpoint, method));
+}
+function isRpcBlocked(endpoint, method) {
+    return blockedRpcMethods.has(rpcBlockKey(endpoint, method));
+}
+function clearRpcBlocks() {
+    blockedRpcMethods.clear();
+}
 class RpcClient {
     endpoint;
     transport;
@@ -1683,6 +1701,15 @@ class RpcClient {
                 fetchedAt: this.now().toISOString(),
             };
         }
+        if (isRpcBlocked(this.endpoint, method)) {
+            return {
+                ok: false,
+                method,
+                error: "HTTP 403",
+                httpStatus: 403,
+                fetchedAt: this.now().toISOString(),
+            };
+        }
         let lastError = "sin respuesta";
         let lastStatus = null;
         for (let attempt = 0; attempt <= this.maxRetries; attempt += 1) {
@@ -1697,6 +1724,10 @@ class RpcClient {
                     lastError = `HTTP ${response.status}`;
                     await this.sleep(this.backoff(attempt, method));
                     continue;
+                }
+                if (response.status === 403) {
+                    rememberRpcBlock(this.endpoint, method);
+                    return { ok: false, method, error: "HTTP 403", httpStatus: 403, fetchedAt };
                 }
                 if (response.status < 200 || response.status >= 300) {
                     return { ok: false, method, error: `HTTP ${response.status}`, httpStatus: response.status, fetchedAt };

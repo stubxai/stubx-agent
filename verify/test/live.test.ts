@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { describe, test } from "node:test";
+import { beforeEach, describe, test } from "node:test";
+import { clearRpcBlocks } from "../rpc.js";
 import { TOKEN_2022_PROGRAM, PUMP_PROGRAM, bondingCurvePda, metadataPda } from "../programs.js";
 import { formatUnitsLocale } from "../bytes.js";
 import { clipForeign, readAnyMint, readLargestAccounts, takeQuerySlot, type LiveReading } from "../signals.js";
@@ -9,6 +10,10 @@ import { repoRootFrom } from "../root.js";
 import type { CanonicalToken } from "../types.js";
 import type { RpcTransport } from "../rpc.js";
 import { labFixtures, type AccountFixture, type LabFixture } from "./layouts.js";
+
+beforeEach(() => {
+  clearRpcBlocks();
+});
 
 const root = repoRootFrom(import.meta.url);
 const registry = (
@@ -289,6 +294,7 @@ describe("lectura universal con RPC simulado", () => {
     assert.equal(refused.usedFallback, true);
     assert.equal(refused.endpointHost, "rpc-b.invalid");
     assert.match(refused.rows.map((row) => row.value.es).join(" "), /slot/);
+    clearRpcBlocks();
     const aboutTheMint = await readAnyMint({
       mint: sample.mint,
       registry,
@@ -319,6 +325,7 @@ describe("lectura universal con RPC simulado", () => {
     assert.equal(aboutTheMint.usedFallback, false);
     assert.equal(aboutTheMint.title.es, "No se pudo comprobar");
     assert.notEqual(aboutTheMint.light, "ok");
+    clearRpcBlocks();
     const bothDown = await readAnyMint({
       mint: sample.mint,
       registry,
@@ -332,6 +339,7 @@ describe("lectura universal con RPC simulado", () => {
     assert.equal(bothDown.usedFallback, true);
     assert.equal(bothDown.title.es, "No se pudo comprobar");
     assert.equal(bothDown.light, "neutro");
+    clearRpcBlocks();
     const supplyRefused = await readAnyMint({
       mint: sample.mint,
       registry,
@@ -483,6 +491,47 @@ describe("lectura universal con RPC simulado", () => {
     assert.deepEqual(hosts.getTokenLargestAccounts, ["api.mainnet-beta.solana.com"]);
     assert.deepEqual(hosts.getMultipleAccounts, ["solana-rpc.publicnode.com"]);
     assert.equal(reading.sources.some((item) => item.host === "api.mainnet-beta.solana.com"), false);
+  });
+
+  test("un 403 de mainnet se recuerda y el método no se vuelve a pedir en la sesión", async () => {
+    const sample = fixture("revoked-mint");
+    const accounts = new Map<string, AccountFixture | null>([
+      [sample.mint, sample.mintAccount],
+      [metadataPda(sample.mint), null],
+      [bondingCurvePda(sample.mint), null],
+    ]);
+    const calls: string[] = [];
+    const base = transportFor({
+      slot: sample.slot,
+      accounts,
+      supply: { amount: "1000", decimals: 6 },
+      largest: [],
+    });
+    const transport: RpcTransport = async (endpoint, body, timeoutMs) => {
+      const method = (JSON.parse(body) as { method: string }).method;
+      calls.push(`${new URL(endpoint).hostname} ${method}`);
+      if (method === "getTokenSupply" || method === "getTokenLargestAccounts") return { status: 403, body: "" };
+      return base(endpoint, body, timeoutMs);
+    };
+    const input = {
+      mint: sample.mint,
+      registry,
+      endpoints: ["https://solana-rpc.publicnode.com", "https://api.mainnet-beta.solana.com"],
+      transport,
+      maxRetries: 0,
+      minIntervalMs: 0,
+      sleep: async () => {},
+    };
+    await readAnyMint(input);
+    await readAnyMint(input);
+    assert.deepEqual(
+      calls.filter((item) => item.endsWith(" getTokenSupply")),
+      ["api.mainnet-beta.solana.com getTokenSupply"],
+    );
+    assert.deepEqual(
+      calls.filter((item) => item.endsWith(" getTokenLargestAccounts")),
+      ["api.mainnet-beta.solana.com getTokenLargestAccounts"],
+    );
   });
 
   test("la lectura automática pide las cuentas más grandes y un fallo aparte no es un censo", async () => {
@@ -840,6 +889,7 @@ describe("lectura universal con RPC simulado", () => {
     const stayed = await refused.run();
     assert.deepEqual(refused.calls, [mainnet]);
     assert.match(stayed.signals.find((item) => item.id === "suministro")?.explain.es ?? "", /no respondió/);
+    clearRpcBlocks();
     const thrown: string[] = [];
     const fetched = await readAnyMint({
       mint: sample.mint,
@@ -859,6 +909,7 @@ describe("lectura universal con RPC simulado", () => {
     });
     assert.deepEqual(thrown, [mainnet]);
     assert.equal(fetched.facts?.find((item) => item.id === "suministro-extra")?.state, "fallo");
+    clearRpcBlocks();
     const both = supplyOf(0, () => ({ status: 0, body: "" }));
     const none = await both.run();
     assert.deepEqual(both.calls, [mainnet]);

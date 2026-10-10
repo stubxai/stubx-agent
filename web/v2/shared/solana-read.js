@@ -606,25 +606,61 @@ function endpointsFor(preferred) {
   return [first, ...ALLOWED_RPCS.filter((item) => item !== first)];
 }
 
+const blockedRpcMethods = new Set();
+
+export function blockedRpcKey(endpoint, method) {
+  try {
+    return `${new URL(endpoint).origin} ${method}`;
+  } catch {
+    return `${endpoint} ${method}`;
+  }
+}
+
+export function rememberBlockedMethod(endpoint, method) {
+  blockedRpcMethods.add(blockedRpcKey(endpoint, method));
+}
+
+export function isMethodBlocked(endpoint, method) {
+  return blockedRpcMethods.has(blockedRpcKey(endpoint, method));
+}
+
+export function clearBlockedMethods() {
+  blockedRpcMethods.clear();
+}
+
 function retryableRpcFailure(result) {
   const status = result?.httpStatus ?? null;
-  if (status === 403 || status === 429 || status === 408 || (status !== null && status >= 500)) return true;
-  return /429|403|too many|rate limit|timeout|timed out|tiempo de espera|network|fetch failed|ECONN|ENET|ENOTFOUND|socket|access forbidden|aborted|personal token|indexed request|request blocked/i.test(
+  if (status === 0 || status === 403 || status === 429 || status === 408 || (status !== null && status >= 500)) return true;
+  return /429|403|too many|rate limit|timeout|timed out|tiempo de espera|failed to fetch|\bHTTP 0\b|error de red|network|fetch failed|ECONN|ENET|ENOTFOUND|socket|access forbidden|aborted|personal token|indexed request|request blocked/i.test(
     result?.error ?? "",
   );
 }
 
 const MAINNET_ONLY_METHODS = new Set(["getTokenSupply", "getTokenLargestAccounts"]);
 
+function blockedResult(state, method) {
+  return {
+    ok: false,
+    method,
+    error: "HTTP 403",
+    httpStatus: 403,
+    fetchedAt: state.now().toISOString(),
+  };
+}
+
 async function rpcCall(state, method, params) {
   // publicnode cierra getTokenSupply y las cuentas grandes con 403. No se pide ahí.
-  const endpoints = MAINNET_ONLY_METHODS.has(method)
+  // Un 403 de un nodo se recuerda en la sesión: ese método no vuelve a pedirse ahí.
+  const candidates = MAINNET_ONLY_METHODS.has(method)
     ? [DEFAULT_RPC]
     : (state.endpoints?.length ? state.endpoints : [state.endpoint]);
+  const endpoints = candidates.filter((endpoint) => !isMethodBlocked(endpoint, method));
+  if (!endpoints.length) return blockedResult(state, method);
   let last = null;
   for (const endpoint of endpoints) {
     state.endpoint = endpoint;
     last = await rpcCallOnce(state, method, params);
+    if (last && last.httpStatus === 403) rememberBlockedMethod(endpoint, method);
     if (!last || last.ok || !retryableRpcFailure(last)) return last;
   }
   return last;

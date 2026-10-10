@@ -26,6 +26,7 @@ interface ReadModule {
   isAllowedRpcUrl: (value: string) => boolean;
   blankCard: (mint: string, consultedAt: string, errors: unknown[]) => Card;
   readMint: (options: Record<string, unknown>) => Promise<{ ok: boolean; card: Card | null }>;
+  clearBlockedMethods: () => void;
   cardFromShown: (shown: Record<string, unknown>) => Card | null;
 }
 
@@ -81,6 +82,7 @@ async function modules(): Promise<{ read: ReadModule; model: ModelModule }> {
   const root = repoRoot();
   const read = (await import(pathToFileURL(path.join(root, "web/v2/shared/solana-read.js")).href)) as ReadModule;
   const model = (await import(pathToFileURL(path.join(root, "web/v2/shared/notebook-model.js")).href)) as ModelModule;
+  read.clearBlockedMethods();
   return { read, model };
 }
 
@@ -402,6 +404,7 @@ describe("lector y cuaderno", () => {
       account(read.PUMP_PROGRAM, curveBytes()),
     ]);
     async function failThen(status: number | "timeout") {
+      read.clearBlockedMethods();
       const seen: string[] = [];
       const result = await read.readMint({
         mint: CA,
@@ -440,6 +443,62 @@ describe("lector y cuaderno", () => {
     });
     assert.equal(rejected.ok, false);
     assert.deepEqual(seen, ["solana-rpc.publicnode.com"]);
+  });
+
+  test("un corte de red en las cuentas prueba el segundo nodo y el suministro no sale de mainnet", async () => {
+    const { read } = await modules();
+    const hosts: Record<string, string[]> = { getMultipleAccounts: [], getTokenSupply: [], getTokenLargestAccounts: [] };
+    const result = await read.readMint({
+      mint: CA,
+      ...fastClock(),
+      endpoint: read.PUBLICNODE_RPC,
+      maxRetries: 0,
+      transport: async (endpoint: string, body: string) => {
+        const method = (JSON.parse(body) as { method: string }).method;
+        const host = new URL(endpoint).hostname;
+        if (hosts[method]) hosts[method]?.push(host);
+        if (method === "getMultipleAccounts" && host === "solana-rpc.publicnode.com") return { status: 0, body: "" };
+        if (method === "getMultipleAccounts") {
+          return rpcOk([
+            account(read.TOKEN_PROGRAM, mintBytes()),
+            account(read.METADATA_PROGRAM, metadataBytes("USDC", "USDC", "https://example.invalid/meta")),
+            null,
+          ]);
+        }
+        if (method === "getTokenSupply") return { status: 0, body: "" };
+        if (method === "getTokenLargestAccounts") return rpcOk([]);
+        throw new Error(method);
+      },
+    });
+    assert.equal(result.card?.partial, true);
+    assert.deepEqual(hosts.getMultipleAccounts, ["solana-rpc.publicnode.com", "api.mainnet-beta.solana.com"]);
+    assert.deepEqual(hosts.getTokenSupply, ["api.mainnet-beta.solana.com"]);
+    assert.deepEqual(hosts.getTokenLargestAccounts, ["api.mainnet-beta.solana.com"]);
+  });
+
+  test("un 403 se recuerda y no se vuelve a pedir ese método en la sesión", async () => {
+    const { read } = await modules();
+    const calls: string[] = [];
+    const transport = async (endpoint: string, body: string) => {
+      const method = (JSON.parse(body) as { method: string }).method;
+      calls.push(`${new URL(endpoint).hostname} ${method}`);
+      if (method === "getMultipleAccounts") {
+        return rpcOk([
+          account(read.TOKEN_PROGRAM, mintBytes()),
+          account(read.METADATA_PROGRAM, metadataBytes("USDC", "USDC", "https://example.invalid/meta")),
+          null,
+        ]);
+      }
+      if (method === "getTokenSupply" || method === "getTokenLargestAccounts") return { status: 403, body: "" };
+      throw new Error(method);
+    };
+    const first = await read.readMint({ mint: CA, ...fastClock(), endpoint: read.DEFAULT_RPC, maxRetries: 0, transport });
+    const second = await read.readMint({ mint: CA, ...fastClock(), endpoint: read.DEFAULT_RPC, maxRetries: 0, transport });
+    assert.equal(first.card?.supplyRpcStatus, "fallo");
+    assert.equal(second.card?.supplyRpcStatus, "fallo");
+    assert.deepEqual(calls.filter((item) => item.endsWith("getTokenSupply")), ["api.mainnet-beta.solana.com getTokenSupply"]);
+    assert.deepEqual(calls.filter((item) => item.endsWith("getTokenLargestAccounts")), ["api.mainnet-beta.solana.com getTokenLargestAccounts"]);
+    assert.equal(calls.filter((item) => item.endsWith("getMultipleAccounts")).length, 2);
   });
 
   test("getTokenSupply y las cuentas grandes no se piden a publicnode", async () => {
