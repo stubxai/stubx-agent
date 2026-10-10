@@ -286,6 +286,22 @@ function classifyAddress(raw, cards, source, evm = []) {
     }
     return notOfficialView(mint, official);
 }
+const DATED_CARD_NOTE = pair("Es la ficha del 2026-10-09. No es una lectura en directo.", "It is the 2026-10-09 card. It is not a live reading.");
+/** La ficha fechada sigue, pero un fallo de los dos RPC no la pinta como lectura en verde. */
+function reserveWhenLiveFails(view) {
+    if (view.kind !== "oficial")
+        return view;
+    const previous = view.partialNote;
+    return {
+        ...view,
+        light: "neutro",
+        lightLabel: pair("No se pudo comprobar en directo", "Could not check live"),
+        title: pair("No se pudo comprobar en directo", "Could not check live"),
+        partialNote: previous
+            ? pair(`${DATED_CARD_NOTE.es} ${previous.es}`, `${DATED_CARD_NOTE.en} ${previous.en}`)
+            : DATED_CARD_NOTE,
+    };
+}
 function readU16(data, offset) {
     if (offset < 0 || offset + 2 > data.length) {
         return null;
@@ -2789,7 +2805,7 @@ function bootVerify() {
     }).then(function (reading) {
       if (ticket !== generation || controller.signal.aborted) return;
       if (!reading.ok) {
-        apply(classifyAddress(normalized, cards, "lista", evm), true);
+        apply(reserveWhenLiveFails(classifyAddress(normalized, cards, "lista", evm)), true);
         return;
       }
       var view = decorate(reading, normalized);
@@ -2797,7 +2813,7 @@ function bootVerify() {
       apply(view, true);
     }).catch(function () {
       if (ticket !== generation || controller.signal.aborted) return;
-      apply(classifyAddress(normalized, cards, "lista", evm), true);
+      apply(reserveWhenLiveFails(classifyAddress(normalized, cards, "lista", evm)), true);
     }).then(function () {
       if (ticket === generation) setBusy(false);
     });
