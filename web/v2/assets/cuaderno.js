@@ -1,6 +1,8 @@
 /**
  * Cuaderno local. Solo lectura, sin cartera y sin ejecutar el JSON importado.
  */
+import { formatAmount } from "../shared/amount.js";
+import { entenderNav } from "../shared/entender.js";
 import { factLine, factState, missingFacts } from "../shared/fact-state.js";
 import {
   PUBLICNODE_RPC,
@@ -14,7 +16,14 @@ import {
   MAX_NOTE,
   MAX_STORED,
   compareRecords,
+  comparedValueText,
+  comparisonSummary,
+  pickPrevious,
+  readingOptionLabel,
   staleLine,
+  supplyConfirmation,
+  supplyDirection,
+  supplyNote,
   toExport,
   validateCard,
   validateExport,
@@ -33,8 +42,10 @@ const COPY = {
     rpc: "Ese lector no está en la lista. Solo se puede usar api.mainnet-beta.solana.com o solana-rpc.publicnode.com. No se ha llamado a la red.",
     full: `Este navegador ya tiene ${MAX_STORED} fichas. Borra alguna para guardar otra.`,
     partial: "La lectura está incompleta. Lo que falta no se ha puesto a cero.",
-    network: "No se pudo leer la red. Revisa la conexión e inténtalo otra vez. No se ha inventado un resultado.",
-    saved: "Consulta guardada en este navegador. No es una lectura en vivo.",
+    network: "El servicio público no respondió, prueba otra vez en un minuto.",
+    saved: "Guardada en el Cuaderno de este navegador · ",
+    open: "Abrir Cuaderno",
+    retry: "Reintentar",
     saveFail: "Esta lectura trae texto que el cuaderno no guarda. No se ha guardado.",
     db: "Este navegador no dejó guardar el cuaderno. Si está en modo privado, el almacenamiento puede estar cerrado.",
     noteFail: "La nota tiene que ser texto, de hasta 2000 caracteres, y no puede ser un script.",
@@ -49,7 +60,7 @@ const COPY = {
     fileRead: "No se pudo leer el archivo.",
     exportEmpty: "No hay consultas que exportar.",
     exportOk: "Copia descargada. Sigue en este navegador.",
-    sameMint: "Solo se comparan dos consultas de la misma dirección.",
+    sameMint: "Solo se comparan dos consultas de la misma red y dirección.",
     official: "Es la dirección oficial de STUBX.",
     notOfficial: "No es la dirección oficial de STUBX.",
     untrusted: "Nombre, símbolo y URI son texto de terceros. No son un enlace ni una imagen.",
@@ -60,7 +71,7 @@ const COPY = {
     program: "Programa",
     mintAuth: "Permiso de emisión",
     freezeAuth: "Permiso de congelación",
-    supplyAccount: "Suministro en la cuenta",
+    supplyAccount: "Suministro total",
     supplyRpc: "Suministro leído aparte",
     decimals: "Decimales",
     name: "Nombre",
@@ -69,6 +80,7 @@ const COPY = {
     mutable: "Metadatos mutables",
     extensions: "Extensiones",
     curve: "Curva",
+    supplyExtra: "Consulta extra del suministro",
     slot: "Momento de la red",
     largest: "Cuentas con más tokens",
     errors: "Qué no se pudo leer",
@@ -82,11 +94,21 @@ const COPY = {
     token2022: "Token-2022",
     notMint: "No es una cuenta de mint",
     unknownProgram: "no disponible",
-    compareTitle: "Comparación",
-    left: "Consulta A",
-    right: "Consulta B",
+    compareTitle: "Comparar consultas",
+    before: "Antes",
+    after: "Ahora",
     changed: "cambió",
     same: "igual",
+    unknownState: "no se puede determinar",
+    unread: "no se leyó",
+    utc: "Hora UTC",
+    incomplete: "Lectura incompleta: se guardará marcando lo que falta",
+    emptySave: "No hay una lectura para guardar. No se ha guardado una ficha vacía.",
+    changesTitle: "Qué cambió",
+    unknownTitle: "Lo que no se puede determinar",
+    unchangedTitle: "Lo que sigue igual",
+    rawAccount: "Valor en bruto del suministro en la cuenta",
+    rawRpc: "Valor en bruto del suministro leído aparte",
     format: "La versión de la ficha no es la misma. Se comparan solo los campos que existen en las dos.",
   },
   en: {
@@ -95,8 +117,10 @@ const COPY = {
     rpc: "That reader is not on the list. Only api.mainnet-beta.solana.com or solana-rpc.publicnode.com can be used. The network was not called.",
     full: `This browser already has ${MAX_STORED} cards. Delete one to save another.`,
     partial: "The reading is incomplete. What is missing was not filled in with zero.",
-    network: "The network could not be read. Check the connection and try again. No result was invented.",
-    saved: "Query saved in this browser. It is not a live reading.",
+    network: "The public service did not respond, try again in a minute.",
+    saved: "Saved in this browser's Notebook · ",
+    open: "Open Notebook",
+    retry: "Try again",
     saveFail: "This reading contains text the notebook does not store. It was not saved.",
     db: "This browser did not allow the notebook to be saved. In private mode, storage may be closed.",
     noteFail: "The note must be text, at most 2000 characters, and it cannot be a script.",
@@ -111,7 +135,7 @@ const COPY = {
     fileRead: "The file could not be read.",
     exportEmpty: "There are no queries to export.",
     exportOk: "Copy downloaded. It also stays in this browser.",
-    sameMint: "Only two queries of the same address can be compared.",
+    sameMint: "Only two queries of the same network and address can be compared.",
     official: "This is the official STUBX address.",
     notOfficial: "This is not the official STUBX address.",
     untrusted: "Name, symbol, and URI are third-party text. They are not a link and not an image.",
@@ -122,7 +146,7 @@ const COPY = {
     program: "Program",
     mintAuth: "Mint authority",
     freezeAuth: "Freeze authority",
-    supplyAccount: "Supply on the account",
+    supplyAccount: "Total supply",
     supplyRpc: "Supply read separately",
     decimals: "Decimals",
     name: "Name",
@@ -131,6 +155,7 @@ const COPY = {
     mutable: "Mutable metadata",
     extensions: "Extensions",
     curve: "Curve",
+    supplyExtra: "Extra supply query",
     slot: "Network moment",
     largest: "Largest token accounts",
     errors: "What could not be read",
@@ -144,11 +169,21 @@ const COPY = {
     token2022: "Token-2022",
     notMint: "Not a mint account",
     unknownProgram: "unavailable",
-    compareTitle: "Comparison",
-    left: "Query A",
-    right: "Query B",
+    compareTitle: "Compare queries",
+    before: "Before",
+    after: "Now",
     changed: "changed",
     same: "same",
+    unknownState: "it cannot be determined",
+    unread: "not read",
+    utc: "UTC time",
+    incomplete: "Incomplete reading: it will be saved marking what is missing",
+    emptySave: "There is no reading to save. An empty card was not saved.",
+    changesTitle: "What changed",
+    unknownTitle: "What cannot be determined",
+    unchangedTitle: "What stayed the same",
+    rawAccount: "Raw supply on the account",
+    rawRpc: "Raw supply read separately",
     format: "The card version is not the same. Only fields that exist on both are compared.",
   },
 };
@@ -189,8 +224,64 @@ function showMessage(message, kind) {
   const node = document.getElementById("consulta-error");
   if (!node) return;
   node.hidden = !message;
-  node.textContent = message || "";
+  node.replaceChildren();
+  if (message) node.append(document.createTextNode(message));
   node.dataset.kind = kind || "";
+  node.setAttribute("role", "status");
+  node.setAttribute("aria-live", "polite");
+}
+
+function showRetry(message, retryMint) {
+  const node = document.getElementById("consulta-error");
+  if (!node) return;
+  node.hidden = false;
+  node.replaceChildren();
+  node.dataset.kind = "error";
+  node.setAttribute("role", "status");
+  node.setAttribute("aria-live", "polite");
+  node.append(document.createTextNode(message));
+  if (retryMint) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.id = "reintentar";
+    button.textContent = t("retry");
+    button.addEventListener("click", () => consult(retryMint));
+    node.append(document.createTextNode(" "), button);
+  }
+}
+
+function announceSaved(extra, retryMint) {
+  const node = document.getElementById("consulta-error");
+  if (!node) return;
+  node.hidden = false;
+  node.replaceChildren();
+  node.dataset.kind = "ok";
+  node.setAttribute("role", "status");
+  node.setAttribute("aria-live", "polite");
+  if (extra) node.append(document.createTextNode(`${extra} `));
+  node.append(document.createTextNode(t("saved")));
+  const link = document.createElement("a");
+  link.href = "#lista-consultas";
+  link.textContent = t("open");
+  node.append(link);
+  if (retryMint) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.id = "reintentar";
+    button.textContent = t("retry");
+    button.addEventListener("click", () => consult(retryMint));
+    node.append(document.createTextNode(" "), button);
+  }
+  revealAboveBar(node);
+}
+
+function revealAboveBar(node) {
+  node.scrollIntoView({ block: "center" });
+  const bar = document.querySelector(".consulta-barra") || document.querySelector("form.consulta");
+  if (!bar) return;
+  const box = node.getBoundingClientRect();
+  const form = bar.getBoundingClientRect();
+  if (box.bottom > form.top - 12) window.scrollBy(0, box.bottom - form.top + 28);
 }
 
 function openDb() {
@@ -253,6 +344,8 @@ async function browserTransport(endpoint, body, timeoutMs) {
       signal: controller.signal,
     });
     return { status: response.status, body: await response.text() };
+  } catch {
+    return { status: 0, body: "" };
   } finally {
     clearTimeout(timer);
   }
@@ -302,6 +395,11 @@ function plain(status, value) {
   return factLine(status, value, lang());
 }
 
+function amountText(raw, decimals, status) {
+  if (factState(status, raw) !== "ok") return plain(status, raw);
+  return formatAmount(raw, decimals, lang()) || plain(status, raw);
+}
+
 function dataRow(list, label, status, value) {
   const term = text("dt", label);
   const detail = text("dd", plain(status, value));
@@ -323,7 +421,7 @@ function renderCard(card) {
   article.append(mintLine);
   const list = el("dl");
   const facts = [];
-  const supplyStatus = card.supplyAccount !== null && card.supplyAccount !== undefined ? "verificado" : card.isMint ? "ausente" : card.supplyRpcStatus;
+  const supplyCheck = supplyConfirmation(card);
   facts.push(dataRow(list, t("program"), card.programStatus, programLabel(card.program)));
   const mintAuth = card.mintAuthority.address
     ? `${authorityLabel(card.mintAuthority)} · ${card.mintAuthority.address}`
@@ -333,8 +431,7 @@ function renderCard(card) {
     : authorityLabel(card.freezeAuthority);
   facts.push(dataRow(list, t("mintAuth"), card.mintAuthority.status, mintAuth));
   facts.push(dataRow(list, t("freezeAuth"), card.freezeAuthority.status, freezeAuth));
-  facts.push(dataRow(list, t("supplyAccount"), supplyStatus, card.supplyAccount));
-  facts.push(dataRow(list, t("supplyRpc"), card.supplyRpcStatus, card.supplyRpc));
+  appendSupply(list, facts, card, supplyCheck);
   facts.push(dataRow(list, t("decimals"), card.decimals === null ? "ausente" : "verificado", card.decimals));
   facts.push(dataRow(list, t("name"), card.name.status, card.name.text));
   facts.push(dataRow(list, t("symbol"), card.symbol.status, card.symbol.text));
@@ -349,17 +446,26 @@ function renderCard(card) {
   facts.push(dataRow(list, t("curve"), curve.present === true ? curve.status : curve.status, curveValue));
   facts.push(dataRow(list, t("largest"), card.largestStatus || "no_consultado", null));
   const summary = missingFacts(facts, lang());
+  if (summary.absentText) {
+    const absentNode = text("p", summary.absentText, { class: "resumen-datos" });
+    absentNode.dataset.estado = "ausente";
+    article.append(absentNode);
+  }
   const summaryNode = text("p", summary.text, { class: "resumen-datos" });
   summaryNode.dataset.estado = summary.state;
   article.append(summaryNode, list);
+  article.append(entenderNav(lang()));
   article.append(text("p", t("untrusted"), { class: "muted" }));
   const details = el("details", { class: "tecnico" });
   const summaryTech = el("summary");
   summaryTech.textContent = t("technical");
   const tech = el("dl");
   dataRow(tech, t("slot"), card.slotStatus, card.slot);
-  dataRow(tech, t("supplyAccount"), supplyStatus, card.supplyAccount);
-  dataRow(tech, t("supplyRpc"), card.supplyRpcStatus, card.supplyRpc);
+  const utcTerm = text("dt", t("utc"));
+  const utcValue = text("dd", card.consultedAt);
+  tech.append(utcTerm, utcValue);
+  dataRow(tech, t("rawAccount"), supplyCheck.account ? "verificado" : "fallo", card.supplyAccount);
+  dataRow(tech, t("rawRpc"), card.supplyRpcStatus, card.supplyRpc);
   if (card.errors.length) {
     const errors = el("ul");
     for (const item of card.errors) {
@@ -372,17 +478,71 @@ function renderCard(card) {
   return article;
 }
 
-function fillSelect(select, records, selected) {
+function appendSupply(list, facts, card, check) {
+  const note = supplyNote(card, lang());
+  if (!check.account && !check.extra) {
+    const status = check.reason === "no_aplica" ? "no_aplica" : "fallo";
+    facts.push(dataRow(list, t("supplyAccount"), status, null));
+    return;
+  }
+  const raw = check.account || check.extra;
+  const term = text("dt", t("supplyAccount"));
+  const detail = text("dd", amountText(raw, card.decimals, "verificado"));
+  detail.dataset.estado = check.confirmed ? "ok" : "fallo";
+  list.append(term, detail);
+  if (note) list.append(text("dd", note, { class: "nota" }));
+  facts.push({ label: t("supplyAccount"), state: check.account || check.confirmed ? "ok" : "fallo" });
+  if (check.reason === "fallo" && check.account) facts.push({ label: t("supplyExtra"), state: "fallo" });
+}
+
+function sameReading(left, right) {
+  return Boolean(left && right && left.card.mint === right.card.mint && left.card.network === right.card.network);
+}
+
+function pairFor(list, leftId, rightId) {
+  const byId = new Map(list.map((item) => [item.id, item]));
+  let leftRec = byId.get(leftId) || null;
+  let rightRec = byId.get(rightId) || null;
+  if (!leftRec) leftRec = list[0] || null;
+  if (leftRec && (!rightRec || rightRec.id === leftRec.id || !sameReading(leftRec, rightRec))) {
+    rightRec = pickPrevious(list, leftRec.card, leftRec.id);
+  }
+  if (leftRec && rightRec && String(leftRec.card.consultedAt) > String(rightRec.card.consultedAt)) {
+    const newer = leftRec;
+    leftRec = rightRec;
+    rightRec = newer;
+  }
+  const rightChoices = leftRec
+    ? list.filter((item) => item.id !== leftRec.id && sameReading(leftRec, item))
+    : [];
+  return {
+    leftId: leftRec ? leftRec.id : "",
+    rightId: rightRec ? rightRec.id : "",
+    rightChoices,
+  };
+}
+
+function fillSelect(select, list, selected, peers) {
   select.replaceChildren();
   const blank = el("option", { value: "" });
   blank.textContent = "—";
   select.append(blank);
-  for (const record of records) {
+  const cards = (peers || list).map((item) => item.card);
+  for (const record of list) {
     const option = el("option", { value: record.id });
-    option.textContent = `${record.card.consultedAt} · ${record.card.mint.slice(0, 8)}…`;
-    if (record.id === selected) option.selected = true;
+    option.textContent = readingOptionLabel(record.card, lang(), cards);
     select.append(option);
   }
+  select.value = selected && list.some((item) => item.id === selected) ? selected : "";
+}
+
+function paintSelects(list, leftId, rightId) {
+  const left = document.getElementById("comparar-izquierda");
+  const right = document.getElementById("comparar-derecha");
+  if (!left || !right) return;
+  const pair = pairFor(list, leftId, rightId);
+  fillSelect(left, list, pair.leftId, list);
+  fillSelect(right, pair.rightChoices, pair.rightId, list);
 }
 
 function renderRecords(records) {
@@ -415,8 +575,7 @@ function renderRecords(records) {
     block.append(note, again);
     list.append(block);
   }
-  fillSelect(left, records, leftId);
-  fillSelect(right, records, rightId);
+  paintSelects(records, leftId, rightId);
 }
 
 let records = [];
@@ -470,7 +629,7 @@ async function consult(mint) {
     });
     const box = document.getElementById("resultado");
     if (!result.card) {
-      showMessage(t(result.error === "rpc" ? "rpc" : "invalid"), "error");
+      showMessage(t(result.error === "rpc" ? "rpc" : result.error === "invalid" ? "invalid" : "emptySave"), "error");
       if (box) box.replaceChildren();
       return;
     }
@@ -479,15 +638,15 @@ async function consult(mint) {
       box.focus();
       box.scrollIntoView({ block: "start" });
     }
-    if (result.error === "partial" || result.card.partial) showMessage(t("partial"), "error");
-    else if (!result.ok) showMessage(t("network"), "error");
     const record = { id: crypto.randomUUID(), note: "", card: result.card, source: "leida" };
     const saved = await persist(record);
     if (!saved) return;
-    showMessage(result.card.partial ? t("partial") : t("saved"), result.card.partial ? "error" : "ok");
+    const incomplete = Boolean(result.card.partial || !result.ok);
+    const extra = incomplete ? `${t("incomplete")}${result.ok ? "" : ` ${t("network")}`}` : "";
+    announceSaved(extra, incomplete ? mint : "");
     await refresh();
-  } catch (error) {
-    showMessage(t("db"), "error");
+  } catch {
+    showRetry(t("network"), mint);
   } finally {
     if (button) button.disabled = false;
     if (input && mint) input.value = mint;
@@ -531,26 +690,70 @@ function renderComparison() {
     out.append(text("p", compared.error[lang()], { class: "campo-error" }));
     return;
   }
+  const older = compared.older || left;
+  const newer = compared.newer || right;
   out.append(text("h3", t("compareTitle")));
-  out.append(text("p", staleLine(left.card.consultedAt, lang()), { class: "sello" }));
-  out.append(text("p", staleLine(right.card.consultedAt, lang()), { class: "sello" }));
+  const counted = text("p", comparisonSummary(compared, lang()), { class: "resumen-comparacion" });
+  out.append(counted);
+  out.append(text("p", `${t("before")} · ${staleLine(older.card.consultedAt, lang())}`, { class: "sello" }));
+  out.append(text("p", `${t("after")} · ${staleLine(newer.card.consultedAt, lang())}`, { class: "sello" }));
   if (compared.formatChanged) out.append(text("p", t("format")));
-  const grid = el("div", { class: "comparacion" });
-  for (const rowItem of compared.rows) {
-    const article = el("article", { class: "ficha" });
-    article.append(text("h3", rowItem.field[lang()]));
-    article.append(text("p", `${t("left")}: ${rowItem.left ?? t("none")}`));
-    article.append(text("p", `${t("right")}: ${rowItem.right ?? t("none")}`));
-    article.append(text("p", rowItem.same ? t("same") : t("changed"), { class: rowItem.same ? "muted" : "nota" }));
-    grid.append(article);
+  const shownSide = (rowItem, side, card) => {
+    const raw = side === "left" ? rowItem.left : rowItem.right;
+    if (rowItem.amount && raw !== null) {
+      const formatted = formatAmount(raw, card.decimals, lang());
+      if (formatted) return formatted;
+    }
+    return comparedValueText(raw, lang());
+  };
+  const gridFor = (rows, verdict) => {
+    const grid = el("div", { class: "comparacion" });
+    const word = verdict === "igual" ? t("same") : verdict === "cambio" ? t("changed") : t("unknownState");
+    for (const rowItem of rows) {
+      const article = el("article", { class: "ficha", "data-veredicto": verdict });
+      article.append(text("h3", rowItem.field[lang()]));
+      article.append(text("p", `${t("before")}: ${shownSide(rowItem, "left", older.card)}`));
+      article.append(text("p", `${t("after")}: ${shownSide(rowItem, "right", newer.card)}`));
+      if (rowItem.difference && verdict === "cambio") {
+        const delta = supplyDirection(rowItem.difference, older.card.decimals, lang());
+        if (delta) article.append(text("p", delta, { class: "nota" }));
+      }
+      article.append(text("p", word, { class: verdict === "cambio" ? "nota" : "muted", "data-estado": verdict }));
+      grid.append(article);
+    }
+    return grid;
+  };
+  if (compared.changes.length) out.append(text("h3", t("changesTitle")), gridFor(compared.changes, "cambio"));
+  if (compared.unknown.length) {
+    const unknown = el("details", { class: "aviso-mas grupo-desconocido", open: "open" });
+    const summary = el("summary");
+    summary.textContent = t("unknownTitle");
+    unknown.append(summary, gridFor(compared.unknown, "indeterminado"));
+    out.append(unknown);
   }
-  out.append(grid);
+  if (compared.unchanged.length) {
+    const sameBox = el("details", { class: "aviso-mas grupo-igual", open: "open" });
+    const summary = el("summary");
+    summary.textContent = t("unchangedTitle");
+    sameBox.append(summary, gridFor(compared.unchanged, "igual"));
+    out.append(sameBox);
+  }
+  const tech = el("details", { class: "tecnico" });
+  const techSummary = el("summary");
+  techSummary.textContent = t("technical");
+  const techList = el("dl");
+  const slotText = (value) => (value === null || value === undefined ? t("unread") : String(value));
+  techList.append(text("dt", t("slot")), text("dd", `${t("before")}: ${slotText(compared.technical.slot.left)} · ${t("after")}: ${slotText(compared.technical.slot.right)}`));
+  techList.append(text("dt", t("utc")), text("dd", `${t("before")}: ${compared.technical.consultedAt.left} · ${t("after")}: ${compared.technical.consultedAt.right}`));
+  tech.append(techSummary, techList);
+  out.append(tech);
   if (compared.notes.left || compared.notes.right) {
     const notes = el("div", { class: "nota-personal" });
-    notes.append(text("p", `${t("left")}: ${compared.notes.left}`));
-    notes.append(text("p", `${t("right")}: ${compared.notes.right}`));
+    notes.append(text("p", `${t("before")}: ${compared.notes.left}`));
+    notes.append(text("p", `${t("after")}: ${compared.notes.right}`));
     out.append(notes);
   }
+  out.append(entenderNav(lang()));
 }
 
 async function exportCopy() {
@@ -649,6 +852,10 @@ function bind() {
   document.getElementById("borrar-confirmar")?.addEventListener("click", confirmDelete);
   document.getElementById("borrar-cancelar")?.addEventListener("click", cancelDelete);
   document.getElementById("comparar")?.addEventListener("click", renderComparison);
+  document.getElementById("comparar-izquierda")?.addEventListener("change", () => {
+    const left = document.getElementById("comparar-izquierda");
+    paintSelects(records, left ? left.value : "", "");
+  });
   document.addEventListener("stubx-lang", () => {
     renderRecords(records);
     const current = document.getElementById("resultado")?.querySelector(".ficha");

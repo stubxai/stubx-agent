@@ -2,6 +2,8 @@
  * Esquema, comparación e importación del cuaderno.
  * El texto importado no se ejecuta. Una ficha guardada no es una lectura actual.
  */
+import { formatAmount } from "./amount.js";
+import { factState } from "./fact-state.js";
 import { CARD_SCHEMA, CARD_VERSION, DISCLAIMER, OFFICIAL_MINT, isMintAddress } from "./solana-read.js";
 
 export const EXPORT_SCHEMA = "stubx.notebook.export";
@@ -289,20 +291,17 @@ export function toExport(records, exportedAt) {
 }
 
 const COMPARE_FIELDS = [
-  ["program", "Programa", "Program"],
-  ["mintAuthority.state", "Permiso de emisión", "Mint authority"],
-  ["freezeAuthority.state", "Permiso de congelación", "Freeze authority"],
-  ["supplyAccount", "Suministro en la cuenta", "Supply on the account"],
-  ["supplyRpc", "Suministro de getTokenSupply", "Supply from getTokenSupply"],
-  ["decimals", "Decimales", "Decimals"],
-  ["name.text", "Nombre", "Name"],
-  ["symbol.text", "Símbolo", "Symbol"],
-  ["metadataMutable", "Metadatos mutables", "Mutable metadata"],
-  ["curve.present", "Curva presente", "Curve present"],
-  ["curve.realToken", "Cantidad real de tokens de la curva", "Real curve token amount"],
-  ["curve.virtualToken", "Cantidad virtual de tokens de la curva", "Virtual curve token amount"],
-  ["curve.complete", "Curva completa", "Curve complete"],
-  ["slot", "Slot", "Slot"],
+  ["program", "programStatus", "Programa", "Program", false],
+  ["mintAuthority.state", "mintAuthority.status", "Permiso de emisión", "Mint authority", false],
+  ["freezeAuthority.state", "freezeAuthority.status", "Permiso de congelación", "Freeze authority", false],
+  ["decimals", null, "Decimales", "Decimals", false],
+  ["name.text", "name.status", "Nombre", "Name", false],
+  ["symbol.text", "symbol.status", "Símbolo", "Symbol", false],
+  ["metadataMutable", "metadataMutable", "Metadatos mutables", "Mutable metadata", false],
+  ["curve.present", "curve.status", "Curva presente", "Curve present", false],
+  ["curve.realToken", "curve.status", "Cantidad real de tokens de la curva", "Real curve token amount", true],
+  ["curve.virtualToken", "curve.status", "Cantidad virtual de tokens de la curva", "Virtual curve token amount", true],
+  ["curve.complete", "curve.status", "Curva completa", "Curve complete", false],
 ];
 
 function readPath(card, path) {
@@ -315,35 +314,262 @@ function readPath(card, path) {
   return current;
 }
 
-export function compareRecords(left, right) {
-  if (!left || !right || left.card.mint !== right.card.mint) {
-    return fail("Solo se comparan dos consultas de la misma dirección.", "Only two queries of the same address can be compared.");
+function compareFact(status, value) {
+  if (status === "si" || status === "no" || status === true || status === false) return "ok";
+  const known = status === null || status === undefined
+    ? (value === null || value === undefined || value === "" ? "no_disponible" : "verificado")
+    : status;
+  return factState(known, value);
+}
+
+function determined(state) {
+  return state === "ok" || state === "ausente" || state === "no_aplica";
+}
+
+function supplyDigits(value) {
+  return typeof value === "string" && /^\d+$/.test(value) ? value : null;
+}
+
+function totalSupply(card) {
+  const account = supplyDigits(card && card.supplyAccount);
+  if (account) return { raw: account, state: "ok" };
+  if (card && card.supplyRpcStatus === "verificado") {
+    const extra = supplyDigits(card.supplyRpc);
+    if (extra) return { raw: extra, state: "ok" };
   }
-  const rows = COMPARE_FIELDS.map(([path, es, en]) => {
+  if (card && card.supplyRpcStatus === "no_aplica" && card.isMint === false) return { raw: null, state: "no_aplica" };
+  return { raw: null, state: "fallo" };
+}
+
+const COMPARED_TEXT = {
+  "spl-token": { es: "SPL Token", en: "SPL Token" },
+  "token-2022": { es: "Token-2022", en: "Token-2022" },
+  no_es_mint: { es: "No es una cuenta de mint", en: "Not a mint account" },
+  no_disponible: { es: "no disponible", en: "unavailable" },
+  si: { es: "sí", en: "yes" },
+  no: { es: "no", en: "no" },
+  true: { es: "sí", en: "yes" },
+  false: { es: "no", en: "no" },
+  activa: { es: "activa", en: "active" },
+  revocada: { es: "revocada", en: "revoked" },
+  no_decodificable: { es: "no se pudo leer", en: "could not be read" },
+  no_aplica: { es: "no aplica", en: "not applicable" },
+  ausente: { es: "ausente comprobado", en: "confirmed absent" },
+  fallo: { es: "consulta fallida", en: "failed query" },
+  no_consultado: { es: "no consultado", en: "not queried" },
+};
+
+export function comparedValueText(raw, lang) {
+  if (raw === null || raw === undefined || raw === "") return lang === "en" ? "unavailable" : "no disponible";
+  const row = COMPARED_TEXT[String(raw)];
+  if (!row) return String(raw);
+  return lang === "en" ? row.en : row.es;
+}
+
+export function supplyConfirmation(card) {
+  const account = supplyDigits(card && card.supplyAccount);
+  const extra = card && card.supplyRpcStatus === "verificado" ? supplyDigits(card.supplyRpc) : null;
+  if (account && extra && account === extra) return { confirmed: true, reason: "coincide", account, extra };
+  if (account && extra) return { confirmed: false, reason: "no_coincide", account, extra };
+  if (account) return { confirmed: false, reason: "fallo", account, extra: null };
+  if (extra) return { confirmed: true, reason: "coincide", account: null, extra };
+  if (card && card.supplyRpcStatus === "no_aplica" && card.isMint === false) {
+    return { confirmed: false, reason: "no_aplica", account: null, extra: null };
+  }
+  return { confirmed: false, reason: "fallo", account: null, extra: null };
+}
+
+export function supplyNote(card, lang) {
+  const check = supplyConfirmation(card);
+  if (check.reason !== "fallo" && check.reason !== "no_coincide") return null;
+  if (!check.account || !Number.isInteger(card.decimals)) return null;
+  const formatted = formatAmount(check.account, card.decimals, lang);
+  if (!formatted) return null;
+  const figure = formatted.replace(/ tokens$/, "");
+  const en = lang === "en";
+  if (check.reason === "no_coincide") {
+    return en
+      ? `The mint bytes say ${figure} with ${card.decimals} decimals, and the extra read does not match. The figure shown is the one from the bytes. Percentages are not calculated.`
+      : `Los bytes del mint dicen ${figure} con ${card.decimals} decimales, y la lectura extra no coincide. Se muestra la cifra de los bytes. No se calculan porcentajes.`;
+  }
+  const service = en
+    ? "The public service did not respond, try again in a minute."
+    : "El servicio público no respondió, prueba otra vez en un minuto.";
+  return en
+    ? `There are ${figure} tokens, with ${card.decimals} decimals, read from the mint bytes. ${service} That does not change this figure and it is not an absence.`
+    : `Hay ${figure} tokens, con ${card.decimals} decimales, leídos de los bytes del mint. ${service} Eso no cambia esta cifra y no es una ausencia.`;
+}
+
+export function supplyDirection(difference, decimals, lang) {
+  if (difference === null || difference === undefined || difference === "") return null;
+  let value;
+  try {
+    value = BigInt(difference);
+  } catch {
+    return null;
+  }
+  if (value === 0n) return null;
+  const absolute = formatAmount((value < 0n ? -value : value).toString(), decimals, lang);
+  if (!absolute) return null;
+  if (lang === "en") return value < 0n ? `Fell ${absolute}` : `Rose ${absolute}`;
+  return value < 0n ? `Bajó ${absolute}` : `Subió ${absolute}`;
+}
+
+function countClause(count, one, many) {
+  return count === 1 ? one : many.replace("#", String(count));
+}
+
+export function comparisonSummary(compared, lang) {
+  const changed = Array.isArray(compared && compared.changes) ? compared.changes.length : 0;
+  const same = Array.isArray(compared && compared.unchanged) ? compared.unchanged.length : 0;
+  const unknown = Array.isArray(compared && compared.unknown) ? compared.unknown.length : 0;
+  if (lang === "en") {
+    const change = countClause(changed, "1 fact changed", "# facts changed");
+    const stay = countClause(same, "1 stayed the same", "# stayed the same");
+    const miss = countClause(
+      unknown,
+      "1 cannot be compared because it is missing from one reading",
+      "# cannot be compared because they are missing from one reading",
+    );
+    return `${change} · ${stay} · ${miss}`;
+  }
+  const change = countClause(changed, "1 dato cambió", "# datos cambiaron");
+  const stay = countClause(same, "1 sigue igual", "# siguen igual");
+  const miss = countClause(
+    unknown,
+    "1 no se puede comparar porque falta en alguna lectura",
+    "# no se pueden comparar porque faltan en alguna lectura",
+  );
+  return `${change} · ${stay} · ${miss}`;
+}
+
+function supplyRow(left, right) {
+  const a = totalSupply(left.card);
+  const b = totalSupply(right.card);
+  let verdict = "indeterminado";
+  let difference = null;
+  if (determined(a.state) && determined(b.state)) {
+    verdict = a.raw === b.raw ? "igual" : "cambio";
+    if (
+      verdict === "cambio"
+      && a.raw
+      && b.raw
+      && Number.isInteger(left.card.decimals)
+      && left.card.decimals === right.card.decimals
+    ) {
+      difference = (BigInt(b.raw) - BigInt(a.raw)).toString();
+    }
+  }
+  return {
+    field: { es: "Suministro total", en: "Total supply" },
+    left: a.raw,
+    right: b.raw,
+    amount: true,
+    difference,
+    leftState: a.state,
+    rightState: b.state,
+    verdict,
+    same: verdict === "igual",
+    leftAt: left.card.consultedAt,
+    rightAt: right.card.consultedAt,
+  };
+}
+
+export function compareRecords(left, right) {
+  if (!left || !right || left.card.mint !== right.card.mint || left.card.network !== right.card.network) {
+    return fail(
+      "Solo se comparan dos consultas de la misma red y dirección.",
+      "Only two queries of the same network and address can be compared.",
+    );
+  }
+  if (String(left.card.consultedAt) > String(right.card.consultedAt)) {
+    const newer = left;
+    left = right;
+    right = newer;
+  }
+  const rows = COMPARE_FIELDS.map(([path, statusPath, es, en, amount]) => {
     const a = readPath(left.card, path);
     const b = readPath(right.card, path);
+    const leftState = compareFact(statusPath ? readPath(left.card, statusPath) : null, a);
+    const rightState = compareFact(statusPath ? readPath(right.card, statusPath) : null, b);
+    const verdict = determined(leftState) && determined(rightState)
+      ? (Object.is(a, b) ? "igual" : "cambio")
+      : "indeterminado";
     return {
       field: { es, en },
       left: a === null || a === undefined ? null : String(a),
       right: b === null || b === undefined ? null : String(b),
-      same: Object.is(a, b),
+      amount,
+      leftState,
+      rightState,
+      verdict,
+      same: verdict === "igual",
       leftAt: left.card.consultedAt,
       rightAt: right.card.consultedAt,
     };
   });
+  const freezeAt = rows.findIndex((row) => row.field.es === "Permiso de congelación");
+  rows.splice(freezeAt + 1, 0, supplyRow(left, right));
   return {
     ok: true,
     mint: left.card.mint,
+    network: left.card.network,
     formatChanged: left.card.schemaVersion !== right.card.schemaVersion,
     rows,
+    changes: rows.filter((row) => row.verdict === "cambio"),
+    unknown: rows.filter((row) => row.verdict === "indeterminado"),
+    unchanged: rows.filter((row) => row.verdict === "igual"),
+    technical: {
+      slot: { left: left.card.slot ?? null, right: right.card.slot ?? null },
+      consultedAt: { left: left.card.consultedAt, right: right.card.consultedAt },
+    },
     notes: { left: left.note, right: right.note },
+    older: left,
+    newer: right,
   };
 }
 
+export function pickPrevious(records, card, exceptId) {
+  if (!card || typeof card.mint !== "string" || typeof card.network !== "string") return null;
+  const matches = (Array.isArray(records) ? records : []).filter((item) => {
+    if (!item || !item.card || item.id === exceptId) return false;
+    return item.card.mint === card.mint && item.card.network === card.network;
+  });
+  matches.sort((a, b) => (a.card.consultedAt < b.card.consultedAt ? 1 : -1));
+  return matches[0] ?? null;
+}
+
 export function staleLine(consultedAt, lang) {
-  const local = formatLocal(consultedAt, lang);
-  if (lang === "en") return `Checked on ${consultedAt} UTC · local ${local} · this may have changed`;
-  return `Consultado el ${consultedAt} UTC · hora local ${local} · puede haber cambiado`;
+  const local = formatReadingStamp(consultedAt, lang);
+  if (lang === "en") return `Checked on ${local} · this may have changed`;
+  return `Consultado el ${local} · puede haber cambiado`;
+}
+
+export function formatReadingStamp(consultedAt, lang, withSeconds = false) {
+  const date = new Date(consultedAt);
+  if (Number.isNaN(date.getTime())) return formatLocal(consultedAt, lang);
+  const options = {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  };
+  if (withSeconds) options.second = "2-digit";
+  return new Intl.DateTimeFormat(lang === "en" ? "en-GB" : "es-ES", options).format(date).replace(/[\u202f\u00a0]/g, " ");
+}
+
+export function readingOptionLabel(card, lang, peers = []) {
+  const symbol = card && card.symbol && typeof card.symbol.text === "string" ? card.symbol.text.trim() : "";
+  const name = card && card.name && typeof card.name.text === "string" ? card.name.text.trim() : "";
+  const title = (symbol || name || `${String(card && card.mint ? card.mint : "").slice(0, 4)}…`).slice(0, 24);
+  const minute = formatReadingStamp(card.consultedAt, lang, false);
+  const crowded = (Array.isArray(peers) ? peers : []).some((other) => {
+    if (!other || other === card) return false;
+    if (other.mint !== card.mint || other.network !== card.network) return false;
+    return formatReadingStamp(other.consultedAt, lang, false) === minute;
+  });
+  return `${title} · ${formatReadingStamp(card.consultedAt, lang, crowded)}`;
 }
 
 export function formatLocal(consultedAt, lang) {

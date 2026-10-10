@@ -54,17 +54,31 @@ export function combinesVerifiedWithMissing(status, value) {
   return (status === "verificado" || status === "ok") && state !== FACT.ok;
 }
 
+const SERVICE = {
+  es: "El servicio público no respondió, prueba otra vez en un minuto.",
+  en: "The public service did not respond, try again in a minute.",
+};
+
 export function missingFacts(items, lang) {
-  const missing = items.filter((item) => item.state !== FACT.ok && item.state !== "no_aplica");
-  if (!missing.length) {
-    return {
-      state: "ok",
-      text: lang === "en" ? "No requested fact is missing in this reading." : "No falta ningún dato pedido en esta lectura.",
-    };
-  }
-  const text = missing.map((item) => `${item.label}: ${factWord(item.state, lang)}`).join("; ");
+  const absent = items.filter((item) => item.state === FACT.ausente);
+  const failed = items.filter((item) => item.state !== FACT.ok && item.state !== "no_aplica" && item.state !== FACT.ausente);
+  const en = lang === "en";
+  const absentText = absent.length
+    ? en
+      ? `Confirmed: it does not exist: ${absent.map((item) => `${item.label}: confirmed absent`).join("; ")}.`
+      : `Comprobado: no existe: ${absent.map((item) => `${item.label}: ausente comprobado`).join("; ")}.`
+    : "";
+  const text = failed.length
+    ? en
+      ? `Missing data: ${failed.map((item) => item.label).join("; ")}. ${SERVICE.en}`
+      : `Faltan datos: ${failed.map((item) => item.label).join("; ")}. ${SERVICE.es}`
+    : en
+      ? "No requested fact is missing in this reading."
+      : "No falta ningún dato pedido en esta lectura.";
   return {
-    state: "falta",
-    text: lang === "en" ? `Missing data: ${text}.` : `Faltan datos: ${text}.`,
+    state: failed.length ? "falta" : "ok",
+    text,
+    absentText,
+    absentState: absent.length ? "ausente" : "ok",
   };
 }

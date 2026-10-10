@@ -17,6 +17,52 @@ function legendItem(light, text) {
   return item;
 }
 
+function entenderResultado(lang) {
+  var titleText = lang === "en" ? "Understand this result" : "Entender este resultado";
+  var understand = verifyEl("nav", {
+    id: "entender-resultado",
+    class: "entender-resultado",
+    "aria-label": titleText,
+  });
+  var button = verifyEl("button", { type: "button", class: "abrir-entender" });
+  button.textContent = titleText;
+  var panel = verifyEl("div", { class: "explicacion-resultado", tabindex: "-1", hidden: "hidden" });
+  var lines = lang === "en"
+    ? [
+      "Permissions: mint authority can create more tokens. Freeze authority can block accounts. Neither one says the project is legitimate.",
+      "Supply: it is the total number of tokens in this reading, using the mint decimals.",
+      "Metadata: if they can change, the name or symbol in this reading may not be tomorrow's.",
+      "Distribution: a sample of accounts is not a census of who holds the tokens.",
+    ]
+    : [
+      "Permisos: el de emisión permite crear más tokens. El de congelación permite bloquear cuentas. Ninguno de los dos dice si el proyecto es legítimo.",
+      "Suministro: es la cantidad total de tokens en esta lectura, con los decimales del mint.",
+      "Metadatos: si se pueden cambiar, el nombre o el símbolo de esta lectura pueden dejar de ser los de mañana.",
+      "Distribución: una muestra de cuentas no es un censo de quién tiene los tokens.",
+    ];
+  lines.forEach(function (line) {
+    var paragraph = verifyEl("p");
+    paragraph.textContent = line;
+    panel.append(paragraph);
+  });
+  [
+    ["/aprender/#guia-permisos", "Permisos", "Permissions"],
+    ["/aprender/#autoridad-emision", "Suministro", "Supply"],
+    ["/aprender/#metadatos-mutables", "Metadatos", "Metadata"],
+    ["/aprender/#censo", "Distribución", "Distribution"],
+  ].forEach(function (item) {
+    var link = verifyEl("a", { href: item[0], "data-guia": item[0] });
+    link.textContent = lang === "en" ? item[2] : item[1];
+    panel.append(link);
+  });
+  button.addEventListener("click", function () {
+    panel.hidden = false;
+    panel.focus();
+  });
+  understand.append(button, panel);
+  return understand;
+}
+
 function paintVerify(out, view) {
   var lang = verifyLang();
   out.replaceChildren();
@@ -66,7 +112,21 @@ function paintVerify(out, view) {
     note.textContent = view.partialNote[lang];
     out.append(note);
   }
-  if (view.missing) {
+  if (view.report) {
+    var report = verifyEl("section", { class: "resumen-informe" });
+    var reportTitle = verifyEl("h3");
+    reportTitle.textContent = lang === "en" ? "Summary of this reading" : "Resumen de esta lectura";
+    var reportBody = verifyEl("p");
+    reportBody.textContent = view.report[lang];
+    report.append(reportTitle, reportBody);
+    out.append(report);
+  }
+  if (view.absent && view.absent[lang]) {
+    var absent = verifyEl("p", { class: "resumen-datos", "data-estado": "ausente" });
+    absent.textContent = view.absent[lang];
+    out.append(absent);
+  }
+  if (view.missing && view.missing[lang]) {
     var missing = verifyEl("p", { class: "resumen-datos", "data-estado": view.missingState || "falta" });
     missing.textContent = view.missing[lang];
     out.append(missing);
@@ -94,10 +154,39 @@ function paintVerify(out, view) {
     sampleBtn.textContent = lang === "en" ? "Try to read the largest accounts" : "Intentar leer las cuentas más grandes";
     out.append(sampleBtn);
   }
+  var failedRead = view.missingState === "falta" || view.kind === "red" || view.kind === "limite" || view.kind === "tiempo";
+  if (failedRead && view.light !== "espera") {
+    var retry = verifyEl("button", { type: "button", id: "reintentar" });
+    retry.textContent = lang === "en" ? "Try again" : "Reintentar";
+    out.append(retry);
+  }
   if (view.kind !== "vacio" && typeof AUDIT_NOTICE !== "undefined") {
     var audit = verifyEl("p", { class: "aviso-fijo" });
     audit.textContent = AUDIT_NOTICE[lang];
     out.append(audit);
+  }
+  if (view.mint && view.kind === "lectura" && view.light !== "espera") {
+    var actions = verifyEl("div", { class: "acciones-consulta" });
+    function actionButton(id, es, en) {
+      var button = verifyEl("button", { type: "button", id: id, "data-mint": view.mint });
+      button.textContent = lang === "en" ? en : es;
+      return button;
+    }
+    var understand = entenderResultado(lang);
+    var notice = document.getElementById("aviso-guardar");
+    if (notice) {
+      var copy = notice.cloneNode(true);
+      copy.removeAttribute("id");
+      actions.append(copy);
+    }
+    actions.append(
+      actionButton("guardar-consulta", "Guardar esta consulta", "Save this lookup"),
+      actionButton("comparar-anterior", "Comparar con la anterior", "Compare with the previous one"),
+      actionButton("ver-cambio", "Ver qué cambió", "See what changed"),
+      understand,
+    );
+    var compareOut = verifyEl("div", { id: "comparacion-verify" });
+    out.append(actions, compareOut);
   }
   if (view.rows && view.rows.length > 0) {
     var details = verifyEl("details", { class: "tecnico" });
@@ -114,6 +203,9 @@ function paintVerify(out, view) {
     });
     details.append(summary, rows);
     out.append(details);
+  }
+  if (view.light !== "espera" && view.kind !== "vacio" && view.kind !== "lectura" && view.kind !== "invalida") {
+    out.append(entenderResultado(lang));
   }
 }
 
@@ -158,6 +250,7 @@ function bootVerify() {
 
   function apply(view, reveal) {
     last = view;
+    document.dispatchEvent(new CustomEvent("stubx-lectura", { detail: view && view.shown ? view.shown : null }));
     paintVerify(out, view);
     input.setAttribute("aria-invalid", view.kind === "invalida" ? "true" : "false");
     if (reveal && view.kind !== "vacio" && view.kind !== "comprobando") revealVerdict();
@@ -214,6 +307,10 @@ function bootVerify() {
     if (submit) submit.disabled = busy;
     var extra = out.querySelector("#leer-cuentas");
     if (extra) extra.disabled = busy;
+    var retry = out.querySelector("#reintentar");
+    if (retry) retry.disabled = busy;
+    var save = out.querySelector("#guardar-consulta");
+    if (save) save.disabled = busy;
   }
 
   function pauseView(mint) {
@@ -252,7 +349,7 @@ function bootVerify() {
     return view;
   }
 
-  function run() {
+  function run(force) {
     if (inFlight) return;
     if (input.value.trim() === "") {
       apply(emptyView(), false);
@@ -279,7 +376,7 @@ function bootVerify() {
       return;
     }
     var now = Date.now();
-    var cached = typeof readCache === "function" ? readCache(memory, normalized, now, 60000) : null;
+    var cached = !force && typeof readCache === "function" ? readCache(memory, normalized, now, 60000) : null;
     if (cached) {
       apply(cached, true);
       return;
@@ -300,7 +397,7 @@ function bootVerify() {
       mint: normalized,
       registry: STUBX_VERIFY.registry || [],
       endpoints: endpoints,
-      maxRetries: 0,
+      maxRetries: 1,
       minIntervalMs: 200,
       timeoutMs: 8000,
       signal: controller.signal,
@@ -341,7 +438,7 @@ function bootVerify() {
       mint: mint,
       registry: STUBX_VERIFY.registry || [],
       endpoints: endpointsOf(),
-      maxRetries: 0,
+      maxRetries: 1,
       minIntervalMs: 200,
       timeoutMs: 6000,
       signal: controller.signal,
@@ -362,8 +459,8 @@ function bootVerify() {
         level: "atencion",
         title: { es: "No se pudo comprobar", en: "Could not be checked" },
         explain: {
-          es: "No se pudo comprobar. El servicio no devolvió las cuentas más grandes. No es una concentración de cero.",
-          en: "It could not be checked. The service did not return the largest accounts. It is not zero concentration.",
+          es: "El servicio público no respondió, prueba otra vez en un minuto. No es una concentración de cero.",
+          en: "The public service did not respond, try again in a minute. It is not zero concentration.",
         },
       };
       view.signals = (view.signals || []).map(function (item) {
@@ -379,6 +476,10 @@ function bootVerify() {
   out.addEventListener("click", function (event) {
     var target = event.target;
     if (target && target.id === "leer-cuentas") readSample();
+    if (target && target.id === "reintentar") {
+      if (last && last.mint) memory.delete(last.mint);
+      run(true);
+    }
   });
 
   apply(emptyView(), false);

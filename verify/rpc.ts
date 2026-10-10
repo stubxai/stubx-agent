@@ -69,21 +69,25 @@ export async function httpTransport(
   if (typeof navigator === "undefined") {
     headers["user-agent"] = "stubx-verify/0.1";
   }
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers,
-    body,
-    signal: signal ? AbortSignal.any([AbortSignal.timeout(timeoutMs), signal]) : AbortSignal.timeout(timeoutMs),
-    cache: "no-store",
-    credentials: "omit",
-    referrerPolicy: "no-referrer",
-    redirect: "error",
-  } as RequestInit);
-  const raw = new Uint8Array(await response.arrayBuffer());
-  if (raw.byteLength > 5_000_000) {
-    return { status: response.status, body: "" };
+  try {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers,
+      body,
+      signal: signal ? AbortSignal.any([AbortSignal.timeout(timeoutMs), signal]) : AbortSignal.timeout(timeoutMs),
+      cache: "no-store",
+      credentials: "omit",
+      referrerPolicy: "no-referrer",
+      redirect: "error",
+    } as RequestInit);
+    const raw = new Uint8Array(await response.arrayBuffer());
+    if (raw.byteLength > 5_000_000) {
+      return { status: response.status, body: "" };
+    }
+    return { status: response.status, body: new TextDecoder().decode(raw) };
+  } catch {
+    return { status: 0, body: "" };
   }
-  return { status: response.status, body: new TextDecoder().decode(raw) };
 }
 
 export class RpcClient {
@@ -254,7 +258,7 @@ export function isAllowedMethod(method: string): method is AllowedRpcMethod {
 }
 
 function isRetryableStatus(status: number): boolean {
-  return status === 429 || status === 408 || status >= 500;
+  return status === 0 || status === 429 || status === 408 || status >= 500;
 }
 
 function isRetryableMessage(code: number | undefined, message: string): boolean {

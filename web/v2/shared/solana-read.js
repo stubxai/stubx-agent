@@ -484,6 +484,116 @@ function authorityField(value) {
   return { state: value.state, address: value.address, status: "verificado" };
 }
 
+const SHOWN_ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/;
+
+function textFromShown(text, status) {
+  if (status === "verificado" && typeof text === "string" && text.length > 0 && text.length <= 300) {
+    return { text, status: "verificado" };
+  }
+  if (status === "ausente") return { text: null, status: "ausente" };
+  if (status === "no_aplica") return { text: null, status: "no_aplica" };
+  return { text: null, status: "fallo" };
+}
+
+function curveFromShown(value) {
+  const empty = emptyCurve();
+  if (!value || typeof value !== "object") return { ...empty, present: null, status: "fallo" };
+  const status = ["verificado", "ausente", "fallo", "no_aplica", "no_disponible"].includes(value.status) ? value.status : "fallo";
+  const amountOrNull = (item) => (typeof item === "string" && /^\d+$/.test(item) ? item : null);
+  return {
+    present: value.present === true || value.present === false ? value.present : null,
+    status,
+    virtualToken: amountOrNull(value.virtualToken),
+    virtualQuote: amountOrNull(value.virtualQuote),
+    realToken: amountOrNull(value.realToken),
+    realQuote: amountOrNull(value.realQuote),
+    complete: value.complete === true || value.complete === false ? value.complete : null,
+  };
+}
+
+function notMintCard(card) {
+  card.program = "no_es_mint";
+  card.programStatus = "verificado";
+  card.partial = false;
+  card.isMint = false;
+  card.name.status = "no_aplica";
+  card.symbol.status = "no_aplica";
+  card.uri.status = "no_aplica";
+  card.metadataMutable = "no_aplica";
+  card.extensionsStatus = "no_aplica";
+  card.supplyRpcStatus = "no_aplica";
+  card.largestStatus = "no_aplica";
+  card.mintAuthority = { state: "no_aplica", address: null, status: "no_aplica" };
+  card.freezeAuthority = { state: "no_aplica", address: null, status: "no_aplica" };
+  card.curve = { ...emptyCurve(), present: false, status: "no_aplica" };
+  return card;
+}
+
+/** Ficha del cuaderno a partir de la lectura ya pintada. No consulta la red. */
+export function cardFromShown(shown) {
+  if (!shown || typeof shown !== "object" || !isMintAddress(shown.mint)) return null;
+  if (!["ausente", "no_mint", "ilegible", "mint"].includes(shown.kind)) return null;
+  if (typeof shown.consultedAt !== "string" || !SHOWN_ISO.test(shown.consultedAt)) return null;
+  const card = blankCard(shown.mint, shown.consultedAt, []);
+  if (Number.isSafeInteger(shown.slot) && shown.slot >= 0) {
+    card.slot = shown.slot;
+    card.slotStatus = "verificado";
+  }
+  if (shown.kind === "ausente" || shown.kind === "no_mint") return notMintCard(card);
+  if (shown.kind === "ilegible") {
+    card.program = shown.program === "token-2022" ? "token-2022" : "spl-token";
+    card.programStatus = "verificado";
+    card.isMint = false;
+    card.partial = true;
+    card.mintAuthority = { state: "no_decodificable", address: null, status: "fallo" };
+    card.freezeAuthority = { state: "no_decodificable", address: null, status: "fallo" };
+    card.name = { text: null, status: "fallo" };
+    card.symbol = { text: null, status: "fallo" };
+    card.uri = { text: null, status: "fallo" };
+    card.metadataMutable = "fallo";
+    card.extensionsStatus = "fallo";
+    card.supplyRpcStatus = "fallo";
+    card.largestStatus = "fallo";
+    card.curve = { ...emptyCurve(), present: null, status: "fallo" };
+    return card;
+  }
+  if (shown.program !== "spl-token" && shown.program !== "token-2022") return null;
+  if (!Number.isInteger(shown.decimals) || shown.decimals < 0 || shown.decimals > 18) return null;
+  if (typeof shown.supplyAccount !== "string" || !/^\d+$/.test(shown.supplyAccount)) return null;
+  card.isMint = true;
+  card.program = shown.program;
+  card.programStatus = "verificado";
+  card.decimals = shown.decimals;
+  card.supplyAccount = shown.supplyAccount;
+  card.mintAuthority = authorityField(shown.mintAuthority);
+  card.freezeAuthority = authorityField(shown.freezeAuthority);
+  card.name = textFromShown(shown.name, shown.metadataStatus);
+  card.symbol = textFromShown(shown.symbol, shown.metadataStatus);
+  card.uri = textFromShown(shown.uri, shown.uriStatus || shown.metadataStatus);
+  card.metadataMutable = ["si", "no", "ausente", "fallo"].includes(shown.metadataMutable) ? shown.metadataMutable : "fallo";
+  const extensionStatus = ["verificado", "no_aplica", "fallo", "no_disponible"].includes(shown.extensionsStatus)
+    ? shown.extensionsStatus
+    : "fallo";
+  card.extensionsStatus = extensionStatus;
+  card.extensions = Array.isArray(shown.extensions)
+    ? shown.extensions.filter((item) => item && Number.isInteger(item.type) && typeof item.name === "string" && (item.status === "verificado" || item.status === "no_soportada")).slice(0, 40)
+    : [];
+  card.supplyRpc = typeof shown.supplyRpc === "string" && /^\d+$/.test(shown.supplyRpc) ? shown.supplyRpc : null;
+  card.supplyRpcStatus = card.supplyRpc === null ? "fallo" : shown.supplyRpcStatus === "verificado" ? "verificado" : "fallo";
+  card.largestStatus = ["ok", "verificado", "ausente", "fallo", "no_consultado", "no_disponible"].includes(shown.largestStatus)
+    ? shown.largestStatus
+    : "fallo";
+  card.curve = curveFromShown(shown.curve);
+  card.partial = card.mintAuthority.status === "fallo"
+    || card.freezeAuthority.status === "fallo"
+    || card.supplyRpcStatus === "fallo"
+    || card.largestStatus === "fallo"
+    || card.extensionsStatus === "fallo"
+    || card.name.status === "fallo"
+    || card.curve.status === "fallo";
+  return card;
+}
+
 function endpointsFor(preferred) {
   let origin = "";
   try {
@@ -504,8 +614,13 @@ function retryableRpcFailure(result) {
   );
 }
 
+const MAINNET_ONLY_METHODS = new Set(["getTokenSupply", "getTokenLargestAccounts"]);
+
 async function rpcCall(state, method, params) {
-  const endpoints = state.endpoints?.length ? state.endpoints : [state.endpoint];
+  // publicnode cierra getTokenSupply y las cuentas grandes con 403. No se pide ahí.
+  const endpoints = MAINNET_ONLY_METHODS.has(method)
+    ? [DEFAULT_RPC]
+    : (state.endpoints?.length ? state.endpoints : [state.endpoint]);
   let last = null;
   for (const endpoint of endpoints) {
     state.endpoint = endpoint;
@@ -531,7 +646,7 @@ async function rpcCallOnce(state, method, params) {
       state.id += 1;
       const response = await state.transport(state.endpoint, body, state.timeoutMs);
       lastStatus = response.status;
-      if ((response.status === 429 || response.status >= 500) && attempt < state.maxRetries) {
+      if ((response.status === 0 || response.status === 408 || response.status === 429 || response.status >= 500) && attempt < state.maxRetries) {
         lastError = `HTTP ${response.status}`;
         await state.sleep(300 * (attempt + 1));
         continue;

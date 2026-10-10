@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, test } from "node:test";
 import { TOKEN_2022_PROGRAM, PUMP_PROGRAM, bondingCurvePda, metadataPda } from "../programs.js";
+import { formatUnitsLocale } from "../bytes.js";
 import { clipForeign, readAnyMint, readLargestAccounts, takeQuerySlot, type LiveReading } from "../signals.js";
 import { repoRootFrom } from "../root.js";
 import type { CanonicalToken } from "../types.js";
@@ -206,7 +207,16 @@ describe("lectura universal con RPC simulado", () => {
     assert.match(reading.rows.map((row) => row.label.es).join(" "), /Momento/);
     assert.match(reading.rows.map((row) => row.value.es).join(" "), /slot 1/);
     assert.equal(reading.canSample, false);
-    assert.match(reading.missing?.es ?? "", /ausente comprobado|No falta/);
+    assert.match(reading.signals.find((item) => item.id === "suministro")?.explain.es ?? "", /Hay 1\.000\.000\.000 tokens/);
+    assert.match(reading.signals.find((item) => item.id === "suministro")?.explain.en ?? "", /There are 1,000,000,000 tokens/);
+    assert.equal(formatUnitsLocale(7840780507370947n, 6, "es"), "7.840.780.507,370947");
+    assert.equal(formatUnitsLocale(7840780507370947n, 6, "en"), "7,840,780,507.370947");
+    assert.equal((reading.missing?.es ?? "").includes("ausente comprobado"), false);
+    assert.match(reading.absent?.es ?? "", /Comprobado: no existe/);
+    assert.match(reading.missing?.es ?? "", /No falta/);
+    assert.match(reading.report?.es ?? "", /Qué se comprobó/);
+    assert.match(reading.report?.es ?? "", /Qué pide atención/);
+    assert.match(reading.report?.es ?? "", /Qué falta/);
     assert.equal((reading.identity?.es ?? "").includes(mint), true);
   });
 
@@ -438,6 +448,40 @@ describe("lectura universal con RPC simulado", () => {
     assert.equal(reading.signals.find((item) => item.id === "emision")?.level, "ok");
   });
 
+  test("una lectura normal no pide suministro ni cuentas grandes a publicnode", async () => {
+    const sample = fixture("revoked-mint");
+    const accounts = new Map<string, AccountFixture | null>([
+      [sample.mint, sample.mintAccount],
+      [metadataPda(sample.mint), null],
+      [bondingCurvePda(sample.mint), null],
+    ]);
+    const hosts: Record<string, string[]> = { getTokenSupply: [], getTokenLargestAccounts: [], getMultipleAccounts: [] };
+    const base = transportFor({
+      slot: sample.slot,
+      accounts,
+      supply: { amount: "7723351880366328", decimals: 6 },
+      largest: [],
+    });
+    const reading = await readAnyMint({
+      mint: sample.mint,
+      registry,
+      endpoints: ["https://solana-rpc.publicnode.com", "https://api.mainnet-beta.solana.com"],
+      transport: async (endpoint, body, timeoutMs) => {
+        const method = (JSON.parse(body) as { method: string }).method;
+        if (hosts[method]) hosts[method]?.push(new URL(endpoint).hostname);
+        return base(endpoint, body, timeoutMs);
+      },
+      maxRetries: 0,
+      minIntervalMs: 0,
+      sleep: async () => {},
+    });
+    assert.equal(reading.ok, true);
+    assert.deepEqual(hosts.getTokenSupply, ["api.mainnet-beta.solana.com"]);
+    assert.deepEqual(hosts.getTokenLargestAccounts, ["api.mainnet-beta.solana.com"]);
+    assert.deepEqual(hosts.getMultipleAccounts, ["solana-rpc.publicnode.com"]);
+    assert.equal(reading.sources.some((item) => item.host === "api.mainnet-beta.solana.com"), false);
+  });
+
   test("la lectura automática pide las cuentas más grandes y un fallo aparte no es un censo", async () => {
     const sample = fixture("revoked-mint");
     const methods: string[] = [];
@@ -581,5 +625,59 @@ describe("lectura universal con RPC simulado", () => {
     assert.match(explain, /Cantidad real de la curva: 500/);
     assert.match(explain, /Cantidad virtual de la curva: 2000/);
     assert.equal(/reserva|\breserve\b|\bfondo\b/i.test(explain), false);
+  });
+
+  test("un 429 del suministro se reintenta una vez y un corte de red no se propaga", async () => {
+    const sample = fixture("revoked-mint");
+    const accounts = new Map<string, AccountFixture | null>([
+      [sample.mint, sample.mintAccount],
+      [metadataPda(sample.mint), null],
+      [bondingCurvePda(sample.mint), null],
+    ]);
+    const base = transportFor({
+      slot: sample.slot,
+      accounts,
+      supply: { amount: "1000000000000000", decimals: 6 },
+      largest: [],
+    });
+    let supplyHits = 0;
+    const sleeps: number[] = [];
+    const reading = await readAnyMint({
+      mint: sample.mint,
+      registry,
+      endpoints: ["https://rpc-a.invalid"],
+      transport: async (endpoint, body, timeoutMs) => {
+        const request = JSON.parse(body) as { method: string };
+        if (request.method === "getTokenSupply") {
+          supplyHits += 1;
+          if (supplyHits === 1) return { status: 429, body: "" };
+        }
+        return base(endpoint, body, timeoutMs);
+      },
+      maxRetries: 1,
+      minIntervalMs: 0,
+      random: () => 0,
+      sleep: async (ms) => {
+        sleeps.push(ms);
+      },
+    });
+    assert.equal(supplyHits, 2);
+    assert.equal(reading.facts?.find((item) => item.id === "suministro-extra")?.state, "ok");
+    assert.ok(sleeps.some((ms) => ms >= 500));
+    assert.equal((reading.missing?.es ?? "").includes("Consulta extra"), false);
+    const dropped = await readAnyMint({
+      mint: sample.mint,
+      registry,
+      endpoints: ["https://rpc-a.invalid"],
+      transport: async () => {
+        throw new TypeError("Failed to fetch");
+      },
+      maxRetries: 1,
+      minIntervalMs: 0,
+      sleep: async () => {},
+    });
+    assert.equal(dropped.ok, false);
+    assert.equal(dropped.kind, "red");
+    assert.match(dropped.support.es, /El servicio público no respondió, prueba otra vez en un minuto/);
   });
 });

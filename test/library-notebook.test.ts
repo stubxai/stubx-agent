@@ -26,21 +26,29 @@ interface ReadModule {
   isAllowedRpcUrl: (value: string) => boolean;
   blankCard: (mint: string, consultedAt: string, errors: unknown[]) => Card;
   readMint: (options: Record<string, unknown>) => Promise<{ ok: boolean; card: Card | null }>;
+  cardFromShown: (shown: Record<string, unknown>) => Card | null;
 }
 
 interface Card {
   isMint?: boolean;
   partial?: boolean;
   officialStubx?: boolean;
-  name: { text: string | null };
-  symbol?: { text: string | null };
+  name: { text: string | null; status?: string };
+  symbol?: { text: string | null; status?: string };
   uri: { text: string | null };
   supplyRpc: string | null;
+  supplyRpcStatus?: string;
   supplyAccount: string | null;
   program?: string;
+  programStatus?: string;
+  slot?: number | null;
+  slotStatus?: string;
   mint: string;
-  mintAuthority?: { state: string; status: string };
-  freezeAuthority?: { state: string; status: string };
+  network?: string;
+  consultedAt?: string;
+  decimals?: number | null;
+  mintAuthority?: { state: string; address?: string | null; status: string };
+  freezeAuthority?: { state: string; address?: string | null; status: string };
 }
 
 interface ModelModule {
@@ -52,8 +60,21 @@ interface ModelModule {
   visibleText: (value: string) => string;
   withNote: (record: { id: string; card: Card }, note: string) => { ok: boolean; record?: { note: string } };
   toExport: (records: unknown[], exportedAt: string) => string;
-  compareRecords: (left: { card: Card }, right: { card: Card }) => { ok: boolean; rows?: Array<{ field: { es: string }; same: boolean }> };
+  compareRecords: (left: { card: Card }, right: { card: Card }) => {
+    ok: boolean;
+    rows?: Array<{ field: { es: string }; same: boolean; verdict?: string; difference?: string | null }>;
+    unchanged?: Array<{ field: { es: string } }>;
+    technical?: { slot: { left: number | null; right: number | null } };
+  };
+  pickPrevious: (records: Array<{ id: string; card: Card }>, card: Card, exceptId: string) => { id: string } | null;
   staleLine: (consultedAt: string, lang: string) => string;
+  formatReadingStamp: (consultedAt: string, lang: string, withSeconds?: boolean) => string;
+  readingOptionLabel: (card: Card, lang: string, peers?: Card[]) => string;
+  comparisonSummary: (compared: { changes?: unknown[]; unchanged?: unknown[]; unknown?: unknown[] }, lang: string) => string;
+  supplyDirection: (difference: string, decimals: number, lang: string) => string | null;
+  comparedValueText: (raw: string, lang: string) => string;
+  supplyConfirmation: (card: Card) => { confirmed: boolean; reason: string };
+  supplyNote: (card: Card, lang: string) => string | null;
 }
 
 async function modules(): Promise<{ read: ReadModule; model: ModelModule }> {
@@ -236,6 +257,40 @@ describe("lector y cuaderno", () => {
     assert.equal(model.validateCard(result.card as Card).ok, true);
   });
 
+  test("guardar usa la lectura de pantalla y un permiso ilegible queda en fallo", async () => {
+    const { read, model } = await modules();
+    const shown = {
+      kind: "mint",
+      mint: CA,
+      consultedAt: WHEN,
+      slot: 7,
+      program: "spl-token",
+      decimals: 6,
+      supplyAccount: "1000",
+      supplyRpc: null,
+      supplyRpcStatus: "fallo",
+      mintAuthority: { state: "no_decodificable", address: null },
+      freezeAuthority: { state: "revocada", address: null },
+      name: "STB",
+      symbol: "STB",
+      uri: "https://example.invalid/meta",
+      metadataStatus: "verificado",
+      uriStatus: "verificado",
+      metadataMutable: "no",
+      extensions: [],
+      extensionsStatus: "no_aplica",
+      largestStatus: "fallo",
+      curve: { present: false, status: "ausente", virtualToken: null, virtualQuote: null, realToken: null, realQuote: null, complete: null },
+    };
+    const card = read.cardFromShown(shown);
+    assert.ok(card);
+    assert.equal(card?.mintAuthority?.status, "fallo");
+    assert.equal(card?.freezeAuthority?.status, "verificado");
+    assert.equal(card?.supplyAccount, "1000");
+    assert.equal(model.validateCard(card as Card).ok, true);
+    assert.equal(read.cardFromShown({ ...shown, consultedAt: "ayer" }), null);
+  });
+
   test("429, cuenta ausente, no-mint y dirección inválida no inventan un cero", async () => {
     const { read } = await modules();
     let calls = 0;
@@ -387,6 +442,36 @@ describe("lector y cuaderno", () => {
     assert.deepEqual(seen, ["solana-rpc.publicnode.com"]);
   });
 
+  test("getTokenSupply y las cuentas grandes no se piden a publicnode", async () => {
+    const { read } = await modules();
+    const hosts: Record<string, string[]> = { getTokenSupply: [], getTokenLargestAccounts: [], getMultipleAccounts: [] };
+    const result = await read.readMint({
+      mint: CA,
+      ...fastClock(),
+      endpoint: read.PUBLICNODE_RPC,
+      maxRetries: 0,
+      transport: async (endpoint: string, body: string) => {
+        const method = (JSON.parse(body) as { method: string }).method;
+        const host = new URL(endpoint).hostname;
+        if (hosts[method]) hosts[method]?.push(host);
+        if (method === "getMultipleAccounts") {
+          return rpcOk([
+            account(read.TOKEN_PROGRAM, mintBytes()),
+            account(read.METADATA_PROGRAM, metadataBytes("USDC", "USDC", "https://example.invalid/meta")),
+            null,
+          ]);
+        }
+        if (method === "getTokenSupply") return rpcOk({ amount: "7723351880366328", decimals: 6, uiAmountString: "skip" });
+        if (method === "getTokenLargestAccounts") return rpcOk([]);
+        throw new Error(method);
+      },
+    });
+    assert.equal(result.ok, true);
+    assert.deepEqual(hosts.getTokenSupply, ["api.mainnet-beta.solana.com"]);
+    assert.deepEqual(hosts.getTokenLargestAccounts, ["api.mainnet-beta.solana.com"]);
+    assert.deepEqual(hosts.getMultipleAccounts, ["solana-rpc.publicnode.com"]);
+  });
+
   test("solo se comparan dos fichas del mismo mint y la antigua no se presenta como actual", async () => {
     const { read, model } = await modules();
     const left = { id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", note: "primera", card: read.blankCard(CA, WHEN, []) };
@@ -395,12 +480,159 @@ describe("lector y cuaderno", () => {
     const right = { id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", note: "segunda", card: rightCard };
     const same = model.compareRecords(left, right);
     assert.equal(same.ok, true);
-    assert.equal(same.rows?.some((row) => row.field.es === "Suministro en la cuenta" && row.same === false), true);
+    const supply = same.rows?.find((row) => row.field.es === "Suministro total");
+    assert.equal(supply?.same, false);
+    assert.equal(supply?.verdict, "indeterminado");
+    const bothBlank = model.compareRecords(left, { ...right, card: read.blankCard(CA, "2026-10-09T13:00:00.000Z", []) });
+    const blankSupply = bothBlank.rows?.find((row) => row.field.es === "Suministro total");
+    assert.equal(blankSupply?.verdict, "indeterminado");
+    assert.equal(blankSupply?.same, false);
+    const older = read.blankCard(CA, WHEN, []);
+    const newer = read.blankCard(CA, "2026-10-09T13:00:00.000Z", []);
+    older.supplyAccount = "1000000";
+    newer.supplyAccount = "2000000";
+    older.decimals = 6;
+    newer.decimals = 6;
+    const moved = model.compareRecords({ ...left, card: older }, { ...right, card: newer });
+    const movedSupply = moved.rows?.find((row) => row.field.es === "Suministro total");
+    assert.equal(movedSupply?.verdict, "cambio");
+    assert.equal(movedSupply?.difference, "1000000");
+    const usdcLeft = read.blankCard(OTHER, "2026-10-10T19:35:21.457Z", []);
+    const usdcRight = read.blankCard(OTHER, "2026-10-10T19:35:10.216Z", []);
+    for (const card of [usdcLeft, usdcRight]) {
+      card.isMint = true;
+      card.program = "spl-token";
+      card.programStatus = "verificado";
+      card.decimals = 6;
+      card.mintAuthority = { state: "activa", address: null, status: "verificado" };
+      card.freezeAuthority = { state: "revocada", address: null, status: "verificado" };
+      card.name = { text: "USD Coin", status: "verificado" };
+      card.symbol = { text: "USDC", status: "verificado" };
+      card.slotStatus = "verificado";
+    }
+    usdcLeft.slot = 11;
+    usdcRight.slot = 22;
+    usdcLeft.supplyAccount = "7723351880366328";
+    usdcRight.supplyAccount = "7723319021661631";
+    const usdc = model.compareRecords({ card: usdcLeft }, { card: usdcRight });
+    const total = usdc.rows?.find((row) => row.field.es === "Suministro total");
+    assert.equal(total?.verdict, "cambio");
+    assert.equal(total?.difference, (7723351880366328n - 7723319021661631n).toString());
+    assert.equal(usdc.rows?.some((row) => row.field.es === "Slot" || row.field.es === "Momento de la red"), false);
+    assert.deepEqual(usdc.technical?.slot, { left: 22, right: 11 });
+    const unchangedNames = (usdc.unchanged ?? []).map((row) => row.field.es);
+    assert.equal(unchangedNames.includes("Permiso de emisión"), true);
+    assert.equal(unchangedNames.includes("Nombre"), true);
+    assert.equal(unchangedNames.includes("Decimales"), true);
+    assert.ok(unchangedNames.length > 0);
+    for (const row of usdc.rows ?? []) {
+      assert.equal(["cambio", "igual", "indeterminado"].includes(row.verdict ?? ""), true);
+    }
+    const previous = model.pickPrevious(
+      [
+        { id: "1", card: older },
+        { id: "2", card: { ...newer, mint: OTHER, network: "solana" } },
+      ],
+      newer,
+      "3",
+    );
+    assert.equal(previous?.id, "1");
+    assert.equal(model.pickPrevious([{ id: "1", card: { ...older, network: "otra" } }], newer, "3"), null);
     const other = model.compareRecords(left, { ...right, card: read.blankCard(OTHER, WHEN, []) });
     assert.equal(other.ok, false);
-    assert.match(model.staleLine(WHEN, "es"), /puede haber cambiado/);
-    assert.match(model.staleLine(WHEN, "en"), /this may have changed/);
+    const otherNet = model.compareRecords(left, { ...right, card: { ...right.card, network: "devnet" } });
+    assert.equal(otherNet.ok, false);
+    const stamp = new Intl.DateTimeFormat("es-ES", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(WHEN)).replace(/[\u202f\u00a0]/g, " ");
+    assert.equal(
+      model.readingOptionLabel({ ...older, symbol: { text: "STUBX" }, name: { text: "STUBX" } }, "es"),
+      `STUBX · ${stamp}`,
+    );
+    const amount = (await import(pathToFileURL(path.join(repoRoot(), "web/v2/shared/amount.js")).href)) as {
+      formatAmount: (raw: string, decimals: number, lang: string) => string | null;
+    };
+    assert.equal(amount.formatAmount("1000000000000000", 6, "es"), "1.000.000.000 tokens");
+    assert.equal(amount.formatAmount("1000000000000000", 6, "en"), "1,000,000,000 tokens");
+    assert.equal(amount.formatAmount("1000000", 6, "es"), "1 tokens");
+    assert.equal(amount.formatAmount("7840780507370947", 6, "es"), "7.840.780.507,370947 tokens");
+    assert.equal(amount.formatAmount("7840780507370947", 6, "en"), "7,840,780,507.370947 tokens");
+    assert.equal(amount.formatAmount(null as unknown as string, 6, "es"), null);
+    const actions = readFileSync(path.join(repoRoot(), "web/v2/assets/verificar-acciones.mjs"), "utf8");
+    assert.equal(actions.includes("localStorage"), false);
+    assert.equal(actions.includes("sessionStorage"), false);
+    assert.equal(actions.includes("searchParams"), false);
+    assert.match(actions, /stubx-cuaderno/);
+    assert.equal(model.staleLine(WHEN, "es"), `Consultado el ${model.formatReadingStamp(WHEN, "es")} · puede haber cambiado`);
+    assert.equal(model.staleLine(WHEN, "en"), `Checked on ${model.formatReadingStamp(WHEN, "en")} · this may have changed`);
+    assert.equal(model.staleLine(WHEN, "es").includes("2026-10-09T"), false);
     assert.equal(model.staleLine(WHEN, "es").includes("actual"), false);
+  });
+
+  test("el resumen separa cambio, igual e indeterminado", async () => {
+    const { read, model } = await modules();
+    const line = (changed: number, same: number, unknown: number, lang = "es") => model.comparisonSummary({
+      changes: Array.from({ length: changed }),
+      unchanged: Array.from({ length: same }),
+      unknown: Array.from({ length: unknown }),
+    }, lang);
+    assert.equal(line(1, 0, 0), "1 dato cambió · 0 siguen igual · 0 no se pueden comparar porque faltan en alguna lectura");
+    assert.equal(line(0, 8, 0), "0 datos cambiaron · 8 siguen igual · 0 no se pueden comparar porque faltan en alguna lectura");
+    assert.equal(line(0, 0, 2), "0 datos cambiaron · 0 siguen igual · 2 no se pueden comparar porque faltan en alguna lectura");
+    assert.equal(line(1, 8, 0), "1 dato cambió · 8 siguen igual · 0 no se pueden comparar porque faltan en alguna lectura");
+    assert.equal(line(1, 0, 2), "1 dato cambió · 0 siguen igual · 2 no se pueden comparar porque faltan en alguna lectura");
+    assert.equal(line(0, 8, 2), "0 datos cambiaron · 8 siguen igual · 2 no se pueden comparar porque faltan en alguna lectura");
+    assert.equal(line(1, 8, 2), "1 dato cambió · 8 siguen igual · 2 no se pueden comparar porque faltan en alguna lectura");
+    assert.equal(line(1, 1, 1), "1 dato cambió · 1 sigue igual · 1 no se puede comparar porque falta en alguna lectura");
+    assert.equal(line(1, 8, 2, "en"), "1 fact changed · 8 stayed the same · 2 cannot be compared because they are missing from one reading");
+    assert.equal(line(0, 8, 2).includes("No hay un cambio"), false);
+    assert.equal(line(1, 0, 2).includes("no se puede determinar si cambió"), false);
+    assert.equal(model.supplyDirection("-32858704697", 6, "es"), "Bajó 32.858,704697 tokens");
+    assert.equal(model.supplyDirection("408850757", 6, "es"), "Subió 408,850757 tokens");
+    assert.equal(model.supplyDirection("-408850757", 6, "en"), "Fell 408.850757 tokens");
+    assert.equal(model.comparedValueText("si", "es"), "sí");
+    assert.equal(model.comparedValueText("spl-token", "es"), "SPL Token");
+    assert.equal(model.comparedValueText("token-2022", "en"), "Token-2022");
+    assert.equal(model.comparedValueText("no_decodificable", "es"), "no se pudo leer");
+    const earlier = "2026-10-10T20:49:07.000Z";
+    const later = "2026-10-10T20:49:40.000Z";
+    const first = read.blankCard(CA, earlier, []);
+    first.symbol = { text: "USDC" };
+    first.name = { text: "USD Coin" };
+    const second = read.blankCard(CA, later, []);
+    second.symbol = { text: "USDC" };
+    second.name = { text: "USD Coin" };
+    const seconds = String(new Date(earlier).getSeconds()).padStart(2, "0");
+    assert.match(model.readingOptionLabel(first, "es", [first, second]), new RegExp(`:${seconds}$`));
+    assert.equal(/\d{2}:\d{2}:\d{2}/.test(model.readingOptionLabel(first, "es", [first])), false);
+  });
+
+  test("el suministro total no queda verificado si la lectura extra falla o no coincide", async () => {
+    const { read, model } = await modules();
+    const card = read.blankCard(CA, WHEN, []);
+    card.isMint = true;
+    card.decimals = 6;
+    card.supplyAccount = "1000";
+    card.supplyRpc = null;
+    card.supplyRpcStatus = "fallo";
+    assert.equal(model.supplyConfirmation(card).confirmed, false);
+    assert.equal(model.supplyConfirmation(card).reason, "fallo");
+    assert.match(model.supplyNote(card, "es") ?? "", /El servicio público no respondió/);
+    assert.match(model.supplyNote(card, "es") ?? "", /no es una ausencia/);
+    assert.match(model.supplyNote(card, "en") ?? "", /does not match|not an absence|did not respond/);
+    card.supplyRpc = "999";
+    card.supplyRpcStatus = "verificado";
+    assert.equal(model.supplyConfirmation(card).confirmed, false);
+    assert.equal(model.supplyConfirmation(card).reason, "no_coincide");
+    assert.match(model.supplyNote(card, "es") ?? "", /no coincide/);
+    assert.match(model.supplyNote(card, "es") ?? "", /Se muestra la cifra de los bytes/);
+    card.supplyRpc = "1000";
+    assert.equal(model.supplyConfirmation(card).confirmed, true);
+    assert.equal(model.supplyNote(card, "es"), null);
   });
 
   test("el nombre de Token-2022 sale de la extensión si no hay cuenta Metaplex", async () => {
@@ -649,7 +881,7 @@ describe("lector y cuaderno", () => {
     const facts = (await import(pathToFileURL(path.join(repoRoot(), "web/v2/shared/fact-state.js")).href)) as {
       factLine: (status: string, value: unknown, lang: string) => string;
       factState: (status: string, value: unknown) => string;
-      missingFacts: (items: Array<{ label: string; state: string }>, lang: string) => { text: string };
+      missingFacts: (items: Array<{ label: string; state: string }>, lang: string) => { text: string; absentText: string };
     };
     assert.equal(facts.factState("verificado", ""), "ausente");
     assert.equal(facts.factLine("verificado", "", "es"), "ausente comprobado");
@@ -665,6 +897,9 @@ describe("lector y cuaderno", () => {
       ],
       "es",
     );
-    assert.match(summary.text, /Faltan datos: Enlace: ausente comprobado; Cuentas: consulta fallida/);
+    assert.match(summary.text, /Faltan datos: Cuentas/);
+    assert.match(summary.text, /El servicio público no respondió, prueba otra vez en un minuto/);
+    assert.equal(summary.text.includes("ausente comprobado"), false);
+    assert.match(summary.absentText, /Comprobado: no existe: Enlace: ausente comprobado/);
   });
 });

@@ -7,7 +7,7 @@ Una sola web estática. Verify, Lab y el tablero no son sitios aparte: el genera
 | Pieza | Dónde | Qué hace ahora |
 | --- | --- | --- |
 | Cascarón | `assets/shell.js`, `assets/site.css` | Idioma (`stubx-lab-lang`), títulos, copiar solo la CA oficial, menú. El service worker solo se registra en `/lab/`. |
-| Verify en el navegador | `assets/verify.js` | Lee en directo, y solo en lectura, cualquier mint SPL o Token-2022. También pinta las fichas del 2026-10-09 y las anteriores. La ficha oficial incluye la cuenta personal publicada y el resto 0,0000 %. Este sitio no guarda la dirección, pero el servicio público de Solana recibe la dirección y la IP según sus propias condiciones. |
+| Verify en el navegador | `assets/verify.js` | Lee en directo, y solo en lectura, cualquier mint SPL o Token-2022. También pinta las fichas del 2026-10-09 y las anteriores. La ficha oficial incluye la cuenta personal publicada y el resto 0,0000 %. El aviso de Guardar está en web/v2/shared/aviso-guardar.js. |
 | Misma regla, importable | `modules/verify/lookup.mjs` | Salida de `tsc` sobre `lab/verify/lookup.ts`, sin source map. Lo usan las pruebas. No llama a la red. Responde a direcciones `0x`. |
 | Fichas | `modules/verify/cards.json` | Las fichas de `loadCards`, con textos de presentación añadidos (`statement_en`, `holdersNote_en` y las notas de la curva) sin cambiar los nombres de la API, más los ejemplos EVM. `snapshot.json` dice que el commit citado es ancestro de esta rama (`inBranch`) y que la lectura en vivo está activa (`liveNetwork`). `inBranch` no es la marca de publicación. |
 | Lab | `assets/mission.js` + `modules/lab/` | Misión de cinco pasos, glosario y tres guías. El progreso se queda en el navegador. |

@@ -388,9 +388,14 @@ main h1::after {
   main h1 { font-size: clamp(1.7rem, 7.5vw, 2.05rem); }
   a.brand img { width: 40px; height: 40px; }
   .hero > div { padding-left: 0.8rem; }
-  .consulta {
+  .consulta,
+  .consulta-barra {
     border-top: 4px solid var(--accent);
     box-shadow: 0 -4px 0 var(--gem), 0 -16px 28px rgba(4, 13, 31, 0.55);
+  }
+  .consulta:has(.consulta-barra) {
+    border-top: 0;
+    box-shadow: none;
   }
 }
 .skip { left: 0.85rem; }
@@ -782,6 +787,38 @@ body:has(a[href="/tablero/"][aria-current="page"]) .grupos { order: 5; }
 body:has(a[href="/aprender/"][aria-current="page"]) main > p:has(> a[href="/lab/"]) { order: 2; }
 body:has(a[href="/comparar/"][aria-current="page"]) main > dl { order: 5; }
 .aviso[data-disclaimer="si"] > p:first-child { margin: 0; color: var(--cream); font-weight: 650; }
+.entender-resultado {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0.8rem 0;
+}
+.abrir-entender {
+  justify-self: start;
+  min-height: 44px;
+  padding: 0.45rem 0.9rem;
+  border: 2px solid var(--tone, var(--pink));
+  border-radius: 0.75rem;
+  background: transparent;
+  color: var(--cream, #f9e6d0);
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.explicacion-resultado {
+  display: grid;
+  gap: 0.45rem;
+  scroll-margin-top: 1rem;
+  scroll-margin-bottom: 1.5rem;
+}
+.explicacion-resultado[hidden] { display: none; }
+.explicacion-resultado:focus { outline: 3px solid var(--accent, var(--pink)); outline-offset: 3px; }
+.explicacion-resultado p { margin: 0; }
+.explicacion-resultado a, .entender-resultado a { text-decoration: underline; }
+.confirmacion-guardado { scroll-margin-top: 5rem; scroll-margin-bottom: 14rem; }
+.confirmacion-guardado a { text-decoration: underline; }
+#consulta-error[data-kind="ok"] a { text-decoration: underline; }
 .aviso-mas { margin: 0.6rem 0 0; padding: 0; border: 0; background: transparent; box-shadow: none; }
 .aviso-mas summary {
   display: inline-flex;
@@ -1220,4 +1257,56 @@ dd[data-estado="fallo"], dd[data-estado="ausente"], dd[data-estado="no_consultad
 @media (max-width: 599px) {
   .acciones-consulta { display: grid; }
   .acciones-consulta a, .acciones-consulta button { width: 100%; }
+}
+.resumen-informe {
+  margin: 0.75rem 0 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-elev);
+  color: var(--cream);
+}
+.resumen-informe h3 { margin: 0 0 0.35rem; font-family: var(--font); }
+.ficha[data-veredicto="cambio"] { border-left-color: var(--attention); }
+.ficha[data-veredicto="indeterminado"] { border-left-color: var(--line); }
+.grupo-desconocido { margin-top: 0.8rem; }
+article[id] { scroll-margin-top: 1rem; }
+@media (max-width: 48rem) {
+  body:has(a[href="/cuaderno/"][aria-current="page"]):has(#resultado:not(:empty)) form.consulta,
+  body:has(a[href="/cuaderno/"][aria-current="page"]):has(#comparacion:not(:empty)) form.consulta {
+    position: static;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    z-index: auto;
+    border-top: 0;
+    box-shadow: none;
+  }
+  body:has(#resultado[data-state]:not([data-state="vacio"])) .consulta-barra,
+  body:has(#comparacion-verify:not(:empty)) .consulta-barra {
+    position: static;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    z-index: auto;
+    border-top: 0;
+    box-shadow: none;
+  }
+  body:has(#resultado[data-state]:not([data-state="vacio"])) #aviso-guardar,
+  body:has(#comparacion-verify:not(:empty)) #aviso-guardar {
+    position: static;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    z-index: auto;
+    max-height: none;
+    margin: 0 0 0.85rem;
+  }
+  body:has(a[href="/cuaderno/"][aria-current="page"]):has(#resultado:not(:empty)),
+  body:has(a[href="/cuaderno/"][aria-current="page"]):has(#comparacion:not(:empty)),
+  body:has(#resultado[data-state]:not([data-state="vacio"])),
+  body:has(#comparacion-verify:not(:empty)) {
+    padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
+  }
+  #comparacion, #comparacion-verify, #resultado { scroll-margin-bottom: 1.5rem; }
 }

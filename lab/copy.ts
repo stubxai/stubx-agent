@@ -1,3 +1,16 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
+const avisoSource = readFileSync(fileURLToPath(new URL("../../web/v2/shared/aviso-guardar.js", import.meta.url)), "utf8");
+
+function avisoLine(name: "es" | "en"): string {
+  const match = avisoSource.match(new RegExp(`${name}:\\s*"((?:\\\\.|[^"\\\\])*)"`));
+  if (!match?.[1]) {
+    throw new Error(`aviso-guardar.js no tiene la frase ${name}`);
+  }
+  return JSON.parse(`"${match[1]}"`) as string;
+}
+
 export const DISCLAIMER =
   "Herramienta educativa con datos públicos. No es consejo de inversión. Cripto de alto riesgo · Puedes perderlo todo.";
 
@@ -24,11 +37,9 @@ export const READONLY_LINE = {
   en: "Read-only: it does not connect wallets or sign anything. The cards are not an audit or a guarantee.",
 } as const;
 
-export const PRIVACY_ES =
-  "Tu navegador consulta directamente un servicio público de Solana (api.mainnet-beta.solana.com o solana-rpc.publicnode.com), solo en lectura. Este sitio no guarda la dirección, pero ese servicio recibe la dirección y tu IP según sus propias condiciones.";
+export const PRIVACY_ES = avisoLine("es");
 
-export const PRIVACY_EN =
-  "Your browser queries a public Solana service directly (api.mainnet-beta.solana.com or solana-rpc.publicnode.com), read-only. This site does not store the address, but that service receives the address and your IP under its own terms.";
+export const PRIVACY_EN = avisoLine("en");
 
 export const AUDIT_ES =
   "Lectura en directo de datos públicos de la blockchain. No es una auditoría, ni una recomendación, ni un aval. STUBX no tiene relación con este token salvo que sea la CA oficial. Que no aparezcan señales no significa que no haya riesgo.";
@@ -39,12 +50,12 @@ export const AUDIT_EN =
 export const HOW_VERIFY = {
   es: [
     "Pega la dirección y pulsa Comprobar.",
-    PRIVACY_ES,
+    "La lectura es directa y solo en lectura.",
     "Verás señales con una explicación en lenguaje llano. No es una puntuación.",
   ],
   en: [
     "Paste the address and press Check.",
-    PRIVACY_EN,
+    "The read is live and read-only.",
     "You will see signals with a plain-language explanation. It is not a score.",
   ],
 } as const;

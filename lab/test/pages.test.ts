@@ -160,7 +160,7 @@ describe("páginas estáticas", () => {
     assert.match(verify, /Dirección del registro de STUBX/);
     assert.match(verify, /Se parece a STUBX, pero no es la CA oficial/);
     assert.match(verify, /No es una auditoría, ni una recomendación, ni un aval/);
-    assert.match(verify, /ese servicio recibe la dirección y tu IP/);
+    assert.match(verify, /Solo si pulsas «Guardar esta consulta»/);
     assert.match(verify, /No se pudo comprobar/);
     assert.match(verify, /id="direccion-token"/);
     assert.match(verify, /id="direccion-error"/);

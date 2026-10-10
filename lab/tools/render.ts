@@ -371,14 +371,16 @@ function renderVerify(cards: readonly CardSummary[], glossaryEntries: readonly G
   const main = `<h1>${both({ es: "Comprueba una dirección", en: "Check an address" })}</h1>
 <p class="lede">${both({ es: "Cualquier token SPL o Token-2022, leído en directo y solo en lectura. Las fichas de abajo son ejemplos fechados, no una lista completa.", en: "Any SPL or Token-2022 token, read live and read-only. The cards below are dated examples, not a complete list." })}</p>
 <p class="aviso-fijo">${both({ es: AUDIT_ES, en: AUDIT_EN })}</p>
-<p class="aviso-fijo privacidad">${both({ es: PRIVACY_ES, en: PRIVACY_EN })}</p>
 ${howDetails(HOW_VERIFY)}
 <div class="herramienta">
 <form id="consulta" class="consulta" action="#">
+<div class="consulta-barra">
 <label for="direccion-token">${both({ es: "Pega la dirección del token", en: "Paste the token address" })}</label>
 <input id="direccion-token" name="direccion" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done">
 <button type="submit">${both({ es: "Comprobar", en: "Check" })}</button>
 <p id="direccion-error" class="campo-error" hidden>${both({ es: "Pega primero una dirección. Suele tener entre 32 y 44 letras y números.", en: "Paste an address first. It is usually 32 to 44 letters and numbers." })}</p>
+</div>
+<p id="aviso-guardar" class="aviso-fijo privacidad">${both({ es: PRIVACY_ES, en: PRIVACY_EN })}</p>
 </form>
 <section id="resultado" class="resultado" data-state="vacio" data-luz="neutro" aria-live="polite">
 <h2>${both({ es: "La lectura aparece aquí", en: "The reading shows up here" })}</h2>

@@ -244,7 +244,10 @@ try {
     await page.waitForFunction(() => (document.getElementById("resultado")?.textContent || "").includes("puede haber cambiado"), null, { timeout: 15000 });
     const text = await page.locator("#resultado").innerText();
     if (!text.includes("Es la dirección oficial de STUBX")) failures.push(`${profile.id}: no marca la dirección oficial`);
-    if (text.includes("evil.example") && (await page.locator("#resultado a").count()) > 0) {
+    const uriLinked = await page.locator("#resultado a").evaluateAll((nodes) =>
+      nodes.some((node) => `${node.textContent || ""} ${node.getAttribute("href") || ""}`.includes("evil.example")),
+    );
+    if (text.includes("evil.example") && uriLinked) {
       failures.push(`${profile.id}: la URI de metadatos se volvió un enlace`);
     }
     await shot(page, `cuaderno-${profile.id}-resultado.png`);
@@ -275,10 +278,10 @@ try {
   await wide.getByRole("button", { name: "Volver a consultar" }).click();
   await wide.waitForFunction(() => document.querySelectorAll("#lista-consultas article.ficha").length >= 2, null, { timeout: 15000 });
   const options = wide.locator("#comparar-izquierda option");
-  const first = await options.nth(1).getAttribute("value");
-  const second = await options.nth(2).getAttribute("value");
-  await wide.locator("#comparar-izquierda").selectOption(first);
-  await wide.locator("#comparar-derecha").selectOption(second);
+  const newest = await options.nth(1).getAttribute("value");
+  const older = await options.nth(2).getAttribute("value");
+  await wide.locator("#comparar-izquierda").selectOption(older);
+  await wide.locator("#comparar-derecha").selectOption(newest);
   await wide.locator("#comparar").click();
   const comparedText = await wide.locator("#comparacion").innerText();
   if (!comparedText.includes("igual")) {
