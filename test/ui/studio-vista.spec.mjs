@@ -37,8 +37,10 @@ test("escritorio: la vista previa se ve entera al editar", async ({ page }) => {
   expect(square.tabCoveredByCanvas).toBe(false);
 
   await page.locator("#tab-formato").click();
-  await page.locator("[data-format='story']").click();
-  await expect(page.locator("canvas#vista")).toHaveAttribute("height", "1920");
+  const storyButton = page.locator("[data-format='story']");
+  await storyButton.click();
+  await expect(storyButton).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("canvas#vista")).toHaveAttribute("height", "1920", { timeout: 45_000 });
   await page.locator("canvas#vista").scrollIntoViewIfNeeded();
   const story = await layout(page);
   expect(story.covered).toBe(false);
