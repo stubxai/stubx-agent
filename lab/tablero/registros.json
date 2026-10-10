@@ -637,7 +637,7 @@
             "es": "Lectura",
             "en": "Read"
           },
-          "path": "web/v2/modules/chain-read.mjs",
+          "path": "pares/chain-read.mjs",
           "note": {
             "es": "Misma lista cerrada de métodos y los dos servicios públicos.",
             "en": "The same closed method list and the two public services."

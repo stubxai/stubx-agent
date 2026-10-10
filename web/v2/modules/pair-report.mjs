@@ -20,10 +20,19 @@ export async function readWithinLimit(stamps, now, read) {
   return { allowed: true, stamps: slot.stamps, result: await read() };
 }
 
+const INVISIBLE = /[\u061C\u180E\u200B\u200C\u200E\u200F\u202A-\u202E\u2060-\u2064\u2066-\u2069\uFEFF]/g;
+
 export function clipTokenName(name) {
-  const text = String(name ?? "");
-  if (text.length <= NAME_LIMIT) return text;
-  return `${text.slice(0, NAME_LIMIT)}…`;
+  const cleaned = String(name ?? "").replace(INVISIBLE, "");
+  const graphemes = [];
+  for (const part of new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(cleaned)) {
+    const grapheme = /\p{Extended_Pictographic}/u.test(part.segment)
+      ? part.segment
+      : part.segment.replaceAll("\u200D", "");
+    if (grapheme) graphemes.push(grapheme);
+  }
+  if (graphemes.length <= NAME_LIMIT) return graphemes.join("");
+  return `${graphemes.slice(0, NAME_LIMIT).join("")}…`;
 }
 
 const FOOTER = {
@@ -54,24 +63,20 @@ export function describePair(state) {
   if (!state || state.ok !== true) {
     return {
       ok: false,
-      connector: "no_disponible",
+      curve: "no_disponible",
       base: "desconocida",
-      route: "no_compatible",
       protocolFeeBps: null,
       creatorFeeBps: null,
     };
   }
   if (!state.curve) {
-    return { ok: true, connector: "sin_curva", base: "desconocida", route: "no_compatible", protocolFeeBps, creatorFeeBps };
+    return { ok: true, curve: "sin_curva", base: "desconocida", protocolFeeBps, creatorFeeBps };
   }
   const base = state.curve.quoteSol ? "SOL" : state.curve.quoteMint || "desconocida";
   if (state.curve.complete) {
-    return { ok: true, connector: "completa", base, route: "no_compatible", protocolFeeBps, creatorFeeBps };
+    return { ok: true, curve: "completa", base, protocolFeeBps, creatorFeeBps };
   }
-  if (!state.curve.quoteSol) {
-    return { ok: true, connector: "abierta", base, route: "no_compatible", protocolFeeBps, creatorFeeBps };
-  }
-  return { ok: true, connector: "abierta", base: "SOL", route: "un_paso", protocolFeeBps, creatorFeeBps };
+  return { ok: true, curve: "abierta", base, protocolFeeBps, creatorFeeBps };
 }
 
 export function evidenceRecord(input) {
@@ -81,8 +86,7 @@ export function evidenceRecord(input) {
     name: input.name ?? null,
     uri: input.uri ?? null,
     base: input.base,
-    connector: input.connector,
-    route: input.route,
+    curve: input.curve,
     protocolFeeBps: input.protocolFeeBps,
     creatorFeeBps: input.creatorFeeBps,
     slot: input.slot ?? null,
@@ -131,7 +135,7 @@ export function snapshotLines(evidence, lang) {
     { size: "body", text: en ? `Token analyzed: ${evidence.mint}` : `Token analizado: ${evidence.mint}` },
     { size: "body", text: name },
     { size: "body", text: base },
-    { size: "body", text: curve[evidence.connector] ?? curve.no_disponible },
+    { size: "body", text: curve[evidence.curve] ?? curve.no_disponible },
     { size: "body", text: feeText(en ? "en" : "es", "Comisión del protocolo", "Protocol fee", evidence.protocolFeeBps) },
     { size: "body", text: feeText(en ? "en" : "es", "Comisión de creación", "Creation fee", evidence.creatorFeeBps) },
     { size: "body", text: en ? "A pairing is not a collaboration or an endorsement." : "Un emparejamiento no es una colaboración ni un respaldo." },

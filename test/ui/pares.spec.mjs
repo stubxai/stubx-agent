@@ -9,7 +9,7 @@ import {
   encodeGlobalAccount,
   encodeMetadataAccount,
   encodeMintAccount,
-} from "../../web/v2/modules/chain-read.mjs";
+} from "../../pares/chain-read.mjs";
 
 const shots = "/opt/cursor/artifacts/screenshots";
 const FOOTER_ES = "Cripto de alto riesgo · Puedes perderlo todo · No es consejo de inversión.";

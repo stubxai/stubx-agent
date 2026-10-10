@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, test } from "node:test";
 import { pathToFileURL } from "node:url";
@@ -7,7 +7,7 @@ import { canonicalJson as verifyCanonical } from "../verify/bytes.js";
 import { repoRoot } from "../src/paths.js";
 
 const reportUrl = pathToFileURL(path.join(repoRoot(), "web/v2/modules/pair-report.mjs")).href;
-const readUrl = pathToFileURL(path.join(repoRoot(), "web/v2/modules/chain-read.mjs")).href;
+const readUrl = pathToFileURL(path.join(repoRoot(), "pares/chain-read.mjs")).href;
 const OFFICIAL = "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump";
 const OTHER = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 const FOOTER_ES = "Cripto de alto riesgo · Puedes perderlo todo · No es consejo de inversión.";
@@ -35,31 +35,43 @@ function fakeContext() {
 }
 
 describe("informe de pares", () => {
-  test("la moneda base y la ruta no se inventan", async () => {
-    const { describePair } = await import(reportUrl);
-    assert.equal(describePair({ ok: false }).route, "no_compatible");
-    assert.equal(describePair({ ok: false }).connector, "no_disponible");
-    assert.notEqual(describePair({ ok: false }).route, "un_paso");
+  test("la moneda base no se inventa y el informe no lleva ruta", async () => {
+    const { describePair, evidenceRecord } = await import(reportUrl);
+    assert.equal(describePair({ ok: false }).curve, "no_disponible");
+    assert.equal(Object.hasOwn(describePair({ ok: false }), "route"), false);
+    assert.equal(Object.hasOwn(describePair({ ok: false }), "connector"), false);
     const missing = describePair({ ok: true, curve: null, fees: null });
-    assert.equal(missing.connector, "sin_curva");
+    assert.equal(missing.curve, "sin_curva");
     assert.equal(missing.base, "desconocida");
-    assert.equal(missing.route, "no_compatible");
     const closed = describePair({ ok: true, curve: curve(true, true), fees: null });
-    assert.equal(closed.connector, "completa");
+    assert.equal(closed.curve, "completa");
     assert.equal(closed.base, "SOL");
-    assert.equal(closed.route, "no_compatible");
     const other = describePair({ ok: true, curve: curve(false, false, OTHER), fees: null });
-    assert.equal(other.connector, "abierta");
+    assert.equal(other.curve, "abierta");
     assert.equal(other.base, OTHER);
-    assert.equal(other.route, "no_compatible");
     const open = describePair({
       ok: true,
       curve: curve(true, false, null),
       fees: { protocol: { status: "leida", bps: 95n }, creator: { status: "leida", bps: 5n } },
     });
-    assert.equal(open.route, "un_paso");
+    assert.equal(open.curve, "abierta");
     assert.equal(open.protocolFeeBps, 95);
     assert.equal(open.creatorFeeBps, 5);
+    const downloaded = evidenceRecord({
+      mint: OTHER,
+      name: "Ejemplo",
+      uri: null,
+      base: open.base,
+      curve: open.curve,
+      protocolFeeBps: open.protocolFeeBps,
+      creatorFeeBps: open.creatorFeeBps,
+      slot: 1,
+      source: "solana-rpc.publicnode.com",
+      readAt: "2026-10-10T10:00:00.000Z",
+    });
+    assert.equal(downloaded.curve, "abierta");
+    assert.equal(Object.hasOwn(downloaded, "route"), false);
+    assert.equal(Object.hasOwn(downloaded, "connector"), false);
     const absent = describePair({
       ok: true,
       curve: curve(true),
@@ -84,8 +96,7 @@ describe("informe de pares", () => {
       name: "<script>alert(1)</script>",
       uri: "https://evil.example/meta.json",
       base: "SOL",
-      connector: "abierta",
-      route: "un_paso",
+      curve: "abierta",
       protocolFeeBps: 95,
       creatorFeeBps: null,
       slot: 454936125,
@@ -124,7 +135,7 @@ describe("informe de pares", () => {
     const decoded = decodeMetadata(METADATA_PROGRAM, data, OTHER);
     assert.equal(decoded?.name, name);
     assert.equal(decoded?.uri, "https://evil.example/meta.json");
-    const sources = ["web/v2/modules/pair-report.mjs", "web/v2/modules/chain-read.mjs", "web/v2/assets/pares.mjs"]
+    const sources = ["web/v2/modules/pair-report.mjs", "pares/chain-read.mjs", "web/v2/assets/pares.mjs"]
       .map((file) => readFileSync(path.join(repoRoot(), file), "utf8"))
       .join("\n");
     assert.equal(sources.includes("sendTransaction"), false);
@@ -144,8 +155,7 @@ describe("informe de pares", () => {
       name: full,
       uri: null,
       base: "SOL",
-      connector: "abierta",
-      route: "un_paso",
+      curve: "abierta",
       protocolFeeBps: null,
       creatorFeeBps: null,
       slot: 1,
@@ -160,6 +170,41 @@ describe("informe de pares", () => {
     assert.ok(nameLine);
     assert.equal(nameLine.includes(full), false);
     assert.match(nameLine, /N{48}…/);
+  });
+
+  test("el recorte del PNG quita RTL y ancho cero y no parte emojis", async () => {
+    const { clipTokenName, NAME_LIMIT } = await import(reportUrl);
+    const rtl = "Nombre\u202Eoficial\u200B\u200C\u2060\uFEFF\u2066";
+    assert.equal(clipTokenName(rtl), "Nombreoficial");
+    assert.equal(/[\u202A-\u202E\u2066-\u2069\u200B\u200C\uFEFF]/.test(clipTokenName(rtl)), false);
+    const messy = `${"A".repeat(10)}\u202E${"B".repeat(50)}`;
+    assert.equal(clipTokenName(messy), `${"A".repeat(10)}${"B".repeat(38)}…`);
+    const hidden = `${"N".repeat(48)}${"\u200B".repeat(20)}TAIL`;
+    assert.equal(clipTokenName(hidden), `${"N".repeat(48)}…`);
+    assert.equal(clipTokenName("A\u200DB"), "AB");
+    const emoji = "😀";
+    const family = "👨‍👩‍👧‍👦";
+    const many = emoji.repeat(50);
+    const cut = clipTokenName(many);
+    assert.equal(cut, `${emoji.repeat(NAME_LIMIT)}…`);
+    assert.equal([...cut.slice(0, -1)].every((char) => char === emoji), true);
+    const atBoundary = `${"N".repeat(NAME_LIMIT - 1)}${family}Z`;
+    const kept = clipTokenName(atBoundary);
+    assert.equal(kept, `${"N".repeat(NAME_LIMIT - 1)}${family}…`);
+    assert.equal(kept.includes(family), true);
+    assert.equal(clipTokenName(`${"A".repeat(47)}${family}`), `${"A".repeat(47)}${family}`);
+  });
+
+  test("la lectura de la cadena no se publica como módulo", async () => {
+    const bundleUrl = pathToFileURL(path.join(repoRoot(), "web/v2/tools/bundle-pares.mjs")).href;
+    const { bundlePares } = await import(bundleUrl);
+    const published = path.join(repoRoot(), "web/v2/assets/pares.mjs");
+    assert.equal(readFileSync(published, "utf8"), bundlePares());
+    assert.equal(existsSync(path.join(repoRoot(), "web/v2/modules/chain-read.mjs")), false);
+    assert.equal(existsSync(path.join(repoRoot(), "web/v2/modules/curve-math.mjs")), false);
+    const source = readFileSync(published, "utf8");
+    assert.equal(source.includes("../modules/chain-read.mjs"), false);
+    assert.equal(source.includes("function readCurveState"), true);
   });
 
   test("la séptima lectura en un minuto no llama al transporte", async () => {
