@@ -93,7 +93,7 @@ describe("cálculo de la curva", () => {
 describe("el módulo no trae envío ni firma", () => {
   test("el texto del cálculo y de la lectura no nombra esas llamadas", () => {
     const root = repoRoot();
-    for (const rel of ["web/v2/modules/curve-math.mjs", "web/v2/modules/chain-read.mjs", "web/v2/assets/comparar.mjs"]) {
+    for (const rel of ["web/v2/modules/curve-math.mjs", "web/v2/modules/chain-read.mjs"]) {
       const text = readFileSync(path.join(root, rel), "utf8");
       assert.equal(text.includes("sendTransaction"), false, rel);
       assert.equal(text.includes("signTransaction"), false, rel);

@@ -366,7 +366,7 @@ def home() -> str:
 <div class="grid-3">
 <article class="card"><p class="estado-pill">{t("Lectura en vivo + fichas del 2026-10-09", "Live reading + cards of 2026-10-09")}</p><h3>Verify</h3><p>{t("Pega la dirección de un token SPL o Token-2022. La página lee la cadena en directo y solo en lectura, y la compara con las fichas fechadas. No es una puntuación.", "Paste the address of an SPL or Token-2022 token. The page reads the chain live and read-only, and compares it with the dated cards. It is not a score.")}</p><p><a class="primary" href="/verify/">{t("Analizar token", "Analyze token")}</a></p></article>
 <article class="card"><p class="estado-pill">{t("Demo fechada · 2026-10-09", "Dated demo · 2026-10-09")}</p><h3>Lab</h3><p>{t("Una misión de cinco pasos para distinguir el mint del registro de un clon. El progreso se queda en este navegador.", "A five-step mission to tell the registry mint from a clone. Progress stays in this browser.")}</p><p><a href="/lab/">{t("Hacer la misión", "Start the mission")}</a></p></article>
-<article class="card"><p class="estado-pill">{t("Registro · 2026-10-09", "Record · 2026-10-09")}</p><h3>{t("Tablero", "Board")}</h3><p>{t("Estados reales del registro de la PR 14. Una idea, un código en el repositorio y una función publicada no son lo mismo.", "Real states from the PR 14 record. An idea, code in the repository, and a published function are not the same thing.")}</p><p><a href="/tablero/">{t("Abrir el tablero", "Open the board")}</a></p></article>
+<article class="card"><p class="estado-pill">{t("Registro · 2026-10-10", "Record · 2026-10-10")}</p><h3>{t("Tablero", "Board")}</h3><p>{t("Qué está en idea, qué está en el repositorio y qué está en stubxai.com. Hay una plantilla vacía para copiar. No avala otros tokens ni promete fechas.", "What is an idea, what is in the repository, and what is on stubxai.com. There is an empty template to copy. It does not endorse other tokens and it promises no dates.")}</p><p><a href="/tablero/">{t("Abrir el tablero", "Open the board")}</a></p></article>
 </div>
 <div class="grid-3">
 <article class="card"><p class="estado-pill">{t("En este navegador · 2026-10-09", "In this browser · 2026-10-09")}</p><h3>Studio</h3><p>{t("Crea una imagen para tu token, sin cuenta. Los recursos de STUBX vienen por defecto. El nombre, el logo y la exportación se quedan en este navegador.", "Create an image for your token, without an account. STUBX assets start as the default. The name, the logo, and the export stay in this browser.")}</p><p><a href="/studio/">{t("Abrir Studio", "Open Studio")}</a></p></article>
@@ -374,7 +374,7 @@ def home() -> str:
 <article class="slot"><p class="estado-pill">{t("No construido · 2026-10-09", "Not built · 2026-10-09")}</p><h3>{t("Contribuir", "Contribute")}</h3><p>{t("No hay formulario ni entrega de archivos. No se piden aportaciones.", "There is no form and no file upload. Contributions are not being requested.")}</p><p><a href="/contribuir/">{t("Ver qué falta", "See what is missing")}</a></p></article>
 </div>
 <div class="grid-3">
-<article class="card"><p class="estado-pill">{t("Calculadora · 2026-10-10", "Calculator · 2026-10-10")}</p><h3>{t("Comparar", "Compare")}</h3><p>{t("Calculadora educativa de un solo paso en una curva abierta cuya moneda base es SOL. Cualquier mint. No es una orden y no dice si un token es bueno.", "Educational one-step calculator for an open curve whose base currency is SOL. Any mint. It is not an order and it does not say whether a token is good.")}</p><p><a href="/comparar/">{t("Abrir la calculadora", "Open the calculator")}</a></p></article>
+<article class="card"><p class="estado-pill">{t("Ejemplo · 2026-10-10", "Example · 2026-10-10")}</p><h3>{t("Comparar", "Compare")}</h3><p>{t("Un ejemplo fijo de cómo se lee una curva. No usa una dirección y no cotiza. Sigue en borrador: hace falta un abogado antes de publicarlo.", "A fixed example of how a curve is read. It does not use an address and it does not quote. It stays a draft: a lawyer has to see it before publication.")}</p><p><a href="/comparar/">{t("Ver el ejemplo", "See the example")}</a></p></article>
 </div>
 <section id="transparencia">
 <h2>{t("Transparencia", "Transparency")}</h2>
@@ -930,31 +930,23 @@ def avances() -> str:
 
 
 def comparar() -> str:
-    hosts = " y ".join(rpc_origins())
-    hosts_en = " and ".join(rpc_origins())
     return f"""
-<h1>{t("Calculadora educativa de la curva", "Educational curve calculator")}</h1>
-<p class="lede">{t("Pega cualquier mint de Solana y una cantidad. Si la curva de Pump.fun está abierta y la moneda base es SOL, verás una estimación de un solo paso. Si no, la página dice que la modalidad no está soportada.", "Paste any Solana mint and an amount. If the Pump.fun curve is open and the base currency is SOL, you get a one-step estimate. Otherwise the page says the mode is not supported.")}</p>
-<p><strong>{t("Estimación educativa. No es una recomendación ni una orden; el resultado real puede ser distinto.", "Educational estimate. It is not a recommendation or an order; the real result can differ.")}</strong></p>
-<p>{t("No es una auditoría ni una recomendación. Muestra datos públicos de la cadena en el momento indicado; no dice si un token es bueno, seguro o una buena compra.", "It is not an audit or a recommendation. It shows public chain data at the stated time; it does not say whether a token is good, safe, or a good purchase.")}</p>
-<p>{t("Escribir una dirección no avala ese token. No conecta carteras, no firma y no envía.", "Writing an address does not endorse that token. It does not connect a wallet, it does not sign, and it does not send.")}</p>
-<p class="source">{t(f"La lectura usa primero {hosts}. Si el primero no responde, prueba el siguiente. Esos servicios reciben la dirección y la IP según sus condiciones. Esta página no guarda la dirección.", f"The read uses {hosts_en}, in that order. If the first one does not answer, it tries the next. Those services receive the address and the IP under their own terms. This page does not store the address.")}</p>
-<form id="consulta" class="consulta" action="#">
-<label for="direccion-token">{t("Dirección del token", "Token address")}</label>
-<input id="direccion-token" name="direccion" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done">
-<fieldset>
-<legend>{t("Qué estimas", "What you estimate")}</legend>
-<label for="sentido-base"><input id="sentido-base" type="radio" name="sentido" value="base" checked> {t("Entregas moneda base, estimas tokens", "You give base currency, you estimate tokens")}</label>
-<label for="sentido-token"><input id="sentido-token" type="radio" name="sentido" value="token"> {t("Entregas tokens, estimas moneda base", "You give tokens, you estimate base currency")}</label>
-</fieldset>
-<label for="cantidad">{t("Cantidad", "Amount")}</label>
-<input id="cantidad" name="cantidad" type="text" inputmode="decimal" autocomplete="off" spellcheck="false">
-<button type="submit">{t("Estimar", "Estimate")}</button>
-</form>
-<section id="resultado" class="resultado" tabindex="-1" aria-live="polite">
-<h2>{t("La estimación aparece aquí", "The estimate shows up here")}</h2>
-<p>{t("Si falta un dato, no se rellena con cero.", "If a fact is missing, it is not filled in with zero.")}</p>
-</section>
+<h1>{t("Ejemplo de una curva", "Curve example")}</h1>
+<p><strong>{t("Lectura de datos públicos. No es una comparación de calidad, ni una recomendación, ni un aval. STUBX no tiene relación con estos tokens salvo la CA oficial.", "Public data reading. It is not a quality comparison, a recommendation, or an endorsement. STUBX has no relationship with these tokens except the official CA.")}</strong></p>
+<p class="lede">{t("Ejemplo hipotético, no leído de la cadena. Fecha del ejemplo: 2026-10-10.", "Hypothetical example, not read from the chain. Example date: 2026-10-10.")}</p>
+<p>{t("Una curva abierta junta dos cantidades virtuales: la de la moneda del token y la de SOL. Si una se mueve, la otra se mueve en el sentido contrario. Esta página no calcula ese movimiento.", "An open curve pairs two virtual amounts: the token currency and SOL. If one moves, the other moves the other way. This page does not calculate that move.")}</p>
+<p>{t("Cuando la curva está completa, ese paso ya no cabe. Si no hay curva, no hay cantidades que mostrar. Aquí las cantidades son redondas y de ejemplo.", "When the curve is complete, that step no longer fits. If there is no curve, there are no amounts to show. Here the amounts are round numbers, and they are an example.")}</p>
+<h2>{t("Cantidades del ejemplo", "Amounts in the example")}</h2>
+<dl>
+<dt>{t("Estado", "State")}</dt><dd>{t("abierta", "open")}</dd>
+<dt>{t("Moneda base", "Base currency")}</dt><dd>SOL</dd>
+<dt>{t("Cantidad virtual de la moneda del token", "Virtual amount of the token currency")}</dt><dd>1 000 000</dd>
+<dt>{t("Cantidad virtual de SOL", "Virtual amount of SOL")}</dt><dd>30</dd>
+<dt>{t("Cantidad real de la moneda del token", "Real amount of the token currency")}</dt><dd>800 000</dd>
+<dt>{t("Cantidad real de SOL", "Real amount of SOL")}</dt><dd>4</dd>
+</dl>
+<p>{t("Estos números no salen de ninguna dirección. No son una cotización.", "These numbers do not come from any address. They are not a quote.")}</p>
+<p>{t("No conecta carteras, no firma y no envía.", "It does not connect a wallet, it does not sign, and it does not send.")}</p>
 """
 
 
@@ -1065,14 +1057,6 @@ def headers() -> str:
   ! Content-Security-Policy
   {verify_csp}
 
-# /comparar/ sustituye la CSP de /*. Una sola política en esta ruta.
-/comparar/
-  ! Content-Security-Policy
-  {verify_csp}
-/comparar/*
-  ! Content-Security-Policy
-  {verify_csp}
-
 /assets/*
   Cache-Control: public, max-age=0, must-revalidate
 /fonts/*
@@ -1180,7 +1164,6 @@ def sitemap() -> str:
         ("https://stubxai.com/lab/", "2026-10-09"),
         ("https://stubxai.com/tablero/", "2026-10-09"),
         ("https://stubxai.com/studio/", "2026-10-09"),
-        ("https://stubxai.com/comparar/", "2026-10-10"),
         ("https://stubxai.com/studio/reglas/", "2026-10-09"),
         ("https://stubxai.com/methodology/", "2026-10-09"),
         ("https://stubxai.com/security/", "2026-10-09"),
@@ -1224,7 +1207,7 @@ def main() -> None:
 
     write_page("index.html", "home", "STUBX · Contrasta la dirección", "STUBX · Check the address", "Vista previa de STUBX. Lee un token en directo y solo en lectura. No es consejo de inversión.", "STUBX preview. Read a token live and read-only. Not investment advice.", home())
     write_page("verify/index.html", "verify", "STUBX Verify", "STUBX Verify", "Lee cualquier token SPL o Token-2022 en directo y solo en lectura. Las fichas fechadas siguen como ejemplo.", "Read any SPL or Token-2022 token live and read-only. The dated cards remain as examples.", prepare_tool("verify"), ["assets/verify.js"], True, connect=connect_src(True))
-    write_page("comparar/index.html", "comparar", "STUBX · Calculadora educativa de la curva", "STUBX · Educational curve calculator", "Estimación educativa de un solo paso. No es una recomendación ni una orden.", "Educational one-step estimate. It is not a recommendation or an order.", comparar(), narrow=True, connect=connect_src(True), modules=["assets/comparar.mjs"])
+    write_page("comparar/index.html", "comparar", "STUBX · Ejemplo de una curva", "STUBX · Curve example", "Ejemplo hipotético, no leído de la cadena. No es una recomendación ni un aval.", "Hypothetical example, not read from the chain. It is not a recommendation or an endorsement.", comparar(), narrow=True)
     write_page("lab/index.html", "lab", "STUBX Lab", "STUBX Lab", "Misión para distinguir el mint del registro de un clon.", "A mission to tell the registry mint from a clone.", prepare_tool("lab"), ["assets/mission.js"], True, True)
     board = prepare_tool("tablero")
     write_page("tablero/index.html", "tablero", "STUBX · Tablero", "STUBX · Board", "Tablero de construcción con el registro del 2026-10-09.", "Construction board with the 2026-10-09 record.", board)

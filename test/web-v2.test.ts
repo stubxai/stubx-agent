@@ -306,34 +306,33 @@ describe("web v2", () => {
     assert.match(risks, /you could lose everything you put in/i);
   });
 
-  test("the curve calculator is read-only and has one route policy", () => {
+  test("the curve example is fixed and no route reads an address", () => {
     const html = read("comparar/index.html");
     const home = read("index.html");
-    assert.match(home, /Abrir la calculadora/);
-    assert.match(home, /Open the calculator/);
-    assert.match(html, /Calculadora educativa de la curva/);
-    assert.match(html, /Educational curve calculator/);
-    assert.match(html, /Estimación educativa\. No es una recomendación ni una orden; el resultado real puede ser distinto\./);
-    assert.match(html, /Educational estimate\. It is not a recommendation or an order; the real result can differ\./);
-    assert.match(html, /No es una auditoría ni una recomendación\./);
-    assert.match(html, /id="consulta"/);
-    assert.match(html, /id="resultado"/);
-    assert.match(html, /type="module"/);
-    assert.match(html, /assets\/comparar\.mjs/);
-    assert.match(html, /solana-rpc\.publicnode\.com/);
-    assert.match(html, /api\.mainnet-beta\.solana\.com/);
+    assert.match(home, /Ver el ejemplo/);
+    assert.match(home, /See the example/);
+    assert.match(html, /Ejemplo hipotético, no leído de la cadena/);
+    assert.match(html, /Hypothetical example, not read from the chain/);
+    assert.match(html, /Lectura de datos públicos\. No es una comparación de calidad, ni una recomendación, ni un aval\. STUBX no tiene relación con estos tokens salvo la CA oficial\./);
+    assert.match(html, /Public data reading\. It is not a quality comparison, a recommendation, or an endorsement\. STUBX has no relationship with these tokens except the official CA\./);
+    assert.equal(/<form\b/.test(html), false);
+    assert.equal(/<input\b/.test(html), false);
+    assert.equal(html.includes("assets/comparar.mjs"), false);
+    assert.equal(html.includes("chain-read.mjs"), false);
+    assert.equal(html.includes("getMultipleAccounts"), false);
     const meta = html.match(/Content-Security-Policy" content="([^"]+)"/)?.[1] ?? "";
-    assert.deepEqual(cspHosts(meta), ["solana-rpc.publicnode.com", "api.mainnet-beta.solana.com"]);
+    assert.deepEqual(cspHosts(meta), []);
     assert.equal(meta.includes("frame-ancestors"), false);
     const headers = read("_headers");
-    const block = headers.split("/comparar/*")[1]?.split("\n\n")[0] ?? "";
-    assert.match(block, /! Content-Security-Policy/);
-    assert.equal((block.match(/Content-Security-Policy:/g) ?? []).length, 1);
-    assert.deepEqual(cspHosts(block), ["solana-rpc.publicnode.com", "api.mainnet-beta.solana.com"]);
-    const bundle = read("assets/comparar.mjs");
-    assert.equal(bundle.includes("sendTransaction"), false);
-    assert.equal(bundle.includes("localStorage"), false);
-    assert.match(read("sitemap.xml"), /https:\/\/stubxai\.com\/comparar\//);
+    assert.equal(headers.includes("/comparar/"), false);
+    assert.equal(read("sitemap.xml").includes("https://stubxai.com/comparar/"), false);
+    const root = path.join(repoRoot(), "web/v2");
+    for (const file of walkFiles(root)) {
+      if (!file.endsWith(".html")) continue;
+      const page = readFileSync(file, "utf8");
+      assert.equal(page.includes("chain-read.mjs"), false, file);
+      assert.equal(page.includes("assets/comparar.mjs"), false, file);
+    }
   });
 
   test("unbuilt modules stay explanatory", () => {
