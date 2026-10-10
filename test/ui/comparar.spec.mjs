@@ -113,5 +113,5 @@ test("si el primer servicio limita, se usa el respaldo", async ({ page }) => {
   await expect(page.locator("#resultado")).toContainText("api.mainnet-beta.solana.com", { timeout: 20000 });
   await expect(page.locator("#resultado")).toContainText(RAW);
   expect(hosts[0]).toBe("solana-rpc.publicnode.com");
-  expect(hosts.includes("api.mainnet-beta.solana.com")).toBe(true);
+  expect(hosts.some((host) => host === "api.mainnet-beta.solana.com")).toBe(true);
 });
