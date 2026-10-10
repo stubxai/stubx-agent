@@ -38,7 +38,7 @@ Lo que el tablero de main da por abierto en la web, más lo fusionado después e
 - En main, el logo de Studio acepta JPG, PNG y WebP, queda en 16 MP y no guarda el PNG inflado (PR #30). El menú marca Studio.
 - En iPhone, guardar en Studio usa compartir o una pestaña, con aviso en español e inglés y revocación a los 60 segundos (PR #33). La pestaña de respaldo lleva `noopener`.
 - La medición de uso no está en el cliente (PR #23, fusionada en main). El detalle es la entrada de debajo y [docs/medicion-uso.md](docs/medicion-uso.md).
-- La lectura de la curva (PR #31) está en el repositorio. El tablero no la da por publicada en stubxai.com.
+- La lectura de la curva está en stubxai.com/pares desde el 2026-10-10 (PR #31). El tablero la da por publicada.
 
 ### Indexación
 

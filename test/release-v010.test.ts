@@ -33,7 +33,7 @@ describe("v0.1.0 notes, without a tag", () => {
     assert.match(log, /stubxai\.com\/comparar desde el 2026-10-10 \(PR #29/);
     assert.match(log, /JPG, PNG y WebP, queda en 16 MP y no guarda el PNG inflado \(PR #30\)/);
     assert.match(log, /revocación a los 60 segundos \(PR #33\)/);
-    assert.match(log, /La lectura de la curva \(PR #31\) está en el repositorio\. El tablero no la da por publicada en stubxai\.com\./);
+    assert.match(log, /La lectura de la curva está en stubxai\.com\/pares desde el 2026-10-10 \(PR #31\)\. El tablero la da por publicada\./);
     assert.match(log, /La medición de uso no está en el cliente \(PR #23, fusionada en main\)/);
     assert.match(log, /En la web v2, `\/verify` es Verify universal, desplegado \(merge `2434636`\)\./);
     assert.match(log, /Este repositorio no inserta medición de visitas ni cookies\. Cloudflare Web Analytics debe estar apagado en el panel de la zona \(sin baliza en el HTML servido el 2026-10-10\)\./);
@@ -67,8 +67,8 @@ describe("v0.1.0 notes, without a tag", () => {
     assert.match(en, /Studio is deployed \(pull requests #20 and #26\) and it is indexable\. Verify universal is deployed \(merge `2434636`\)\. The notebook is not part of this deployment\./);
     assert.match(es, /el tablero en \/tablero \(PR #27\)/);
     assert.match(en, /the board at \/tablero \(pull request #27\)/);
-    assert.match(es, /el tablero no la da por publicada/);
-    assert.match(en, /the board does not mark it published/);
+    assert.match(es, /stubxai\.com\/pares desde el 2026-10-10 \(PR #31\) y el tablero la da por publicada/);
+    assert.match(en, /stubxai\.com\/pares since 2026-10-10 \(pull request #31\), and the board marks it published/);
     assert.match(es, /cualquier mint SPL o Token-2022/);
     assert.match(en, /any SPL or Token-2022 mint/);
     assert.equal(es.includes("hay que reescribir"), false);
