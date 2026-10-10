@@ -36,7 +36,7 @@ Vista previa del 2026-10-09. No está publicada en stubxai.com. La copia recuper
 - Riesgos y la frase MiCA del art. 7.1.e viven en `/risks` y en `/legal`. La portada solo deja el resumen y el enlace. El pie repite la frase MiCA en las dos lenguas.
 - El archivo de posts no se ha reescrito en el cuerpo. Los 18 posts salen de la copia de origen no publicada del 2026-10-03 11:21 (Madrid). La huella SHA-256 `654f8b25a72bae9d80c83ba3b3aa16ef16a1a531c450fce17d1d806342706897` es la de esa copia, como dice `/proofs`, no la de `archivo.html`. En el archivo servido solo cambian el canónico y `og:url`, de `https://stubxai.com/archivo.html` a `https://stubxai.com/archivo`, para que coincidan con la URL que Pages sirve.
 - Verify, Lab y el tablero entran en el mismo cascarón (ver `modules/README.md`). No son enlaces a otra web.
-- Studio, cuaderno y contribuciones no se simulan.
+- Cuaderno y contribuciones no se simulan. Studio es el editor en `/studio/`.
 
 ## Textos
 
@@ -49,7 +49,8 @@ Las direcciones, los canales y los avisos dicen lo mismo en español y en inglé
 | Portada, riesgos | Una línea y un enlace al ensayo de la misma página | Dos frases y enlace a `/risks`. El ensayo no se ha acortado allí. |
 | Versiones | «Cerrar la revisión de la PPM» seguía en objetivos aunque el texto ya decía que el 2026-10-05 estaban marcadas Logs, Límites y Kill-switch, y wallet no aplica | Ese punto pasa a «Hecho», con los mismos hechos y la misma fecha. El resto de objetivos no cambia. |
 | Verify, Lab, tablero | No estaban en la web | Interfaz real de la PR 14, regenerada desde `lab/` y `site-drafts/` (commit `0cb1633`, 2026-10-09), más lectura en vivo y solo lectura de cualquier mint SPL o Token-2022. Las fichas siguen siendo la del 2026-10-09 (commit `86df576`): oficial con la cuenta personal publicada, ERYyy, FMNb, USDC, más las del 2026-10-08 y dos ejemplos 0x. Este sitio no guarda la dirección, pero el servicio público recibe la dirección y la IP. `snapshot.json` marca `inBranch` y `liveNetwork`. La PR 14 se fusionó en main el 2026-10-09 y la web no se ha desplegado. Los enlaces del tablero a las PR 13 y 14 llevan la fecha (2026-10-08 y 2026-10-09). |
-| Studio, cuaderno, contribuir | No estaban | «No construido · 2026-10-09». Sin controles. |
+| Studio | No estaba | Ficha en la portada, mismo estilo que Verify y Lab, con enlace a `/studio/`. El editor crea una imagen en el navegador, sin cuenta. El nombre del token empieza en STUBX y se puede cambiar. El logo elegido se queda en el navegador. Si el nombre no es STUBX, la mascota no se usa ni se puede elegir, y la banda dice que no es oficial de ese token ni de STUBX. La etiqueta del recurso ai vuelve a la fórmula que pide Legal. |
+| Cuaderno, contribuir | No estaban | «No construido · 2026-10-09». Sin controles. |
 
 No se han inventado cifras. Suministro, PPM, pruebas y avisos conservan la fecha de la fuente que ya estaba publicada. Esta vista previa no ha vuelto a consultar GitHub ni la red.
 

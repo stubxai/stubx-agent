@@ -33,6 +33,7 @@ const ROUTES = [
   "build/index.html",
   "aprender/index.html",
   "studio/index.html",
+  "studio/reglas/index.html",
   "cuaderno/index.html",
   "contribuir/index.html",
   "404.html",
@@ -279,6 +280,11 @@ describe("web v2", () => {
     assert.match(home, /href="\/verify\/"/);
     assert.match(home, /Analizar token/);
     assert.match(home, /Analyze token/);
+    assert.match(home, /<article class="card"><p class="estado-pill">[\s\S]*?<h3>Studio<\/h3>/);
+    assert.equal(/<article class="slot">[\s\S]*?<h3>Studio<\/h3>/.test(home), false);
+    assert.match(home, /Crea una imagen para tu token, sin cuenta\. Los recursos de STUBX vienen por defecto/);
+    assert.match(home, /Create an image for your token, without an account\. STUBX assets start as the default/);
+    assert.match(home, /<a href="\/studio\/"><span class="lang es" lang="es">Abrir Studio<\/span><span class="lang en" lang="en">Open Studio<\/span><\/a>/);
     assert.match(security, /Comunidad STUBX/);
     assert.match(security, /COMUNIDAD/);
     assert.match(risks, /puedes perder todo lo que aportes/);
@@ -286,7 +292,7 @@ describe("web v2", () => {
   });
 
   test("unbuilt modules stay explanatory", () => {
-    for (const rel of ["studio/index.html", "cuaderno/index.html", "contribuir/index.html"]) {
+    for (const rel of ["cuaderno/index.html", "contribuir/index.html"]) {
       const html = read(rel);
       assert.match(html, /No construido/);
       assert.match(html, /Not built/);
@@ -469,6 +475,15 @@ describe("web v2", () => {
     }
     assert.match(read("sitemap.xml"), /https:\/\/stubxai.com\/verify\//);
     assert.match(read("sitemap.xml"), /https:\/\/stubxai.com\/archivo</);
+    assert.match(read("sitemap.xml"), /https:\/\/stubxai.com\/studio\/</);
+    assert.match(read("sitemap.xml"), /https:\/\/stubxai.com\/studio\/reglas\//);
+    assert.equal((read("_headers").match(/^\/studio\/\*$/gm) ?? []).length, 0);
+    assert.match(read("studio/index.html"), /connect-src 'self'/);
+    assert.match(read("studio/index.html"), /default-src 'none'/);
+    assert.match(read("studio/reglas/index.html"), /connect-src 'self'/);
+    assert.match(read("studio/reglas/index.html"), /default-src 'none'/);
+    assert.equal(read("studio/index.html").includes("noindex"), false);
+    assert.equal(read("studio/reglas/index.html").includes("noindex"), false);
     assert.equal(read("sitemap.xml").includes("archivo.html"), false);
     assert.match(read("_headers"), /\/assets\/\*[\s\S]*max-age=0, must-revalidate/);
     assert.equal(redirects.includes("/archivo.html"), false);
@@ -728,7 +743,11 @@ test("el pie antiguo no sale en el alt de la imagen OG", () => {
     if (rel === "archivo.html" || rel === "token.json" || rel.startsWith("tools/__pycache__")) continue;
     if (!/\.(html|py|js|mjs|json|md|css|txt|xml)$/.test(rel)) continue;
     const text = readFileSync(file, "utf8").toLowerCase();
-    for (const phrase of OLD_OG_FOOTER) assert.equal(text.includes(phrase), false, `${rel} ${phrase}`);
+    const studioLabel = rel === "studio/lib/copy.mjs" || rel === "studio/reglas/index.html";
+    for (const phrase of OLD_OG_FOOTER) {
+      if (studioLabel && (phrase === "imagen generada con ia" || phrase === "ai-generated image")) continue;
+      assert.equal(text.includes(phrase), false, `${rel} ${phrase}`);
+    }
   }
 });
 
@@ -741,6 +760,7 @@ test("las palabras prohibidas no salen en el texto visible, y token.json queda f
   for (const file of walkFiles(root)) {
     const rel = path.relative(root, file);
     if (rel === "token.json" || rel === "archivo.html" || rel.startsWith("tools/")) continue;
+    if (rel === "studio/blocklist.json") continue;
     if (!/\.(html|json|md|js|mjs)$/.test(rel)) continue;
     const text = readFileSync(file, "utf8");
     const stripped = text
