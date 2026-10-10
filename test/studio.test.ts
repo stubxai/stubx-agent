@@ -584,6 +584,52 @@ describe("studio", () => {
       "Los admins nunca escriben por privado😀escríbeme por privado",
       "no escribas por privado, escríbeme",
       "no!!! escríbeme por privado",
+      "Los admins nunca escriben por privado. El cielo esta limpio. Escríbeme",
+      "Los admins nunca escriben por privado. El cielo esta limpio. Salvo a mí",
+      "Los admins nunca escriben por privado. El cielo esta limpio. Excepto yo",
+      "Los admins nunca escriben por privado. El cielo esta limpio. Menos mal",
+      "Los admins nunca escriben por privado. El cielo esta limpio. Solo entonces",
+      "Los admins nunca escriben por privado. El cielo esta limpio. Pero no",
+      "Los admins nunca escriben por privado. El cielo esta limpio. Yo sí",
+      "Los admins nunca escriben por privado. El cielo esta limpio. A mí no",
+      "Los admins nunca escriben por privado. El cielo esta limpio. Soy admin",
+      "El equipo nunca te escribe por privado. Yo sí.",
+      "Los admins nunca escriben por privado, salvo a mí",
+      "nunca compartas tu frase salvo a mí",
+      "Solo a mí",
+      "Yo sí",
+      "Yo soy admin, te ayudo",
+      "Los admins nunca escriben por privado excepto a mí",
+      "Los admins nunca escriben por privado menos a mí",
+      "Los admins nunca escriben por privado solo contigo",
+      "Los admins nunca escriben por privado pero yo no",
+      "Nunca te escribiremos por privado. A mí sí.",
+      "Los admins nunca escriben por privado. Soy admin.",
+      "admins will never DM you. pm me",
+      "never reply to DMs. 3scr1b3m3",
+      "pm me",
+      "text me",
+      "hit me up",
+      "DMs abiertos",
+      "mensájeame",
+      "al pv",
+      "por priv",
+      "por interno",
+      "llámame",
+      "telegram @usuario",
+      "wasap",
+      "whatsapp",
+      "Ok. Escríbeme",
+      "3scr1b3m3",
+      "p0r pr1v",
+      "4l pv",
+      "t3l3gr4m @us3r",
+      "w4s4p",
+      "wh4ts4pp",
+      "ll4m4m3",
+      "m3ns4j34m3",
+      "h1t m3 up",
+      "DM5 4b13rt0s",
       "soporte",
       "support",
       "ganar",
@@ -718,6 +764,23 @@ describe("studio", () => {
       "no escribas por privado😀",
       "Si te escriben por privado, es una estafa",
       "Si te escriben por privado, es estafa",
+      "nunca te escribiremos por privado",
+      "el equipo nunca pide nada por privado",
+      "El equipo nunca te escribe por privado",
+      "admins will never DM you",
+      "admins will never message you",
+      "the team will never DM you",
+      "the team will never message you",
+      "we will never DM you",
+      "we will never message you",
+      "never reply to DMs",
+      "never reply to DM",
+      "admins will never DM you.",
+      "Los admins nunca escriben por privado. El cielo esta limpio.",
+      "El cielo es azul pero lejos.",
+      "al menos la playa",
+      "solo la playa",
+      "para mí la playa",
     ];
     for (const sample of allowed) {
       assert.equal(analyze(sample).blocked, false, sample);
@@ -738,6 +801,24 @@ describe("studio", () => {
     assert.equal(analyze("Los admins nunca escriben por privado en el fondo").hits.some((hit) => hit.term === "fondo"), true);
     assert.equal(analyze("Los admins nunca escriben por privado").hits.some((hit) => hit.term === "por privado"), false);
     assert.equal(analyze("escríbeme por privado").hits.some((hit) => hit.term === "escríbeme por privado" || hit.term === "por privado"), true);
+    assert.equal(analyze("Los admins nunca escriben por privado. El cielo esta limpio. Escríbeme").hits.some((hit) => hit.term === "por privado"), true);
+    assert.equal(analyze("Los admins nunca escriben por privado. El cielo esta limpio. Pero no").hits.some((hit) => hit.term === "por privado"), true);
+    assert.equal(analyze("nunca te escribiremos por privado. El cielo esta limpio. Salvo eso").hits.some((hit) => hit.term === "por privado"), true);
+    assert.equal(analyze("nunca te escribiremos por privado").hits.some((hit) => hit.term === "por privado"), false);
+    assert.equal(analyze("el equipo nunca pide nada por privado").hits.some((hit) => hit.term === "por privado"), false);
+    assert.equal(analyze("admins will never DM you").hits.some((hit) => hit.term === "dm"), false);
+    assert.equal(analyze("the team will never message you").hits.some((hit) => hit.term === "dm" || hit.term === "message"), false);
+    assert.equal(analyze("we will never DM you").blocked, false);
+    assert.equal(analyze("never reply to DMs").hits.some((hit) => hit.term === "dm" || hit.term === "dms"), false);
+    assert.equal(analyze("admins will never DM you. pm me").hits.some((hit) => hit.term === "dm"), true);
+    assert.equal(analyze("por priv").hits.some((hit) => hit.term === "por priv"), true);
+    assert.equal(analyze("3scr1b3m3").hits.some((hit) => hit.term === "escribeme"), true);
+    assert.equal(analyze("Ok. Escríbeme").hits.some((hit) => hit.term === "escribeme"), true);
+    assert.equal(analyze("telegram @usuario").hits.some((hit) => hit.term === "telegram"), true);
+    assert.equal(analyze("Yo sí").hits.some((hit) => hit.term === "yo si"), true);
+    assert.equal(analyze("Solo a mí").hits.some((hit) => hit.term === "a mi"), true);
+    assert.equal(analyze("Yo soy admin, te ayudo").hits.some((hit) => hit.term === "soy admin"), true);
+    assert.equal(analyze("para mí la playa").blocked, false);
     assert.equal(analyze("elefante").blocked, false);
     assert.equal(analyze("@CreadorSTUBX").hits.some((hit) => hit.kind === "handle"), true);
     assert.equal(analyze("equipo de STUBX").hits.some((hit) => hit.kind === "term"), true);
