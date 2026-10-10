@@ -679,47 +679,99 @@ describe("lectura universal con RPC simulado", () => {
     assert.equal(/reserva|\breserve\b|\bfondo\b/i.test(explain), false);
   });
 
-  test("una respuesta de 2 cuentas no convierte la que falta en ausencia", async () => {
+  test("una lista incompleta prueba el otro nodo y si los dos fallan no se pudo comprobar", async () => {
     const sample = fixture("revoked-mint");
     const pump = registry[0]?.mint ?? "";
     assert.equal(pump.endsWith("pump"), true);
-    const short = (mint: string) => {
-      const calls: string[] = [];
-      return {
-        calls,
-        reading: readAnyMint({
+    const shortBody = (count: number) => ({
+      status: 200,
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        result: { context: { slot: sample.slot }, value: Array.from({ length: count }, () => null) },
+      }),
+    });
+    for (const count of [0, 2, 4]) {
+      for (const mint of [sample.mint, pump]) {
+        const calls: string[] = [];
+        const reading = await readAnyMint({
           mint,
           registry,
           endpoints: ["https://rpc-a.invalid", "https://rpc-b.invalid"],
-          transport: async (endpoint) => {
-            calls.push(new URL(endpoint).host);
-            return {
-              status: 200,
-              body: JSON.stringify({
-                jsonrpc: "2.0",
-                result: { context: { slot: sample.slot }, value: [accountJson(sample.mintAccount), null] },
-              }),
-            };
+          transport: async (endpoint, body) => {
+            const method = (JSON.parse(body) as { method: string }).method;
+            calls.push(`${new URL(endpoint).host} ${method}`);
+            return shortBody(count);
           },
           maxRetries: 0,
           minIntervalMs: 0,
           sleep: async () => {},
-        }),
-      };
-    };
-    for (const mint of [sample.mint, pump]) {
-      const { calls, reading: pending } = short(mint);
-      const reading = await pending;
-      assert.equal(reading.ok, false);
-      assert.equal(reading.title.es, "No se pudo comprobar");
-      assert.equal(reading.title.en, "Could not be checked");
-      assert.equal(reading.signals.some((item) => item.id === "curva"), false);
-      assert.equal(`${reading.support.es} ${reading.support.en}`.includes("No aplica"), false);
-      assert.equal(`${reading.support.es} ${reading.support.en}`.includes("Not applicable"), false);
-      assert.equal(reading.support.es.includes("no existe"), false);
-      assert.equal(reading.usedFallback, false);
-      assert.deepEqual(calls, ["rpc-a.invalid"]);
+        });
+        assert.equal(reading.ok, false, `${count} ${mint}`);
+        assert.equal(reading.title.es, "No se pudo comprobar");
+        assert.equal(reading.title.en, "Could not be checked");
+        assert.equal(reading.signals.some((item) => item.id === "curva"), false);
+        assert.equal(`${reading.support.es} ${reading.support.en}`.includes("No aplica"), false);
+        assert.equal(`${reading.support.es} ${reading.support.en}`.includes("Not applicable"), false);
+        assert.equal(reading.support.es.includes("no existe"), false);
+        assert.equal(reading.usedFallback, true);
+        assert.deepEqual(calls, ["rpc-a.invalid getMultipleAccounts", "rpc-b.invalid getMultipleAccounts"]);
+      }
     }
+    const limited: string[] = [];
+    const stayed = await readAnyMint({
+      mint: sample.mint,
+      registry,
+      endpoints: ["https://rpc-a.invalid", "https://rpc-b.invalid"],
+      transport: async (endpoint, body) => {
+        const method = (JSON.parse(body) as { method: string }).method;
+        if (method === "getMultipleAccounts") limited.push(new URL(endpoint).host);
+        return shortBody(2);
+      },
+      maxRetries: 1,
+      minIntervalMs: 0,
+      sleep: async () => {},
+    });
+    assert.equal(stayed.ok, false);
+    assert.equal(stayed.title.es, "No se pudo comprobar");
+    assert.equal(stayed.usedFallback, true);
+    assert.deepEqual(limited, ["rpc-a.invalid", "rpc-a.invalid", "rpc-b.invalid", "rpc-b.invalid"]);
+    const accounts = new Map<string, AccountFixture | { owner: string; data: Uint8Array } | null>([
+      [sample.mint, sample.mintAccount],
+      [metadataPda(sample.mint), null],
+      [bondingCurvePda(sample.mint), null],
+    ]);
+    const base = transportFor({
+      slot: sample.slot,
+      accounts,
+      supply: { amount: "1000000000000000", decimals: 6 },
+      largest: [],
+    });
+    const recoveredCalls: string[] = [];
+    const recovered = await readAnyMint({
+      mint: sample.mint,
+      registry,
+      endpoints: ["https://rpc-a.invalid", "https://rpc-b.invalid"],
+      transport: async (endpoint, body, timeoutMs) => {
+        const method = (JSON.parse(body) as { method: string }).method;
+        recoveredCalls.push(`${new URL(endpoint).host} ${method}`);
+        if (method === "getMultipleAccounts" && endpoint === "https://rpc-a.invalid") return shortBody(2);
+        return base(endpoint, body, timeoutMs);
+      },
+      maxRetries: 0,
+      minIntervalMs: 0,
+      sleep: async () => {},
+    });
+    assert.equal(recovered.ok, true);
+    assert.equal(recovered.usedFallback, true);
+    assert.equal(recovered.facts?.find((item) => item.id === "curva")?.state, "no_aplica");
+    assert.deepEqual(
+      recoveredCalls.filter((item) => item.endsWith("getMultipleAccounts")),
+      ["rpc-a.invalid getMultipleAccounts", "rpc-b.invalid getMultipleAccounts"],
+    );
+    assert.deepEqual(
+      recoveredCalls.filter((item) => item.endsWith("getTokenSupply") || item.endsWith("getTokenLargestAccounts")),
+      ["api.mainnet-beta.solana.com getTokenSupply", "api.mainnet-beta.solana.com getTokenLargestAccounts"],
+    );
   });
 
   test("un token que no es de Pump.fun deja la curva fuera de lo que falta", async () => {
