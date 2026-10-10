@@ -1,5 +1,30 @@
 export const REPORT_VERSION = "u09-pares-1";
 export const OFFICIAL_MINT = "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump";
+export const QUERY_LIMIT = 6;
+export const QUERY_WINDOW_MS = 60_000;
+export const NAME_LIMIT = 48;
+export const PUBLIC_WARNING = {
+  es: "Lectura de datos públicos. No es una comparación de calidad, ni una recomendación, ni un aval. STUBX no tiene relación con estos tokens salvo la CA oficial.",
+  en: "Public data reading. It is not a quality comparison, a recommendation, or an endorsement. STUBX has no relationship with these tokens except the official CA.",
+};
+
+export function takeQuerySlot(stamps, now, limit = QUERY_LIMIT, windowMs = QUERY_WINDOW_MS) {
+  const fresh = stamps.filter((stamp) => typeof stamp === "number" && now - stamp < windowMs);
+  if (fresh.length >= limit) return { allowed: false, stamps: fresh };
+  return { allowed: true, stamps: [...fresh, now] };
+}
+
+export async function readWithinLimit(stamps, now, read) {
+  const slot = takeQuerySlot(stamps, now);
+  if (!slot.allowed) return { allowed: false, stamps: slot.stamps, result: null };
+  return { allowed: true, stamps: slot.stamps, result: await read() };
+}
+
+export function clipTokenName(name) {
+  const text = String(name ?? "");
+  if (text.length <= NAME_LIMIT) return text;
+  return `${text.slice(0, NAME_LIMIT)}…`;
+}
 
 const FOOTER = {
   es: "Cripto de alto riesgo · Puedes perderlo todo · No es consejo de inversión.",
@@ -78,25 +103,25 @@ function feeText(lang, labelEs, labelEn, bps) {
 
 export function snapshotLines(evidence, lang) {
   const en = lang === "en";
-  const connector = {
-    abierta: en ? "Connector: open curve." : "Conector: curva abierta.",
-    completa: en ? "Connector: complete curve. This is not a favorable conclusion." : "Conector: curva completa. No es una conclusión favorable.",
-    sin_curva: en ? "Connector: no curve. This is not a favorable conclusion." : "Conector: no hay curva. No es una conclusión favorable.",
-    no_disponible: en ? "Connector: unavailable. This is not a favorable conclusion." : "Conector: no disponible. No es una conclusión favorable.",
+  const curve = {
+    abierta: en ? "Curve: open." : "Curva: abierta.",
+    completa: en ? "Curve: complete." : "Curva: completa.",
+    sin_curva: en ? "Curve: no curve." : "Curva: no hay curva.",
+    no_disponible: en ? "Curve: unavailable." : "Curva: no disponible.",
   };
-  const route = evidence.route === "un_paso"
-    ? (en ? "Route: one step on the open curve. Two steps are not added together." : "Ruta: un solo paso en la curva abierta. No se suman dos pasos.")
-    : (en ? "Route: not compatible. A step is not invented." : "Ruta: no compatible. No se inventa un paso.");
   const base = evidence.base === "desconocida"
     ? (en ? "Base currency: unknown." : "Moneda base: desconocida.")
     : (en ? `Base currency: ${evidence.base}.` : `Moneda base: ${evidence.base}.`);
+  const shown = evidence.name ? clipTokenName(evidence.name) : "";
   const name = evidence.name
-    ? (en ? `Name read: ${evidence.name}. It is account text, not an endorsement.` : `Nombre leído: ${evidence.name}. Es un texto de la cuenta, no un aval.`)
+    ? (en ? `Name read: ${shown}. It is account text, not an endorsement.` : `Nombre leído: ${shown}. Es un texto de la cuenta, no un aval.`)
     : (en ? "Name: not available. It is not filled in." : "Nombre: no disponible. No se rellena.");
   const lines = [
     { size: "large", text: evidence.readAt },
     { size: "body", text: en ? "Snapshot: it may have changed" : "Instantánea: puede haber cambiado" },
+    { size: "body", text: en ? PUBLIC_WARNING.en : PUBLIC_WARNING.es },
     { size: "body", text: en ? "It is not an audit or a recommendation." : "No es una auditoría ni una recomendación." },
+    { size: "body", text: en ? "No data is invented." : "No se inventa ningún dato." },
     {
       size: "body",
       text: evidence.official
@@ -106,8 +131,7 @@ export function snapshotLines(evidence, lang) {
     { size: "body", text: en ? `Token analyzed: ${evidence.mint}` : `Token analizado: ${evidence.mint}` },
     { size: "body", text: name },
     { size: "body", text: base },
-    { size: "body", text: connector[evidence.connector] ?? connector.no_disponible },
-    { size: "body", text: route },
+    { size: "body", text: curve[evidence.connector] ?? curve.no_disponible },
     { size: "body", text: feeText(en ? "en" : "es", "Comisión del protocolo", "Protocol fee", evidence.protocolFeeBps) },
     { size: "body", text: feeText(en ? "en" : "es", "Comisión de creación", "Creation fee", evidence.creatorFeeBps) },
     { size: "body", text: en ? "A pairing is not a collaboration or an endorsement." : "Un emparejamiento no es una colaboración ni un respaldo." },

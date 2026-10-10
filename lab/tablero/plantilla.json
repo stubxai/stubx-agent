@@ -1,0 +1,36 @@
+{
+  "version": "1.0.0",
+  "updated": null,
+  "editor": "",
+  "note": {
+    "es": "Plantilla vacía. No afirma nada sobre ningún token. Copia el archivo y anota solo trabajo que puedas enseñar, con su evidencia. Una idea, código en un repositorio y una página publicada no son lo mismo. No escribas fechas de entrega si no están acordadas. No pongas secretos ni datos personales.",
+    "en": "Empty template. It claims nothing about any token. Copy the file and record only work you can show, with its evidence. An idea, code in a repository, and a published page are not the same thing. Do not write delivery dates that are not agreed. Do not put secrets or personal data in it."
+  },
+  "tasks": [
+    {
+      "id": "EJEMPLO",
+      "version": "0",
+      "title": { "es": "Título de la tarea", "en": "Task title" },
+      "status": "propuesta",
+      "webPublished": false,
+      "scope": { "es": "Qué incluye esta entrega y qué deja fuera.", "en": "What this delivery includes and what it leaves out." },
+      "owner": "",
+      "reviewer": "",
+      "reviewedOn": null,
+      "block": { "es": "Qué impide avanzarla, sin datos sensibles.", "en": "What blocks it, with no sensitive data." },
+      "exampleMint": null,
+      "evidence": [],
+      "history": [
+        {
+          "on": "YYYY-MM-DD",
+          "change": { "es": "Qué cambió. No borres las líneas anteriores.", "en": "What changed. Do not delete the earlier lines." }
+        }
+      ]
+    }
+  ],
+  "states": ["propuesta", "en_curso", "en_revision", "publicada"],
+  "exampleMintNote": {
+    "es": "exampleMint es opcional. Si una prueba usa la dirección de un token de Solana, anótala aquí. Anotarla no dice que el token sea bueno, seguro o esté respaldado.",
+    "en": "exampleMint is optional. If a test uses a Solana token address, write it here. Writing it does not say the token is good, safe, or endorsed."
+  }
+}

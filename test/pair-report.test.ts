@@ -132,4 +132,48 @@ describe("informe de pares", () => {
     assert.equal(sources.includes("simulateTransaction"), false);
     assert.equal(sources.includes("innerHTML"), false);
   });
+
+  test("un nombre largo se recorta en la instantánea y el hash usa el nombre entero", async () => {
+    const { clipTokenName, evidenceRecord, canonicalJson, sha256Hex, snapshotLines, NAME_LIMIT } = await import(reportUrl);
+    const full = "N".repeat(200);
+    assert.equal(clipTokenName(full).length, NAME_LIMIT + 1);
+    assert.notEqual(clipTokenName(full), full);
+    assert.equal(clipTokenName(full).endsWith("…"), true);
+    const evidence = evidenceRecord({
+      mint: OTHER,
+      name: full,
+      uri: null,
+      base: "SOL",
+      connector: "abierta",
+      route: "un_paso",
+      protocolFeeBps: null,
+      creatorFeeBps: null,
+      slot: 1,
+      source: "solana-rpc.publicnode.com",
+      readAt: "2026-10-10T10:00:00.000Z",
+    });
+    assert.equal(evidence.name, full);
+    const digest = await sha256Hex(canonicalJson(evidence));
+    assert.equal(await sha256Hex(canonicalJson({ ...evidence, name: full })), digest);
+    const lines = snapshotLines(evidence, "es");
+    const nameLine = lines.map((line: { text: string }) => line.text).find((text: string) => text.startsWith("Nombre leído"));
+    assert.ok(nameLine);
+    assert.equal(nameLine.includes(full), false);
+    assert.match(nameLine, /N{48}…/);
+  });
+
+  test("la séptima lectura en un minuto no llama al transporte", async () => {
+    const { readWithinLimit } = await import(reportUrl);
+    let stamps: number[] = [];
+    let calls = 0;
+    const now = 1_700_000_000_000;
+    for (let i = 0; i < 7; i += 1) {
+      const gate = await readWithinLimit(stamps, now + i, async () => {
+        calls += 1;
+        return "leido";
+      });
+      stamps = gate.stamps;
+    }
+    assert.equal(calls, 6);
+  });
 });

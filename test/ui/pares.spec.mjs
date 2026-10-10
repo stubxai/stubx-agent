@@ -80,9 +80,12 @@ test("el informe lee un paso y cambia de idioma", async ({ page }, info) => {
     seen.push(request.url());
   });
   await page.goto("/");
-  await page.getByRole("link", { name: "Abrir pares" }).click();
+  await page.getByRole("link", { name: "Abrir la curva" }).click();
   await expect(page).toHaveURL(/\/pares\/?$/);
-  await expect(page.locator("h1")).toContainText("Pares e informe");
+  await expect(page.locator("h1")).toContainText("Lectura de la curva");
+  await expect(page.locator("main")).toContainText(
+    "Lectura de datos públicos. No es una comparación de calidad, ni una recomendación, ni un aval. STUBX no tiene relación con estos tokens salvo la CA oficial.",
+  );
   await expect(page.locator("footer")).toContainText(FOOTER_ES);
   await expect(page.locator("#exportar")).toBeHidden();
   await page.getByRole("button", { name: "Leer" }).click();
@@ -94,8 +97,8 @@ test("el informe lee un paso y cambia de idioma", async ({ page }, info) => {
   await page.locator("#direccion-token").fill(MINT);
   await page.getByRole("button", { name: "Leer" }).click();
   await expect(page.locator("#resultado")).toContainText("Moneda base: SOL", { timeout: 15000 });
-  await expect(page.locator("#resultado")).toContainText("curva abierta");
-  await expect(page.locator("#resultado")).toContainText("un solo paso");
+  await expect(page.locator("#resultado")).toContainText("Curva: abierta");
+  await expect(page.locator("#resultado")).toContainText("No se inventa ningún dato.");
   await expect(page.locator("#resultado")).toContainText("95");
   await expect(page.locator("#resultado")).toContainText("Esta dirección coincide con la CA publicada de STUBX.");
   await expect(page.locator("#resultado")).toContainText("Un emparejamiento no es una colaboración ni un respaldo.");
@@ -119,7 +122,10 @@ test("el informe lee un paso y cambia de idioma", async ({ page }, info) => {
 
   await page.getByRole("button", { name: "English" }).click();
   await expect(page.locator("html")).toHaveAttribute("data-lang", "en");
-  await expect(page.locator("h1")).toContainText("Pairs and report");
+  await expect(page.locator("h1")).toContainText("Curve reading");
+  await expect(page.locator("main")).toContainText(
+    "Public data reading. It is not a quality comparison, a recommendation, or an endorsement. STUBX has no relationship with these tokens except the official CA.",
+  );
   await expect(page.locator("footer")).toContainText(FOOTER_EN);
   await expect(page.locator("#resultado")).toContainText("Base currency: SOL");
   await page.screenshot({ path: `${shots}/u09-pares-${project}-en.png`, fullPage: false });
@@ -140,4 +146,25 @@ test("si el primer servicio limita, se usa el respaldo", async ({ page }) => {
   await expect(page.locator("#resultado")).toContainText("Moneda base: SOL");
   expect(hosts[0]).toBe("solana-rpc.publicnode.com");
   expect(hosts.some((host) => host === "api.mainnet-beta.solana.com")).toBe(true);
+});
+
+test("la séptima lectura en un minuto no llama al servicio", async ({ page }) => {
+  test.setTimeout(60000);
+  let calls = 0;
+  await page.route(/solana-rpc\.publicnode\.com/, async (route) => {
+    calls += 1;
+    await answer(route, 200);
+  });
+  await page.route(/api\.mainnet-beta\.solana\.com/, (route) => answer(route, 500));
+  await page.goto("/pares/");
+  await page.locator("#direccion-token").fill(MINT);
+  for (let i = 0; i < 6; i += 1) {
+    await page.getByRole("button", { name: "Leer" }).click();
+    await expect(page.locator("#resultado")).toContainText("Curva: abierta");
+  }
+  const afterSix = calls;
+  await page.getByRole("button", { name: "Leer" }).click();
+  await expect(page.locator("#resultado")).toContainText("Se han hecho 6 lecturas en un minuto");
+  await expect(page.locator("#resultado")).toContainText("No se inventa ningún dato.");
+  expect(calls).toBe(afterSix);
 });

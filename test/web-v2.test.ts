@@ -309,10 +309,15 @@ describe("web v2", () => {
   test("the pair report is read-only and has one route policy", () => {
     const html = read("pares/index.html");
     const home = read("index.html");
-    assert.match(home, /Abrir pares/);
-    assert.match(home, /Open pairs/);
-    assert.match(html, /Pares e informe/);
-    assert.match(html, /Pairs and report/);
+    assert.match(home, /Abrir la curva/);
+    assert.match(home, /Open the curve/);
+    assert.match(html, /Lectura de la curva/);
+    assert.match(html, /Curve reading/);
+    assert.match(html, /Lectura de datos públicos\. No es una comparación de calidad, ni una recomendación, ni un aval\. STUBX no tiene relación con estos tokens salvo la CA oficial\./);
+    assert.match(html, /No se inventa ningún dato\./);
+    assert.equal(html.includes("Conector"), false);
+    assert.equal(html.includes("favorable"), false);
+    assert.equal(/\bRuta:/.test(html), false);
     assert.match(html, /No es una auditoría ni una recomendación\./);
     assert.match(html, /Un emparejamiento no es una colaboración ni un respaldo\./);
     assert.match(html, /A pairing is not a collaboration or an endorsement\./);

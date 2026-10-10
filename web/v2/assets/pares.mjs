@@ -1,16 +1,18 @@
 import { readCurveState } from "../modules/chain-read.mjs";
-import { canonicalJson, describePair, drawSnapshot, evidenceRecord, sha256Hex, snapshotLines } from "../modules/pair-report.mjs";
+import { canonicalJson, describePair, drawSnapshot, evidenceRecord, PUBLIC_WARNING, readWithinLimit, sha256Hex, snapshotLines } from "../modules/pair-report.mjs";
 
 const TEXT = {
   direccion: ["Esa dirección no es válida. Suele tener entre 32 y 44 letras y números.", "That address is not valid. It is usually 32 to 44 letters and numbers."],
   no_mint: ["Esa cuenta no es un mint. No hay informe.", "That account is not a mint. There is no report."],
-  limite: ["El servicio limitó la consulta. No se inventa una ruta favorable. Puedes volver a leer.", "The service limited the query. A favorable route is not invented. You can read again."],
-  tiempo: ["El servicio no respondió a tiempo. No se inventa una ruta favorable. Puedes volver a leer.", "The service did not answer in time. A favorable route is not invented. You can read again."],
-  red: ["El servicio no respondió. No se inventa una ruta favorable. Puedes volver a leer.", "The service did not answer. A favorable route is not invented. You can read again."],
+  limite: ["El servicio limitó la consulta. No se inventa ningún dato. Puedes volver a leer.", "The service limited the query. No data is invented. You can read again."],
+  tiempo: ["El servicio no respondió a tiempo. No se inventa ningún dato. Puedes volver a leer.", "The service did not answer in time. No data is invented. You can read again."],
+  red: ["El servicio no respondió. No se inventa ningún dato. Puedes volver a leer.", "The service did not answer. No data is invented. You can read again."],
+  minuto: ["Se han hecho 6 lecturas en un minuto. Espera un momento antes de comprobar otra. No se inventa ningún dato.", "6 readings were made in one minute. Wait a moment before checking another. No data is invented."],
   leyendo: ["Leyendo datos públicos. No se firma nada.", "Reading public data. Nothing is signed."],
 };
 
 let current = null;
+let queryStamps = [];
 
 function lang() {
   return document.documentElement.dataset.lang === "en" ? "en" : "es";
@@ -81,18 +83,17 @@ function feeLine(labelEs, labelEn, bps) {
 }
 
 function pageLines(evidence, digest) {
-  const connector = {
-    abierta: ["Conector: curva abierta.", "Connector: open curve."],
-    completa: ["Conector: curva completa. No es una conclusión favorable.", "Connector: complete curve. This is not a favorable conclusion."],
-    sin_curva: ["Conector: no hay curva. No es una conclusión favorable.", "Connector: no curve. This is not a favorable conclusion."],
-  }[evidence.connector] ?? ["Conector: no disponible. No es una conclusión favorable.", "Connector: unavailable. This is not a favorable conclusion."];
-  const route = evidence.route === "un_paso"
-    ? ["Ruta: un solo paso en la curva abierta. No se suman dos pasos.", "Route: one step on the open curve. Two steps are not added together."]
-    : ["Ruta: no compatible. No se inventa un paso.", "Route: not compatible. A step is not invented."];
+  const curve = {
+    abierta: ["Curva: abierta.", "Curve: open."],
+    completa: ["Curva: completa.", "Curve: complete."],
+    sin_curva: ["Curva: no hay curva.", "Curve: no curve."],
+  }[evidence.connector] ?? ["Curva: no disponible.", "Curve: unavailable."];
   const base = evidence.base === "desconocida"
     ? ["Moneda base: desconocida.", "Base currency: unknown."]
     : [`Moneda base: ${evidence.base}.`, `Base currency: ${evidence.base}.`];
   const lines = [
+    { es: PUBLIC_WARNING.es, en: PUBLIC_WARNING.en },
+    { es: "No se inventa ningún dato.", en: "No data is invented." },
     { es: "No es una auditoría ni una recomendación. Muestra datos públicos de la cadena en el momento indicado; no dice si un token es bueno, seguro o una buena compra.", en: "It is not an audit or a recommendation. It shows public chain data at the stated time; it does not say whether a token is good, safe, or a good purchase." },
     { es: `Token analizado: ${evidence.mint}`, en: `Token analyzed: ${evidence.mint}` },
   ];
@@ -107,8 +108,7 @@ function pageLines(evidence, digest) {
   if (evidence.uri) lines.push({ es: `Enlace de metadatos, no se abre: ${evidence.uri}`, en: `Metadata link, not opened: ${evidence.uri}` });
   lines.push(
     { es: base[0], en: base[1] },
-    { es: connector[0], en: connector[1] },
-    { es: route[0], en: route[1] },
+    { es: curve[0], en: curve[1] },
     feeLine("Comisión del protocolo", "Protocol fee", evidence.protocolFeeBps),
     feeLine("Comisión de creación", "Creation fee", evidence.creatorFeeBps),
     evidence.slot === null
@@ -160,7 +160,13 @@ async function onSubmit(event) {
   if (button) button.disabled = true;
   fail("leyendo");
   try {
-    const state = await readCurveState(address.value);
+    const gate = await readWithinLimit(queryStamps, Date.now(), () => readCurveState(address.value));
+    queryStamps = gate.stamps;
+    if (!gate.allowed) {
+      fail("minuto");
+      return;
+    }
+    const state = gate.result;
     if (!state.ok) {
       fail(TEXT[state.code] ? state.code : "red");
       return;
