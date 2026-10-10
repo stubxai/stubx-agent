@@ -26,6 +26,7 @@ interface ReadModule {
   isAllowedRpcUrl: (value: string) => boolean;
   blankCard: (mint: string, consultedAt: string, errors: unknown[]) => Card;
   readMint: (options: Record<string, unknown>) => Promise<{ ok: boolean; card: Card | null }>;
+  clearBlockedMethods: () => void;
   cardFromShown: (shown: Record<string, unknown>) => Card | null;
 }
 
@@ -81,6 +82,7 @@ async function modules(): Promise<{ read: ReadModule; model: ModelModule }> {
   const root = repoRoot();
   const read = (await import(pathToFileURL(path.join(root, "web/v2/shared/solana-read.js")).href)) as ReadModule;
   const model = (await import(pathToFileURL(path.join(root, "web/v2/shared/notebook-model.js")).href)) as ModelModule;
+  read.clearBlockedMethods();
   return { read, model };
 }
 
@@ -402,6 +404,7 @@ describe("lector y cuaderno", () => {
       account(read.PUMP_PROGRAM, curveBytes()),
     ]);
     async function failThen(status: number | "timeout") {
+      read.clearBlockedMethods();
       const seen: string[] = [];
       const result = await read.readMint({
         mint: CA,
@@ -440,6 +443,126 @@ describe("lector y cuaderno", () => {
     });
     assert.equal(rejected.ok, false);
     assert.deepEqual(seen, ["solana-rpc.publicnode.com"]);
+  });
+
+  test("un corte de red en las cuentas prueba el segundo nodo y el suministro no sale de mainnet", async () => {
+    const { read } = await modules();
+    const hosts: Record<string, string[]> = { getMultipleAccounts: [], getTokenSupply: [], getTokenLargestAccounts: [] };
+    const result = await read.readMint({
+      mint: CA,
+      ...fastClock(),
+      endpoint: read.PUBLICNODE_RPC,
+      maxRetries: 0,
+      transport: async (endpoint: string, body: string) => {
+        const method = (JSON.parse(body) as { method: string }).method;
+        const host = new URL(endpoint).hostname;
+        if (hosts[method]) hosts[method]?.push(host);
+        if (method === "getMultipleAccounts" && host === "solana-rpc.publicnode.com") return { status: 0, body: "" };
+        if (method === "getMultipleAccounts") {
+          return rpcOk([
+            account(read.TOKEN_PROGRAM, mintBytes()),
+            account(read.METADATA_PROGRAM, metadataBytes("USDC", "USDC", "https://example.invalid/meta")),
+            null,
+          ]);
+        }
+        if (method === "getTokenSupply") return { status: 0, body: "" };
+        if (method === "getTokenLargestAccounts") return rpcOk([]);
+        throw new Error(method);
+      },
+    });
+    assert.equal(result.card?.partial, true);
+    assert.deepEqual(hosts.getMultipleAccounts, ["solana-rpc.publicnode.com", "api.mainnet-beta.solana.com"]);
+    assert.deepEqual(hosts.getTokenSupply, ["api.mainnet-beta.solana.com"]);
+    assert.deepEqual(hosts.getTokenLargestAccounts, ["api.mainnet-beta.solana.com"]);
+  });
+
+  test("un 403 se recuerda y no se vuelve a pedir ese método en la sesión", async () => {
+    const { read } = await modules();
+    const calls: string[] = [];
+    const transport = async (endpoint: string, body: string) => {
+      const method = (JSON.parse(body) as { method: string }).method;
+      calls.push(`${new URL(endpoint).hostname} ${method}`);
+      if (method === "getMultipleAccounts") {
+        return rpcOk([
+          account(read.TOKEN_PROGRAM, mintBytes()),
+          account(read.METADATA_PROGRAM, metadataBytes("USDC", "USDC", "https://example.invalid/meta")),
+          null,
+        ]);
+      }
+      if (method === "getTokenSupply" || method === "getTokenLargestAccounts") return { status: 403, body: "" };
+      throw new Error(method);
+    };
+    const first = await read.readMint({ mint: CA, ...fastClock(), endpoint: read.DEFAULT_RPC, maxRetries: 0, transport });
+    const second = await read.readMint({ mint: CA, ...fastClock(), endpoint: read.DEFAULT_RPC, maxRetries: 0, transport });
+    assert.equal(first.card?.supplyRpcStatus, "fallo");
+    assert.equal(second.card?.supplyRpcStatus, "fallo");
+    assert.deepEqual(calls.filter((item) => item.endsWith("getTokenSupply")), ["api.mainnet-beta.solana.com getTokenSupply"]);
+    assert.deepEqual(calls.filter((item) => item.endsWith("getTokenLargestAccounts")), ["api.mainnet-beta.solana.com getTokenLargestAccounts"]);
+    assert.equal(calls.filter((item) => item.endsWith("getMultipleAccounts")).length, 2);
+  });
+
+  test("un 403 recordado caduca a los 10 minutos y Reintentar lo borra dentro del cupo", async () => {
+    const { read } = await modules();
+    const calls: string[] = [];
+    let now = Date.parse(WHEN);
+    const transport = async (endpoint: string, body: string) => {
+      const method = (JSON.parse(body) as { method: string }).method;
+      calls.push(`${new URL(endpoint).hostname} ${method}`);
+      if (method === "getMultipleAccounts") {
+        return rpcOk([
+          account(read.TOKEN_PROGRAM, mintBytes()),
+          account(read.METADATA_PROGRAM, metadataBytes("USDC", "USDC", "https://example.invalid/meta")),
+          null,
+        ]);
+      }
+      if (method === "getTokenSupply" || method === "getTokenLargestAccounts") return { status: 403, body: "" };
+      throw new Error(method);
+    };
+    const readAt = () => read.readMint({
+      mint: CA,
+      now: () => new Date(now),
+      sleep: async () => undefined,
+      mono: () => 0,
+      minIntervalMs: 0,
+      maxRetries: 0,
+      timeoutMs: 50,
+      endpoint: read.DEFAULT_RPC,
+      transport,
+    });
+    const supplyCalls = () => calls.filter((item) => item.endsWith("getTokenSupply")).length;
+    await readAt();
+    await readAt();
+    assert.equal(supplyCalls(), 1);
+    now += 599_999;
+    await readAt();
+    assert.equal(supplyCalls(), 1);
+    now += 1;
+    await readAt();
+    assert.equal(supplyCalls(), 2);
+    read.clearBlockedMethods();
+    await readAt();
+    assert.equal(supplyCalls(), 3);
+
+    const source = readFileSync(path.join(repoRoot(), "web/v2/assets/cuaderno.js"), "utf8");
+    const consult = source.slice(source.indexOf("async function consult"), source.indexOf("async function saveNote"));
+    const denied = consult.indexOf("if (!slot.allowed)");
+    const clear = consult.indexOf("if (forgetBlocked) clearBlockedMethods()");
+    assert.match(consult, /takeQuerySlot\(\s*queryStamps,\s*Date\.now\(\),\s*6,\s*60000\s*\)/);
+    assert.ok(consult.indexOf("takeQuerySlot") < denied);
+    assert.match(consult.slice(denied, clear), /return;/);
+    assert.ok(clear < consult.indexOf("readMint"));
+    assert.match(source, /addEventListener\("click", \(\) => consult\(retryMint, true\)\)/);
+    assert.match(source, /addEventListener\("click", \(\) => consult\(record\.card\.mint\)\)/);
+
+    const verifyUi = readFileSync(path.join(repoRoot(), "lab/client/verify-ui.js"), "utf8");
+    const run = verifyUi.slice(verifyUi.indexOf("function run(force, forgetBlocked)"), verifyUi.indexOf("function readSample"));
+    const verifyDenied = run.indexOf("if (!slot.allowed)");
+    const verifyClear = run.indexOf("if (forgetBlocked) clearRpcBlocks()");
+    assert.match(run, /takeQuerySlot\(stamps, now, 6, 60000\)/);
+    assert.ok(verifyDenied < verifyClear);
+    assert.match(run.slice(verifyDenied, verifyClear), /return;/);
+    assert.ok(verifyClear < run.indexOf("readAnyMint({"));
+    assert.match(verifyUi, /run\(true, true\)/);
   });
 
   test("getTokenSupply y las cuentas grandes no se piden a publicnode", async () => {
@@ -901,5 +1024,31 @@ describe("lector y cuaderno", () => {
     assert.match(summary.text, /El servicio público no respondió, prueba otra vez en un minuto/);
     assert.equal(summary.text.includes("ausente comprobado"), false);
     assert.match(summary.absentText, /Comprobado: no existe: Enlace: ausente comprobado/);
+  });
+
+  test("Reintentar del cuaderno entra en el cupo de 6 lecturas por minuto", async () => {
+    const { takeQuerySlot } = (await import(pathToFileURL(path.join(repoRoot(), "web/v2/modules/pair-report.mjs")).href)) as {
+      takeQuerySlot: (stamps: number[], now: number, limit?: number, windowMs?: number) => { allowed: boolean; stamps: number[] };
+    };
+    let stamps: number[] = [];
+    for (let index = 0; index < 6; index += 1) {
+      const slot = takeQuerySlot(stamps, 1_000 + index, 6, 60_000);
+      assert.equal(slot.allowed, true);
+      stamps = slot.stamps;
+    }
+    const blocked = takeQuerySlot(stamps, 1_006, 6, 60_000);
+    assert.equal(blocked.allowed, false);
+    assert.equal(blocked.stamps.length, 6);
+    const opened = takeQuerySlot([0], 60_000, 6, 60_000);
+    assert.equal(opened.allowed, true);
+    const source = readFileSync(path.join(repoRoot(), "web/v2/assets/cuaderno.js"), "utf8");
+    const consult = source.slice(source.indexOf("async function consult"), source.indexOf("async function saveNote"));
+    assert.match(consult, /takeQuerySlot\(\s*queryStamps,\s*Date\.now\(\),\s*6,\s*60000\s*\)/);
+    assert.match(consult, /maxRetries:\s*1/);
+    assert.ok(consult.indexOf("isAllowedRpcUrl") < consult.indexOf("takeQuerySlot"));
+    assert.ok(consult.indexOf("isMintAddress") < consult.indexOf("takeQuerySlot"));
+    assert.ok(consult.indexOf("takeQuerySlot") < consult.indexOf("readMint"));
+    assert.match(source, /addEventListener\("click", \(\) => consult\(retryMint, true\)\)/);
+    assert.match(source, /Se han hecho 6 lecturas en un minuto/);
   });
 });

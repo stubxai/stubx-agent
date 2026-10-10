@@ -1,8 +1,22 @@
 import type { AccountInfo, ChainReader, LargestAccount, RpcResult, TokenAmount } from "./rpc.js";
 
+/** Corte de red: no hubo respuesta del nodo. Un 403 o un error del mint no entran aquí. */
+export function isNetworkFailure(result: { ok: boolean; error?: string; httpStatus?: number | null }): boolean {
+  if (result.ok) {
+    return false;
+  }
+  if (result.httpStatus === 0) {
+    return true;
+  }
+  return /failed to fetch|\bHTTP 0\b|error de red|fetch failed|ECONN|ENET|ENOTFOUND|socket/i.test(result.error ?? "");
+}
+
 export function isRetryableFailure(result: { ok: boolean; error?: string; httpStatus?: number | null }): boolean {
   if (result.ok) {
     return false;
+  }
+  if (isNetworkFailure(result)) {
+    return true;
   }
   const status = result.httpStatus ?? null;
   // 403, 429 y el tiempo agotado los pone el servicio (cortafuegos, cupo o corte).
@@ -11,7 +25,7 @@ export function isRetryableFailure(result: { ok: boolean; error?: string; httpSt
   if (status === 403 || status === 429 || status === 408 || (status !== null && status >= 500)) {
     return true;
   }
-  return /429|403|too many|rate limit|timeout|timed out|tiempo de espera|network|fetch failed|ECONN|ENET|ENOTFOUND|socket|access forbidden|personal token|indexed request|request blocked/i.test(
+  return /429|403|too many|rate limit|timeout|timed out|tiempo de espera|network|access forbidden|personal token|indexed request|request blocked/i.test(
     result.error ?? "",
   );
 }

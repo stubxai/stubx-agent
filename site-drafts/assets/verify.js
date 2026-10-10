@@ -401,9 +401,22 @@ function canonicalJson(value) {
     return `{${keys.map((key) => `${JSON.stringify(key)}:${canonicalJson(record[key])}`).join(",")}}`;
 }
 
+/** Corte de red: no hubo respuesta del nodo. Un 403 o un error del mint no entran aquí. */
+function isNetworkFailure(result) {
+    if (result.ok) {
+        return false;
+    }
+    if (result.httpStatus === 0) {
+        return true;
+    }
+    return /failed to fetch|\bHTTP 0\b|error de red|fetch failed|ECONN|ENET|ENOTFOUND|socket/i.test(result.error ?? "");
+}
 function isRetryableFailure(result) {
     if (result.ok) {
         return false;
+    }
+    if (isNetworkFailure(result)) {
+        return true;
     }
     const status = result.httpStatus ?? null;
     // 403, 429 y el tiempo agotado los pone el servicio (cortafuegos, cupo o corte).
@@ -412,7 +425,7 @@ function isRetryableFailure(result) {
     if (status === 403 || status === 429 || status === 408 || (status !== null && status >= 500)) {
         return true;
     }
-    return /429|403|too many|rate limit|timeout|timed out|tiempo de espera|network|fetch failed|ECONN|ENET|ENOTFOUND|socket|access forbidden|personal token|indexed request|request blocked/i.test(result.error ?? "");
+    return /429|403|too many|rate limit|timeout|timed out|tiempo de espera|network|access forbidden|personal token|indexed request|request blocked/i.test(result.error ?? "");
 }
 function classifyRpcFailure(error, httpStatus) {
     if (httpStatus === 429 || /429|too many|rate limit/i.test(error)) {
@@ -1590,6 +1603,33 @@ async function httpTransport(endpoint, body, timeoutMs, signal) {
         return { status: 0, body: "" };
     }
 }
+const RPC_BLOCK_MS = 10 * 60 * 1000;
+const blockedRpcMethods = new Map();
+function rpcBlockKey(endpoint, method) {
+    try {
+        return `${new URL(endpoint).origin} ${method}`;
+    }
+    catch {
+        return `${endpoint} ${method}`;
+    }
+}
+function rememberRpcBlock(endpoint, method, nowMs = Date.now()) {
+    blockedRpcMethods.set(rpcBlockKey(endpoint, method), nowMs + RPC_BLOCK_MS);
+}
+function isRpcBlocked(endpoint, method, nowMs = Date.now()) {
+    const key = rpcBlockKey(endpoint, method);
+    const until = blockedRpcMethods.get(key);
+    if (until === undefined)
+        return false;
+    if (nowMs >= until) {
+        blockedRpcMethods.delete(key);
+        return false;
+    }
+    return true;
+}
+function clearRpcBlocks() {
+    blockedRpcMethods.clear();
+}
 class RpcClient {
     endpoint;
     transport;
@@ -1670,6 +1710,16 @@ class RpcClient {
                 fetchedAt: this.now().toISOString(),
             };
         }
+        const nowMs = this.now().getTime();
+        if (isRpcBlocked(this.endpoint, method, nowMs)) {
+            return {
+                ok: false,
+                method,
+                error: "HTTP 403",
+                httpStatus: 403,
+                fetchedAt: this.now().toISOString(),
+            };
+        }
         let lastError = "sin respuesta";
         let lastStatus = null;
         for (let attempt = 0; attempt <= this.maxRetries; attempt += 1) {
@@ -1684,6 +1734,10 @@ class RpcClient {
                     lastError = `HTTP ${response.status}`;
                     await this.sleep(this.backoff(attempt, method));
                     continue;
+                }
+                if (response.status === 403) {
+                    rememberRpcBlock(this.endpoint, method, nowMs);
+                    return { ok: false, method, error: "HTTP 403", httpStatus: 403, fetchedAt };
                 }
                 if (response.status < 200 || response.status >= 300) {
                     return { ok: false, method, error: `HTTP ${response.status}`, httpStatus: response.status, fetchedAt };
@@ -2053,7 +2107,8 @@ function mainnetOnlyClient(input, timeoutMs) {
     });
 }
 async function optionalMainnetSupply(mint, input) {
-    // getTokenSupply en publicnode responde 403 por diseño. Solo se pide a mainnet-beta.
+    // getTokenSupply en publicnode responde 403 por diseño. Un corte de red tampoco
+    // prueba ese nodo: el método sigue cerrado allí.
     return mainnetOnlyClient(input, input.timeoutMs ?? 8000).getTokenSupply(mint);
 }
 function groupFacts(facts) {
@@ -3029,7 +3084,7 @@ function bootVerify() {
     return view;
   }
 
-  function run(force) {
+  function run(force, forgetBlocked) {
     if (inFlight) return;
     if (input.value.trim() === "") {
       apply(emptyView(), false);
@@ -3067,6 +3122,7 @@ function bootVerify() {
       apply(pauseView(normalized), true);
       return;
     }
+    if (forgetBlocked) clearRpcBlocks();
     if (currentAbort) currentAbort.abort();
     var controller = new AbortController();
     currentAbort = controller;
@@ -3158,7 +3214,7 @@ function bootVerify() {
     if (target && target.id === "leer-cuentas") readSample();
     if (target && target.id === "reintentar") {
       if (last && last.mint) memory.delete(last.mint);
-      run(true);
+      run(true, true);
     }
   });
 

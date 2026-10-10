@@ -395,7 +395,8 @@ function mainnetOnlyClient(input: ReadMintInput, timeoutMs: number): RpcClient {
 }
 
 async function optionalMainnetSupply(mint: string, input: ReadMintInput): Promise<RpcResult<TokenAmount>> {
-  // getTokenSupply en publicnode responde 403 por diseño. Solo se pide a mainnet-beta.
+  // getTokenSupply en publicnode responde 403 por diseño. Un corte de red tampoco
+  // prueba ese nodo: el método sigue cerrado allí.
   return mainnetOnlyClient(input, input.timeoutMs ?? 8000).getTokenSupply(mint);
 }
 

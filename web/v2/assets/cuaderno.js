@@ -8,9 +8,12 @@ import {
   PUBLICNODE_RPC,
   DISCLAIMER,
   OFFICIAL_MINT,
+  clearBlockedMethods,
   isAllowedRpcUrl,
+  isMintAddress,
   readMint,
 } from "../shared/solana-read.js";
+import { takeQuerySlot } from "../modules/pair-report.mjs";
 import {
   MAX_BYTES,
   MAX_NOTE,
@@ -43,6 +46,7 @@ const COPY = {
     full: `Este navegador ya tiene ${MAX_STORED} fichas. Borra alguna para guardar otra.`,
     partial: "La lectura está incompleta. Lo que falta no se ha puesto a cero.",
     network: "El servicio público no respondió, prueba otra vez en un minuto.",
+    limit: "Se han hecho 6 lecturas en un minuto. Espera un momento antes de comprobar otra. No se ha inventado un resultado.",
     saved: "Guardada en el Cuaderno de este navegador · ",
     open: "Abrir Cuaderno",
     retry: "Reintentar",
@@ -118,6 +122,7 @@ const COPY = {
     full: `This browser already has ${MAX_STORED} cards. Delete one to save another.`,
     partial: "The reading is incomplete. What is missing was not filled in with zero.",
     network: "The public service did not respond, try again in a minute.",
+    limit: "6 readings were made in one minute. Wait a moment before checking another. No result was invented.",
     saved: "Saved in this browser's Notebook · ",
     open: "Open Notebook",
     retry: "Try again",
@@ -245,7 +250,7 @@ function showRetry(message, retryMint) {
     button.type = "button";
     button.id = "reintentar";
     button.textContent = t("retry");
-    button.addEventListener("click", () => consult(retryMint));
+    button.addEventListener("click", () => consult(retryMint, true));
     node.append(document.createTextNode(" "), button);
   }
 }
@@ -269,7 +274,7 @@ function announceSaved(extra, retryMint) {
     button.type = "button";
     button.id = "reintentar";
     button.textContent = t("retry");
-    button.addEventListener("click", () => consult(retryMint));
+    button.addEventListener("click", () => consult(retryMint, true));
     node.append(document.createTextNode(" "), button);
   }
   revealAboveBar(node);
@@ -580,6 +585,7 @@ function renderRecords(records) {
 
 let records = [];
 let dbPromise = null;
+let queryStamps = [];
 
 function database() {
   if (!dbPromise) dbPromise = openDb();
@@ -609,7 +615,7 @@ async function persist(record) {
   return true;
 }
 
-async function consult(mint) {
+async function consult(mint, forgetBlocked = false) {
   const button = document.getElementById("consultar");
   const input = document.getElementById("direccion-cuaderno");
   if (button) button.disabled = true;
@@ -620,12 +626,26 @@ async function consult(mint) {
     if (button) button.disabled = false;
     return;
   }
+  if (!isMintAddress(mint)) {
+    showMessage(t("invalid"), "error");
+    if (button) button.disabled = false;
+    return;
+  }
+  const slot = takeQuerySlot(queryStamps, Date.now(), 6, 60000);
+  queryStamps = slot.stamps;
+  if (!slot.allowed) {
+    showMessage(t("limit"), "error");
+    if (button) button.disabled = false;
+    return;
+  }
+  if (forgetBlocked) clearBlockedMethods();
   try {
     const result = await readMint({
       mint,
       endpoint,
       transport: browserTransport,
       minIntervalMs: 2000,
+      maxRetries: 1,
     });
     const box = document.getElementById("resultado");
     if (!result.card) {

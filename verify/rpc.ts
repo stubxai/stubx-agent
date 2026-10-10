@@ -90,6 +90,36 @@ export async function httpTransport(
   }
 }
 
+const RPC_BLOCK_MS = 10 * 60 * 1000;
+const blockedRpcMethods = new Map<string, number>();
+
+export function rpcBlockKey(endpoint: string, method: string): string {
+  try {
+    return `${new URL(endpoint).origin} ${method}`;
+  } catch {
+    return `${endpoint} ${method}`;
+  }
+}
+
+export function rememberRpcBlock(endpoint: string, method: string, nowMs = Date.now()): void {
+  blockedRpcMethods.set(rpcBlockKey(endpoint, method), nowMs + RPC_BLOCK_MS);
+}
+
+export function isRpcBlocked(endpoint: string, method: string, nowMs = Date.now()): boolean {
+  const key = rpcBlockKey(endpoint, method);
+  const until = blockedRpcMethods.get(key);
+  if (until === undefined) return false;
+  if (nowMs >= until) {
+    blockedRpcMethods.delete(key);
+    return false;
+  }
+  return true;
+}
+
+export function clearRpcBlocks(): void {
+  blockedRpcMethods.clear();
+}
+
 export class RpcClient {
   private readonly endpoint: string;
   private readonly transport: RpcTransport;
@@ -189,6 +219,16 @@ export class RpcClient {
         fetchedAt: this.now().toISOString(),
       };
     }
+    const nowMs = this.now().getTime();
+    if (isRpcBlocked(this.endpoint, method, nowMs)) {
+      return {
+        ok: false,
+        method,
+        error: "HTTP 403",
+        httpStatus: 403,
+        fetchedAt: this.now().toISOString(),
+      };
+    }
     let lastError = "sin respuesta";
     let lastStatus: number | null = null;
     for (let attempt = 0; attempt <= this.maxRetries; attempt += 1) {
@@ -203,6 +243,10 @@ export class RpcClient {
           lastError = `HTTP ${response.status}`;
           await this.sleep(this.backoff(attempt, method));
           continue;
+        }
+        if (response.status === 403) {
+          rememberRpcBlock(this.endpoint, method, nowMs);
+          return { ok: false, method, error: "HTTP 403", httpStatus: 403, fetchedAt };
         }
         if (response.status < 200 || response.status >= 300) {
           return { ok: false, method, error: `HTTP ${response.status}`, httpStatus: response.status, fetchedAt };
