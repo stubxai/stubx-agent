@@ -902,4 +902,30 @@ describe("lector y cuaderno", () => {
     assert.equal(summary.text.includes("ausente comprobado"), false);
     assert.match(summary.absentText, /Comprobado: no existe: Enlace: ausente comprobado/);
   });
+
+  test("Reintentar del cuaderno entra en el cupo de 6 lecturas por minuto", async () => {
+    const { takeQuerySlot } = (await import(pathToFileURL(path.join(repoRoot(), "web/v2/modules/pair-report.mjs")).href)) as {
+      takeQuerySlot: (stamps: number[], now: number, limit?: number, windowMs?: number) => { allowed: boolean; stamps: number[] };
+    };
+    let stamps: number[] = [];
+    for (let index = 0; index < 6; index += 1) {
+      const slot = takeQuerySlot(stamps, 1_000 + index, 6, 60_000);
+      assert.equal(slot.allowed, true);
+      stamps = slot.stamps;
+    }
+    const blocked = takeQuerySlot(stamps, 1_006, 6, 60_000);
+    assert.equal(blocked.allowed, false);
+    assert.equal(blocked.stamps.length, 6);
+    const opened = takeQuerySlot([0], 60_000, 6, 60_000);
+    assert.equal(opened.allowed, true);
+    const source = readFileSync(path.join(repoRoot(), "web/v2/assets/cuaderno.js"), "utf8");
+    const consult = source.slice(source.indexOf("async function consult"), source.indexOf("async function saveNote"));
+    assert.match(consult, /takeQuerySlot\(\s*queryStamps,\s*Date\.now\(\),\s*6,\s*60000\s*\)/);
+    assert.match(consult, /maxRetries:\s*1/);
+    assert.ok(consult.indexOf("isAllowedRpcUrl") < consult.indexOf("takeQuerySlot"));
+    assert.ok(consult.indexOf("isMintAddress") < consult.indexOf("takeQuerySlot"));
+    assert.ok(consult.indexOf("takeQuerySlot") < consult.indexOf("readMint"));
+    assert.match(source, /addEventListener\("click", \(\) => consult\(retryMint\)\)/);
+    assert.match(source, /Se han hecho 6 lecturas en un minuto/);
+  });
 });

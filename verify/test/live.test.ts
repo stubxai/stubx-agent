@@ -683,4 +683,185 @@ describe("lectura universal con RPC simulado", () => {
     assert.equal(dropped.kind, "red");
     assert.match(dropped.support.es, /El servicio público no respondió, prueba otra vez en un minuto/);
   });
+
+  test("un corte de red en un nodo prueba el segundo y no pasa de los reintentos", async () => {
+    const sample = fixture("revoked-mint");
+    const accounts = new Map<string, AccountFixture | null>([
+      [sample.mint, sample.mintAccount],
+      [metadataPda(sample.mint), null],
+      [bondingCurvePda(sample.mint), null],
+    ]);
+    const base = transportFor({
+      slot: sample.slot,
+      accounts,
+      supply: { amount: "1000000000000000", decimals: 6 },
+      largest: [],
+    });
+    const dead = "https://rpc-a.invalid";
+    const live = "https://rpc-b.invalid";
+    const track = () => {
+      const calls: { endpoint: string; method: string }[] = [];
+      const transport: RpcTransport = async (endpoint, body, timeoutMs) => {
+        const method = (JSON.parse(body) as { method: string }).method;
+        calls.push({ endpoint, method });
+        if (endpoint === dead) return { status: 0, body: "" };
+        return base(endpoint, body, timeoutMs);
+      };
+      return { calls, transport };
+    };
+    const packed = (calls: { endpoint: string; method: string }[]) =>
+      calls.filter((item) => item.method === "getMultipleAccounts" && item.endpoint === dead);
+    const once = track();
+    const reading = await readAnyMint({
+      mint: sample.mint,
+      registry,
+      endpoints: [dead, live],
+      transport: once.transport,
+      maxRetries: 0,
+      minIntervalMs: 0,
+      sleep: async () => {},
+    });
+    assert.equal(reading.ok, true);
+    assert.equal(reading.usedFallback, true);
+    assert.equal(reading.endpointHost, "rpc-b.invalid");
+    assert.equal(packed(once.calls).length, 1);
+    assert.equal(once.calls.filter((item) => item.method === "getMultipleAccounts" && item.endpoint === live).length, 1);
+    const twice = track();
+    const retried = await readAnyMint({
+      mint: sample.mint,
+      registry,
+      endpoints: [dead, live],
+      transport: twice.transport,
+      maxRetries: 1,
+      minIntervalMs: 0,
+      sleep: async () => {},
+    });
+    assert.equal(retried.ok, true);
+    assert.equal(retried.usedFallback, true);
+    assert.equal(retried.endpointHost, "rpc-b.invalid");
+    assert.equal(packed(twice.calls).length, 2);
+    const fetches: string[] = [];
+    const fetched = await readAnyMint({
+      mint: sample.mint,
+      registry,
+      endpoints: [dead, live],
+      transport: async (endpoint, body, timeoutMs) => {
+        const method = (JSON.parse(body) as { method: string }).method;
+        if (endpoint === dead) {
+          if (method === "getMultipleAccounts") fetches.push(endpoint);
+          throw new TypeError("Failed to fetch");
+        }
+        return base(endpoint, body, timeoutMs);
+      },
+      maxRetries: 0,
+      minIntervalMs: 0,
+      sleep: async () => {},
+    });
+    assert.equal(fetches.length, 1);
+    assert.equal(fetched.ok, true);
+    assert.equal(fetched.usedFallback, true);
+    assert.equal(fetched.endpointHost, "rpc-b.invalid");
+    const both = track();
+    const down = await readAnyMint({
+      mint: sample.mint,
+      registry,
+      endpoints: [dead, live],
+      transport: async (endpoint, body) => {
+        const method = (JSON.parse(body) as { method: string }).method;
+        both.calls.push({ endpoint, method });
+        return { status: 0, body: "" };
+      },
+      maxRetries: 0,
+      minIntervalMs: 0,
+      sleep: async () => {},
+    });
+    assert.equal(down.ok, false);
+    assert.equal(down.kind, "red");
+    assert.equal(down.usedFallback, true);
+    assert.deepEqual(
+      both.calls.filter((item) => item.method === "getMultipleAccounts").map((item) => item.endpoint),
+      [dead, live],
+    );
+  });
+
+  test("un corte de red en el suministro no prueba publicnode y un 403 tampoco", async () => {
+    const sample = fixture("revoked-mint");
+    const accounts = new Map<string, AccountFixture | null>([
+      [sample.mint, sample.mintAccount],
+      [metadataPda(sample.mint), null],
+      [bondingCurvePda(sample.mint), null],
+    ]);
+    const base = transportFor({
+      slot: sample.slot,
+      accounts,
+      supply: { amount: "1000000000000000", decimals: 6 },
+      largest: [],
+    });
+    const mainnet = "https://api.mainnet-beta.solana.com";
+    const other = "https://solana-rpc.publicnode.com";
+    const supplyOf = (retries: number, fail: (endpoint: string, hit: number) => { status: number; body: string } | null) => {
+      const calls: string[] = [];
+      const hits = new Map<string, number>();
+      const transport: RpcTransport = async (endpoint, body, timeoutMs) => {
+        const method = (JSON.parse(body) as { method: string }).method;
+        if (method === "getTokenSupply") {
+          calls.push(endpoint);
+          const hit = (hits.get(endpoint) ?? 0) + 1;
+          hits.set(endpoint, hit);
+          const failed = fail(endpoint, hit);
+          if (failed) return failed;
+        }
+        return base(endpoint, body, timeoutMs);
+      };
+      return {
+        calls,
+        run: () =>
+          readAnyMint({
+            mint: sample.mint,
+            registry,
+            endpoints: [other, mainnet],
+            transport,
+            maxRetries: retries,
+            minIntervalMs: 0,
+            sleep: async () => {},
+          }),
+      };
+    };
+    const cut = supplyOf(0, (endpoint) => (endpoint === mainnet ? { status: 0, body: "" } : null));
+    const moved = await cut.run();
+    assert.deepEqual(cut.calls, [mainnet]);
+    assert.equal(moved.ok, true);
+    assert.equal(moved.facts?.find((item) => item.id === "suministro-extra")?.state, "fallo");
+    const retried = supplyOf(1, (endpoint) => (endpoint === mainnet ? { status: 0, body: "" } : null));
+    const afterRetry = await retried.run();
+    assert.deepEqual(retried.calls, [mainnet, mainnet]);
+    assert.equal(afterRetry.facts?.find((item) => item.id === "suministro-extra")?.state, "fallo");
+    const refused = supplyOf(0, () => ({ status: 403, body: "" }));
+    const stayed = await refused.run();
+    assert.deepEqual(refused.calls, [mainnet]);
+    assert.match(stayed.signals.find((item) => item.id === "suministro")?.explain.es ?? "", /no respondió/);
+    const thrown: string[] = [];
+    const fetched = await readAnyMint({
+      mint: sample.mint,
+      registry,
+      endpoints: [other, mainnet],
+      transport: async (endpoint, body, timeoutMs) => {
+        const method = (JSON.parse(body) as { method: string }).method;
+        if (method === "getTokenSupply" && endpoint === mainnet) {
+          thrown.push(endpoint);
+          throw new TypeError("Failed to fetch");
+        }
+        return base(endpoint, body, timeoutMs);
+      },
+      maxRetries: 0,
+      minIntervalMs: 0,
+      sleep: async () => {},
+    });
+    assert.deepEqual(thrown, [mainnet]);
+    assert.equal(fetched.facts?.find((item) => item.id === "suministro-extra")?.state, "fallo");
+    const both = supplyOf(0, () => ({ status: 0, body: "" }));
+    const none = await both.run();
+    assert.deepEqual(both.calls, [mainnet]);
+    assert.equal(none.facts?.find((item) => item.id === "suministro-extra")?.state, "fallo");
+  });
 });

@@ -401,9 +401,22 @@ function canonicalJson(value) {
     return `{${keys.map((key) => `${JSON.stringify(key)}:${canonicalJson(record[key])}`).join(",")}}`;
 }
 
+/** Corte de red: no hubo respuesta del nodo. Un 403 o un error del mint no entran aquí. */
+function isNetworkFailure(result) {
+    if (result.ok) {
+        return false;
+    }
+    if (result.httpStatus === 0) {
+        return true;
+    }
+    return /failed to fetch|\bHTTP 0\b|error de red|fetch failed|ECONN|ENET|ENOTFOUND|socket/i.test(result.error ?? "");
+}
 function isRetryableFailure(result) {
     if (result.ok) {
         return false;
+    }
+    if (isNetworkFailure(result)) {
+        return true;
     }
     const status = result.httpStatus ?? null;
     // 403, 429 y el tiempo agotado los pone el servicio (cortafuegos, cupo o corte).
@@ -412,7 +425,7 @@ function isRetryableFailure(result) {
     if (status === 403 || status === 429 || status === 408 || (status !== null && status >= 500)) {
         return true;
     }
-    return /429|403|too many|rate limit|timeout|timed out|tiempo de espera|network|fetch failed|ECONN|ENET|ENOTFOUND|socket|access forbidden|personal token|indexed request|request blocked/i.test(result.error ?? "");
+    return /429|403|too many|rate limit|timeout|timed out|tiempo de espera|network|access forbidden|personal token|indexed request|request blocked/i.test(result.error ?? "");
 }
 function classifyRpcFailure(error, httpStatus) {
     if (httpStatus === 429 || /429|too many|rate limit/i.test(error)) {
@@ -2053,7 +2066,8 @@ function mainnetOnlyClient(input, timeoutMs) {
     });
 }
 async function optionalMainnetSupply(mint, input) {
-    // getTokenSupply en publicnode responde 403 por diseño. Solo se pide a mainnet-beta.
+    // getTokenSupply en publicnode responde 403 por diseño. Un corte de red tampoco
+    // prueba ese nodo: el método sigue cerrado allí.
     return mainnetOnlyClient(input, input.timeoutMs ?? 8000).getTokenSupply(mint);
 }
 function groupFacts(facts) {

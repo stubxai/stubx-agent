@@ -29,7 +29,7 @@ function serve(dir) {
         const body = readFileSync(file);
         const type = file.endsWith(".css")
           ? "text/css"
-          : file.endsWith(".js")
+          : file.endsWith(".js") || file.endsWith(".mjs")
             ? "text/javascript"
             : file.endsWith(".svg")
               ? "image/svg+xml"
