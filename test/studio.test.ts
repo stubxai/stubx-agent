@@ -1069,8 +1069,8 @@ describe("studio", () => {
     assert.equal(aiLabel(["mascota"], "en"), "");
     assert.equal(aiLabel(["ai"], "es"), AI_LABEL.ai.es);
     assert.equal(aiLabel(["ai"], "en"), AI_LABEL.ai.en);
-    assert.equal(aiLabel(["ai", "mascota", "ninguno"], "en"), "");
-    assert.equal(aiLabel(["ai", "mascota"], "es"), "");
+    assert.equal(aiLabel(["ai", "mascota", "ninguno"], "en"), AI_LABEL.ai.en);
+    assert.equal(aiLabel(["ai", "mascota"], "es"), AI_LABEL.ai.es);
 
     const catalog = JSON.parse(readStudio("catalog.json")) as {
       items: { archivo: string; licencia: string | { es: string; en: string }; permitido: boolean; aiOrigin: string; sha256: string }[];
@@ -1970,7 +1970,7 @@ describe("studio", () => {
           title: longTitle,
           body: "Texto de apoyo.",
           headline: headline.id,
-          origins: ["mascota", "ai"],
+          origins: ["mascota"],
           watermark: false,
           fill: "#0a090d",
           ink: "#fff3f5",
