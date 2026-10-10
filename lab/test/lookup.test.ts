@@ -50,8 +50,10 @@ describe("lectura de una dirección", () => {
     }
     const copy = classifyAddress(clone, cards, "lista");
     assert.equal(copy.kind, "copia");
-    assert.equal(copy.light, "riesgo");
-    assert.equal(copy.title.es, "Cuidado: posible copia");
+    assert.equal(copy.light, "atencion");
+    assert.equal(copy.title.es, "Se parece a STUBX, pero no es la CA oficial");
+    assert.equal(copy.lightLabel.es, "Se parece a STUBX, pero no es la CA oficial");
+    assert.match(copy.support.es, /La única CA oficial es /);
     assert.equal(copy.rows.find((row) => row.label.es === "Señal de copia")?.value.es, "Sí");
     const other = classifyAddress(usdc, cards, "lista");
     assert.equal(other.kind, "otra");
@@ -126,7 +128,9 @@ describe("lectura de una dirección", () => {
     assert.equal(exact.title.es, "Parece el STUBX oficial");
     assert.equal(exact.support.es.includes("No es la dirección oficial"), false);
     const copy = classifyAddress(clone, cards, "lista", evm);
-    assert.equal(copy.title.es, "Cuidado: posible copia");
+    assert.equal(copy.light, "atencion");
+    assert.equal(copy.title.es, "Se parece a STUBX, pero no es la CA oficial");
+    assert.equal(/copia|riesgo/i.test(copy.title.es), false);
     const other = classifyAddress(usdc, cards, "lista", evm);
     assert.equal(other.title.es, "No es el STUBX oficial");
     const far = classifyAddress(wrappedSol, cards, "caida", evm);
@@ -134,11 +138,33 @@ describe("lectura de una dirección", () => {
     assert.notEqual(far.kind, "lectura_caida");
   });
 
+  test("con el RPC caído un clon del registro no sale como posible copia ni en rojo", () => {
+    const down = classifyAddress(clone, cards, "caida", evm);
+    assert.notEqual(down.light, "riesgo");
+    assert.equal(/copia|riesgo/i.test(down.title.es), false);
+    assert.equal((down.support.es + (down.partialNote?.es ?? "")).includes("no consulta la red"), false);
+    const reserve = classifyAddress(clone, cards, "lista", evm);
+    assert.equal(reserve.kind, "copia");
+    assert.equal(reserve.light, "atencion");
+    assert.equal(reserve.title.es, "Se parece a STUBX, pero no es la CA oficial");
+    assert.equal(reserve.title.en, "Looks like STUBX, but it is not the official CA");
+    assert.match(reserve.support.es, /Esto no dice quién lo creó ni con qué intención/);
+    assert.equal(/copia|riesgo/i.test(reserve.title.es), false);
+  });
+
   test("sin ficha conocida y con la lectura caída no se inventa un resultado", () => {
     const missing = classifyAddress(wrappedSol, cards, "lista");
     assert.equal(missing.kind, "sin_ficha");
     assert.equal(missing.title.es, "No es la dirección oficial");
-    assert.match(missing.partialNote?.es ?? "", /no consulta la red/);
+    assert.equal(
+      missing.partialNote?.es,
+      "No hay ficha de ejemplo. La lista no es completa y no hay lectura en directo de esta dirección, así que no rellena el hueco.",
+    );
+    assert.equal(
+      missing.partialNote?.en,
+      "There is no example card. The list is not complete and there is no live reading of this address, so it does not fill the gap.",
+    );
+    assert.equal((missing.partialNote?.es ?? "").includes("no consulta la red"), false);
     assert.equal(missing.rows.length, 0);
     const down = classifyAddress(official, cards, "caida");
     assert.equal(down.kind, "lectura_caida");

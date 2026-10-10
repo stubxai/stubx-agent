@@ -338,12 +338,18 @@ describe("web v2", () => {
     assert.equal(/gtag|google-analytics|googletagmanager|plausible|posthog/i.test(bundle), false);
     assert.equal(bundle.includes("\uFFFD"), false);
     const snap = JSON.parse(read("modules/snapshot.json")) as {
+      pr: number;
+      branch: string;
       commit: string;
       inBranch: boolean;
       liveNetwork: boolean;
       cardsDate: string;
+      note: string;
     };
-    assert.equal(snap.commit, "fa9a500dac16251aa5d3831d59717981fb434be6");
+    assert.equal(snap.pr, 21);
+    assert.equal(snap.branch, "feat/verify-universal");
+    assert.equal(JSON.stringify(snap).includes("feat/lab-mision-1"), false);
+    assert.equal(JSON.stringify(snap).includes('"pr":14'), false);
     const cited = spawnSync("git", ["rev-parse", `${snap.commit}:lab/verify/lookup.ts`], { cwd: repoRoot(), encoding: "utf8" });
     const headLookup = spawnSync("git", ["rev-parse", "HEAD:lab/verify/lookup.ts"], { cwd: repoRoot(), encoding: "utf8" });
     assert.equal(cited.status, 0, cited.stderr);
@@ -377,7 +383,9 @@ describe("web v2", () => {
     assert.match(officialCard.holdersNote ?? "", /0\.0000 %/);
     const clone = lookup.classifyAddress(CLONE, data.cards, "lista", data.evm);
     assert.equal(clone.kind, "copia");
-    assert.equal(clone.light, "riesgo");
+    assert.equal(clone.light, "atencion");
+    assert.equal(clone.title.es, "Se parece a STUBX, pero no es la CA oficial");
+    assert.equal(/copia|riesgo/i.test(clone.title.es), false);
     const ery = lookup.classifyAddress("ERYyyaE2Y2GuKB28YbC2w1nCuQ5ENQ89LR44kicvpump", data.cards, "lista", data.evm);
     assert.equal(ery.kind, "copia");
     const fmn = lookup.classifyAddress("FMNb4CR8ksibmgY7Ztei6BWcZXi3WHcVeJhYb9TNpump", data.cards, "lista", data.evm);
@@ -599,7 +607,10 @@ describe("web v2", () => {
       encoding: "utf8",
     });
     assert.equal(run.status, 0, `${run.stdout}\n${run.stderr}`);
-    assert.match(run.stdout, /fa9a500dac16251aa5d3831d59717981fb434be6/);
+    const snap = JSON.parse(readFileSync(path.join(root, "web/v2/modules/snapshot.json"), "utf8")) as { pr: number; branch: string; commit: string };
+    assert.equal(snap.pr, 21);
+    assert.equal(snap.branch, "feat/verify-universal");
+    assert.match(run.stdout, new RegExp(snap.commit));
     const same = (left: string, right: string) => {
       assert.equal(readFileSync(path.join(root, left), "utf8"), readFileSync(path.join(root, right), "utf8"), left);
     };

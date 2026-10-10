@@ -153,7 +153,7 @@ describe("lectura universal con RPC simulado", () => {
     assert.equal(reading.ok, true);
     assert.equal(reading.title.es, "Lectura de este token");
     assert.equal(reading.signals.find((item) => item.id === "emision")?.level, "neutro");
-    assert.equal(reading.signals.find((item) => item.id === "congelacion")?.level, "ok");
+    assert.equal(reading.signals.find((item) => item.id === "congelacion")?.level, "neutro");
     assert.match(textOf(reading), /Cuentas con tokens/);
     assert.equal(/\bholders?\b|reserva|\breserve\b|scam|recomendado|\bseguro\b/i.test(textOf(reading)), false);
   });
@@ -202,6 +202,7 @@ describe("lectura universal con RPC simulado", () => {
     assert.equal(reading.title.es, "Esta dirección es la del registro de STUBX");
     assert.equal(reading.light, "ok");
     assert.equal(reading.signals.find((item) => item.id === "emision")?.level, "ok");
+    assert.equal(reading.signals.find((item) => item.id === "congelacion")?.level, "ok");
     assert.match(reading.rows.map((row) => row.label.es).join(" "), /Momento/);
     assert.match(reading.rows.map((row) => row.value.es).join(" "), /slot 1/);
     assert.equal(reading.canSample, true);
@@ -217,7 +218,10 @@ describe("lectura universal con RPC simulado", () => {
   test("si el suministro no cuadra no hay porcentajes", async () => {
     const reading = await readFixture(fixture("supply-mismatch"));
     const supply = reading.signals.find((item) => item.id === "suministro");
+    assert.equal(supply?.level, "atencion");
     assert.match(supply?.explain.es ?? "", /No se calculan porcentajes/);
+    assert.equal(reading.signals.some((item) => item.id === "fuentes"), false);
+    assert.equal(reading.sources.some((item) => item.host === "api.mainnet-beta.solana.com"), false);
     const sample = reading.signals.find((item) => item.id === "cuentas");
     assert.equal(/\d+(?:\.\d+)? %/.test(sample?.explain.es ?? ""), false);
   });
@@ -341,7 +345,7 @@ describe("lectura universal con RPC simulado", () => {
     assert.match(supplyRefused.signals.find((item) => item.id === "suministro")?.explain.es ?? "", /no respondió/);
   });
 
-  test("si un dato sale de otro servicio, la ficha lo dice", async () => {
+  test("un fallo de getTokenSupply no junta servicios ni baja la lectura", async () => {
     const sample = fixture("revoked-mint");
     const accounts = new Map<string, AccountFixture | null>([
       [sample.mint, sample.mintAccount],
@@ -354,13 +358,15 @@ describe("lectura universal con RPC simulado", () => {
       supply: { amount: "1000000000000000", decimals: 6 },
       largest: [],
     });
+    const supplyCalls: string[] = [];
     const reading = await readAnyMint({
       mint: sample.mint,
       registry,
       endpoints: ["https://rpc-a.invalid", "https://rpc-b.invalid"],
       transport: async (endpoint, body, timeoutMs) => {
         const method = (JSON.parse(body) as { method: string }).method;
-        if (endpoint === "https://rpc-a.invalid" && method === "getTokenSupply") {
+        if (method === "getTokenSupply") {
+          supplyCalls.push(endpoint);
           return { status: 429, body: "" };
         }
         return base(endpoint, body, timeoutMs);
@@ -370,12 +376,64 @@ describe("lectura universal con RPC simulado", () => {
       sleep: async () => {},
     });
     assert.equal(reading.ok, true);
+    assert.deepEqual(supplyCalls, ["https://api.mainnet-beta.solana.com"]);
     const text = reading.rows.map((row) => `${row.label.es} ${row.value.es}`).join("\n");
     assert.match(text, /rpc-a\.invalid/);
-    assert.match(text, /rpc-b\.invalid/);
+    assert.equal(text.includes("rpc-b.invalid"), false);
     assert.match(text, /slot/);
     assert.match(text, /Madrid/);
-    assert.match(text, /Esta lectura junta más de un servicio/);
+    assert.equal(reading.signals.some((item) => item.id === "fuentes"), false);
+    assert.equal(text.includes("Esta lectura junta más de un servicio"), false);
+    const supply = reading.signals.find((item) => item.id === "suministro");
+    assert.equal(supply?.level, "neutro");
+    assert.match(supply?.explain.es ?? "", /bytes del mint/);
+    assert.match(supply?.explain.es ?? "", /no respondió/);
+    assert.equal(reading.light, "neutro");
+  });
+
+  test("un 403 de getTokenSupply no baja la CA oficial y solo prueba mainnet-beta", async () => {
+    const mint = registry[0]?.mint ?? "";
+    assert.equal(mint, "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump");
+    const sample = fixture("revoked-mint");
+    const accounts = new Map<string, AccountFixture | null>([
+      [mint, sample.mintAccount],
+      [metadataPda(mint), null],
+      [bondingCurvePda(mint), null],
+    ]);
+    const supplyCalls: string[] = [];
+    const reading = await readAnyMint({
+      mint,
+      registry,
+      endpoints: ["https://solana-rpc.publicnode.com", "https://api.mainnet-beta.solana.com"],
+      transport: async (endpoint, body, timeoutMs) => {
+        const method = (JSON.parse(body) as { method: string }).method;
+        if (method === "getTokenSupply") {
+          supplyCalls.push(endpoint);
+          return { status: 403, body: "" };
+        }
+        return transportFor({
+          slot: sample.slot,
+          accounts,
+          supply: { amount: "1000000000000000", decimals: 6 },
+          largest: [],
+        })(endpoint, body, timeoutMs);
+      },
+      maxRetries: 0,
+      minIntervalMs: 0,
+      sleep: async () => {},
+    });
+    assert.deepEqual(supplyCalls, ["https://api.mainnet-beta.solana.com"]);
+    assert.equal(reading.ok, true);
+    assert.equal(reading.light, "ok");
+    assert.equal(reading.title.es, "Esta dirección es la del registro de STUBX");
+    const supply = reading.signals.find((item) => item.id === "suministro");
+    assert.equal(supply?.level, "neutro");
+    assert.match(supply?.explain.es ?? "", /bytes del mint/);
+    assert.match(supply?.explain.es ?? "", /no respondió/);
+    assert.equal(reading.signals.some((item) => item.id === "fuentes"), false);
+    assert.equal(reading.sources.some((item) => item.host === "api.mainnet-beta.solana.com"), false);
+    assert.equal(reading.signals.find((item) => item.id === "congelacion")?.level, "ok");
+    assert.equal(reading.signals.find((item) => item.id === "emision")?.level, "ok");
   });
 
   test("la lectura automática no pide las cuentas más grandes", async () => {

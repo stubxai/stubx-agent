@@ -15,7 +15,7 @@ import {
   metadataPda,
 } from "./programs.js";
 import { decodeBondingCurve } from "./pump.js";
-import { RpcClient, type AccountInfo, type ChainReader, type RpcResult, type RpcTransport } from "./rpc.js";
+import { RpcClient, type AccountInfo, type ChainReader, type RpcResult, type RpcTransport, type TokenAmount } from "./rpc.js";
 import type { CanonicalToken, ExtensionReport } from "./types.js";
 
 export type Localized = { es: string; en: string };
@@ -301,7 +301,7 @@ export async function readAnyMint(input: ReadMintInput): Promise<LiveReading> {
       }),
   );
   const rpc = new FallbackRpc(readers, endpoints);
-  return readWith(checked.mint, input.registry, rpc);
+  return readWith(checked.mint, input.registry, rpc, input);
 }
 
 export async function readLargestAccounts(input: ReadMintInput): Promise<Signal> {
@@ -361,7 +361,29 @@ export async function readLargestAccounts(input: ReadMintInput): Promise<Signal>
   return sample.signal;
 }
 
-async function readWith(mint: string, registry: readonly CanonicalToken[], rpc: FallbackRpc): Promise<LiveReading> {
+const OPTIONAL_SUPPLY_URL = "https://api.mainnet-beta.solana.com";
+
+async function optionalMainnetSupply(mint: string, input: ReadMintInput): Promise<RpcResult<TokenAmount>> {
+  const client = new RpcClient({
+    endpoint: OPTIONAL_SUPPLY_URL,
+    transport: input.transport,
+    timeoutMs: input.timeoutMs ?? 8000,
+    maxRetries: 0,
+    minIntervalMs: input.minIntervalMs ?? 200,
+    now: input.now,
+    sleep: input.sleep,
+    random: input.random,
+    signal: input.signal,
+  });
+  return client.getTokenSupply(mint);
+}
+
+async function readWith(
+  mint: string,
+  registry: readonly CanonicalToken[],
+  rpc: FallbackRpc,
+  input: ReadMintInput,
+): Promise<LiveReading> {
   const meta = metadataPda(mint);
   const curve = bondingCurvePda(mint);
   const packed = await rpc.getMultipleAccounts([mint, meta, curve]);
@@ -454,7 +476,7 @@ async function readWith(mint: string, registry: readonly CanonicalToken[], rpc: 
     );
     return { ...unread, ok: true, endpointHost: hostOf(rpc.lastEndpoint), usedFallback: rpc.usedFallback, slot: packed.slot };
   }
-  const supply = await rpc.getTokenSupply(mint);
+  const supply = await optionalMainnetSupply(mint, input);
   rememberSlot(supply, slots);
   const metaplex = metaInfo ? decodeMetaplex(metaInfo.owner, metaInfo.data, mint) : null;
   const bonding = curveInfo && curveInfo.owner === PUMP_PROGRAM ? decodeBondingCurve(curveInfo.owner, curveInfo.data) : null;
@@ -480,6 +502,7 @@ async function readWith(mint: string, registry: readonly CanonicalToken[], rpc: 
         : "This is an SPL Token mint. That program does not carry Token-2022 extensions.",
     ),
   });
+  const byteSupply = formatUnits(decoded.supplyRaw, decoded.decimals);
   const supplyMatches =
     supply.ok && supply.value.amount === decoded.supplyRaw.toString() && supply.value.decimals === decoded.decimals;
   signals.push({
@@ -489,18 +512,18 @@ async function readWith(mint: string, registry: readonly CanonicalToken[], rpc: 
     explain: loc(
       supply.ok
         ? supplyMatches
-          ? `Hay ${formatUnits(decoded.supplyRaw, decoded.decimals)} tokens, con ${decoded.decimals} decimales. Las dos lecturas del suministro coinciden.`
-          : `Los bytes del mint dicen ${formatUnits(decoded.supplyRaw, decoded.decimals)} con ${decoded.decimals} decimales, y la otra lectura no coincide. No se calculan porcentajes.`
-        : `Los bytes del mint dicen ${formatUnits(decoded.supplyRaw, decoded.decimals)} con ${decoded.decimals} decimales. La otra lectura del suministro no respondió, así que no hay porcentajes.`,
+          ? `Hay ${byteSupply} tokens, con ${decoded.decimals} decimales, leídos de los bytes del mint. La lectura extra coincide.`
+          : `Los bytes del mint dicen ${byteSupply} con ${decoded.decimals} decimales, y la lectura extra no coincide. Se muestra la cifra de los bytes. No se calculan porcentajes.`
+        : `Hay ${byteSupply} tokens, con ${decoded.decimals} decimales, leídos de los bytes del mint. La lectura extra del suministro no respondió. Eso no cambia esta cifra.`,
       supply.ok
         ? supplyMatches
-          ? `There are ${formatUnits(decoded.supplyRaw, decoded.decimals)} tokens, with ${decoded.decimals} decimals. The two supply reads match.`
-          : `The mint bytes say ${formatUnits(decoded.supplyRaw, decoded.decimals)} with ${decoded.decimals} decimals, and the other read does not match. Percentages are not calculated.`
-        : `The mint bytes say ${formatUnits(decoded.supplyRaw, decoded.decimals)} with ${decoded.decimals} decimals. The other supply read did not respond, so there are no percentages.`,
+          ? `There are ${byteSupply} tokens, with ${decoded.decimals} decimals, read from the mint bytes. The extra read matches.`
+          : `The mint bytes say ${byteSupply} with ${decoded.decimals} decimals, and the extra read does not match. The figure shown is the one from the bytes. Percentages are not calculated.`
+        : `There are ${byteSupply} tokens, with ${decoded.decimals} decimals, read from the mint bytes. The extra supply read did not respond. That does not change this figure.`,
     ),
   });
   signals.push(authoritySignal("emision", decoded.mintAuthority, likeness.inRegistry));
-  signals.push(authoritySignal("congelacion", decoded.freezeAuthority, true));
+  signals.push(authoritySignal("congelacion", decoded.freezeAuthority, likeness.inRegistry));
   signals.push(...extensionSignals(decoded.extensions, decoded.extensionsParsed));
   signals.push(...metadataSignals(decoded.tokenMetadata, metaplex, likeness.inRegistry));
   if ([...names, ...symbols].some((item) => item.includes("\uFFFD"))) {
@@ -647,7 +670,7 @@ function authoritySignal(
   if (authority.state === "revocada") {
     return {
       id: kind,
-      level: minting && !official ? "neutro" : "ok",
+      level: official ? "ok" : "neutro",
       title: loc(
         minting ? "Nadie puede crear más tokens con ese permiso" : "Nadie puede congelar cuentas con ese permiso",
         minting ? "Nobody can create more tokens with that permission" : "Nobody can freeze accounts with that permission",

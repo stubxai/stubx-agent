@@ -32,12 +32,12 @@ const COPY = {
         },
     },
     copia: {
-        light: "riesgo",
-        lightLabel: { es: "Posible copia", en: "Possible copy" },
-        title: { es: "Cuidado: posible copia", en: "Careful: possible copy" },
+        light: "atencion",
+        lightLabel: { es: "Se parece a STUBX, pero no es la CA oficial", en: "Looks like STUBX, but it is not the official CA" },
+        title: { es: "Se parece a STUBX, pero no es la CA oficial", en: "Looks like STUBX, but it is not the official CA" },
         support: {
-            es: "El nombre se parece, pero la dirección no es la del registro. Esto no dice quién lo hizo.",
-            en: "The name looks similar, but the address is not the registry one. This does not say who did it.",
+            es: `El nombre o el símbolo se parece a STUBX y la dirección es otra. Esto no dice quién lo creó ni con qué intención. La única CA oficial es ${OFFICIAL_MINT}.`,
+            en: `The name or the symbol looks like STUBX and the address is different. This does not say who created it or why. The only official CA is ${OFFICIAL_MINT}.`,
         },
     },
     otra: {
@@ -54,8 +54,8 @@ const COPY = {
         lightLabel: { es: "Sin ficha", en: "No card" },
         title: { es: "No se pudo comprobar", en: "Could not be checked" },
         support: {
-            es: "No está entre las fichas de ejemplo. La lista no es completa y esta página no consulta la red, así que no rellena el hueco.",
-            en: "It is not among the example cards. The list is not complete and this page does not query the network, so it does not fill the gap.",
+            es: "No está entre las fichas de ejemplo. La lista no es completa y no hay lectura en directo de esta dirección, así que no rellena el hueco.",
+            en: "It is not among the example cards. The list is not complete and there is no live reading of this address, so it does not fill the gap.",
         },
     },
     lectura_caida: {
@@ -152,8 +152,8 @@ function officialMintOf(cards) {
     return cards.find((card) => card.role === "registro")?.mint ?? OFFICIAL_MINT;
 }
 const NOT_OFFICIAL_GAP = {
-    es: "No hay ficha de ejemplo. La lista no es completa y esta página no consulta la red, así que no rellena el hueco.",
-    en: "There is no example card. The list is not complete and this page does not query the network, so it does not fill the gap.",
+    es: "No hay ficha de ejemplo. La lista no es completa y no hay lectura en directo de esta dirección, así que no rellena el hueco.",
+    en: "There is no example card. The list is not complete and there is no live reading of this address, so it does not fill the gap.",
 };
 function notOfficialView(mint, official) {
     const caseOnly = mint !== official && mint.toLowerCase() === official.toLowerCase();
@@ -1944,7 +1944,7 @@ async function readAnyMint(input) {
         signal: input.signal,
     }));
     const rpc = new FallbackRpc(readers, endpoints);
-    return readWith(checked.mint, input.registry, rpc);
+    return readWith(checked.mint, input.registry, rpc, input);
 }
 async function readLargestAccounts(input) {
     const checked = validateMint(input.mint.trim());
@@ -1987,7 +1987,22 @@ async function readLargestAccounts(input) {
     const sample = await accountSample(rpc, checked.mint, program, bondingCurvePda(checked.mint), largest, null);
     return sample.signal;
 }
-async function readWith(mint, registry, rpc) {
+const OPTIONAL_SUPPLY_URL = "https://api.mainnet-beta.solana.com";
+async function optionalMainnetSupply(mint, input) {
+    const client = new RpcClient({
+        endpoint: OPTIONAL_SUPPLY_URL,
+        transport: input.transport,
+        timeoutMs: input.timeoutMs ?? 8000,
+        maxRetries: 0,
+        minIntervalMs: input.minIntervalMs ?? 200,
+        now: input.now,
+        sleep: input.sleep,
+        random: input.random,
+        signal: input.signal,
+    });
+    return client.getTokenSupply(mint);
+}
+async function readWith(mint, registry, rpc, input) {
     const meta = metadataPda(mint);
     const curve = bondingCurvePda(mint);
     const packed = await rpc.getMultipleAccounts([mint, meta, curve]);
@@ -2060,7 +2075,7 @@ async function readWith(mint, registry, rpc) {
         const unread = blank("lectura", mint, loc("No se pudo leer el mint", "The mint could not be read"), loc("La cuenta es del programa de tokens, pero sus bytes no se pudieron separar. No se inventan permisos.", "The account belongs to a token program, but its bytes could not be split. Permissions are not invented."));
         return { ...unread, ok: true, endpointHost: hostOf(rpc.lastEndpoint), usedFallback: rpc.usedFallback, slot: packed.slot };
     }
-    const supply = await rpc.getTokenSupply(mint);
+    const supply = await optionalMainnetSupply(mint, input);
     rememberSlot(supply, slots);
     const metaplex = metaInfo ? decodeMetaplex(metaInfo.owner, metaInfo.data, mint) : null;
     const bonding = curveInfo && curveInfo.owner === PUMP_PROGRAM ? decodeBondingCurve(curveInfo.owner, curveInfo.data) : null;
@@ -2080,6 +2095,7 @@ async function readWith(mint, registry, rpc) {
             ? "This is a Token-2022 mint. It can carry extensions. Each extension below is read on its own."
             : "This is an SPL Token mint. That program does not carry Token-2022 extensions."),
     });
+    const byteSupply = formatUnits(decoded.supplyRaw, decoded.decimals);
     const supplyMatches = supply.ok && supply.value.amount === decoded.supplyRaw.toString() && supply.value.decimals === decoded.decimals;
     signals.push({
         id: "suministro",
@@ -2087,16 +2103,16 @@ async function readWith(mint, registry, rpc) {
         title: loc("Suministro y decimales", "Supply and decimals"),
         explain: loc(supply.ok
             ? supplyMatches
-                ? `Hay ${formatUnits(decoded.supplyRaw, decoded.decimals)} tokens, con ${decoded.decimals} decimales. Las dos lecturas del suministro coinciden.`
-                : `Los bytes del mint dicen ${formatUnits(decoded.supplyRaw, decoded.decimals)} con ${decoded.decimals} decimales, y la otra lectura no coincide. No se calculan porcentajes.`
-            : `Los bytes del mint dicen ${formatUnits(decoded.supplyRaw, decoded.decimals)} con ${decoded.decimals} decimales. La otra lectura del suministro no respondió, así que no hay porcentajes.`, supply.ok
+                ? `Hay ${byteSupply} tokens, con ${decoded.decimals} decimales, leídos de los bytes del mint. La lectura extra coincide.`
+                : `Los bytes del mint dicen ${byteSupply} con ${decoded.decimals} decimales, y la lectura extra no coincide. Se muestra la cifra de los bytes. No se calculan porcentajes.`
+            : `Hay ${byteSupply} tokens, con ${decoded.decimals} decimales, leídos de los bytes del mint. La lectura extra del suministro no respondió. Eso no cambia esta cifra.`, supply.ok
             ? supplyMatches
-                ? `There are ${formatUnits(decoded.supplyRaw, decoded.decimals)} tokens, with ${decoded.decimals} decimals. The two supply reads match.`
-                : `The mint bytes say ${formatUnits(decoded.supplyRaw, decoded.decimals)} with ${decoded.decimals} decimals, and the other read does not match. Percentages are not calculated.`
-            : `The mint bytes say ${formatUnits(decoded.supplyRaw, decoded.decimals)} with ${decoded.decimals} decimals. The other supply read did not respond, so there are no percentages.`),
+                ? `There are ${byteSupply} tokens, with ${decoded.decimals} decimals, read from the mint bytes. The extra read matches.`
+                : `The mint bytes say ${byteSupply} with ${decoded.decimals} decimals, and the extra read does not match. The figure shown is the one from the bytes. Percentages are not calculated.`
+            : `There are ${byteSupply} tokens, with ${decoded.decimals} decimals, read from the mint bytes. The extra supply read did not respond. That does not change this figure.`),
     });
     signals.push(authoritySignal("emision", decoded.mintAuthority, likeness.inRegistry));
-    signals.push(authoritySignal("congelacion", decoded.freezeAuthority, true));
+    signals.push(authoritySignal("congelacion", decoded.freezeAuthority, likeness.inRegistry));
     signals.push(...extensionSignals(decoded.extensions, decoded.extensionsParsed));
     signals.push(...metadataSignals(decoded.tokenMetadata, metaplex, likeness.inRegistry));
     if ([...names, ...symbols].some((item) => item.includes("\uFFFD"))) {
@@ -2210,7 +2226,7 @@ function authoritySignal(kind, authority, official) {
     if (authority.state === "revocada") {
         return {
             id: kind,
-            level: minting && !official ? "neutro" : "ok",
+            level: official ? "ok" : "neutro",
             title: loc(minting ? "Nadie puede crear más tokens con ese permiso" : "Nadie puede congelar cuentas con ese permiso", minting ? "Nobody can create more tokens with that permission" : "Nobody can freeze accounts with that permission"),
             explain: loc(minting
                 ? "La autoridad de emisión está revocada en esta lectura. Eso no demuestra que el proyecto sea legítimo."
@@ -2772,31 +2788,16 @@ function bootVerify() {
       signal: controller.signal,
     }).then(function (reading) {
       if (ticket !== generation || controller.signal.aborted) return;
+      if (!reading.ok) {
+        apply(classifyAddress(normalized, cards, "lista", evm), true);
+        return;
+      }
       var view = decorate(reading, normalized);
       if (view.ok) memory.set(normalized, { at: Date.now(), value: view });
       apply(view, true);
     }).catch(function () {
       if (ticket !== generation || controller.signal.aborted) return;
-      apply({
-        ok: false,
-        kind: "red",
-        mint: normalized,
-        light: "neutro",
-        lightLabel: { es: "No se pudo comprobar", en: "Could not be checked" },
-        title: { es: "No se pudo comprobar", en: "Could not be checked" },
-        support: {
-          es: "No se pudo comprobar: el servicio no respondió o rechazó la petición. No se ha inventado un resultado.",
-          en: "It could not be checked: the service did not respond or refused the request. No result was invented.",
-        },
-        signals: [],
-        rows: [],
-        endpointHost: null,
-        usedFallback: false,
-        slot: null,
-        fetchedAt: null,
-        sources: [],
-        canSample: false,
-      }, true);
+      apply(classifyAddress(normalized, cards, "lista", evm), true);
     }).then(function () {
       if (ticket === generation) setBusy(false);
     });

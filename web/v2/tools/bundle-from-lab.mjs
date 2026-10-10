@@ -138,9 +138,9 @@ writeFileSync(
 const unix = Number(git(["log", "-1", "--format=%ct", commit]));
 const when = Number.isFinite(unix) ? new Date(unix * 1000).toISOString().replace(".000Z", "+00:00") : "";
 const snapshot = {
-  kind: "pr14-browser-snapshot",
-  pr: 14,
-  branch: "feat/lab-mision-1",
+  kind: "verify-browser-snapshot",
+  pr: 21,
+  branch: "feat/verify-universal",
   commit,
   commitDate: when,
   cardsDate: "2026-10-09",
@@ -153,7 +153,7 @@ const snapshot = {
   missionBundle: "assets/mission.js",
   browserApi: "modules/verify/lookup.mjs",
   cards: "modules/verify/cards.json",
-  note: `Bundle regenerado desde lab/ en ${commit}. La página lee en el navegador, solo lectura, con los dos servicios públicos de limits.json. Este sitio no guarda la dirección, pero ese servicio recibe la dirección y la IP según sus propias condiciones. La ficha oficial incluye la cuenta personal publicada ${PERSONAL}. inBranch significa que ese commit está en esta rama. La PR 14 se fusionó en main el 2026-10-09. Esta copia no está publicada.`,
+  note: `Bundle regenerado desde lab/ en ${commit}, rama feat/verify-universal, PR 21. La página /verify/ lee en el navegador, solo lectura, con los servicios públicos de limits.json. Este sitio no guarda la dirección, pero ese servicio recibe la dirección y la IP según sus propias condiciones. La ficha oficial incluye la cuenta personal publicada ${PERSONAL}. inBranch significa que el commit citado es ancestro de esta rama. Esta copia no está publicada.`,
 };
 writeFileSync(path.join(root, "web/v2/modules/snapshot.json"), `${JSON.stringify(snapshot, null, 2)}\n`);
 console.log(`Bundle regenerado desde lab/ ${commit}.`);

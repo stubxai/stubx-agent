@@ -296,31 +296,16 @@ function bootVerify() {
       signal: controller.signal,
     }).then(function (reading) {
       if (ticket !== generation || controller.signal.aborted) return;
+      if (!reading.ok) {
+        apply(classifyAddress(normalized, cards, "lista", evm), true);
+        return;
+      }
       var view = decorate(reading, normalized);
       if (view.ok) memory.set(normalized, { at: Date.now(), value: view });
       apply(view, true);
     }).catch(function () {
       if (ticket !== generation || controller.signal.aborted) return;
-      apply({
-        ok: false,
-        kind: "red",
-        mint: normalized,
-        light: "neutro",
-        lightLabel: { es: "No se pudo comprobar", en: "Could not be checked" },
-        title: { es: "No se pudo comprobar", en: "Could not be checked" },
-        support: {
-          es: "No se pudo comprobar: el servicio no respondió o rechazó la petición. No se ha inventado un resultado.",
-          en: "It could not be checked: the service did not respond or refused the request. No result was invented.",
-        },
-        signals: [],
-        rows: [],
-        endpointHost: null,
-        usedFallback: false,
-        slot: null,
-        fetchedAt: null,
-        sources: [],
-        canSample: false,
-      }, true);
+      apply(classifyAddress(normalized, cards, "lista", evm), true);
     }).then(function () {
       if (ticket === generation) setBusy(false);
     });
