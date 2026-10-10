@@ -893,7 +893,7 @@ describe("studio", () => {
     assert.match(script, /injectComment/);
     assert.match(script, /navigator\.share/);
     assert.match(script, /exportAllowed/);
-    assert.match(script, /setTimeout\(\(\) => URL\.revokeObjectURL\(url\), 1000\)/);
+    assert.match(script, /setTimeout\(\(\) => URL\.revokeObjectURL\(url\), REVOKE_MS\)/);
     assert.equal(/link\.click\(\);\s*URL\.revokeObjectURL\(url\)/.test(script), false);
     assert.match(editor, /El borrador de Studio se guarda en este dispositivo/);
     assert.match(editor, /The Studio draft is saved on this device/);
@@ -1610,5 +1610,58 @@ describe("studio", () => {
     assert.equal(analyze("0".repeat(39)).blocked, false);
     assert.equal(analyze("0".repeat(40)).hits.some((hit) => hit.kind === "base58"), true);
     assert.equal(analyze("0".repeat(41)).blocked, false);
+  });
+});
+
+describe("Studio: guardar en iPhone", () => {
+  type Save = {
+    FILE_NAME: string;
+    REVOKE_MS: number;
+    isIOS: (nav: unknown) => boolean;
+    canShareFiles: (nav: unknown, file: unknown) => boolean;
+    saveMode: (opts: { ios: boolean; share: boolean }) => string;
+  };
+  const IPHONE = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1";
+  const PIXEL = "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0 Mobile Safari/537.36";
+
+  test("detecta iPhone, iPad con escritorio y no Android", async () => {
+    const { isIOS } = await load<Save>("lib/save.mjs");
+    assert.equal(isIOS({ userAgent: IPHONE }), true);
+    assert.equal(isIOS({ userAgent: "Mozilla/5.0 (Macintosh)", platform: "MacIntel", maxTouchPoints: 5 }), true);
+    assert.equal(isIOS({ userAgent: "Mozilla/5.0 (Macintosh)", platform: "MacIntel", maxTouchPoints: 0 }), false);
+    assert.equal(isIOS({ userAgent: PIXEL }), false);
+    assert.equal(isIOS(undefined), false);
+  });
+
+  test("solo comparte si el navegador acepta archivos", async () => {
+    const { canShareFiles } = await load<Save>("lib/save.mjs");
+    const share = () => Promise.resolve();
+    assert.equal(canShareFiles({ share, canShare: () => true }, {}), true);
+    assert.equal(canShareFiles({ share, canShare: () => false }, {}), false);
+    assert.equal(canShareFiles({ share }, {}), false);
+    assert.equal(canShareFiles({ canShare: () => true }, {}), false);
+    assert.equal(canShareFiles({ share, canShare: () => { throw new Error("x"); } }, {}), false);
+  });
+
+  test("elige compartir, abrir o descargar", async () => {
+    const { saveMode, REVOKE_MS, FILE_NAME } = await load<Save>("lib/save.mjs");
+    assert.equal(saveMode({ ios: true, share: true }), "share");
+    assert.equal(saveMode({ ios: true, share: false }), "open");
+    assert.equal(saveMode({ ios: false, share: true }), "download");
+    assert.equal(saveMode({ ios: false, share: false }), "download");
+    assert.ok(REVOKE_MS >= 60_000);
+    assert.equal(FILE_NAME, "studio.png");
+  });
+
+  test("la página trae el aviso de guardar en ES y EN y Compartir empieza oculto", () => {
+    const html = readStudio("index.html");
+    assert.match(html, /id="aviso-guardar"[^>]*hidden/);
+    assert.ok(html.includes("Mantén pulsada la imagen y elige Guardar en Fotos."));
+    assert.ok(html.includes("Press and hold the image and choose Save to Photos."));
+    assert.match(html, /id="compartir" hidden/);
+    const js = readStudio("studio.js");
+    assert.doesNotMatch(js, /revokeObjectURL\(url\), 1000\)/);
+    assert.match(js, /window\.open\(url, "_blank", "noopener"\)/);
+    assert.doesNotMatch(js, /= window\.open\(/);
   });
 });
