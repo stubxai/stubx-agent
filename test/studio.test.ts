@@ -638,13 +638,31 @@ describe("studio", () => {
       "msg me",
       "por pv",
       "p1ng m3",
-      "612345678",
-      "612 345 678",
-      "1 2 3 4 5 6 7 8 9",
       "+34 612 345 678",
+      "+34 612.345.678",
       "+12",
-      "1".repeat(31),
-      `${"1".repeat(20)}0${"1".repeat(20)}`,
+      "tel 612345678",
+      "tlf 612 345 678",
+      "teléfono 612.345.678",
+      "phone 612-345-678",
+      "llama al 612345678",
+      "call 612.345.678",
+      "whatsapp 612-345-678",
+      "ig",
+      "IG",
+      "snapchat",
+      "kik",
+      "mi line",
+      "line me",
+      "line @ana",
+      "viber",
+      "wechat",
+      "we chat",
+      "threema",
+      "mi session",
+      "session @ana",
+      "reddit dm",
+      "skype",
       "wasap",
       "whatsapp",
       "Ok. Escríbeme",
@@ -754,6 +772,20 @@ describe("studio", () => {
       "contenido no oficial",
       "@stubxaiextra",
       "12345678",
+      "1".repeat(31),
+      `${"1".repeat(20)}0${"1".repeat(20)}`,
+      "Supply: 1000000000",
+      "Bloque 312345678",
+      "612345678",
+      "612.345.678",
+      "612-345-678",
+      "line",
+      "la session de hoy",
+      "en linea",
+      "reddit",
+      "no respondas a nadie que te escriba por privado",
+      "Protege tu cartera",
+      "Be careful",
       "😀",
       "Una nota sin enlace.",
       "freedom",
@@ -870,10 +902,24 @@ describe("studio", () => {
     assert.equal(analyze("Mi Telegram: @x").hits.some((hit) => hit.term === "telegram"), true);
     assert.equal(analyze("signal").hits.some((hit) => hit.term === "signal"), true);
     assert.equal(analyze("por pv").hits.some((hit) => hit.term === "por pv"), true);
-    assert.equal(analyze("612345678").hits.some((hit) => hit.term === "telefono"), true);
+    assert.equal(analyze("Supply: 1000000000").blocked, false);
+    assert.equal(analyze("Bloque 312345678").blocked, false);
+    assert.equal(analyze("612345678").hits.some((hit) => hit.term === "telefono"), false);
+    assert.equal(analyze("tel 612345678").hits.some((hit) => hit.term === "telefono"), true);
+    assert.equal(analyze("teléfono 612.345.678").hits.some((hit) => hit.term === "telefono"), true);
+    assert.equal(analyze("phone 612-345-678").hits.some((hit) => hit.term === "telefono"), true);
     assert.equal(analyze("1".repeat(31)).hits.some((hit) => hit.kind === "base58"), false);
-    assert.equal(analyze("1".repeat(31)).hits.some((hit) => hit.term === "telefono"), true);
+    assert.equal(analyze("1".repeat(31)).blocked, false);
     assert.equal(analyze("12345678").blocked, false);
+    assert.equal(analyze("no respondas a nadie que te escriba por privado").hits.some((hit) => hit.term === "por privado"), false);
+    assert.equal(analyze("Protege tu cartera").blocked, false);
+    assert.equal(analyze("Be careful").blocked, false);
+    assert.equal(analyze("mi line").hits.some((hit) => hit.term === "line"), true);
+    assert.equal(analyze("line").blocked, false);
+    assert.equal(analyze("la session de hoy").blocked, false);
+    assert.equal(analyze("mi session").hits.some((hit) => hit.term === "session"), true);
+    assert.equal(analyze("reddit dm").blocked, true);
+    assert.equal(analyze("reddit").blocked, false);
     assert.equal(analyze("para mí la playa").blocked, false);
     assert.equal(analyze("Yo sí").blocked, false);
     assert.equal(analyze("elefante").blocked, false);
@@ -1781,11 +1827,9 @@ describe("studio", () => {
     assert.equal(analyze(`${bare[0]} y ${bare[1]}`).hits.some((hit) => hit.kind === "base58"), true, "dos evm con y");
     const irregular = `${wallet.slice(0, 3)}.${wallet.slice(3, 12)}_${wallet.slice(12, 14)},${wallet.slice(14)}`;
     assert.equal(analyze(irregular).hits.some((hit) => hit.kind === "base58"), true, "trozos irregulares");
-    assert.equal(analyze("0".repeat(39)).hits.some((hit) => hit.kind === "base58"), false);
-    assert.equal(analyze("0".repeat(39)).hits.some((hit) => hit.term === "telefono"), true);
+    assert.equal(analyze("0".repeat(39)).blocked, false);
     assert.equal(analyze("0".repeat(40)).hits.some((hit) => hit.kind === "base58"), true);
-    assert.equal(analyze("0".repeat(41)).hits.some((hit) => hit.kind === "base58"), false);
-    assert.equal(analyze("0".repeat(41)).hits.some((hit) => hit.term === "telefono"), true);
+    assert.equal(analyze("0".repeat(41)).blocked, false);
   });
 });
 
