@@ -164,6 +164,9 @@ describe("lectura universal con RPC simulado", () => {
     assert.equal(reading.title.es, "Lectura de este token");
     assert.equal(reading.signals.find((item) => item.id === "congelacion")?.level, "riesgo");
     assert.equal(reading.signals.find((item) => item.id === "emision")?.level, "atencion");
+    assert.match(reading.signals.find((item) => item.id === "emision")?.explain.es ?? "", /moneda estable/);
+    assert.match(reading.signals.find((item) => item.id === "emision")?.explain.es ?? "", /suministro fijo/);
+    assert.equal(/estafa|acus/i.test(reading.signals.find((item) => item.id === "emision")?.explain.es ?? ""), false);
     assert.match(reading.signals.find((item) => item.id === "cuentas")?.explain.es ?? "", /No es un censo/);
     assert.equal(/no se pide sola/.test(reading.signals.find((item) => item.id === "cuentas")?.explain.es ?? ""), false);
     assert.equal(/scam|recomendado|\bseguro\b/i.test(textOf(reading)), false);

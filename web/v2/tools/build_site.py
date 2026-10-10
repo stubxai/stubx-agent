@@ -385,6 +385,7 @@ def home() -> str:
 </div>
 <p class="lede">{t("STUBX Verify lee en directo, y solo en lectura, cualquier token SPL o Token-2022. También compara con fichas de ejemplo: la oficial está releída el 2026-10-09, con el saldo de la curva y el de la creadora. No pide una cuenta y no dice qué comprar.", "STUBX Verify reads any SPL or Token-2022 token live, and read-only. It also compares with example cards: the official one was read again on 2026-10-09, with the curve balance and the creator balance. It does not ask for an account and it does not say what to buy.")}</p>
 <p class="source">{t("La acción abre Verify: lectura en vivo y solo lectura, más las fichas fechadas del 2026-10-09 (commit 86df576). No es una puntuación. La PR 14 se fusionó en main el 2026-10-09.", "The action opens Verify: a live read-only reading, plus the dated cards of 2026-10-09 (commit 86df576). It is not a score. PR 14 was merged into main on 2026-10-09.")}</p>
+<p class="lede">{t("Agente Talón es la guía de estas páginas. Acompaña la lectura y no es un sello de aprobación.", "Agente Talón is the guide for these pages. It stays with the reading and it is not a seal of approval.")}</p>
 </div>
 <figure>
 <picture>
@@ -393,6 +394,18 @@ def home() -> str:
 </picture>
 <figcaption>{t("Agente Talón. No es un sello de aprobación.", "Agente Talón. It is not a seal of approval.")}</figcaption>
 </figure>
+</section>
+<section id="que-puedes">
+<h2>{t("Qué puedes hacer aquí", "What you can do here")}</h2>
+<p>{t("Sin cuenta, sin cartera y sin decirte qué hacer con un token.", "No account, no wallet, and no instruction about what to do with a token.")}</p>
+<div class="grid-3">
+<article class="paso"><h3>{t("Consultar un token de Solana", "Look up a Solana token")}</h3><p>{t("Pega una dirección en Verify. La página lee permisos y suministro, solo en lectura.", "Paste an address in Verify. The page reads permissions and supply, read-only.")}</p></article>
+<article class="paso"><h3>{t("Entender los permisos", "Understand the permissions")}</h3><p>{t("Un permiso de emisión activo puede ser habitual en una moneda estable. Importa si el proyecto prometió un suministro fijo. La lectura no acusa.", "An active mint authority can be common on a stablecoin. It matters if the project promised a fixed supply. The reading does not accuse.")}</p></article>
+<article class="paso"><h3>{t("Guardar y comparar", "Save and compare")}</h3><p>{t("El cuaderno guarda la lectura en este navegador. Comparar consultas muestra qué cambió y qué no se pudo determinar.", "The notebook saves the reading in this browser. Compare queries shows what changed and what could not be determined.")}</p></article>
+</div>
+<p>{t("Dos lecturas reales, como ejemplo y no como aval. Al abrirlas, la dirección va en el fragmento y la página la quita del historial.", "Two real readings, as an example and not as an endorsement. When they open, the address is in the fragment and the page removes it from the history.")}</p>
+<p><a class="primary" href="/verify/#a={CA}">{t("Leer la CA oficial de STUBX", "Read the official STUBX CA")}</a></p>
+<p><a href="/verify/#a=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v">{t("Leer USDC, un ejemplo público de otra dirección. No es STUBX.", "Read USDC, a public example of another address. It is not STUBX.")}</a></p>
 </section>
 <section class="ca-panel" id="contrato" aria-labelledby="ca-title">
 <h2 id="ca-title">{t("Contrato oficial", "Official contract")}</h2>
@@ -1319,6 +1332,7 @@ def aprender() -> str:
 <article class="card" id="guia-permisos"><h2><span class="lang es" lang="es">Interpretar permisos</span><span class="lang en" lang="en">Read permissions</span></h2>
 <div class="lang es" lang="es">
 <p>Un permiso no es una garantía. La autoridad de emisión, si está activa, puede aumentar el suministro de ese mint. Si está revocada y el campo está verificado, ese permiso concreto figura vacío en esa lectura.</p>
+<p>En una moneda estable, un permiso de emisión activo es habitual: quien la emite añade unidades cuando entra dinero. Si un proyecto prometió un suministro fijo, el mismo permiso permite crear más. La lectura no dice cuál de los dos casos es y no acusa.</p>
 <p>La autoridad de congelación es otro permiso. Revocada lo quita en esa lectura. Activa lo deja asignado a la dirección que muestra la ficha.</p>
 <p>En Token-2022 pueden aparecer extensiones después de la cuenta base. Si el tipo está en la lista, se muestra el nombre. Si no, queda en no soportada. En un mint SPL clásico las extensiones no aplican.</p>
 <p>Que el permiso de emisión esté revocado no impide que el precio baje y no predice la demanda ni la liquidez. Un ejemplo hipotético, no leído de la cadena: un token con la emisión revocada puede seguir sin liquidez.</p>
@@ -1327,6 +1341,7 @@ def aprender() -> str:
 </div>
 <div class="lang en" lang="en">
 <p>A permission is not a guarantee. Mint authority, if active, can increase the supply of that mint. If it is revoked and the field is verified, that specific permission is recorded as empty in that reading.</p>
+<p>On a stablecoin, an active mint authority is common: the issuer adds units when money comes in. If a project promised a fixed supply, the same permission can create more. The reading does not say which of the two cases this is, and it does not accuse.</p>
 <p>Freeze authority is a different permission. Revoked removes it in that reading. Active leaves it assigned to the address the card shows.</p>
 <p>On Token-2022, extensions can appear after the base account. If the type is on the list, the name is shown. If it is not, it stays not supported. On a classic SPL mint, extensions do not apply.</p>
 <p>A revoked mint authority does not stop the price from falling and does not predict demand or liquidity. A hypothetical example, not read from the chain: a token with mint authority revoked can still have no liquidity.</p>
