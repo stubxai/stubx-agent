@@ -810,7 +810,7 @@ describe("studio", () => {
     assert.match(editor, /JPG, PNG o WebP\. Si pasa de 2048 px, se reduce\./);
     assert.match(editor, /JPG, PNG or WebP\. If it is over 2048 px, it is reduced\./);
     assert.match(editor, /Este formato no se puede usar\. Prueba con JPG o PNG\./);
-    assert.match(editor, /This format cannot be used\. Try JPG or PNG\./);
+    assert.match(editor, /This format can’t be used\. Try JPG or PNG\./);
     assert.match(editor, /Los recursos de STUBX son la opción por defecto/);
     assert.match(editor, /STUBX assets are the default option/);
     assert.match(editor, /Ese archivo no sirve como logo/);
@@ -818,6 +818,7 @@ describe("studio", () => {
     assert.match(editor, /id="aviso-logo-peso"/);
     assert.match(editor, /El archivo pesa demasiado \(máx\. 8 MB\)\./);
     assert.match(editor, /The file is too large \(max\. 8 MB\)\./);
+    assert.match(readStudio("lib/logo.mjs"), /export const LOGO_MAX_BYTES = 8_000_000/);
     assert.match(editor, /La imagen es demasiado grande \(máx\. 8192 px\)\./);
     assert.match(editor, /The image is too large \(max\. 8192 px\)\./);
     assert.match(reglas, /El nombre del token pasa por el mismo filtro/);
