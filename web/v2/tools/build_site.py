@@ -486,9 +486,14 @@ def prepare_tool(name: str) -> str:
     )
     raw = raw.replace('<section id="resultado"', '<section id="resultado" tabindex="-1"', 1)
     if name == "verify":
-        raw = re.sub(r'<p class="aviso-fijo privacidad">.*?</p>', "", raw, count=1, flags=re.S)
-        raw = re.sub(r'<p id="aviso-guardar" class="aviso-fijo privacidad">.*?</p>', "", raw, count=1, flags=re.S)
-        raw = raw.replace("</div>\n</form>", "</div>\n" + aviso_html() + "\n</form>", 1)
+        raw = re.sub(
+            r'\s*<p(?: id="aviso-guardar")? class="aviso-fijo privacidad">.*?</p>',
+            "",
+            raw,
+            count=1,
+            flags=re.S,
+        )
+        raw = raw.replace("</form>", aviso_html() + "\n</form>", 1)
         extra = (
             '<p><button type="button" id="ver-lectura-caida">'
             + t(
