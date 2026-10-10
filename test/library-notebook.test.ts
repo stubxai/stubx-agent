@@ -321,6 +321,25 @@ describe("lector y cuaderno", () => {
     const notebook = readFileSync(path.join(root, "web/v2/cuaderno/index.html"), "utf8");
     assert.match(notebook, /puede haber cambiado/);
     assert.match(notebook, /this may have changed/);
+    assert.match(
+      notebook,
+      /Lo que escribes se guarda solo en este navegador\. No escribas claves, frases semilla ni datos personales\. Borrar lo elimina\. Para leer la cadena, tu navegador consulta un servicio público de Solana \(por defecto api\.mainnet-beta\.solana\.com, o el que elijas\), que recibe la dirección consultada y tu IP\./,
+    );
+    assert.match(
+      notebook,
+      /What you write is stored only in this browser\. Do not write keys, seed phrases, or personal data\. Clear deletes it\. To read the chain, your browser queries a public Solana service \(by default api\.mainnet-beta\.solana\.com, or the one you choose\), which receives the address and your IP\./,
+    );
+    assert.match(
+      notebook,
+      /las fichas y notas de este cuaderno se guardan en este navegador; la consulta pasa por el servicio de lectura elegido\./,
+    );
+    assert.match(
+      notebook,
+      /the cards and notes in this notebook are stored in this browser; the query goes through the chosen read service\./,
+    );
+    assert.match(notebook, /Si eliges otro lector, ese servicio recibe tus consultas y tu IP\. STUBX no lo revisa\./);
+    assert.match(notebook, /If you choose another reader, that service receives your queries and your IP\. STUBX does not review it\./);
+    assert.equal(notebook.toLowerCase().includes("mala inversión"), false);
     assert.match(notebook, /connect-src 'self' https:\/\/api\.mainnet-beta\.solana\.com/);
     assert.equal(notebook.includes("frame-ancestors"), false);
     assert.match(notebook, /No es una auditoría ni una recomendación\./);
