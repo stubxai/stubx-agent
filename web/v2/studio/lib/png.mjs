@@ -53,9 +53,78 @@ function samplesForColor(color) {
 /** Bytes del IDAT ya descomprimido: un byte de filtro por fila más las muestras. */
 export function pngRawSize(width, height, depth, color) {
   const samples = samplesForColor(color);
-  if (!samples || depth < 1 || depth > 16) return 0;
+  if (!samples || depth < 1 || depth > 16 || width < 1 || height < 1) return 0;
   const rowBytes = Math.ceil((width * samples * depth) / 8);
   return height * (1 + rowBytes);
+}
+
+function passPixels(limit, start, step) {
+  if (start >= limit) return 0;
+  return Math.floor((limit - 1 - start) / step) + 1;
+}
+
+/** Tope del IDAT descomprimido, también en Adam7. Por encima se corta la lectura. */
+export function pngInflatedCap(width, height, depth, color, interlace) {
+  if (!interlace) return pngRawSize(width, height, depth, color);
+  const samples = samplesForColor(color);
+  if (!samples || depth < 1 || depth > 16 || width < 1 || height < 1) return 0;
+  const passes = [
+    [0, 0, 8, 8],
+    [4, 0, 8, 8],
+    [0, 4, 4, 8],
+    [2, 0, 4, 4],
+    [0, 2, 2, 4],
+    [1, 0, 2, 2],
+    [0, 1, 1, 2],
+  ];
+  let total = 0;
+  for (const [x0, y0, xs, ys] of passes) {
+    const pw = passPixels(width, x0, xs);
+    const ph = passPixels(height, y0, ys);
+    if (!pw || !ph) continue;
+    const rowBytes = Math.ceil((pw * samples * depth) / 8);
+    total += ph * (1 + rowBytes);
+  }
+  return total;
+}
+
+export function pngHeader(png) {
+  const { width, height } = pngDimensions(png);
+  if (png.byteLength < 29) throw new Error("PNG no válido");
+  return { width, height, depth: png[24] ?? 0, color: png[25] ?? 0, interlace: png[28] ?? 0 };
+}
+
+/** Cuenta el IDAT descomprimido y lo tira. No guarda el resultado. */
+async function countInflatedBytes(data, maxOut) {
+  const stream = new Blob([data]).stream().pipeThrough(new DecompressionStream("deflate"));
+  const reader = stream.getReader();
+  let total = 0;
+  try {
+    while (true) {
+      const step = await reader.read();
+      if (step.done) break;
+      total += step.value.byteLength;
+      if (total > maxOut) {
+        await reader.cancel().catch(() => {});
+        throw new Error("PNG demasiado grande");
+      }
+    }
+  } catch (error) {
+    await reader.cancel().catch(() => {});
+    throw error;
+  }
+  return total;
+}
+
+/** Corta la bomba contando bytes. La imagen se decodifica después, sin este buffer. */
+export async function assertPngInflate(png) {
+  const header = pngHeader(png);
+  const cap = pngInflatedCap(header.width, header.height, header.depth, header.color, header.interlace);
+  if (!cap) throw new Error("PNG no soportado");
+  const chunks = parseChunks(png);
+  const idat = concat(chunks.filter((item) => item.type === "IDAT").map((item) => item.data));
+  if (idat.length === 0) throw new Error("PNG no válido");
+  await countInflatedBytes(idat, cap);
 }
 
 async function inflateBytes(data, maxOut) {
@@ -193,9 +262,9 @@ export function pngDimensions(png) {
   return { width: view.getUint32(16), height: view.getUint32(20) };
 }
 
-export async function decodePng(png) {
+export async function decodePng(png, maxEdge = PNG_MAX_EDGE) {
   const declared = pngDimensions(png);
-  if (declared.width > PNG_MAX_EDGE || declared.height > PNG_MAX_EDGE || declared.width < 1 || declared.height < 1) {
+  if (declared.width > maxEdge || declared.height > maxEdge || declared.width < 1 || declared.height < 1) {
     throw new Error("PNG demasiado grande");
   }
   const chunks = parseChunks(png);

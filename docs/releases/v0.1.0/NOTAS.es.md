@@ -33,6 +33,7 @@ Una ficha no dice si un token es bueno, seguro o una buena compra.
 - El cambio de idioma está en la cabecera. El pie legal es el mismo en todas las páginas de `web/v2/`. La web v2 se desplegó en stubxai.com el 2026-10-09, fuera de estas notas. Estas notas no la despliegan ni la cambian.
 - `web/v2/` es la web publicada en stubxai.com desde el 2026-10-09 (merge `ed1c7759`). `web/current/` es la copia anterior, para volver atrás.
 - Studio está desplegado (PR #20 y #26) y se indexa. Verify universal está desplegado (merge `2434636`). El cuaderno no forma parte de este despliegue.
+- En stubxai.com, además: el tablero en /tablero (PR #27); Contribuir en /contribuir desde el 2026-10-10 (PR #28, anotado en #32), sin cuenta y sin datos guardados en la página; el ejemplo educativo fijo en /comparar desde el 2026-10-10 (PR #29, anotado en #32), sin leer una dirección. En main, el logo de Studio acepta JPG, PNG y WebP y queda en 16 MP (PR #30). En iPhone, guardar usa compartir o una pestaña, con aviso en los dos idiomas y revocación a los 60 segundos (PR #33). La lectura de la curva (PR #31) está en el repositorio y el tablero no la da por publicada. La medición de uso no está en el cliente (PR #23).
 
 ## Indexación
 

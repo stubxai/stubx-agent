@@ -11,8 +11,10 @@ Una sola web estática. Verify, Lab y el tablero no son sitios aparte: el genera
 | Misma regla, importable | `modules/verify/lookup.mjs` | Salida de `tsc` sobre `lab/verify/lookup.ts`, sin source map. Lo usan las pruebas. No llama a la red. Responde a direcciones `0x`. |
 | Fichas | `modules/verify/cards.json` | Las fichas de `loadCards`, con textos de presentación añadidos (`statement_en`, `holdersNote_en` y las notas de la curva) sin cambiar los nombres de la API, más los ejemplos EVM. `snapshot.json` dice que el commit citado es ancestro de esta rama (`inBranch`) y que la lectura en vivo está activa (`liveNetwork`). `inBranch` no es la marca de publicación. |
 | Lab | `assets/mission.js` + `modules/lab/` | Misión de cinco pasos, glosario y tres guías. El progreso se queda en el navegador. |
-| Tablero | `modules/tablero/registros.json` | Registro del 2026-10-09, envuelto en el mismo cascarón. |
-| Huecos | `/studio`, `/cuaderno`, `/contribuir` | Texto fechado «No construido · 2026-10-09». Sin formulario ni botones de crear, guardar, exportar o enviar. |
+| Tablero | `modules/tablero/registros.json` | Registro envuelto en el mismo cascarón. La ficha de contribuciones está al día 2026-10-10. |
+| Curva | `pares/index.html`, `modules/pair-report.mjs` | Moneda base y estado de la curva. La lectura de la cadena no está en `modules/`. La exportación es una instantánea. |
+| Contribuciones | `/contribuir` | Enlaces a issues y propuestas de GitHub, con plantilla descargable. Sin formulario y sin datos personales. |
+| Hueco | `/cuaderno` | Texto fechado «No construido · 2026-10-09». Sin formulario ni botones de crear, guardar, exportar o enviar. |
 
 `/avances` no es un segundo tablero: explica que el tablero está en `/tablero`.
 
@@ -29,7 +31,7 @@ La lectura en vivo consulta la red al pegar una dirección de Solana. Si el serv
 
 ## Huecos que un módulo futuro debe cumplir
 
-Studio, el cuaderno y las contribuciones, cuando existan, entran igual que Verify:
+El cuaderno, cuando exista, entra igual que Verify:
 
 - Su HTML es un `<main>` que `build_site.py` envuelve. No traen su propia cabecera ni su propio selector.
 - Usan las variables de `assets/tool.css` y lo que añada `assets/site-extra.css`.

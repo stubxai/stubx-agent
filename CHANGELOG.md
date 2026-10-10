@@ -16,8 +16,8 @@ Esta entrada resume. No reescribe el detalle fechado que sigue debajo.
 
 ### Lab
 
-- Misión 1, cinco pasos, para distinguir la dirección del nombre. El progreso se queda en el navegador. No pide cartera ni pago.
-- Glosario y tres guías. El inglés de esa biblioteca sigue pendiente de revisión humana: si no coincide, manda el español.
+- Misión 1, cinco pasos, para distinguir la dirección del nombre. El progreso se queda en el navegador. No pide cartera ni pago. Está en stubxai.com/lab desde el 2026-10-09.
+- Glosario y tres guías, en stubxai.com/aprender. El inglés de esa biblioteca sigue pendiente de revisión humana: si no coincide, manda el español.
 
 ### Web v2
 
@@ -27,6 +27,18 @@ Esta entrada resume. No reescribe el detalle fechado que sigue debajo.
 - Studio está desplegado (PR #20 y #26) y se indexa. Verify universal está desplegado (merge `2434636`). El cuaderno no forma parte de este despliegue.
 - Esta entrada no despliega `web/v2/`. stubxai.com no cambia por este documento. La v2 ya está desplegada desde el 2026-10-09.
 - Este repositorio no inserta medición de visitas ni cookies. Cloudflare Web Analytics debe estar apagado en el panel de la zona (sin baliza en el HTML servido el 2026-10-10).
+
+### Publicado en stubxai.com
+
+Lo que el tablero de main da por abierto en la web, más lo fusionado después en Studio. Esta lista no despliega nada.
+
+- El tablero está en stubxai.com/tablero (PR #27). La columna de la web dice sí solo si la función se abre hoy.
+- Contribuir está en stubxai.com/contribuir desde el 2026-10-10 (PR #28; el tablero lo marca publicado en #32). La página no pide cuenta ni guarda datos.
+- El ejemplo educativo fijo de una curva está en stubxai.com/comparar desde el 2026-10-10 (PR #29; el tablero lo anota en #32). No lee una dirección.
+- En main, el logo de Studio acepta JPG, PNG y WebP, queda en 16 MP y no guarda el PNG inflado (PR #30). El menú marca Studio.
+- En iPhone, guardar en Studio usa compartir o una pestaña, con aviso en español e inglés y revocación a los 60 segundos (PR #33). La pestaña de respaldo lleva `noopener`.
+- La medición de uso no está en el cliente (PR #23, fusionada en main). El detalle es la entrada de debajo y [docs/medicion-uso.md](docs/medicion-uso.md).
+- La lectura de la curva (PR #31) está en el repositorio. El tablero no la da por publicada en stubxai.com.
 
 ### Indexación
 
@@ -38,6 +50,12 @@ Esta entrada resume. No reescribe el detalle fechado que sigue debajo.
 ### Texto retirado
 
 - En README y LIMITS, la frase retirada «Memecoin experimental · puedes perderlo todo…» pasa al pie vigente. En inglés, «could», no «can».
+
+## 2026-10-09 · Medición de uso: ninguna en el cliente
+
+- Este proyecto no añade baliza, cookie ni script de terceros, y no guarda la IP (Cloudflare la recibe como alojamiento). Tampoco un contador agregado: la petición llevaría la IP al alojamiento aunque el programa no la escriba.
+- Las únicas cifras que se pueden mirar son las que GitHub ya enseña en la página del repositorio: estrellas, forks y watchers. No son visitas a la web. No se usa la API de tráfico.
+- La decisión está en [docs/medicion-uso.md](docs/medicion-uso.md). `npm test` falla si el HTML, el CSS o el JavaScript de la web trae una baliza.
 
 ## 2026-10-09 · Verify lee cualquier mint, solo lectura, sin publicar
 

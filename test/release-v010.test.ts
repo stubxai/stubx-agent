@@ -28,6 +28,13 @@ describe("v0.1.0 notes, without a tag", () => {
     assert.equal(log.includes("hay que reescribir"), false);
     assert.equal(log.includes("No es una lectura en vivo"), false);
     assert.match(log, /Studio está desplegado \(PR #20 y #26\) y se indexa\. Verify universal está desplegado \(merge `2434636`\)\./);
+    assert.match(log, /stubxai\.com\/tablero \(PR #27\)/);
+    assert.match(log, /stubxai\.com\/contribuir desde el 2026-10-10 \(PR #28/);
+    assert.match(log, /stubxai\.com\/comparar desde el 2026-10-10 \(PR #29/);
+    assert.match(log, /JPG, PNG y WebP, queda en 16 MP y no guarda el PNG inflado \(PR #30\)/);
+    assert.match(log, /revocación a los 60 segundos \(PR #33\)/);
+    assert.match(log, /La lectura de la curva \(PR #31\) está en el repositorio\. El tablero no la da por publicada en stubxai\.com\./);
+    assert.match(log, /La medición de uso no está en el cliente \(PR #23, fusionada en main\)/);
     assert.match(log, /En la web v2, `\/verify` es Verify universal, desplegado \(merge `2434636`\)\./);
     assert.match(log, /Este repositorio no inserta medición de visitas ni cookies\. Cloudflare Web Analytics debe estar apagado en el panel de la zona \(sin baliza en el HTML servido el 2026-10-10\)\./);
     assert.match(log, /no está creado/);
@@ -58,6 +65,10 @@ describe("v0.1.0 notes, without a tag", () => {
     assert.match(en, /`web\/v2\/` is the website published on stubxai.com since 2026-10-09 \(merge `ed1c7759`\)\. `web\/current\/` is the earlier copy, kept so it can be put back\./);
     assert.match(es, /Studio está desplegado \(PR #20 y #26\) y se indexa\. Verify universal está desplegado \(merge `2434636`\)\. El cuaderno no forma parte de este despliegue\./);
     assert.match(en, /Studio is deployed \(pull requests #20 and #26\) and it is indexable\. Verify universal is deployed \(merge `2434636`\)\. The notebook is not part of this deployment\./);
+    assert.match(es, /el tablero en \/tablero \(PR #27\)/);
+    assert.match(en, /the board at \/tablero \(pull request #27\)/);
+    assert.match(es, /el tablero no la da por publicada/);
+    assert.match(en, /the board does not mark it published/);
     assert.match(es, /cualquier mint SPL o Token-2022/);
     assert.match(en, /any SPL or Token-2022 mint/);
     assert.equal(es.includes("hay que reescribir"), false);
