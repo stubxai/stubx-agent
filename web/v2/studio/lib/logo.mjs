@@ -7,7 +7,8 @@ export const DEFAULT_TOKEN = "STUBX";
 export const TOKEN_MAX = 20;
 export const LOGO_MAX_BYTES = 8_000_000;
 export const LOGO_MAX_EDGE = 2048;
-export const LOGO_HARD_EDGE = 8192;
+export const LOGO_HARD_EDGE = 4096;
+export const LOGO_MAX_PIXELS = 16_777_216;
 export const LOGO_DRAW_EDGE = 512;
 
 export function clipToken(value) {
@@ -180,7 +181,13 @@ function sniffLogo(bytes) {
 }
 
 function withinHardEdge(width, height) {
-  if (width < 1 || height < 1 || width > LOGO_HARD_EDGE || height > LOGO_HARD_EDGE) throw new Error("logo-size");
+  if (width < 1 || height < 1 || width > LOGO_HARD_EDGE || height > LOGO_HARD_EDGE || width * height > LOGO_MAX_PIXELS) {
+    throw new Error("logo-size");
+  }
+}
+
+export function rejectsWithoutResize(width, height, canResize) {
+  return !canResize && (width > LOGO_MAX_EDGE || height > LOGO_MAX_EDGE);
 }
 
 export async function inspectLogo(bytes) {
@@ -231,33 +238,52 @@ function drawCanvas(width, height) {
   return canvas;
 }
 
+const RESIZE_PROBE = Uint8Array.from([137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 0, 2, 0, 0, 0, 2, 8, 2, 0, 0, 0, 253, 212, 154, 115, 0, 0, 0, 18, 73, 68, 65, 84, 120, 156, 99, 56, 193, 197, 117, 130, 139, 139, 1, 66, 1, 0, 27, 22, 3, 113, 73, 128, 206, 212, 0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130]);
+let resizeKnown;
+
+async function bitmapCanResize() {
+  if (resizeKnown !== undefined) return resizeKnown;
+  if (typeof createImageBitmap !== "function") {
+    resizeKnown = false;
+    return false;
+  }
+  try {
+    const blob = new Blob([RESIZE_PROBE], { type: "image/png" });
+    const bitmap = await createImageBitmap(blob, { resizeWidth: 1, resizeHeight: 1 });
+    resizeKnown = bitmap.width === 1 && bitmap.height === 1;
+    bitmap.close?.();
+  } catch {
+    resizeKnown = false;
+  }
+  return resizeKnown;
+}
+
 async function logoFromBitmap(bytes, plan) {
+  const canResize = await bitmapCanResize();
+  if (rejectsWithoutResize(plan.width, plan.height, canResize)) throw new Error("logo-scale");
   const blob = new Blob([bytes], { type: plan.mime });
   const options = {
     imageOrientation: "from-image",
     premultiplyAlpha: "none",
-    resizeWidth: plan.resizeWidth,
-    resizeHeight: plan.resizeHeight,
-    resizeQuality: "high",
   };
+  if (canResize) {
+    options.resizeWidth = plan.resizeWidth;
+    options.resizeHeight = plan.resizeHeight;
+    options.resizeQuality = "high";
+  }
   let bitmap;
   try {
     bitmap = await createImageBitmap(blob, options);
   } catch {
-    try {
-      bitmap = await createImageBitmap(blob, { imageOrientation: "from-image" });
-    } catch {
-      throw new Error("logo");
-    }
+    throw new Error("logo");
   }
   try {
-    if (bitmap.width > LOGO_HARD_EDGE || bitmap.height > LOGO_HARD_EDGE) throw new Error("logo-size");
-    const fitted = fitEdge(bitmap.width, bitmap.height, LOGO_MAX_EDGE);
-    const canvas = drawCanvas(fitted.resizeWidth, fitted.resizeHeight);
+    if (bitmap.width > LOGO_MAX_EDGE || bitmap.height > LOGO_MAX_EDGE) throw new Error("logo-scale");
+    const canvas = drawCanvas(bitmap.width, bitmap.height);
     const context = canvas.getContext("2d", { willReadFrequently: true });
-    context.drawImage(bitmap, 0, 0, fitted.resizeWidth, fitted.resizeHeight);
-    const data = context.getImageData(0, 0, fitted.resizeWidth, fitted.resizeHeight);
-    return fitLogo({ width: fitted.resizeWidth, height: fitted.resizeHeight, rgba: data.data }, LOGO_DRAW_EDGE);
+    context.drawImage(bitmap, 0, 0);
+    const data = context.getImageData(0, 0, bitmap.width, bitmap.height);
+    return fitLogo({ width: bitmap.width, height: bitmap.height, rgba: data.data }, LOGO_DRAW_EDGE);
   } finally {
     bitmap.close?.();
   }

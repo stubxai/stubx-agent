@@ -94,7 +94,29 @@ export function pngHeader(png) {
   return { width, height, depth: png[24] ?? 0, color: png[25] ?? 0, interlace: png[28] ?? 0 };
 }
 
-/** Descomprime el IDAT solo hasta el tamaño que declaran ancho, alto y tipo. */
+/** Cuenta el IDAT descomprimido y lo tira. No guarda el resultado. */
+async function countInflatedBytes(data, maxOut) {
+  const stream = new Blob([data]).stream().pipeThrough(new DecompressionStream("deflate"));
+  const reader = stream.getReader();
+  let total = 0;
+  try {
+    while (true) {
+      const step = await reader.read();
+      if (step.done) break;
+      total += step.value.byteLength;
+      if (total > maxOut) {
+        await reader.cancel().catch(() => {});
+        throw new Error("PNG demasiado grande");
+      }
+    }
+  } catch (error) {
+    await reader.cancel().catch(() => {});
+    throw error;
+  }
+  return total;
+}
+
+/** Corta la bomba contando bytes. La imagen se decodifica después, sin este buffer. */
 export async function assertPngInflate(png) {
   const header = pngHeader(png);
   const cap = pngInflatedCap(header.width, header.height, header.depth, header.color, header.interlace);
@@ -102,7 +124,7 @@ export async function assertPngInflate(png) {
   const chunks = parseChunks(png);
   const idat = concat(chunks.filter((item) => item.type === "IDAT").map((item) => item.data));
   if (idat.length === 0) throw new Error("PNG no válido");
-  await inflateBytes(idat, cap);
+  await countInflatedBytes(idat, cap);
 }
 
 async function inflateBytes(data, maxOut) {

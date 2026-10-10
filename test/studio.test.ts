@@ -819,8 +819,13 @@ describe("studio", () => {
     assert.match(editor, /El archivo pesa demasiado \(máx\. 8 MB\)\./);
     assert.match(editor, /The file is too large \(max\. 8 MB\)\./);
     assert.match(readStudio("lib/logo.mjs"), /export const LOGO_MAX_BYTES = 8_000_000/);
-    assert.match(editor, /La imagen es demasiado grande \(máx\. 8192 px\)\./);
-    assert.match(editor, /The image is too large \(max\. 8192 px\)\./);
+    assert.match(editor, /La imagen es demasiado grande \(máx\. 4096 px de lado, 16\.777\.216 píxeles\)\./);
+    assert.match(editor, /The image is too large \(max\. 4096 px on a side, 16,777,216 pixels\)\./);
+    assert.match(editor, /Este navegador no puede reducir la imagen\. Usa una de hasta 2048 px\./);
+    assert.match(editor, /This browser cannot reduce the image\. Use one up to 2048 px\./);
+    assert.equal(editor.includes("8192 px"), false);
+    assert.equal(editor.includes("1,5 MB"), false);
+    assert.equal(editor.includes("1.5 MB"), false);
     assert.match(reglas, /El nombre del token pasa por el mismo filtro/);
     assert.match(reglas, /The token name goes through the same filter/);
     assert.match(reglas, /Los recursos de STUBX siguen como opción por defecto/);
@@ -845,12 +850,22 @@ describe("studio", () => {
     assert.match(logoSrc, /\.normalize\("NFKC"\)/);
     assert.equal(logoSrc.includes(String.raw`[\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF]`), false);
     assert.match(editor, /id="aviso-logo-medida"/);
-    assert.match(readStudio("studio.css"), /#aviso-logo \.lang, #aviso-logo-formato \.lang, #aviso-logo-peso \.lang, #aviso-logo-medida \.lang \{ display: block; \}/);
+    assert.match(readStudio("studio.css"), /#aviso-logo \.lang, #aviso-logo-formato \.lang, #aviso-logo-peso \.lang, #aviso-logo-medida \.lang, #aviso-logo-reducir \.lang \{ display: block; \}/);
     assert.match(editor, /Con otro nombre no se usa la mascota de STUBX/);
     assert.match(editor, /With another name the STUBX mascot is not used/);
     assert.match(script, /message === "logo-bytes"/);
     assert.match(script, /message === "logo-size"/);
     assert.match(script, /message === "logo-format"/);
+    assert.match(script, /message === "logo-scale"/);
+    assert.match(script, /file\.size > LOGO_MAX_BYTES/);
+    const change = script.slice(script.indexOf('logoInput.addEventListener("change"'), script.indexOf("logoClear.addEventListener"));
+    assert.match(change, /if \(file\.size > LOGO_MAX_BYTES\) \{[\s\S]*?return;\s*\}/);
+    assert.ok(change.indexOf("file.size > LOGO_MAX_BYTES") < change.indexOf("readBlob("));
+    const pngSrc = readStudio("lib/png.mjs");
+    const counter = pngSrc.slice(pngSrc.indexOf("async function countInflatedBytes"), pngSrc.indexOf("async function inflateBytes"));
+    assert.equal(counter.includes("parts.push"), false);
+    assert.match(pngSrc, /await countInflatedBytes\(idat, cap\)/);
+    assert.match(logoSrc, /rejectsWithoutResize\(plan\.width, plan\.height, canResize\)\) throw new Error\("logo-scale"\)/);
     assert.match(script, /function hideLogoErrors\(\)/);
     assert.match(script, /createLogoGate/);
     assert.match(script, /stillCurrent\(\)/);
@@ -947,17 +962,19 @@ describe("studio", () => {
   test("el nombre del token se dibuja y el logo se queda en un PNG local", async () => {
     const { renderCard } = await load<{ renderCard: (options: Record<string, unknown>) => Promise<Card> }>("lib/render.mjs");
     const { encodePng } = await load<{ encodePng: (rgba: Uint8ClampedArray, width: number, height: number) => Promise<Uint8Array> }>("lib/png.mjs");
-    const { clipToken, fitLogo, readLogoPng, inspectLogo, isStubxToken, DEFAULT_TOKEN, TOKEN_MAX, LOGO_MAX_BYTES, LOGO_MAX_EDGE, LOGO_HARD_EDGE, LOGO_DRAW_EDGE } = await load<{
+    const { clipToken, fitLogo, readLogoPng, inspectLogo, rejectsWithoutResize, isStubxToken, DEFAULT_TOKEN, TOKEN_MAX, LOGO_MAX_BYTES, LOGO_MAX_EDGE, LOGO_HARD_EDGE, LOGO_MAX_PIXELS, LOGO_DRAW_EDGE } = await load<{
       clipToken: (value: string) => string;
       isStubxToken: (value: string) => boolean;
       fitLogo: (image: { width: number; height: number; rgba: Uint8ClampedArray }, edge: number) => { width: number; height: number };
       readLogoPng: (bytes: Uint8Array) => Promise<{ width: number; height: number; rgba: Uint8ClampedArray }>;
       inspectLogo: (bytes: Uint8Array) => Promise<{ mime: string; width: number; height: number; resizeWidth: number; resizeHeight: number; simplePng: boolean }>;
+      rejectsWithoutResize: (width: number, height: number, canResize: boolean) => boolean;
       DEFAULT_TOKEN: string;
       TOKEN_MAX: number;
       LOGO_MAX_BYTES: number;
       LOGO_MAX_EDGE: number;
       LOGO_HARD_EDGE: number;
+      LOGO_MAX_PIXELS: number;
       LOGO_DRAW_EDGE: number;
     }>("lib/logo.mjs");
     const { decodePng, pngDimensions, pngRawSize, pngInflatedCap } = await load<{
@@ -1138,7 +1155,6 @@ describe("studio", () => {
     assert.equal(pngRawSize(8, 8, 8, 6), 264);
     const packed = pngWithIdat(8, 8, zlibStoredZeros(1_399_884));
     assert.ok(packed.length >= 1_400_000);
-    assert.ok(packed.length < 1_500_000);
     assert.ok(packed.length < LOGO_MAX_BYTES);
     assert.equal(pngDimensions(packed).width, 8);
     assert.equal(pngDimensions(packed).height, 8);
@@ -1150,13 +1166,30 @@ describe("studio", () => {
       assert.equal(error.message, "logo-size");
       return true;
     });
+    assert.equal(LOGO_HARD_EDGE, 4096);
+    assert.equal(LOGO_MAX_PIXELS, 16_777_216);
+    assert.equal(LOGO_HARD_EDGE * LOGO_HARD_EDGE, LOGO_MAX_PIXELS);
+    assert.equal(rejectsWithoutResize(4032, 3024, false), true);
+    assert.equal(rejectsWithoutResize(4032, 3024, true), false);
+    assert.equal(rejectsWithoutResize(2048, 2048, false), false);
     const phone = await inspectLogo(jpegBytes(4032, 3024, 6));
     assert.equal(phone.mime, "image/jpeg");
     assert.equal(phone.width, 3024);
     assert.equal(phone.height, 4032);
+    assert.ok(phone.width * phone.height <= LOGO_MAX_PIXELS);
     assert.equal(Math.max(phone.resizeWidth, phone.resizeHeight), LOGO_MAX_EDGE);
     assert.ok(phone.resizeWidth <= LOGO_MAX_EDGE && phone.resizeHeight <= LOGO_MAX_EDGE);
     assert.ok(Math.abs(phone.resizeWidth / phone.resizeHeight - 3024 / 4032) < 0.02);
+    const square = await inspectLogo(jpegBytes(4096, 4096));
+    assert.equal(square.width * square.height, LOGO_MAX_PIXELS);
+    await assert.rejects(() => inspectLogo(jpegBytes(8192, 8192)), (error: Error) => {
+      assert.equal(error.message, "logo-size");
+      return true;
+    });
+    await assert.rejects(() => readLogoPng(pngDeclaring(8192, 8192)), (error: Error) => {
+      assert.equal(error.message, "logo-size");
+      return true;
+    });
     const turned = await inspectLogo(jpegBytes(400, 100, 6));
     assert.equal(turned.width, 100);
     assert.equal(turned.height, 400);
