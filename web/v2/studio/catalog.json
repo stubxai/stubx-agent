@@ -1,12 +1,18 @@
 {
-  "version": "2026-10-09",
+  "version": "2026-10-10",
   "items": [
     {
       "id": "talon-avatar-512",
       "archivo": "assets/agente-talon-avatar-512.png",
       "tipo": "avatar",
-      "nombre": { "es": "Agente Talón", "en": "Agente Talón" },
-      "licencia": { "es": "Licencia del kit de memes STUBX · Agente Talón", "en": "STUBX meme kit license · Agente Talón" },
+      "nombre": {
+        "es": "Agente Talón",
+        "en": "Agente Talón"
+      },
+      "licencia": {
+        "es": "Licencia del kit de memes STUBX · Agente Talón",
+        "en": "STUBX meme kit license · Agente Talón"
+      },
       "autor": "STUBX",
       "permitido": true,
       "aiOrigin": "mascota",
@@ -16,21 +22,185 @@
       "id": "talon-cara-512",
       "archivo": "assets/agente-talon-cara-512.png",
       "tipo": "avatar",
-      "nombre": { "es": "Cara de Talón", "en": "Talón face" },
-      "licencia": { "es": "Licencia del kit de memes STUBX · Agente Talón", "en": "STUBX meme kit license · Agente Talón" },
+      "nombre": {
+        "es": "Cara de Talón",
+        "en": "Talón face"
+      },
+      "licencia": {
+        "es": "Licencia del kit de memes STUBX · Agente Talón",
+        "en": "STUBX meme kit license · Agente Talón"
+      },
       "autor": "STUBX",
       "permitido": true,
       "aiOrigin": "mascota",
       "sha256": "d5dcf25a2321432271341291278c34637510ee21cbe033d0dcd7a1c8c2a8e542"
     },
     {
+      "id": "fondo-solana",
+      "archivo": "assets/fondo-solana-mini.png",
+      "tipo": "fondo",
+      "nombre": {
+        "es": "Solana",
+        "en": "Solana"
+      },
+      "fill": "#070418",
+      "ink": "#f4f7fb",
+      "licencia": {
+        "es": "Código MIT. Dibujo del Studio, sin archivos de fuera.",
+        "en": "MIT code. Studio drawing, with no outside files."
+      },
+      "autor": "STUBX",
+      "permitido": true,
+      "aiOrigin": "ninguno",
+      "sha256": "ff8bdaa3d6006fb358700fdacd9cc4f9686aca9d1deab42d5fd2da90efa69a9c"
+    },
+    {
+      "id": "fondo-vineta",
+      "archivo": "assets/fondo-vineta-mini.png",
+      "tipo": "fondo",
+      "nombre": {
+        "es": "Viñeta",
+        "en": "Panel"
+      },
+      "fill": "#12081c",
+      "ink": "#f4f7fb",
+      "licencia": {
+        "es": "Código MIT. Dibujo del Studio, sin archivos de fuera.",
+        "en": "MIT code. Studio drawing, with no outside files."
+      },
+      "autor": "STUBX",
+      "permitido": true,
+      "aiOrigin": "ninguno",
+      "sha256": "c3ca4223a2ea07f6b1622ba561e465d67ed86a23f6f99a1fbfc1924dde72a44b"
+    },
+    {
+      "id": "fondo-talon",
+      "archivo": "assets/fondo-talon-mini.png",
+      "tipo": "fondo",
+      "nombre": {
+        "es": "Talón",
+        "en": "Talón"
+      },
+      "fill": "#071422",
+      "ink": "#f4f7fb",
+      "licencia": {
+        "es": "Código MIT. Dibujo del Studio, sin archivos de fuera.",
+        "en": "MIT code. Studio drawing, with no outside files."
+      },
+      "autor": "STUBX",
+      "permitido": true,
+      "aiOrigin": "ninguno",
+      "sha256": "24254d94a482b1e30d1ff94701e6901da9ab57ca8a54b9fdc70364e239623a09"
+    },
+    {
+      "id": "fondo-pixel",
+      "archivo": "assets/fondo-pixel-mini.png",
+      "tipo": "fondo",
+      "nombre": {
+        "es": "Pixel",
+        "en": "Pixel"
+      },
+      "fill": "#080a16",
+      "ink": "#f4f7fb",
+      "licencia": {
+        "es": "Código MIT. Dibujo del Studio, sin archivos de fuera.",
+        "en": "MIT code. Studio drawing, with no outside files."
+      },
+      "autor": "STUBX",
+      "permitido": true,
+      "aiOrigin": "ninguno",
+      "sha256": "8354acd4a1777562a0a720d96b6061d05acac8e7d9ac44c7add00b09d1469955"
+    },
+    {
+      "id": "fondo-velas",
+      "archivo": "assets/fondo-velas-mini.png",
+      "tipo": "fondo",
+      "nombre": {
+        "es": "Velas",
+        "en": "Candles"
+      },
+      "fill": "#080e1c",
+      "ink": "#f4f7fb",
+      "licencia": {
+        "es": "Código MIT. Dibujo del Studio, sin archivos de fuera.",
+        "en": "MIT code. Studio drawing, with no outside files."
+      },
+      "autor": "STUBX",
+      "permitido": true,
+      "aiOrigin": "ninguno",
+      "sha256": "07aec47a3de7a3fb16ed7c620530f8210d7d08c81c223bb499b412fe8bb9e021"
+    },
+    {
+      "id": "fondo-confeti",
+      "archivo": "assets/fondo-confeti-mini.png",
+      "tipo": "fondo",
+      "nombre": {
+        "es": "Confeti",
+        "en": "Confetti"
+      },
+      "fill": "#100818",
+      "ink": "#f4f7fb",
+      "licencia": {
+        "es": "Código MIT. Dibujo del Studio, sin archivos de fuera.",
+        "en": "MIT code. Studio drawing, with no outside files."
+      },
+      "autor": "STUBX",
+      "permitido": true,
+      "aiOrigin": "ninguno",
+      "sha256": "2614a2c4bb271464bf2605d722caf79faf609b50033da01d11e7bbeefdd07fbd"
+    },
+    {
+      "id": "fondo-estrellas",
+      "archivo": "assets/fondo-estrellas-mini.png",
+      "tipo": "fondo",
+      "nombre": {
+        "es": "Estrellas",
+        "en": "Stars"
+      },
+      "fill": "#050816",
+      "ink": "#f4f7fb",
+      "licencia": {
+        "es": "Código MIT. Dibujo del Studio, sin archivos de fuera.",
+        "en": "MIT code. Studio drawing, with no outside files."
+      },
+      "autor": "STUBX",
+      "permitido": true,
+      "aiOrigin": "ninguno",
+      "sha256": "8471f0e935bb96312301a2b95b60ed84c6f9a07e14fd2ee2654c883812ffd3aa"
+    },
+    {
+      "id": "fondo-rafaga",
+      "archivo": "assets/fondo-rafaga-mini.png",
+      "tipo": "fondo",
+      "nombre": {
+        "es": "Ráfaga",
+        "en": "Burst"
+      },
+      "fill": "#140610",
+      "ink": "#f4f7fb",
+      "licencia": {
+        "es": "Código MIT. Dibujo del Studio, sin archivos de fuera.",
+        "en": "MIT code. Studio drawing, with no outside files."
+      },
+      "autor": "STUBX",
+      "permitido": true,
+      "aiOrigin": "ninguno",
+      "sha256": "f784730aa005eacfdbe72533b68302890905a6c4f71868ad499675710d3f963c"
+    },
+    {
       "id": "fondo-carbon",
       "archivo": "assets/fondo-carbon.png",
       "tipo": "fondo",
-      "nombre": { "es": "Noche", "en": "Night" },
+      "nombre": {
+        "es": "Noche",
+        "en": "Night"
+      },
       "fill": "#0a090d",
       "ink": "#fff3f5",
-      "licencia": { "es": "Código MIT. Color plano tomado de la paleta del kit de memes STUBX v0.2.", "en": "MIT code. Flat color taken from the STUBX meme kit v0.2 palette." },
+      "licencia": {
+        "es": "Código MIT. Color plano tomado de la paleta del kit de memes STUBX v0.2.",
+        "en": "MIT code. Flat color taken from the STUBX meme kit v0.2 palette."
+      },
       "autor": "STUBX",
       "permitido": true,
       "aiOrigin": "ninguno",
@@ -40,10 +210,16 @@
       "id": "fondo-panel",
       "archivo": "assets/fondo-panel.png",
       "tipo": "fondo",
-      "nombre": { "es": "Panel", "en": "Panel" },
+      "nombre": {
+        "es": "Panel",
+        "en": "Panel"
+      },
       "fill": "#17131b",
       "ink": "#fff3f5",
-      "licencia": { "es": "Código MIT. Color plano tomado de la paleta del kit de memes STUBX v0.2.", "en": "MIT code. Flat color taken from the STUBX meme kit v0.2 palette." },
+      "licencia": {
+        "es": "Código MIT. Color plano tomado de la paleta del kit de memes STUBX v0.2.",
+        "en": "MIT code. Flat color taken from the STUBX meme kit v0.2 palette."
+      },
       "autor": "STUBX",
       "permitido": true,
       "aiOrigin": "ninguno",
@@ -53,10 +229,16 @@
       "id": "fondo-tinta",
       "archivo": "assets/fondo-tinta.png",
       "tipo": "fondo",
-      "nombre": { "es": "Tinta", "en": "Ink" },
+      "nombre": {
+        "es": "Tinta",
+        "en": "Ink"
+      },
       "fill": "#120a0e",
       "ink": "#fff3f5",
-      "licencia": { "es": "Código MIT. Color plano tomado de la paleta del kit de memes STUBX v0.2.", "en": "MIT code. Flat color taken from the STUBX meme kit v0.2 palette." },
+      "licencia": {
+        "es": "Código MIT. Color plano tomado de la paleta del kit de memes STUBX v0.2.",
+        "en": "MIT code. Flat color taken from the STUBX meme kit v0.2 palette."
+      },
       "autor": "STUBX",
       "permitido": true,
       "aiOrigin": "ninguno",
@@ -66,10 +248,16 @@
       "id": "fondo-rosa",
       "archivo": "assets/fondo-rosa.png",
       "tipo": "fondo",
-      "nombre": { "es": "Rosa", "en": "Pink" },
+      "nombre": {
+        "es": "Rosa",
+        "en": "Pink"
+      },
       "fill": "#fe8596",
       "ink": "#120a0e",
-      "licencia": { "es": "Código MIT. Color plano tomado de la paleta del kit de memes STUBX v0.2.", "en": "MIT code. Flat color taken from the STUBX meme kit v0.2 palette." },
+      "licencia": {
+        "es": "Código MIT. Color plano tomado de la paleta del kit de memes STUBX v0.2.",
+        "en": "MIT code. Flat color taken from the STUBX meme kit v0.2 palette."
+      },
       "autor": "STUBX",
       "permitido": true,
       "aiOrigin": "ninguno",
@@ -79,10 +267,16 @@
       "id": "fondo-claro",
       "archivo": "assets/fondo-claro.png",
       "tipo": "fondo",
-      "nombre": { "es": "Papel", "en": "Paper" },
+      "nombre": {
+        "es": "Papel",
+        "en": "Paper"
+      },
       "fill": "#fff3f5",
       "ink": "#120a0e",
-      "licencia": { "es": "Código MIT. Color plano tomado de la paleta del kit de memes STUBX v0.2.", "en": "MIT code. Flat color taken from the STUBX meme kit v0.2 palette." },
+      "licencia": {
+        "es": "Código MIT. Color plano tomado de la paleta del kit de memes STUBX v0.2.",
+        "en": "MIT code. Flat color taken from the STUBX meme kit v0.2 palette."
+      },
       "autor": "STUBX",
       "permitido": true,
       "aiOrigin": "ninguno",
@@ -92,7 +286,10 @@
       "id": "inter-regular",
       "archivo": "assets/Inter-Regular.woff2",
       "tipo": "fuente",
-      "nombre": { "es": "Inter Regular", "en": "Inter Regular" },
+      "nombre": {
+        "es": "Inter Regular",
+        "en": "Inter Regular"
+      },
       "licencia": "This Font Software is licensed under the SIL Open Font License, Version 1.1.",
       "autor": "The Inter Project Authors",
       "permitido": true,
@@ -103,7 +300,10 @@
       "id": "inter-semibold",
       "archivo": "assets/Inter-SemiBold.woff2",
       "tipo": "fuente",
-      "nombre": { "es": "Inter SemiBold", "en": "Inter SemiBold" },
+      "nombre": {
+        "es": "Inter SemiBold",
+        "en": "Inter SemiBold"
+      },
       "licencia": "This Font Software is licensed under the SIL Open Font License, Version 1.1.",
       "autor": "The Inter Project Authors",
       "permitido": true,
@@ -114,7 +314,10 @@
       "id": "silkscreen-regular",
       "archivo": "assets/Silkscreen-Regular.woff2",
       "tipo": "fuente",
-      "nombre": { "es": "Silkscreen Regular", "en": "Silkscreen Regular" },
+      "nombre": {
+        "es": "Silkscreen Regular",
+        "en": "Silkscreen Regular"
+      },
       "licencia": "This Font Software is licensed under the SIL Open Font License, Version 1.1.",
       "autor": "The Silkscreen Project Authors",
       "permitido": true,
@@ -125,12 +328,113 @@
       "id": "silkscreen-bold",
       "archivo": "assets/Silkscreen-Bold.woff2",
       "tipo": "fuente",
-      "nombre": { "es": "Silkscreen Bold", "en": "Silkscreen Bold" },
+      "nombre": {
+        "es": "Silkscreen Bold",
+        "en": "Silkscreen Bold"
+      },
       "licencia": "This Font Software is licensed under the SIL Open Font License, Version 1.1.",
       "autor": "The Silkscreen Project Authors",
       "permitido": true,
       "aiOrigin": "ninguno",
       "sha256": "5741b7f01a127f40ed70281fa2f686e8fc2cfe241930a120e4d1a1cebe78f995"
+    },
+    {
+      "id": "anton-regular",
+      "archivo": "assets/Anton-Regular.ttf",
+      "tipo": "fuente",
+      "nombre": {
+        "es": "Anton",
+        "en": "Anton"
+      },
+      "licencia": "This Font Software is licensed under the SIL Open Font License, Version 1.1.",
+      "autor": "The Anton Project Authors",
+      "permitido": true,
+      "aiOrigin": "ninguno",
+      "sha256": "a4ba3a92350ebb031da0cb47630ac49eb265082ca1bc0450442f4a83ab947cab"
+    },
+    {
+      "id": "bangers-regular",
+      "archivo": "assets/Bangers-Regular.ttf",
+      "tipo": "fuente",
+      "nombre": {
+        "es": "Bangers",
+        "en": "Bangers"
+      },
+      "licencia": "This Font Software is licensed under the SIL Open Font License, Version 1.1.",
+      "autor": "The Bangers Project Authors",
+      "permitido": true,
+      "aiOrigin": "ninguno",
+      "sha256": "4160a7311de9342674cce9160cde9fcbb30f48190397d86ff1b70b455af65824"
+    },
+    {
+      "id": "audiowide-regular",
+      "archivo": "assets/Audiowide-Regular.ttf",
+      "tipo": "fuente",
+      "nombre": {
+        "es": "Audiowide",
+        "en": "Audiowide"
+      },
+      "licencia": "This Font Software is licensed under the SIL Open Font License, Version 1.1.",
+      "autor": "Brian J. Bonislawsky",
+      "permitido": true,
+      "aiOrigin": "ninguno",
+      "sha256": "c7c0f2b0f6fad8c623e31772ce79f94a4edb9321ffce9fce978ea892d20ae730"
+    },
+    {
+      "id": "silkscreen-bold-ttf",
+      "archivo": "assets/Silkscreen-Bold.ttf",
+      "tipo": "fuente",
+      "nombre": {
+        "es": "Silkscreen Bold TTF",
+        "en": "Silkscreen Bold TTF"
+      },
+      "licencia": "This Font Software is licensed under the SIL Open Font License, Version 1.1.",
+      "autor": "The Silkscreen Project Authors",
+      "permitido": true,
+      "aiOrigin": "ninguno",
+      "sha256": "768476aa712d4f5c3e18d3bce80f980a8bd3f72b7094d22ec5e768df3acfed61"
+    },
+    {
+      "id": "archivo-black",
+      "archivo": "assets/ArchivoBlack-Regular.ttf",
+      "tipo": "fuente",
+      "nombre": {
+        "es": "Archivo Black",
+        "en": "Archivo Black"
+      },
+      "licencia": "This Font Software is licensed under the SIL Open Font License, Version 1.1.",
+      "autor": "The Archivo Black Project Authors",
+      "permitido": true,
+      "aiOrigin": "ninguno",
+      "sha256": "dd9a89a019b4849f66ab75455fe7bdf931311042cbb0f0f97acc061539703180"
+    },
+    {
+      "id": "barlow-condensed-semibold",
+      "archivo": "assets/BarlowCondensed-SemiBold.ttf",
+      "tipo": "fuente",
+      "nombre": {
+        "es": "Barlow Condensed",
+        "en": "Barlow Condensed"
+      },
+      "licencia": "This Font Software is licensed under the SIL Open Font License, Version 1.1.",
+      "autor": "The Barlow Project Authors",
+      "permitido": true,
+      "aiOrigin": "ninguno",
+      "sha256": "7b619d14bc2327509a9ef32b0890f709626f7ecc9ff61191c2a4314c5499d2d9"
+    },
+    {
+      "id": "saira-extracondensed-semibold",
+      "archivo": "assets/SairaExtraCondensed-SemiBold.ttf",
+      "tipo": "fuente",
+      "nombre": {
+        "es": "Saira ExtraCondensed",
+        "en": "Saira ExtraCondensed"
+      },
+      "licencia": "This Font Software is licensed under the SIL Open Font License, Version 1.1.",
+      "autor": "The Saira Project Authors",
+      "permitido": true,
+      "aiOrigin": "ninguno",
+      "sha256": "a0e5bcf41ea6ec93a55de288f4f0db8c01a4c1f126020cd57db147ea6cd3baee"
     }
   ]
 }

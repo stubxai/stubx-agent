@@ -170,6 +170,7 @@ type Glyph = {
   y: number;
   size: number;
   w: number;
+  h: number;
   role: string;
   missing?: boolean;
 };
@@ -185,7 +186,16 @@ type Card = {
   footerTop: number;
   label: string;
   watermarkAlpha: number;
+  watermarkColor: number[];
+  watermarkPlate: number[];
+  watermarkBox: { x: number; y: number; w: number; h: number };
+  labelBox: { x: number; y: number; w: number; h: number } | null;
   topBand: number;
+  noticeFontSize: number;
+  noticeInk: number;
+  noticeText: string;
+  noticeLines: number;
+  noticeTop: number;
   fill: number[];
   texts: string[];
 };
@@ -230,6 +240,45 @@ function glyphPixel(card: Card, glyph: Glyph, point: InkPoint): number[] {
 
 function sameColor(got: number[], want: readonly number[]): boolean {
   return got[0] === want[0] && got[1] === want[1] && got[2] === want[2] && got[3] === want[3];
+}
+
+function minNoticePx(height: number): number {
+  return Math.max(14, Math.ceil(height * 0.025));
+}
+
+/** Alto en píxeles de la primera letra del aviso, no el tamaño em. */
+function noticeLetterPx(card: Card): number {
+  const glyph = card.glyphs.find((item) => item.role === "notice");
+  if (!glyph) return 0;
+  const x0 = Math.max(0, Math.floor(glyph.x));
+  const x1 = Math.min(card.width - 1, Math.ceil(glyph.x + Math.max(2, glyph.w * 0.62)));
+  const y0 = Math.max(0, Math.floor(glyph.y));
+  const y1 = Math.min(card.height - 1, Math.ceil(glyph.y + glyph.h));
+  let top = Number.POSITIVE_INFINITY;
+  let bottom = -1;
+  for (let y = y0; y <= y1; y += 1) {
+    for (let x = x0; x <= x1; x += 1) {
+      const sample = pixel(card, x, y);
+      if ((sample[0] ?? 0) >= 90 && (sample[1] ?? 0) >= 90 && (sample[2] ?? 0) >= 90) {
+        if (y < top) top = y;
+        if (y > bottom) bottom = y;
+      }
+    }
+  }
+  return bottom < top ? 0 : bottom - top + 1;
+}
+
+function channelLin(channel: number): number {
+  const value = channel / 255;
+  return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+}
+
+function contrastRgb(a: number[], b: number[]): number {
+  const luma = (rgb: number[]) =>
+    0.2126 * channelLin(rgb[0] ?? 0) + 0.7152 * channelLin(rgb[1] ?? 0) + 0.0722 * channelLin(rgb[2] ?? 0);
+  const hi = Math.max(luma(a), luma(b));
+  const lo = Math.min(luma(a), luma(b));
+  return (hi + 0.05) / (lo + 0.05);
 }
 
 function deniedTokens(raw: string): string[] {
@@ -1016,10 +1065,12 @@ describe("studio", () => {
     assert.equal(AI_LABEL.mascota.en, "Illustration with AI-generated elements.");
     assert.equal(aiLabel([], "es"), "");
     assert.equal(aiLabel(["ninguno"], "es"), "");
-    assert.equal(aiLabel(["mascota"], "es"), AI_LABEL.mascota.es);
-    assert.equal(aiLabel(["mascota"], "en"), AI_LABEL.mascota.en);
+    assert.equal(aiLabel(["mascota"], "es"), "");
+    assert.equal(aiLabel(["mascota"], "en"), "");
     assert.equal(aiLabel(["ai"], "es"), AI_LABEL.ai.es);
+    assert.equal(aiLabel(["ai"], "en"), AI_LABEL.ai.en);
     assert.equal(aiLabel(["ai", "mascota", "ninguno"], "en"), AI_LABEL.ai.en);
+    assert.equal(aiLabel(["ai", "mascota"], "es"), AI_LABEL.ai.es);
 
     const catalog = JSON.parse(readStudio("catalog.json")) as {
       items: { archivo: string; licencia: string | { es: string; en: string }; permitido: boolean; aiOrigin: string; sha256: string }[];
@@ -1244,9 +1295,10 @@ describe("studio", () => {
       pngDimensions: (bytes: Uint8Array) => { width: number; height: number };
       pngRawSize: (width: number, height: number, depth: number, color: number) => number;
     }>("lib/png.mjs");
-    const { brandFor, BRAND } = await load<{
+    const { brandFor, BRAND, NOTICE_SHORT } = await load<{
       brandFor: (lang: string, token: string) => string;
       BRAND: { es: string; en: string };
+      NOTICE_SHORT: { es: string };
     }>("lib/copy.mjs");
     assert.equal(DEFAULT_TOKEN, "STUBX");
     assert.equal(TOKEN_MAX, 20);
@@ -1288,8 +1340,9 @@ describe("studio", () => {
     assert.equal(named.fits, true);
     assert.equal(joined(named, "token"), "LUNA");
     assert.ok(named.texts.includes("LUNA"));
-    assert.equal(joined(named, "brand"), "NOOFICIALDELUNANIDESTUBX");
-    assert.equal(joined(named, "brandTop"), "NOOFICIALDELUNANIDESTUBX");
+    assert.ok(joined(named, "notice").includes("NOOFICIALDELUNANIDESTUBX"));
+    assert.equal(named.topBand, 0);
+    assert.equal(named.glyphs.some((glyph) => glyph.role === "brandTop" || glyph.role === "riskTop"), false);
     const englishToken = await renderCard({
       width: 1080,
       height: 1080,
@@ -1301,7 +1354,7 @@ describe("studio", () => {
       origins: [],
     });
     assert.equal(englishToken.fits, true);
-    assert.equal(joined(englishToken, "brand"), "NOTOFFICIALFROMLUNAORSTUBX");
+    assert.ok(joined(englishToken, "notice").includes("NOTOFFICIALFROMLUNAORSTUBX"));
     assert.equal(englishToken.label, "");
     const wideName = "M".repeat(20);
     for (const lang of ["es", "en"] as const) {
@@ -1317,20 +1370,24 @@ describe("studio", () => {
           watermark: false,
           origins: [],
         });
-        assertLockedSuffix(card, "brand", suffix);
-        assertLockedSuffix(card, "brandTop", suffix);
-        const lines = brandLinesOf(card, "brand");
-        const topLines = brandLinesOf(card, "brandTop");
-        assert.equal((lines.at(-1) ?? "").includes(suffix), true);
-        if (height === 1920) {
-          assert.ok(lines.length > 1);
-          assert.equal(lines.at(-1), suffix);
-          assert.equal(topLines.at(-1), suffix);
-        }
-        const brandGlyphs = card.glyphs.filter((glyph) => glyph.role === "brand");
-        const right = Math.max(...brandGlyphs.map((glyph) => glyph.x + glyph.w));
-        assert.ok(right <= card.width);
-        assert.ok(brandGlyphs.some((glyph) => glyph.ch === "S" && glyph.y >= card.brandTop && glyph.y < card.footerTop));
+        const phrase = (lang === "en" ? `Not official from ${wideName} or STUBX` : `No oficial de ${wideName} ni de STUBX`)
+          .toLocaleUpperCase("es-ES")
+          .replaceAll(" ", "");
+        const notice = joined(card, "notice");
+        assert.ok(notice.includes(phrase), notice);
+        assert.ok(notice.includes(suffix), notice);
+        assert.ok(card.noticeLines >= 1);
+        assert.equal(card.topBand, 0);
+        const minPx = Math.max(14, Math.ceil(height * 0.025));
+        const letterPx = noticeLetterPx(card);
+        assert.ok(letterPx >= minPx, `${lang} ${height} letra ${letterPx} < ${minPx}`);
+        assert.ok(letterPx >= 14, `${lang} ${height}`);
+        assert.ok(card.noticeInk >= minPx, `${lang} ${height} tinta ${card.noticeInk}`);
+        const noticeGlyphs = card.glyphs.filter((glyph) => glyph.role === "notice");
+        const right = Math.max(...noticeGlyphs.map((glyph) => glyph.x + glyph.w));
+        assert.ok(right <= card.width, `${lang} ${height} ${right}`);
+        assert.ok(noticeGlyphs.some((glyph) => glyph.ch === "S" && glyph.y >= card.noticeTop));
+        assert.ok(noticeGlyphs.every((glyph) => glyph.y >= card.noticeTop && glyph.y + glyph.h <= card.height));
       }
     }
     const plain = await renderCard({
@@ -1504,8 +1561,9 @@ describe("studio", () => {
       watermark: false,
       origins: [],
     });
-    assert.equal(joined(disguised, "brand"), BRAND.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
-    assert.notEqual(joined(disguised, "brand"), "NOOFICIALDESTUBXNIDESTUBX");
+    const shortNotice = NOTICE_SHORT.es.toLocaleUpperCase("es-ES").replaceAll(" ", "");
+    assert.equal(joined(disguised, "notice"), shortNotice);
+    assert.equal(joined(disguised, "notice").includes("NOOFICIALDESTUBXNIDESTUBX"), false);
     const fullwidth = await renderCard({
       width: 1080,
       height: 1080,
@@ -1517,7 +1575,7 @@ describe("studio", () => {
       origins: [],
     });
     assert.equal(joined(fullwidth, "token"), "STUBX");
-    assert.equal(joined(fullwidth, "brand"), BRAND.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
+    assert.equal(joined(fullwidth, "notice"), shortNotice);
   });
 
   test("el borrador se guarda y se borra en local", async () => {
@@ -1549,18 +1607,15 @@ describe("studio", () => {
       BRAND_FG: number[];
       contrastHex: (a: string, b: string) => number;
     }>("lib/render.mjs");
-    const { BRAND, FOOTER, PNG_COMMENT, RISK, AI_LABEL } = await load<{
-      BRAND: { es: string; en: string };
-      FOOTER: { es: string; en: string };
-      RISK: { es: string; en: string };
+    const { NOTICE_FULL, NOTICE_SHORT, PNG_COMMENT } = await load<{
+      NOTICE_FULL: { es: string; en: string };
+      NOTICE_SHORT: { es: string; en: string };
       PNG_COMMENT: string;
-      AI_LABEL: { mascota: { es: string } };
     }>("lib/copy.mjs");
     const { readComments, injectComment } = await load<{
       readComments: (png: Uint8Array) => { keyword: string; text: string }[];
       injectComment: (png: Uint8Array, text: string) => Uint8Array;
     }>("lib/png.mjs");
-    const { inkSpan } = await load<{ inkSpan: (ch: string) => { top: InkPoint; bottom: InkPoint } | null }>("lib/font.mjs");
     const templates = JSON.parse(readStudio("templates.json")) as {
       formats: { id: string; width: number; height: number }[];
       zones: Record<string, unknown>;
@@ -1580,60 +1635,60 @@ describe("studio", () => {
       zones: templates.zones,
     };
     const marked = await renderCard({ ...base, watermark: false });
-    assert.ok(marked.brandFontSize >= marked.height * 0.025);
-    assert.ok(marked.brandFontSize >= 8);
-    assert.equal(marked.label, AI_LABEL.mascota.es);
-    assert.equal(joined(marked, "brand"), BRAND.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
-    assert.equal(joined(marked, "brandTop"), BRAND.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
-    assert.equal(joined(marked, "riskTop"), RISK.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
-    assert.equal(joined(marked, "footer"), FOOTER.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
-    assert.equal(joined(marked, "ai"), AI_LABEL.mascota.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
-    assert.equal(marked.watermarkAlpha, 0.15);
-    assert.ok(marked.topBand > 0 && marked.topBand < marked.height * 0.2);
+    assert.ok(noticeLetterPx(marked) >= minNoticePx(marked.height), String(noticeLetterPx(marked)));
+    assert.ok(noticeLetterPx(marked) >= 27);
+    assert.ok(marked.noticeInk >= 27);
+    assert.equal(marked.noticeLines, 2);
+    assert.equal(marked.topBand, 0);
+    assert.equal(marked.label, "");
+    assert.equal(marked.glyphs.some((glyph) => glyph.role === "ai"), false);
+    assert.equal(marked.noticeText, NOTICE_SHORT.es);
+    assert.equal(joined(marked, "notice"), NOTICE_SHORT.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
+    assert.equal(joined(marked, "notice").includes("ILUSTRACION"), false);
+    assert.equal(marked.glyphs.some((glyph) => glyph.role === "brandTop" || glyph.role === "riskTop"), false);
+    assert.ok(marked.watermarkAlpha >= 0.6);
+    assert.ok(marked.watermarkBox.x > marked.width * 0.55);
+    assert.ok(marked.watermarkBox.y >= 0 && marked.watermarkBox.y < marked.height * 0.12);
+    assert.ok(marked.watermarkBox.w < marked.width * 0.3);
+    assert.ok(marked.watermarkBox.y + marked.watermarkBox.h < marked.noticeTop);
     assert.equal(readComments(marked.png).some((item) => item.keyword === "Comment" && item.text === PNG_COMMENT), true);
     const replaced = injectComment(marked.png, PNG_COMMENT);
     assert.equal(readComments(replaced).filter((item) => item.keyword === "Comment").length, 1);
+    assert.ok(sameColor(pixel(marked, 2, marked.height - 2), [7, 20, 34, 255]));
+    assert.equal(sameColor(pixel(marked, 2, 2), BRAND_BG), false);
 
-    const brand = marked.glyphs.find((glyph) => glyph.role === "brand" && glyph.ch === "C");
-    assert.ok(brand);
-    const span = inkSpan("C");
-    assert.ok(span);
-    assert.ok(sameColor(glyphPixel(marked, brand, span.top), BRAND_FG));
-    assert.ok(sameColor(glyphPixel(marked, brand, span.bottom), BRAND_FG));
-    assert.ok(sameColor(pixel(marked, 2, marked.brandTop + 2), BRAND_BG));
-    assert.ok(sameColor(pixel(marked, 2, 2), BRAND_BG));
-    const topBrand = marked.glyphs.find((glyph) => glyph.role === "brandTop" && glyph.ch === "C");
-    assert.ok(topBrand);
-    assert.ok(topBrand.y < marked.topBand);
-    const topRisk = marked.glyphs.find((glyph) => glyph.role === "riskTop" && glyph.ch === "C");
-    assert.ok(topRisk);
-    assert.ok(topRisk.y > topBrand.y && topRisk.y < marked.topBand);
-
-    const fill = marked.fill;
-    const wm = [255, 243, 245];
+    const plate = marked.watermarkPlate;
+    const wm = marked.watermarkColor;
     const blend = (channel: number, ink: number) => Math.round(channel * (1 - marked.watermarkAlpha) + ink * marked.watermarkAlpha);
-    const expected = [blend(fill[0] ?? 0, wm[0] ?? 0), blend(fill[1] ?? 0, wm[1] ?? 0), blend(fill[2] ?? 0, wm[2] ?? 0)];
-    const counts = [0, 0, 0, 0];
-    for (let y = 0; y < marked.brandTop; y += 2) {
-      for (let x = 0; x < marked.width; x += 2) {
+    const expected = [blend(plate[0] ?? 0, wm[0] ?? 0), blend(plate[1] ?? 0, wm[1] ?? 0), blend(plate[2] ?? 0, wm[2] ?? 0)];
+    let corner = 0;
+    let other = 0;
+    const box = marked.watermarkBox;
+    for (let y = box.y; y < box.y + box.h; y += 1) {
+      for (let x = box.x; x < box.x + box.w; x += 1) {
         const sample = pixel(marked, x, y);
-        if (sample[0] !== expected[0] || sample[1] !== expected[1] || sample[2] !== expected[2]) continue;
-        const qx = x < marked.width / 2 ? 0 : 1;
-        const qy = y < marked.brandTop / 2 ? 0 : 2;
-        counts[qx + qy] = (counts[qx + qy] ?? 0) + 1;
+        if (sample[0] === expected[0] && sample[1] === expected[1] && sample[2] === expected[2]) corner += 1;
       }
     }
-    assert.ok(counts.every((count) => count > 0), counts.join(","));
+    for (let y = 0; y < Math.floor(marked.height * 0.2); y += 2) {
+      for (let x = 0; x < Math.floor(marked.width * 0.35); x += 2) {
+        const sample = pixel(marked, x, y);
+        if (sample[0] === expected[0] && sample[1] === expected[1] && sample[2] === expected[2]) other += 1;
+      }
+    }
+    assert.ok(corner > 20, String(corner));
+    assert.equal(other, 0);
 
     const none = await renderCard({ ...base, origins: ["ninguno"], watermark: false });
     assert.equal(none.label, "");
     assert.equal(none.glyphs.some((glyph) => glyph.role === "ai"), false);
 
     const english = await renderCard({ ...base, lang: "en", origins: ["ninguno"], watermark: false });
-    assert.equal(joined(english, "brand"), BRAND.en.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
-    assert.equal(joined(english, "brandTop"), BRAND.en.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
-    assert.equal(joined(english, "riskTop"), RISK.en.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
-    assert.equal(joined(english, "footer"), FOOTER.en.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
+    assert.equal(english.noticeText, NOTICE_SHORT.en);
+    assert.equal(joined(english, "notice"), NOTICE_SHORT.en.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
+    assert.equal(english.noticeLines, 1);
+    assert.ok(noticeLetterPx(english) >= 27);
+    assert.equal(english.topBand, 0);
 
     for (const format of templates.formats) {
       for (const template of templates.templates) {
@@ -1648,10 +1703,368 @@ describe("studio", () => {
             origins: ["mascota"],
             zones: templates.zones,
           });
+          const floor = minNoticePx(format.height);
           assert.equal(card.fits, true, `${format.id} ${lang} ${template.title[lang]}`);
-          assert.ok(card.brandFontSize >= format.height * 0.025);
-          assert.ok(joined(card, "footer").includes(lang === "es" ? "CRIPTO" : "HIGH-RISK"));
-          assert.ok(joined(card, "riskTop").includes(lang === "es" ? "CRIPTO" : "HIGH-RISK"));
+          const letterPx = noticeLetterPx(card);
+          assert.ok(letterPx >= floor, `${format.id} ${lang} letra ${letterPx} < ${floor}`);
+          assert.ok(letterPx >= 14, `${format.id} ${lang}`);
+          assert.ok(card.noticeInk >= floor, `${format.id} ${lang} tinta ${card.noticeInk}`);
+          assert.ok(card.noticeLines >= 1);
+          assert.equal(card.topBand, 0);
+          const approved = lang === "es" ? [NOTICE_FULL.es, NOTICE_SHORT.es] : [NOTICE_FULL.en, NOTICE_SHORT.en];
+          assert.ok(approved.includes(card.noticeText), card.noticeText);
+          assert.ok(joined(card, "notice").includes(lang === "es" ? "CRIPTO" : "HIGH-RISK"));
+        }
+      }
+    }
+  });
+
+  test("el aviso mínimo de Legal queda en una línea, el formato corto y la marca en una esquina", { timeout: 60_000 }, async () => {
+    const { renderCard } = await load<{ renderCard: (options: Record<string, unknown>) => Promise<Card> }>("lib/render.mjs");
+    const { NOTICE_FULL, NOTICE_SHORT, NOTICE_MIN_PX, NOTICE_RATIO, WATERMARK_ALPHA } = await load<{
+      NOTICE_FULL: { es: string; en: string };
+      NOTICE_SHORT: { es: string; en: string };
+      NOTICE_MIN_PX: number;
+      NOTICE_RATIO: number;
+      WATERMARK_ALPHA: number;
+    }>("lib/copy.mjs");
+    const footer = [7, 20, 34, 255];
+    const avatarColor = [255, 0, 128, 255];
+    const avatar = { width: 4, height: 4, rgba: new Uint8ClampedArray(4 * 4 * 4) };
+    for (let i = 0; i < avatar.rgba.length; i += 4) {
+      avatar.rgba[i] = avatarColor[0] ?? 0;
+      avatar.rgba[i + 1] = avatarColor[1] ?? 0;
+      avatar.rgba[i + 2] = avatarColor[2] ?? 0;
+      avatar.rgba[i + 3] = 255;
+    }
+    const cover = { x: 0, y: 0, w: 1, h: 1 };
+    const covered = await renderCard({
+      width: 1080,
+      height: 1080,
+      lang: "es",
+      title: "TAPA ".repeat(80),
+      body: "TAPA ".repeat(160),
+      token: "STUBX",
+      watermark: false,
+      origins: [],
+      avatar,
+      zones: { title: cover, body: cover, avatar: cover },
+      fill: "#0a090d",
+      ink: "#fff3f5",
+    });
+    assert.equal(NOTICE_FULL.es, "Contenido comunitario · No oficial · Cripto de alto riesgo · Puedes perderlo todo · No es consejo de inversión");
+    assert.equal(covered.noticeText, NOTICE_SHORT.es);
+    assert.equal(joined(covered, "notice"), NOTICE_SHORT.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
+    assert.equal(covered.noticeLines, 2);
+    assert.equal(covered.topBand, 0);
+    assert.ok(noticeLetterPx(covered) >= Math.ceil(covered.height * NOTICE_RATIO), String(noticeLetterPx(covered)));
+    assert.ok(noticeLetterPx(covered) >= 27);
+    assert.ok(noticeLetterPx(covered) >= NOTICE_MIN_PX);
+    assert.ok(covered.noticeInk >= Math.ceil(covered.height * NOTICE_RATIO));
+    const noticeGlyphs = covered.glyphs.filter((glyph) => glyph.role === "notice");
+    assert.ok(noticeGlyphs.length > 20);
+    assert.ok(Math.max(...noticeGlyphs.map((glyph) => glyph.x + glyph.w)) <= covered.width);
+    for (const glyph of covered.glyphs) {
+      if (glyph.role === "notice") {
+        assert.ok(glyph.y >= covered.noticeTop);
+        assert.ok(glyph.y + glyph.h <= covered.height);
+      } else {
+        assert.ok(glyph.y + glyph.h <= covered.noticeTop, glyph.role);
+      }
+    }
+    let avatarInNotice = 0;
+    for (let y = covered.noticeTop; y < covered.height; y += 1) {
+      for (let x = 0; x < covered.width; x += 4) {
+        const sample = pixel(covered, x, y);
+        if (sample[0] === avatarColor[0] && sample[1] === avatarColor[1] && sample[2] === avatarColor[2]) avatarInNotice += 1;
+      }
+    }
+    assert.equal(avatarInNotice, 0);
+    assert.ok(sameColor(pixel(covered, 2, covered.height - 2), footer));
+    assert.equal(sameColor(pixel(covered, 2, 2), avatarColor), false);
+
+    const english = await renderCard({
+      width: 1080,
+      height: 1080,
+      lang: "en",
+      title: "Hello",
+      body: "Clean text.",
+      watermark: false,
+      origins: [],
+    });
+    assert.equal(english.noticeText, NOTICE_SHORT.en);
+    assert.equal(english.noticeLines, 1);
+    assert.ok(noticeLetterPx(english) >= 27);
+    assert.ok(english.noticeInk >= NOTICE_MIN_PX);
+
+    const square1024 = await renderCard({
+      width: 1024,
+      height: 1024,
+      lang: "es",
+      title: "Hola",
+      body: "Texto corto.",
+      watermark: false,
+      origins: [],
+    });
+    assert.ok(noticeLetterPx(square1024) >= 26, String(noticeLetterPx(square1024)));
+    assert.ok(square1024.noticeInk >= Math.ceil(1024 * NOTICE_RATIO));
+
+    const story = await renderCard({
+      width: 1080,
+      height: 1920,
+      lang: "es",
+      title: "Hola",
+      body: "Texto corto.",
+      watermark: false,
+      origins: [],
+    });
+    assert.equal(story.noticeText, NOTICE_SHORT.es);
+    assert.equal(story.noticeLines, 2);
+    assert.ok(noticeLetterPx(story) >= 48, String(noticeLetterPx(story)));
+    assert.ok(story.noticeInk >= Math.ceil(story.height * NOTICE_RATIO));
+    assert.equal(story.topBand, 0);
+
+    assert.equal(NOTICE_SHORT.es, "No oficial · Cripto de alto riesgo · Puedes perderlo todo · No es consejo de inversión");
+    for (const [width, height] of [[720, 720], [1080, 720], [640, 900]] as const) {
+      for (const lang of ["es", "en"] as const) {
+        const card = await renderCard({
+          width,
+          height,
+          lang,
+          title: "Hola",
+          body: "Texto corto.",
+          watermark: false,
+          origins: [],
+        });
+        const approved = card.noticeText === NOTICE_FULL[lang] || card.noticeText === NOTICE_SHORT[lang];
+        assert.equal(approved, true, `${width}x${height} ${lang} ${card.noticeText}`);
+        assert.ok(card.noticeLines >= 1, `${width}x${height} ${lang}`);
+        const letterPx = noticeLetterPx(card);
+        const floor = Math.max(NOTICE_MIN_PX, Math.ceil(height * NOTICE_RATIO));
+        assert.ok(letterPx >= floor, `${width}x${height} letra ${letterPx} < ${floor}`);
+        assert.ok(card.noticeInk >= floor, `${width}x${height} ink ${card.noticeInk}`);
+        const right = Math.max(...card.glyphs.filter((glyph) => glyph.role === "notice").map((glyph) => glyph.x + glyph.w));
+        assert.ok(right <= card.width, `${width}x${height}`);
+      }
+    }
+    const wideShort = await renderCard({
+      width: 1080,
+      height: 720,
+      lang: "es",
+      title: "Hola",
+      body: "Texto corto.",
+      watermark: false,
+      origins: [],
+    });
+    assert.equal(wideShort.noticeText, NOTICE_FULL.es);
+    assert.equal(wideShort.noticeLines, 1);
+
+    const stamp = await renderCard({
+      width: 1080,
+      height: 1080,
+      lang: "es",
+      title: "",
+      body: "",
+      watermark: false,
+      origins: [],
+      avatar,
+      zones: { title: cover, body: cover, avatar: cover },
+      fill: "#0a090d",
+    });
+    assert.ok(WATERMARK_ALPHA >= 0.6);
+    assert.ok(stamp.watermarkAlpha >= 0.6);
+    assert.equal(stamp.watermarkAlpha, WATERMARK_ALPHA);
+    assert.equal(covered.watermarkAlpha, WATERMARK_ALPHA);
+    assert.ok(joined(stamp, "watermark").includes("NOOFICIAL"));
+    assert.ok(joined(covered, "watermark").includes("NOOFICIAL"));
+    const box = stamp.watermarkBox;
+    assert.ok(box.w > 0 && box.h > 0);
+    assert.ok(box.w < stamp.width * 0.3);
+    assert.ok(box.h < stamp.height * 0.08);
+    assert.ok(box.x > stamp.width * 0.55);
+    assert.ok(box.y >= 0 && box.y + box.h < stamp.height * 0.12);
+    assert.ok(box.y + box.h < stamp.noticeTop);
+    const wm = stamp.watermarkColor;
+    const plate = stamp.watermarkPlate;
+    const blend = (channel: number, ink: number) => Math.round(channel * (1 - stamp.watermarkAlpha) + ink * stamp.watermarkAlpha);
+    const expected = [
+      blend(plate[0] ?? 0, wm[0] ?? 0),
+      blend(plate[1] ?? 0, wm[1] ?? 0),
+      blend(plate[2] ?? 0, wm[2] ?? 0),
+    ];
+    assert.deepEqual(pixel(stamp, box.x + 1, box.y + 1).slice(0, 3), plate);
+    assert.ok(contrastRgb(expected, plate) >= 3);
+    let corner = 0;
+    for (let y = box.y; y < box.y + box.h; y += 1) {
+      for (let x = box.x; x < box.x + box.w; x += 1) {
+        const sample = pixel(stamp, x, y);
+        if (sample[0] === expected[0] && sample[1] === expected[1] && sample[2] === expected[2]) corner += 1;
+      }
+    }
+    assert.ok(corner > 20, String(corner));
+  });
+
+  test("la marca NO OFICIAL contrasta al menos 3:1 sobre cada fondo", { timeout: 60_000 }, async () => {
+    const { renderCard } = await load<{ renderCard: (options: Record<string, unknown>) => Promise<Card> }>("lib/render.mjs");
+    const catalog = JSON.parse(readStudio("catalog.json")) as {
+      items: { id: string; tipo: string; fill?: string; ink?: string }[];
+    };
+    const fondos = catalog.items.filter((item) => item.tipo === "fondo");
+    assert.equal(fondos.length, 13);
+    for (const fondo of fondos) {
+      const card = await renderCard({
+        width: 480,
+        height: 480,
+        lang: "es",
+        title: "",
+        body: "",
+        fill: fondo.fill,
+        ink: fondo.ink,
+        backgroundId: fondo.id,
+        watermark: false,
+        origins: [],
+      });
+      const box = card.watermarkBox;
+      const platePx = pixel(card, box.x + 1, box.y + 1);
+      assert.deepEqual(platePx.slice(0, 3), card.watermarkPlate, fondo.id);
+      let inkPx: number[] | null = null;
+      for (let y = box.y; y < box.y + box.h; y += 1) {
+        for (let x = box.x; x < box.x + box.w; x += 1) {
+          const sample = pixel(card, x, y);
+          if (sample[0] === platePx[0] && sample[1] === platePx[1] && sample[2] === platePx[2]) continue;
+          const sum = (sample[0] ?? 0) + (sample[1] ?? 0) + (sample[2] ?? 0);
+          if (!inkPx || sum > (inkPx[0] ?? 0) + (inkPx[1] ?? 0) + (inkPx[2] ?? 0)) inkPx = sample;
+        }
+      }
+      assert.ok(inkPx, fondo.id);
+      const ratio = contrastRgb(inkPx ?? [], platePx);
+      assert.ok(ratio >= 3, `${fondo.id} ${ratio.toFixed(2)}`);
+      assert.ok(card.watermarkAlpha >= 0.6, fondo.id);
+    }
+  });
+
+  test("un titular largo no entra en la placa y la mascota no lleva la etiqueta de IA", { timeout: 120_000 }, async () => {
+    const { renderCard } = await load<{ renderCard: (options: Record<string, unknown>) => Promise<Card> }>("lib/render.mjs");
+    const { HEADLINES } = await load<{ HEADLINES: { id: string }[] }>("lib/headlines.mjs");
+    const { AI_LABEL } = await load<{ AI_LABEL: { ai: { es: string; en: string } } }>("lib/copy.mjs");
+    const templates = JSON.parse(readStudio("templates.json")) as {
+      formats: { id: string; width: number; height: number }[];
+    };
+    const padFor = (id: string) => {
+      if (id === "comic") return 0.11;
+      if (id === "neon") return 0.16;
+      if (id === "pixel") return 0.07;
+      if (id === "bold") return 0.08;
+      return 0.09;
+    };
+    const hits = (a: { x: number; y: number; w: number; h: number }, b: { x: number; y: number; w: number; h: number }) =>
+      a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+    const longTitle = "prueba ".repeat(12).trim().slice(0, 72).trim();
+    assert.ok(longTitle.length >= 60, longTitle);
+    for (const format of templates.formats) {
+      for (const headline of HEADLINES) {
+        const card = await renderCard({
+          width: format.width,
+          height: format.height,
+          lang: "es",
+          title: longTitle,
+          body: "Texto de apoyo.",
+          headline: headline.id,
+          origins: ["mascota"],
+          watermark: false,
+          fill: "#0a090d",
+          ink: "#fff3f5",
+        });
+        const titles = card.glyphs.filter((glyph) => glyph.role === "title");
+        assert.ok(titles.length > 8, `${format.id} ${headline.id}`);
+        assert.equal(card.label, "", `${format.id} ${headline.id}`);
+        assert.equal(card.glyphs.some((glyph) => glyph.role === "ai"), false, `${format.id} ${headline.id}`);
+        const plate = card.watermarkBox;
+        for (const glyph of titles) {
+          const pad = glyph.size * padFor(headline.id) + 1;
+          const box = { x: glyph.x - pad, y: glyph.y - pad, w: glyph.w + pad * 2, h: glyph.h + pad * 2 };
+          assert.equal(hits(box, plate), false, `${format.id} ${headline.id} ${glyph.ch}`);
+        }
+      }
+    }
+    for (const [width, height] of [[1080, 1080], [1080, 1920]] as const) {
+      const card = await renderCard({
+        width,
+        height,
+        lang: "es",
+        title: "Hola",
+        body: "Texto corto.",
+        origins: ["ai"],
+        watermark: false,
+        fill: "#fff3f5",
+        ink: "#120a0e",
+      });
+      assert.equal(card.label, AI_LABEL.ai.es, `${width}x${height}`);
+      assert.ok(card.glyphs.some((glyph) => glyph.role === "ai"), `${width}x${height}`);
+      const box = card.labelBox;
+      assert.ok(box, `${width}x${height}`);
+      const platePx = pixel(card, (box?.x ?? 0) + 1, (box?.y ?? 0) + 1);
+      assert.deepEqual(platePx.slice(0, 3), card.watermarkPlate, `${width}x${height}`);
+      let inkPx: number[] | null = null;
+      const x1 = Math.min(card.width, (box?.x ?? 0) + (box?.w ?? 0));
+      const y1 = Math.min(card.height, (box?.y ?? 0) + (box?.h ?? 0));
+      for (let y = box?.y ?? 0; y < y1; y += 1) {
+        for (let x = box?.x ?? 0; x < x1; x += 1) {
+          const sample = pixel(card, x, y);
+          if (sample[0] === platePx[0] && sample[1] === platePx[1] && sample[2] === platePx[2]) continue;
+          const sum = (sample[0] ?? 0) + (sample[1] ?? 0) + (sample[2] ?? 0);
+          if (!inkPx || sum > (inkPx[0] ?? 0) + (inkPx[1] ?? 0) + (inkPx[2] ?? 0)) inkPx = sample;
+        }
+      }
+      assert.ok(inkPx, `${width}x${height}`);
+      assert.ok(contrastRgb(inkPx ?? [], platePx) >= 3, `${width}x${height}`);
+      assert.ok((box?.y ?? 0) + (box?.h ?? 0) <= card.noticeTop, `${width}x${height}`);
+    }
+  });
+
+  test("el titular no parte palabras en ninguna fuente ni formato", { timeout: 120_000 }, async () => {
+    const { renderCard } = await load<{ renderCard: (options: Record<string, unknown>) => Promise<Card> }>("lib/render.mjs");
+    const { HEADLINES } = await load<{ HEADLINES: { id: string }[] }>("lib/headlines.mjs");
+    const templates = JSON.parse(readStudio("templates.json")) as {
+      formats: { id: string; width: number; height: number }[];
+    };
+    assert.ok(HEADLINES.length >= 5);
+    assert.ok(templates.formats.some((format) => format.id === "square" && format.width === 1080 && format.height === 1080));
+    assert.ok(templates.formats.some((format) => format.id === "story" && format.width === 1080 && format.height === 1920));
+    const titles = ["Mira la dirección", "DESCENTRALIZACIÓN"];
+    const shown = (word: string) => [...word].map((ch) => [...ch.toLocaleUpperCase("es-ES")][0] ?? ch).join("");
+    for (const format of templates.formats) {
+      for (const headline of HEADLINES) {
+        for (const title of titles) {
+          const card = await renderCard({
+            width: format.width,
+            height: format.height,
+            lang: "es",
+            title,
+            body: "Texto de apoyo.",
+            headline: headline.id,
+            origins: ["mascota"],
+            watermark: false,
+            fill: "#0a090d",
+            ink: "#fff3f5",
+          });
+          const label = `${format.id} ${headline.id} ${title}`;
+          assert.equal(card.fits, true, label);
+          const words = title.split(/\s+/).filter(Boolean).map(shown);
+          const lines = brandLinesOf(card, "title");
+          assert.ok(lines.length > 0, label);
+          let index = 0;
+          for (const line of lines) {
+            let rest = line;
+            while (rest.length > 0) {
+              const word = words[index];
+              assert.ok(word, `${label} sobra «${line}»`);
+              assert.ok(rest.startsWith(word), `${label} «${line}» no empieza por «${word}»`);
+              rest = rest.slice(word.length);
+              index += 1;
+            }
+          }
+          assert.equal(index, words.length, `${label} ${lines.join("|")}`);
         }
       }
     }
@@ -1659,7 +2072,7 @@ describe("studio", () => {
 
   test("un texto largo con eñe sigue llevando pie y marca", { timeout: 60_000 }, async () => {
     const { renderCard } = await load<{ renderCard: (options: Record<string, unknown>) => Promise<Card> }>("lib/render.mjs");
-    const { FOOTER, BRAND } = await load<{ FOOTER: { es: string }; BRAND: { es: string } }>("lib/copy.mjs");
+    const { NOTICE_SHORT } = await load<{ NOTICE_SHORT: { es: string } }>("lib/copy.mjs");
     const line = "¿Ñandú pingüino sigue en la viñeta? ¡Sí! ";
     const card = await renderCard({
       width: 1080,
@@ -1671,9 +2084,9 @@ describe("studio", () => {
       origins: [],
     });
     assert.equal(card.fits, false);
-    assert.equal(joined(card, "brand"), BRAND.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
-    assert.equal(joined(card, "brandTop"), BRAND.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
-    assert.equal(joined(card, "footer"), FOOTER.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
+    assert.equal(joined(card, "notice"), NOTICE_SHORT.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
+    assert.equal(card.noticeLines, 2);
+    assert.equal(card.topBand, 0);
     for (const ch of ["¿", "Ñ", "Ü", "¡"]) {
       const glyph = card.glyphs.find((item) => item.ch === ch && (item.role === "title" || item.role === "body"));
       assert.ok(glyph, ch);
@@ -1688,9 +2101,12 @@ describe("studio", () => {
       watermark: false,
       origins: [],
     });
-    assert.ok(story.brandFontSize >= 1920 * 0.025);
-    assert.equal(joined(story, "footer"), FOOTER.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
-    assert.equal(joined(story, "brandTop"), BRAND.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
+    assert.ok(noticeLetterPx(story) >= 48, String(noticeLetterPx(story)));
+    assert.ok(noticeLetterPx(story) >= 14);
+    assert.ok(story.noticeInk >= Math.ceil(story.height * 0.025));
+    assert.equal(story.noticeLines, 2);
+    assert.equal(joined(story, "notice"), NOTICE_SHORT.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
+    assert.equal(story.topBand, 0);
   });
 
   test("una palabra suelta no coincide dentro de otra", () => {

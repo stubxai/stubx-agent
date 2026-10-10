@@ -1,6 +1,7 @@
 import catalog from "./catalog.json" with { type: "json" };
 import templates from "./templates.json" with { type: "json" };
-import { FOOTER, PNG_COMMENT, brandFor } from "./lib/copy.mjs";
+import { PNG_COMMENT } from "./lib/copy.mjs";
+import { HEADLINES, headlineById } from "./lib/headlines.mjs";
 import { clearDraft, clipDraftText, loadDraft, saveDraft } from "./lib/draft.mjs";
 import { analyze, exportAllowed } from "./lib/filter.mjs";
 import { DEFAULT_TOKEN, LOGO_MAX_BYTES, TOKEN_MAX, clipToken, createLogoGate, isStubxToken, readLogoPng } from "./lib/logo.mjs";
@@ -41,6 +42,7 @@ const mascotNotice = document.getElementById("aviso-mascota");
 const logoState = document.getElementById("logo-estado");
 const userLive = document.getElementById("vista-usuario");
 const bgBox = document.getElementById("opcion-fondo");
+const typeBox = document.getElementById("opcion-titular");
 const avatarBox = document.getElementById("avatares");
 
 const backgrounds = catalog.items.filter((item) => item.tipo === "fondo" && item.permitido);
@@ -49,6 +51,7 @@ const images = new Map();
 let templateId = "aprendizaje";
 let formatId = "square";
 let backgroundId = backgrounds[0]?.id ?? "";
+let headlineId = "meme";
 let avatarId = avatars[0]?.id ?? "";
 let customLogo = null;
 const logoGate = createLogoGate();
@@ -96,20 +99,52 @@ function applyTemplate(id, code, keepText) {
   });
 }
 
+function choiceButton(pressed, label, thumb) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.setAttribute("aria-pressed", pressed ? "true" : "false");
+  if (thumb) {
+    const img = document.createElement("img");
+    img.src = thumb.src;
+    img.alt = "";
+    img.width = thumb.width;
+    img.height = thumb.height;
+    button.append(img);
+  }
+  const name = document.createElement("span");
+  name.textContent = label;
+  button.append(name);
+  return button;
+}
+
 function paintChoices() {
   const code = lang();
   bgBox.replaceChildren();
   for (const item of backgrounds) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.textContent = item.nombre[code];
-    button.setAttribute("aria-pressed", item.id === backgroundId ? "true" : "false");
+    const button = choiceButton(item.id === backgroundId, item.nombre[code], {
+      src: item.miniatura || item.archivo,
+      width: 96,
+      height: 54,
+    });
     button.addEventListener("click", () => {
       backgroundId = item.id;
       paintChoices();
       schedule();
     });
     bgBox.append(button);
+  }
+  if (typeBox) {
+    typeBox.replaceChildren();
+    for (const item of HEADLINES) {
+      const button = choiceButton(item.id === headlineId, item.nombre[code]);
+      button.style.fontFamily = `"${item.family}", sans-serif`;
+      button.addEventListener("click", () => {
+        headlineId = item.id;
+        paintChoices();
+        schedule();
+      });
+      typeBox.append(button);
+    }
   }
   avatarBox.replaceChildren();
   const stubxName = isStubxToken(tokenName());
@@ -168,6 +203,7 @@ function persist() {
     templateId,
     formatId,
     backgroundId,
+    headlineId,
     avatarId,
     token: tokenName(),
     title: titleInput.value,
@@ -196,6 +232,8 @@ async function draw() {
     token: name,
     fill: bg?.fill ?? "#0a090d",
     ink: bg?.ink ?? "#fff3f5",
+    backgroundId: bg?.id,
+    headline: headlineById(headlineId).id,
     origins,
     zones: templates.zones,
     avatar: customLogo ?? (avatar ? images.get(avatar.id) ?? null : null),
@@ -211,9 +249,37 @@ async function draw() {
   detail.textContent = hits.slice(0, 5).map((hit) => hitLabel(hit, code)).join(", ");
   download.disabled = !allowed || !card.fits;
   share.disabled = download.disabled;
-  userLive.textContent = [name, titleInput.value, bodyInput.value, brandFor(code, name), FOOTER[code], card.label].filter(Boolean).join(". ");
+  const vistaTexto = document.getElementById("vista-texto");
+  vistaTexto.replaceChildren();
+  const noticeLabel = document.createElement("span");
+  noticeLabel.lang = code;
+  noticeLabel.textContent = card.noticeText;
+  vistaTexto.append(noticeLabel);
+  userLive.textContent = [name, titleInput.value, bodyInput.value, card.noticeText, card.label].filter(Boolean).join(". ");
   persist();
   prepare();
+  placePreview();
+}
+
+function placePreview() {
+  const header = document.querySelector("header.site");
+  const box = document.querySelector(".vista-caja");
+  if (!header || !box) return;
+  const narrow = window.matchMedia("(max-width: 800px)").matches;
+  if (narrow) {
+    header.classList.remove("sin-fijar");
+    box.classList.remove("sin-fijar");
+    document.documentElement.style.removeProperty("--cabecera");
+    document.documentElement.style.scrollPaddingTop = "";
+    return;
+  }
+  const bar = Math.ceil(header.getBoundingClientRect().height);
+  document.documentElement.style.setProperty("--cabecera", `${bar}px`);
+  const preview = box.getBoundingClientRect().height;
+  const fits = bar + 4 + preview <= window.innerHeight - 8;
+  header.classList.toggle("sin-fijar", !fits);
+  box.classList.toggle("sin-fijar", !fits);
+  document.documentElement.style.scrollPaddingTop = fits ? `${bar + 4 + preview + 12}px` : "0px";
 }
 
 // La imagen se prepara antes del toque: iOS solo deja compartir o abrir una pestaña
@@ -447,6 +513,7 @@ if (saved) {
   templateId = saved.templateId || templateId;
   formatId = saved.formatId || formatId;
   backgroundId = saved.backgroundId || backgroundId;
+  if (saved.headlineId && headlineById(saved.headlineId).id === saved.headlineId) headlineId = saved.headlineId;
   avatarId = saved.avatarId || "";
   dirty = Boolean(saved.dirty);
   applyTemplate(templateId, lang(), true);
@@ -461,6 +528,9 @@ if (saved) {
   applyTemplate(templateId, lang(), lang() === "es");
 }
 paintChoices();
+placePreview();
+window.addEventListener("resize", placePreview);
+document.fonts?.ready?.then(placePreview);
 loadImages().then(schedule).catch(() => {
   loadNotice.hidden = false;
   schedule();
