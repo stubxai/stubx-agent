@@ -3,6 +3,9 @@ import { mkdirSync, readFileSync } from "node:fs";
 import { deflateSync } from "node:zlib";
 
 import { decodePng } from "../../web/v2/studio/lib/png.mjs";
+import { readLogoPng } from "../../web/v2/studio/lib/logo.mjs";
+import { renderCard } from "../../web/v2/studio/lib/render.mjs";
+import templates from "../../web/v2/studio/templates.json" with { type: "json" };
 
 const shots = process.env.STUDIO_SHOTS ?? "test-results/studio-guardar";
 
@@ -32,11 +35,11 @@ function yellowPng() {
 async function ready(page) {
   await page.goto("/studio/");
   // El editor está listo cuando ha dibujado la primera vista.
-  await expect(page.locator("#descargar")).toBeEnabled();
+  await expect(page.locator("#descargar")).toBeEnabled({ timeout: 45_000 });
   await page.click("#tab-avatar");
   await page.setInputFiles("#logo", { name: "logo.png", mimeType: "image/png", buffer: yellowPng() });
   await expect(page.locator("#logo-estado")).not.toHaveText("", { timeout: 10000 });
-  await expect(page.locator("#descargar")).toBeEnabled();
+  await expect(page.locator("#descargar")).toBeEnabled({ timeout: 45_000 });
   await page.waitForTimeout(300);
 }
 
@@ -125,6 +128,31 @@ async function expectFinalPng(page, bytes) {
   const footRows = Array.from({ length: Math.floor(img.height * 0.08) }, (_, k) => img.height - 1 - k).filter(rowVaries).length;
   expect(bandRows).toBeGreaterThan(3);
   expect(footRows).toBeGreaterThan(3);
+  const logo = await readLogoPng(yellowPng());
+  const item = templates.templates.find((entry) => entry.id === "aprendizaje");
+  const card = await renderCard({
+    width: 1080,
+    height: 1080,
+    lang: "es",
+    title: item.title.es,
+    body: item.body.es,
+    token: "STUBX",
+    fill: "#070418",
+    ink: "#f4f7fb",
+    backgroundId: "fondo-solana",
+    headline: "meme",
+    origins: ["ninguno"],
+    zones: templates.zones,
+    avatar: logo,
+    png: false,
+  });
+  expect(img.width).toBe(card.width);
+  expect(img.height).toBe(card.height);
+  let diff = 0;
+  for (let i = 0; i < img.rgba.length; i += 4) {
+    if (img.rgba[i] !== card.rgba[i] || img.rgba[i + 1] !== card.rgba[i + 1] || img.rgba[i + 2] !== card.rgba[i + 2]) diff += 1;
+  }
+  expect(diff).toBe(0);
 }
 
 test("guardar: lo que se comparte es el PNG final", async ({ page }) => {

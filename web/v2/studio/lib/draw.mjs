@@ -4,6 +4,33 @@ import { glyphPolylines, measureFont, parseFont } from "./ttf.mjs";
 
 const cache = new Map();
 
+function clock() {
+  return globalThis.performance?.now?.() ?? Date.now();
+}
+
+// Reparte el trabajo en trozos cortos. Sin pace, el bucle sigue siendo síncrono y el resultado no cambia.
+function sliceRows(total, pace, draw) {
+  if (!pace) {
+    for (let row = 0; row < total; row += 1) draw(row);
+    return null;
+  }
+  return (async () => {
+    let stamp = clock();
+    for (let row = 0; row < total; row += 1) {
+      draw(row);
+      if (clock() - stamp < 12) continue;
+      const pending = pace();
+      if (pending) await pending;
+      stamp = clock();
+    }
+  })();
+}
+
+async function taken(value) {
+  if (value && typeof value.then === "function") return value;
+  return value;
+}
+
 export async function loadFace(file) {
   if (cache.has(file)) return cache.get(file);
   const pending = readAsset(file).then((bytes) => parseFont(bytes));
@@ -112,7 +139,7 @@ export function fitFace(font, text, zone, maxSize, minSize, avoid) {
   return { lines, size: used, fits: fit.ok && fit.lines.length <= maxLines };
 }
 
-function raster(lines, width, height) {
+function raster(lines, width, height, pace) {
   const mask = new Uint8Array(width * height);
   const edges = [];
   for (const line of lines) {
@@ -130,14 +157,14 @@ function raster(lines, width, height) {
       });
     }
   }
-  for (let y = 0; y < height; y += 1) {
+  const done = sliceRows(height, pace, (y) => {
     const scan = y + 0.5;
     const hits = [];
     for (const edge of edges) {
       if (scan < edge.y0 || scan >= edge.y1) continue;
       hits.push({ x: edge.x + (scan - edge.y0) * edge.dx, wind: edge.wind });
     }
-    if (hits.length === 0) continue;
+    if (hits.length === 0) return;
     hits.sort((a, b) => a.x - b.x);
     let wind = 0;
     let from = 0;
@@ -150,16 +177,17 @@ function raster(lines, width, height) {
       wind += hit.wind;
       from = hit.x;
     }
-  }
+  });
+  if (done) return done.then(() => mask);
   return mask;
 }
 
-function dilate(mask, width, height, radius) {
+function dilate(mask, width, height, radius, pace) {
   const r = Math.ceil(radius);
   if (r <= 0) return mask;
   const out = new Uint8Array(mask.length);
   const r2 = radius * radius;
-  for (let y = 0; y < height; y += 1) {
+  const done = sliceRows(height, pace, (y) => {
     for (let x = 0; x < width; x += 1) {
       if (mask[y * width + x] === 0) continue;
       const y0 = Math.max(0, y - r);
@@ -174,16 +202,17 @@ function dilate(mask, width, height, radius) {
         }
       }
     }
-  }
+  });
+  if (done) return done.then(() => out);
   return out;
 }
 
-function blur(mask, width, height, radius) {
+function blur(mask, width, height, radius, pace) {
   const r = Math.max(1, Math.round(radius));
   const tmp = new Uint8Array(mask.length);
   const out = new Uint8Array(mask.length);
   const win = r * 2 + 1;
-  for (let y = 0; y < height; y += 1) {
+  const horizontal = sliceRows(height, pace, (y) => {
     let sum = 0;
     for (let x = -r; x <= r; x += 1) sum += mask[y * width + Math.min(width - 1, Math.max(0, x))] ?? 0;
     for (let x = 0; x < width; x += 1) {
@@ -193,8 +222,8 @@ function blur(mask, width, height, radius) {
       sum -= mask[y * width + Math.min(width - 1, Math.max(0, leave))] ?? 0;
       sum += mask[y * width + Math.min(width - 1, Math.max(0, enter))] ?? 0;
     }
-  }
-  for (let x = 0; x < width; x += 1) {
+  });
+  const vertical = () => sliceRows(width, pace, (x) => {
     let sum = 0;
     for (let y = -r; y <= r; y += 1) sum += tmp[Math.min(height - 1, Math.max(0, y)) * width + x] ?? 0;
     for (let y = 0; y < height; y += 1) {
@@ -204,15 +233,23 @@ function blur(mask, width, height, radius) {
       sum -= tmp[Math.min(height - 1, Math.max(0, leave)) * width + x] ?? 0;
       sum += tmp[Math.min(height - 1, Math.max(0, enter)) * width + x] ?? 0;
     }
+  });
+  if (!horizontal) {
+    const done = vertical();
+    if (done) return done.then(() => out);
+    return out;
   }
-  return out;
+  return horizontal.then(vertical).then((done) => (done ? done.then(() => out) : out));
 }
 
-function blit(rgba, width, height, mask, mw, mh, ox, oy, color, alpha, sample) {
+function blit(rgba, width, height, mask, mw, mh, ox, oy, color, alpha, sample, pace) {
   const step = sample;
-  for (let y = 0; y < mh; y += step) {
+  const rows = [];
+  for (let y = 0; y < mh; y += step) rows.push(y);
+  const done = sliceRows(rows.length, pace, (index) => {
+    const y = rows[index];
     const dy = oy + Math.floor(y / step);
-    if (dy < 0 || dy >= height) continue;
+    if (dy < 0 || dy >= height) return;
     for (let x = 0; x < mw; x += step) {
       const dx = ox + Math.floor(x / step);
       if (dx < 0 || dx >= width) continue;
@@ -236,7 +273,8 @@ function blit(rgba, width, height, mask, mw, mh, ox, oy, color, alpha, sample) {
       rgba[i + 2] = Math.round((rgba[i + 2] ?? 0) * keep + color[2] * a);
       rgba[i + 3] = 255;
     }
-  }
+  });
+  return done;
 }
 
 function shownChar(ch) {
@@ -244,10 +282,11 @@ function shownChar(ch) {
   return [...upper][0] ?? ch;
 }
 
-export function drawFace(rgba, width, height, font, lines, x, baseline, size, role, glyphs, style) {
+export async function drawFace(rgba, width, height, font, lines, x, baseline, size, role, glyphs, style, pace) {
   const sample = style.crisp ? 1 : 2;
   const { ascent, descent, step } = lineBox(font, size);
-  lines.forEach((line, index) => {
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
     const y = baseline + index * step;
     const placed = [];
     let pen = x;
@@ -282,7 +321,7 @@ export function drawFace(rgba, width, height, font, lines, x, baseline, size, ro
         missing: item.poly.missing,
       });
     }
-    if (!Number.isFinite(minX)) return;
+    if (!Number.isFinite(minX)) continue;
     const pad = Math.ceil(size * Math.max(style.strokeWidth ?? 0, style.glowRadius ?? 0, style.shadow ?? 0) + 3);
     const ox = Math.floor(minX) - pad;
     const oyTop = Math.floor(y - maxY) - pad;
@@ -297,25 +336,25 @@ export function drawFace(rgba, width, height, font, lines, x, baseline, size, ro
         })));
       }
     }
-    const mask = raster(shifted, mw, mh);
+    const mask = await taken(raster(shifted, mw, mh, pace));
     const fill = style.fill;
     const stroke = style.stroke;
     const glow = style.glow;
     if (glow) {
-      const soft = blur(mask, mw, mh, (style.glowRadius ?? 0.2) * size * sample);
-      blit(rgba, width, height, soft, mw, mh, ox, oyTop, glow, style.glowAlpha ?? 0.9, sample);
-      if (style.glow2) blit(rgba, width, height, soft, mw, mh, ox - Math.round(size * 0.03), oyTop, style.glow2, 0.55, sample);
+      const soft = await taken(blur(mask, mw, mh, (style.glowRadius ?? 0.2) * size * sample, pace));
+      await taken(blit(rgba, width, height, soft, mw, mh, ox, oyTop, glow, style.glowAlpha ?? 0.9, sample, pace));
+      if (style.glow2) await taken(blit(rgba, width, height, soft, mw, mh, ox - Math.round(size * 0.03), oyTop, style.glow2, 0.55, sample, pace));
     }
     if (style.shadow) {
       const shift = Math.max(1, Math.round(size * style.shadow));
-      blit(rgba, width, height, mask, mw, mh, ox + shift, oyTop + shift, style.shadowColor ?? [8, 6, 12], style.shadowAlpha ?? 0.9, sample);
+      await taken(blit(rgba, width, height, mask, mw, mh, ox + shift, oyTop + shift, style.shadowColor ?? [8, 6, 12], style.shadowAlpha ?? 0.9, sample, pace));
     }
     if (stroke && (style.strokeWidth ?? 0) > 0) {
-      const thick = dilate(mask, mw, mh, style.strokeWidth * size * sample);
-      blit(rgba, width, height, thick, mw, mh, ox, oyTop, stroke, style.alpha ?? 1, sample);
+      const thick = await taken(dilate(mask, mw, mh, style.strokeWidth * size * sample, pace));
+      await taken(blit(rgba, width, height, thick, mw, mh, ox, oyTop, stroke, style.alpha ?? 1, sample, pace));
     }
-    blit(rgba, width, height, mask, mw, mh, ox, oyTop, fill, style.alpha ?? 1, sample);
-  });
+    await taken(blit(rgba, width, height, mask, mw, mh, ox, oyTop, fill, style.alpha ?? 1, sample, pace));
+  }
 }
 
 export function letterInk(font, ch, size) {

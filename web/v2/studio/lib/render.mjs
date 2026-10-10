@@ -68,6 +68,28 @@ async function breathe(options) {
   }
 }
 
+function createPace(options) {
+  if (!options?.slice) return null;
+  let stamp = 0;
+  return () => {
+    const now = globalThis.performance?.now?.() ?? Date.now();
+    if (stamp && now - stamp < 12) return null;
+    stamp = now;
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        stamp = globalThis.performance?.now?.() ?? Date.now();
+        if (typeof options.alive === "function" && !options.alive()) {
+          const error = new Error("cancelled");
+          error.name = "AbortError";
+          reject(error);
+          return;
+        }
+        resolve();
+      }, 0);
+    });
+  };
+}
+
 function fillRect(rgba, width, height, x, y, w, h, color) {
   const x0 = Math.max(0, Math.floor(x));
   const y0 = Math.max(0, Math.floor(y));
@@ -200,15 +222,16 @@ function watermarkLayout(width, height, bodyFont) {
   };
 }
 
-function placeText(rgba, width, height, font, fit, zone, role, glyphs, style) {
+async function placeText(rgba, width, height, font, fit, zone, role, glyphs, style, pace) {
   if (!fit.lines.length || zone.h < 4) return;
   const metrics = lineBox(font, fit.size);
-  drawFace(rgba, width, height, font, fit.lines, zone.x, zone.y + metrics.ascent, fit.size, role, glyphs, style);
+  await drawFace(rgba, width, height, font, fit.lines, zone.x, zone.y + metrics.ascent, fit.size, role, glyphs, style, pace);
 }
 
 export async function renderCard(options) {
   const width = options.width;
   const height = options.height;
+  const pace = createPace(options);
   const lang = options.lang === "en" ? "en" : "es";
   const fill = hexColor(options.fill ?? "#0a090d");
   const ink = hexColor(options.ink ?? "#fff3f5");
@@ -287,18 +310,18 @@ export async function renderCard(options) {
   );
   const bodyFit = fitFace(bodyFont, options.body ?? "", bodyZone, Math.max(18, height * 0.04), Math.max(14, Math.round(height * 0.02)));
   const tokenFit = fitFace(bodyFont, tokenText, tokenZone, Math.max(14, Math.round(height * 0.028)), 12);
-  placeText(rgba, width, height, titleFont, titleFit, titleZone, "title", glyphs, titleLook);
+  await placeText(rgba, width, height, titleFont, titleFit, titleZone, "title", glyphs, titleLook, pace);
   await breathe(options);
-  placeText(rgba, width, height, bodyFont, bodyFit, bodyZone, "body", glyphs, { fill: inkRgb, shadow: 0.05, shadowAlpha: 0.75 });
+  await placeText(rgba, width, height, bodyFont, bodyFit, bodyZone, "body", glyphs, { fill: inkRgb, shadow: 0.05, shadowAlpha: 0.75 }, pace);
   await breathe(options);
-  placeText(rgba, width, height, bodyFont, tokenFit, tokenZone, "token", glyphs, { fill: inkRgb });
+  await placeText(rgba, width, height, bodyFont, tokenFit, tokenZone, "token", glyphs, { fill: inkRgb }, pace);
 
   fillRect(rgba, width, height, mark.plateX, mark.plateY, mark.plateW, mark.plateH, [WM_PLATE[0], WM_PLATE[1], WM_PLATE[2], 255]);
-  drawFace(rgba, width, height, bodyFont, [WM_TEXT], mark.wmX, mark.wmBaseline, mark.wmSize, "watermark", glyphs, {
+  await drawFace(rgba, width, height, bodyFont, [WM_TEXT], mark.wmX, mark.wmBaseline, mark.wmSize, "watermark", glyphs, {
     fill: [WM_INK[0], WM_INK[1], WM_INK[2]],
     alpha: WATERMARK_ALPHA,
     crisp: true,
-  });
+  }, pace);
 
   let labelBox = null;
   if (aiLines.length && aiMetrics) {
@@ -310,18 +333,18 @@ export async function renderCard(options) {
       h: aiH,
     };
     fillRect(rgba, width, height, labelBox.x, labelBox.y, labelBox.w, labelBox.h, [WM_PLATE[0], WM_PLATE[1], WM_PLATE[2], 255]);
-    drawFace(rgba, width, height, bodyFont, aiLines, labelBox.x + aiPad, labelBox.y + aiPad + aiMetrics.ascent, aiSize, "ai", glyphs, {
+    await drawFace(rgba, width, height, bodyFont, aiLines, labelBox.x + aiPad, labelBox.y + aiPad + aiMetrics.ascent, aiSize, "ai", glyphs, {
       fill: [WM_INK[0], WM_INK[1], WM_INK[2]],
       alpha: WATERMARK_ALPHA,
       crisp: true,
-    });
+    }, pace);
   }
 
   fillRect(rgba, width, height, 0, footerTop, width, noticeH, FOOTER_BG);
   const noticeBaseline = footerTop + padY + noticeMetrics.ascent;
-  drawFace(rgba, width, height, noticeFont, noticeLinesDrawn, pad, noticeBaseline, noticeSize, "notice", glyphs, {
+  await drawFace(rgba, width, height, noticeFont, noticeLinesDrawn, pad, noticeBaseline, noticeSize, "notice", glyphs, {
     fill: [FOOTER_FG[0], FOOTER_FG[1], FOOTER_FG[2]],
-  });
+  }, pace);
 
   const png = options.png === false ? new Uint8Array() : await encodePng(rgba, width, height, PNG_COMMENT);
   const noticeGlyphs = glyphs.filter((glyph) => glyph.role === "notice");

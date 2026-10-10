@@ -1258,7 +1258,7 @@ describe("studio", () => {
     const headers = readFileSync(path.join(repoRoot(), "web/v2/_headers"), "utf8");
     assert.equal((headers.match(/^\/studio\/\*$/gm) ?? []).length, 0);
     assert.match(readStudio("index.html"), /default-src 'none'/);
-    assert.match(readStudio("index.html"), /worker-src 'none'/);
+    assert.match(readStudio("index.html"), /worker-src 'self'/);
     assert.match(readStudio("index.html"), /connect-src 'self'/);
     assert.equal(readStudio("index.html").includes("frame-ancestors"), false);
     assert.match(readStudio("reglas/index.html"), /default-src 'none'/);

@@ -199,11 +199,22 @@ function tokenName() {
   return clipToken(tokenInput.value);
 }
 
-const PREVIEW_MAX = 540;
+const PREVIEW_CAP = 1600;
+const EXPORT_IDLE_MS = 400;
 const carga = document.getElementById("vista-carga");
+const prepNotice = document.getElementById("aviso-preparando");
 let renderToken = 0;
 let raf = 0;
 let fontWarm = null;
+let exportTimer = 0;
+let jobId = 0;
+let worker = null;
+let workerBroken = false;
+let avatarCacheKey = "";
+let previewJob = 0;
+let previewWait = null;
+let exportJobId = 0;
+let exportCount = 0;
 
 function warmFonts() {
   if (fontWarm) return fontWarm;
@@ -218,20 +229,76 @@ function warmFonts() {
 
 function previewSize() {
   const full = format();
-  const box = canvas.parentElement?.getBoundingClientRect();
-  const cssW = Math.max(1, box?.width || 320);
+  const cssW = Math.max(1, canvas.clientWidth || canvas.parentElement?.clientWidth || 320);
   const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 3));
   let width = cssW * dpr;
   let height = width * (full.height / full.width);
-  const edge = Math.max(width, height);
-  if (edge > PREVIEW_MAX) {
-    const scale = PREVIEW_MAX / edge;
+  const long = Math.max(width, height);
+  if (long > PREVIEW_CAP) {
+    const scale = PREVIEW_CAP / long;
     width *= scale;
     height *= scale;
   }
   width = Math.max(1, Math.min(full.width, Math.round(width)));
-  height = Math.max(1, Math.min(full.height, Math.round(height)));
+  height = Math.max(1, Math.min(full.height, Math.round(width * full.height / full.width)));
+  if (height > full.height) {
+    height = full.height;
+    width = Math.max(1, Math.min(full.width, Math.round(height * full.width / full.height)));
+  }
+  if (full.width === full.height) height = width;
   return { width, height };
+}
+
+function avatarKey(image) {
+  if (!image?.rgba) return "";
+  const rgba = image.rgba;
+  const last = rgba.length - 1;
+  return `${image.width}x${image.height}:${rgba.length}:${rgba[0]}:${rgba[last >> 1]}:${rgba[last]}`;
+}
+
+function workerOptions(size) {
+  const options = cardOptions(size);
+  const key = avatarKey(options.avatar);
+  options.avatarKey = key;
+  if (key && key === avatarCacheKey) delete options.avatar;
+  else if (key) avatarCacheKey = key;
+  return options;
+}
+
+function canUseWorker() {
+  if (workerBroken || typeof Worker !== "function" || typeof OffscreenCanvas !== "function") return false;
+  try {
+    const probe = new OffscreenCanvas(1, 1);
+    return Boolean(probe.getContext("2d") && probe.transferToImageBitmap);
+  } catch {
+    return false;
+  }
+}
+
+function renderWorker() {
+  if (!canUseWorker()) return null;
+  if (worker) return worker;
+  try {
+    worker = new Worker(new URL("./render.worker.mjs", import.meta.url), { type: "module" });
+  } catch {
+    workerBroken = true;
+    worker = null;
+    return null;
+  }
+  worker.onmessage = (event) => onWorkerMessage(event.data || {});
+  worker.onerror = () => {
+    workerBroken = true;
+    const failed = worker;
+    worker = null;
+    avatarCacheKey = "";
+    failed?.terminate();
+    const wait = previewWait;
+    if (!wait) return;
+    previewWait = null;
+    previewJob = 0;
+    renderLocal(previewSize(), wait.token).then(wait.resolve, wait.reject);
+  };
+  return worker;
 }
 
 function cardOptions(size) {
@@ -258,22 +325,63 @@ function cardOptions(size) {
   };
 }
 
-function showPreview(card) {
-  const pixels = new Uint8ClampedArray(card.rgba);
-  const image = new ImageData(pixels, card.width, card.height);
-  if (typeof OffscreenCanvas === "function") {
-    const off = new OffscreenCanvas(card.width, card.height);
-    off.getContext("2d").putImageData(image, 0, 0);
-    canvas.width = card.width;
-    canvas.height = card.height;
-    const bitmap = off.transferToImageBitmap();
-    canvas.getContext("2d").drawImage(bitmap, 0, 0);
-    bitmap.close?.();
-    return;
-  }
-  canvas.width = card.width;
-  canvas.height = card.height;
-  canvas.getContext("2d").putImageData(image, 0, 0);
+function showBitmap(bitmap, width, height) {
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(bitmap, 0, 0);
+  bitmap.close?.();
+}
+
+function paintCounters() {
+  const max = limits();
+  titleCount.textContent = `${titleInput.value.length} / ${max.title}`;
+  bodyCount.textContent = `${bodyInput.value.length} / ${max.body}`;
+  tokenCount.textContent = `${tokenName().length} / ${TOKEN_MAX}`;
+}
+
+function syncExportButtons() {
+  const name = tokenName();
+  const allowed = exportAllowed(titleInput.value, bodyInput.value, undefined, name);
+  const fits = latest ? Boolean(latest.fits) : true;
+  const waiting = !ready || readyFor !== drawCount;
+  const showWait = waiting && allowed && fits;
+  download.classList.toggle("preparando", showWait);
+  share.classList.toggle("preparando", showWait);
+  if (prepNotice) prepNotice.hidden = !showWait;
+  download.disabled = !allowed || !fits || waiting || !latest;
+  share.disabled = download.disabled;
+}
+
+function applyPreviewMeta(meta) {
+  const code = lang();
+  const name = tokenName();
+  latest = {
+    fits: Boolean(meta.fits),
+    noticeText: meta.noticeText,
+    label: meta.label || "",
+    width: meta.width,
+    height: meta.height,
+  };
+  const allowed = exportAllowed(titleInput.value, bodyInput.value, undefined, name);
+  const hits = [...analyze(name).hits, ...analyze(titleInput.value).hits, ...analyze(bodyInput.value).hits];
+  blockNotice.hidden = allowed;
+  fitNotice.hidden = latest.fits;
+  detail.textContent = hits.slice(0, 5).map((hit) => hitLabel(hit, code)).join(", ");
+  const vistaTexto = document.getElementById("vista-texto");
+  vistaTexto.replaceChildren();
+  const noticeLabel = document.createElement("span");
+  noticeLabel.lang = code;
+  noticeLabel.textContent = meta.noticeText || "";
+  vistaTexto.append(noticeLabel);
+  userLive.textContent = [name, titleInput.value, bodyInput.value, meta.noticeText, meta.label].filter(Boolean).join(". ");
+  syncExportButtons();
+}
+
+function finishChrome(token) {
+  if (token !== renderToken || !carga) return;
+  carga.hidden = true;
+  canvas.removeAttribute("aria-busy");
 }
 
 function persist() {
@@ -291,42 +399,125 @@ function persist() {
 }
 
 async function draw(token) {
-  const code = lang();
-  const max = limits();
-  titleCount.textContent = `${titleInput.value.length} / ${max.title}`;
-  bodyCount.textContent = `${bodyInput.value.length} / ${max.body}`;
-  tokenCount.textContent = `${tokenName().length} / ${TOKEN_MAX}`;
-  const name = tokenName();
-  await warmFonts();
-  if (token !== renderToken) return;
+  return beginPreview(token);
+}
+
+function dropPreviewWait() {
+  if (!previewWait) return;
+  const wait = previewWait;
+  previewWait = null;
+  previewJob = 0;
+  wait.resolve();
+}
+
+function onWorkerMessage(msg) {
+  if (msg.kind === "preview" && previewWait && msg.id === previewWait.id) {
+    const wait = previewWait;
+    previewWait = null;
+    previewJob = 0;
+    if (msg.error) {
+      workerBroken = true;
+      worker?.terminate();
+      worker = null;
+      avatarCacheKey = "";
+      renderLocal(previewSize(), wait.token).then(wait.resolve, wait.reject);
+      return;
+    }
+    if (wait.token !== renderToken) {
+      msg.bitmap?.close?.();
+      wait.resolve();
+      return;
+    }
+    showBitmap(msg.bitmap, msg.width, msg.height);
+    applyPreviewMeta(msg);
+    finishChrome(wait.token);
+    persist();
+    placePreview();
+    armExport(drawCount);
+    wait.resolve();
+    return;
+  }
+  if (msg.kind !== "png" || msg.id !== exportJobId) return;
+  const count = exportCount;
+  exportJobId = 0;
+  if (count !== drawCount) return;
+  if (msg.fits === false || msg.error || !msg.blob) {
+    if (msg.fits === false) {
+      if (latest) latest.fits = false;
+      syncExportButtons();
+      return;
+    }
+    exportedBlob(renderToken).then((blob) => {
+      if (count !== drawCount || !blob) {
+        syncExportButtons();
+        return;
+      }
+      ready = blob;
+      readyFor = count;
+      syncExportButtons();
+    }).catch((error) => {
+      if (error?.name === "AbortError") return;
+      loadNotice.hidden = false;
+      download.disabled = true;
+    });
+    return;
+  }
+  ready = msg.blob;
+  readyFor = count;
+  syncExportButtons();
+}
+
+async function paintBands(board, rgba, width, height, alive) {
+  board.width = width;
+  board.height = height;
+  const ctx = board.getContext("2d");
+  const pixels = rgba instanceof Uint8ClampedArray ? rgba : new Uint8ClampedArray(rgba);
+  const band = 12;
+  for (let y = 0; y < height; y += band) {
+    if (alive && !alive()) return false;
+    const h = Math.min(band, height - y);
+    const slice = pixels.subarray(y * width * 4, (y + h) * width * 4);
+    ctx.putImageData(new ImageData(new Uint8ClampedArray(slice), width, h), 0, y);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+  return true;
+}
+
+async function renderLocal(size, token) {
   const card = await renderCard({
-    ...cardOptions(previewSize()),
+    ...cardOptions(size),
     preview: true,
     png: false,
+    slice: true,
+    cooperative: true,
     alive: () => token === renderToken,
   });
   if (token !== renderToken) return;
-  latest = card;
-  showPreview(card);
-  const allowed = exportAllowed(titleInput.value, bodyInput.value, undefined, name);
-  const hits = [...analyze(name).hits, ...analyze(titleInput.value).hits, ...analyze(bodyInput.value).hits];
-  blockNotice.hidden = allowed;
-  fitNotice.hidden = card.fits;
-  detail.textContent = hits.slice(0, 5).map((hit) => hitLabel(hit, code)).join(", ");
-  download.disabled = !allowed || !card.fits;
-  share.disabled = download.disabled;
-  const vistaTexto = document.getElementById("vista-texto");
-  vistaTexto.replaceChildren();
-  const noticeLabel = document.createElement("span");
-  noticeLabel.lang = code;
-  noticeLabel.textContent = card.noticeText;
-  vistaTexto.append(noticeLabel);
-  userLive.textContent = [name, titleInput.value, bodyInput.value, card.noticeText, card.label].filter(Boolean).join(". ");
-  if (carga) carga.hidden = true;
-  canvas.removeAttribute("aria-busy");
+  const painted = await paintBands(canvas, card.rgba, card.width, card.height, () => token === renderToken);
+  if (!painted || token !== renderToken) return;
+  applyPreviewMeta(card);
+  finishChrome(token);
   persist();
-  prepare();
   placePreview();
+  armExport(drawCount);
+}
+
+async function beginPreview(token) {
+  paintCounters();
+  await warmFonts();
+  if (token !== renderToken) return;
+  const size = previewSize();
+  const thread = renderWorker();
+  if (thread) {
+    const id = ++jobId;
+    previewJob = id;
+    await new Promise((resolve, reject) => {
+      previewWait = { id, token, resolve, reject };
+      thread.postMessage({ id, kind: "preview", options: workerOptions(size) });
+    });
+    return;
+  }
+  await renderLocal(size, token);
 }
 
 function placePreview() {
@@ -350,22 +541,43 @@ function placePreview() {
   document.documentElement.style.scrollPaddingTop = fits ? `${bar + 4 + preview + 12}px` : "0px";
 }
 
-// La imagen se prepara antes del toque: iOS solo deja compartir o abrir una pestaña
-// si se hace en el mismo gesto, sin esperas largas.
-function prepare() {
-  drawCount += 1;
-  ready = null;
+// El PNG completo se prepara cuando la vista lleva un momento quieta.
+// Guardar y Compartir usan ese blob en el mismo toque: iOS pierde el gesto si se espera el render.
+function armExport(count) {
+  clearTimeout(exportTimer);
+  exportTimer = setTimeout(() => {
+    if (count !== drawCount) return;
+    const token = renderToken;
+    if (!exportAllowed(titleInput.value, bodyInput.value, undefined, tokenName()) || !latest?.fits) {
+      syncExportButtons();
+      return;
+    }
+    const thread = renderWorker();
+    if (thread) {
+      exportJobId = ++jobId;
+      exportCount = count;
+      thread.postMessage({ id: exportJobId, kind: "png", options: workerOptions(format()) });
+      return;
+    }
+    exportedBlob(token).then((blob) => {
+      if (count !== drawCount || token !== renderToken || !blob) {
+        syncExportButtons();
+        return;
+      }
+      ready = blob;
+      readyFor = count;
+      syncExportButtons();
+    }).catch((error) => {
+      if (error?.name === "AbortError") return;
+      loadNotice.hidden = false;
+      download.disabled = true;
+    });
+  }, EXPORT_IDLE_MS);
 }
 
-async function currentBlob() {
+function readyBlob() {
   if (ready && readyFor === drawCount) return ready;
-  const token = renderToken;
-  const blob = await exportedBlob(token);
-  if (blob && token === renderToken) {
-    ready = blob;
-    readyFor = drawCount;
-  }
-  return blob;
+  return null;
 }
 
 function showSaveNotice() {
@@ -391,21 +603,33 @@ function downloadFile(blob) {
   setTimeout(() => URL.revokeObjectURL(url), REVOKE_MS);
 }
 
-async function shareFile(blob) {
+function shareNow(blob) {
   const file = new File([blob], FILE_NAME, { type: "image/png" });
-  try {
-    await navigator.share({ files: [file] });
-  } catch (error) {
+  navigator.share({ files: [file] }).then(() => {}, (error) => {
     if (error && error.name === "AbortError") return;
     openImage(blob);
-  }
+  });
 }
 
 function schedule(kind) {
   clearTimeout(timer);
+  clearTimeout(exportTimer);
   cancelAnimationFrame(raf);
+  dropPreviewWait();
   const token = ++renderToken;
+  drawCount += 1;
   ready = null;
+  readyFor = 0;
+  syncExportButtons();
+  const thread = worker;
+  if (thread) {
+    try {
+      thread.postMessage({ id: ++jobId, kind: "cancel" });
+    } catch {
+      workerBroken = true;
+      worker = null;
+    }
+  }
   const typing = kind === "input";
   if (!typing && carga) {
     canvas.setAttribute("aria-busy", "true");
@@ -421,14 +645,12 @@ function schedule(kind) {
       }, 100);
       draw(token).catch((error) => {
         if (error?.name === "AbortError") return;
+        if (token !== renderToken) return;
         loadNotice.hidden = false;
         download.disabled = true;
       }).finally(() => {
         clearTimeout(slow);
-        if (token === renderToken && carga) {
-          carga.hidden = true;
-          canvas.removeAttribute("aria-busy");
-        }
+        finishChrome(token);
       });
     });
   }, typing ? 160 : 0);
@@ -442,10 +664,9 @@ async function loadImages() {
   }));
 }
 
-function blobFrom(canvas, rgba, width, height) {
-  canvas.width = width;
-  canvas.height = height;
-  canvas.getContext("2d").putImageData(new ImageData(rgba, width, height), 0, 0);
+async function blobFrom(canvas, rgba, width, height, alive) {
+  const painted = await paintBands(canvas, rgba, width, height, alive);
+  if (!painted) return null;
   return new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
 }
 
@@ -456,11 +677,12 @@ async function exportedBlob(token) {
     ...cardOptions(full),
     png: false,
     cooperative: true,
+    slice: true,
     alive: () => token === renderToken,
   });
   if (!card?.fits || token !== renderToken) return null;
   const board = document.createElement("canvas");
-  const blob = await blobFrom(board, new Uint8ClampedArray(card.rgba), card.width, card.height);
+  const blob = await blobFrom(board, card.rgba, card.width, card.height, () => token === renderToken);
   if (!blob || token !== renderToken) return null;
   const bytes = new Uint8Array(await blob.arrayBuffer());
   return new Blob([injectComment(bytes, PNG_COMMENT)], { type: "image/png" });
@@ -583,18 +805,24 @@ logoClear.addEventListener("click", () => {
   paintChoices();
   schedule();
 });
-download.addEventListener("click", async () => {
-  const blob = await currentBlob();
+download.addEventListener("click", () => {
+  const blob = readyBlob();
   if (!blob) return;
   const mode = saveMode({ ios, share: shareFiles });
-  if (mode === "share") return shareFile(blob);
-  if (mode === "open") return openImage(blob);
+  if (mode === "share") {
+    shareNow(blob);
+    return;
+  }
+  if (mode === "open") {
+    openImage(blob);
+    return;
+  }
   downloadFile(blob);
 });
-share.addEventListener("click", async () => {
-  const blob = await currentBlob();
+share.addEventListener("click", () => {
+  const blob = readyBlob();
   if (!blob || !shareFiles) return;
-  await shareFile(blob);
+  shareNow(blob);
 });
 clearButton.addEventListener("click", () => {
   clearDraft(localStorage);
