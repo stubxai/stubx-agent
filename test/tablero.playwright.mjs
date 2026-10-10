@@ -71,13 +71,19 @@ async function check(page, name) {
   must(await page.locator('#plantilla a[href="/modules/tablero/plantilla.json"]').isVisible(), "enlace de la plantilla");
   must((await page.locator("footer").innerText()).includes(FOOTER_ES), "pie");
   must((await page.locator("form").count()) === 0, "formulario");
-  must((await page.locator('[data-web="si"]').count()) === 0, "publicado");
+  must((await page.locator('[data-web="si"]').count()) === 5, "publicado");
+  must((await page.locator('[data-web="no"]').count()) > 0, "sin publicar");
+  const boardText = await page.locator("main").innerText();
+  must(boardText.includes("La columna stubxai.com dice sí solo si la función se puede abrir hoy en la web."), "columna");
+  must(!boardText.includes("Nada de esta página está publicado"), "frase falsa");
+  must(!boardText.includes("Hoy ninguna lo está"), "ninguna");
   await page.screenshot({ path: path.join(shots, `u03-tablero-${name}-es.png`), fullPage: name === "desktop" });
 
   await page.getByRole("button", { name: "English" }).click();
   must(await page.locator("html").getAttribute("data-lang") === "en", "idioma");
   must((await page.locator("h1").innerText()).includes("Construction board"), "título en");
   must((await page.locator("#como-leerlo").innerText()).includes("It is not a deadline"), "plazo en");
+  must((await page.locator("#como-leerlo").innerText()).includes("The stubxai.com column says yes only if the function can be opened on the website today."), "columna en");
   must((await page.locator("footer").innerText()).includes(FOOTER_EN), "pie en");
   await page.locator('a[href="#grupo-propuesta"]').click();
   const box = await page.locator("#grupo-propuesta").boundingBox();

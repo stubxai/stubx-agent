@@ -295,8 +295,9 @@ describe("tablero", () => {
       assert.equal(byId.get(id)?.status, "propuesta", id);
       assert.equal(byId.get(id)?.evidence.length, 0, id);
     }
+    const onWeb = new Set(["VERIFY", "U01", "U02", "U03", "U06"]);
     for (const task of board.tasks) {
-      assert.equal(task.webPublished, false, task.id);
+      assert.equal(task.webPublished, onWeb.has(task.id), task.id);
       assert.ok(task.history.length > 0, task.id);
     }
     assert.equal(board.tasks.some((task) => task.status === "publicada"), false);

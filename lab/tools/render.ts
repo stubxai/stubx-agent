@@ -502,13 +502,13 @@ function renderBoard(repoRoot: string, board: BoardFile, options: RenderOptions)
 <ul class="clean">
 <li>${both({ es: "Propuesta: es una idea. Todavía no hay una entrega que puedas abrir.", en: "Proposal: it is an idea. There is no delivery you can open yet." })}</li>
 <li>${both({ es: "En curso o en revisión: hay trabajo en este repositorio. Puedes abrir la evidencia.", en: "In progress or in review: there is work in this repository. You can open the evidence." })}</li>
-<li>${both({ es: "Publicada: estaría en stubxai.com. Hoy la columna stubxai.com dice no en todas.", en: "Published: it would be on stubxai.com. Today the stubxai.com column says no on every row." })}</li>
+<li>${both({ es: "La columna stubxai.com dice sí solo si la función se puede abrir hoy en la web.", en: "The stubxai.com column says yes only if the function can be opened on the website today." })}</li>
 <li>${both({ es: "Una fecha del historial dice cuándo se anotó el cambio. No es un plazo.", en: "A history date says when the change was written down. It is not a deadline." })}</li>
 </ul>
 </section>
 <nav class="grupos" aria-label="${escapeHtml("Estados / States")}">${jumps}</nav>
 <div class="tabla-scroll" tabindex="0"><table><caption>${both({ es: "Tareas de este registro", en: "Tasks in this record" })}</caption><thead><tr><th scope="col">ID</th><th scope="col">${both({ es: "Tarea", en: "Task" })}</th><th scope="col">${both({ es: "Estado", en: "State" })}</th><th scope="col">stubxai.com</th></tr></thead><tbody>${rows}</tbody></table></div>
-<p>${both({ es: "Propuesta es una idea. En curso o en revisión es trabajo en el repositorio. Publicada sería una función ya en stubxai.com. Hoy ninguna lo está.", en: "Proposal means an idea. In progress or in review means work in the repository. Published would mean a function already on stubxai.com. None is, today." })}</p>
+<p>${both({ es: "Propuesta es una idea. En curso o en revisión es trabajo en el repositorio. Publicada sería una función ya en stubxai.com.", en: "Proposal means an idea. In progress or in review means work in the repository. Published would mean a function already on stubxai.com." })}</p>
 <div class="tareas">${groups}</div>
 <section class="card" id="plantilla">
 <h2>${both({ es: "Plantilla para copiar", en: "Template to copy" })}</h2>
