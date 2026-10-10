@@ -74,7 +74,15 @@ describe("usage measurement stays off", () => {
     assert.match(doc, /There is no client-side measurement/);
     assert.match(doc, /Cloudflare Web Analytics/);
     assert.match(doc, /github_stars|estrellas/);
-    assert.match(doc, /no se guarda la IP|no stored IP/i);
+    assert.match(doc, /Este proyecto no guarda la IP\. Cloudflare, como alojamiento, recibe la IP de cada visita/);
+    assert.match(doc, /This project does not store the IP address\. Cloudflare, as the host, receives each visitor's IP/);
+    assert.match(doc, /el HTML servido el 2026-10-10 no lleva la baliza/);
+    assert.match(doc, /the HTML served on 2026-10-10 does not contain the beacon/);
+    assert.match(doc, /Datos que se quedan en el navegador o salen a terceros/);
+    assert.match(doc, /api\.mainnet-beta\.solana\.com/);
+    const legal = readFileSync(path.join(repoRoot(), "web/v2/legal/index.html"), "utf8");
+    assert.match(legal, /Cloudflare, como alojamiento, recibe la IP de cada visita/);
+    assert.match(legal, /Cloudflare, as the host, receives each visitor's IP/);
     assert.equal(doc.includes("You can lose"), false);
   });
 });
