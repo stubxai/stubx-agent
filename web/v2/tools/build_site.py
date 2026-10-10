@@ -510,7 +510,7 @@ def fold_aviso(raw: str) -> str:
         "<p>"
         + t(
             "Lectura informativa y solo lectura. No es una auditoría, ni un aval, ni una recomendación. Puedes perderlo todo.",
-            "Informative read-only reading. It is not an audit, an endorsement, or a recommendation. You could lose everything.",
+            "Informational, read-only view. It is not an audit, an endorsement, or a recommendation. You could lose everything.",
         )
         + "</p>"
     )

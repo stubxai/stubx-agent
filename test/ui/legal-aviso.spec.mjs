@@ -5,7 +5,7 @@ const FOOTER_EN = "High-risk crypto · You could lose everything · Not investme
 const LEAD_ES =
   "Lectura informativa y solo lectura. No es una auditoría, ni un aval, ni una recomendación. Puedes perderlo todo.";
 const LEAD_EN =
-  "Informative read-only reading. It is not an audit, an endorsement, or a recommendation. You could lose everything.";
+  "Informational, read-only view. It is not an audit, an endorsement, or a recommendation. You could lose everything.";
 const SUMMARY_ES = "Leer el aviso completo";
 const SUMMARY_EN = "Read the full notice";
 const MICA_ES =
