@@ -421,11 +421,11 @@ describe("lector y cuaderno", () => {
     );
     assert.match(
       notebook,
-      /las fichas y notas de este cuaderno se guardan en este navegador; la consulta pasa por el servicio de lectura elegido\./,
+      /El idioma, el progreso de Lab, el borrador de Studio y el cuaderno, si se usan, se quedan en este navegador\./,
     );
     assert.match(
       notebook,
-      /the cards and notes in this notebook are stored in this browser; the query goes through the chosen read service\./,
+      /Language, Lab progress, the Studio draft, and the notebook, if they are used, stay in this browser\./,
     );
     assert.match(notebook, /Si eliges otro lector, ese servicio recibe tus consultas y tu IP\. STUBX no lo revisa\./);
     assert.match(notebook, /If you choose another reader, that service receives your queries and your IP\. STUBX does not review it\./);
