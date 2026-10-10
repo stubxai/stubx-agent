@@ -187,6 +187,7 @@ type Card = {
   label: string;
   watermarkAlpha: number;
   watermarkColor: number[];
+  watermarkPlate: number[];
   watermarkBox: { x: number; y: number; w: number; h: number };
   topBand: number;
   noticeFontSize: number;
@@ -238,6 +239,45 @@ function glyphPixel(card: Card, glyph: Glyph, point: InkPoint): number[] {
 
 function sameColor(got: number[], want: readonly number[]): boolean {
   return got[0] === want[0] && got[1] === want[1] && got[2] === want[2] && got[3] === want[3];
+}
+
+function minNoticePx(height: number): number {
+  return Math.max(14, Math.ceil(height * 0.025));
+}
+
+/** Alto en píxeles de la primera letra del aviso, no el tamaño em. */
+function noticeLetterPx(card: Card): number {
+  const glyph = card.glyphs.find((item) => item.role === "notice");
+  if (!glyph) return 0;
+  const x0 = Math.max(0, Math.floor(glyph.x));
+  const x1 = Math.min(card.width - 1, Math.ceil(glyph.x + Math.max(2, glyph.w * 0.62)));
+  const y0 = Math.max(0, Math.floor(glyph.y));
+  const y1 = Math.min(card.height - 1, Math.ceil(glyph.y + glyph.h));
+  let top = Number.POSITIVE_INFINITY;
+  let bottom = -1;
+  for (let y = y0; y <= y1; y += 1) {
+    for (let x = x0; x <= x1; x += 1) {
+      const sample = pixel(card, x, y);
+      if ((sample[0] ?? 0) >= 90 && (sample[1] ?? 0) >= 90 && (sample[2] ?? 0) >= 90) {
+        if (y < top) top = y;
+        if (y > bottom) bottom = y;
+      }
+    }
+  }
+  return bottom < top ? 0 : bottom - top + 1;
+}
+
+function channelLin(channel: number): number {
+  const value = channel / 255;
+  return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+}
+
+function contrastRgb(a: number[], b: number[]): number {
+  const luma = (rgb: number[]) =>
+    0.2126 * channelLin(rgb[0] ?? 0) + 0.7152 * channelLin(rgb[1] ?? 0) + 0.0722 * channelLin(rgb[2] ?? 0);
+  const hi = Math.max(luma(a), luma(b));
+  const lo = Math.min(luma(a), luma(b));
+  return (hi + 0.05) / (lo + 0.05);
 }
 
 function deniedTokens(raw: string): string[] {
@@ -1252,9 +1292,10 @@ describe("studio", () => {
       pngDimensions: (bytes: Uint8Array) => { width: number; height: number };
       pngRawSize: (width: number, height: number, depth: number, color: number) => number;
     }>("lib/png.mjs");
-    const { brandFor, BRAND } = await load<{
+    const { brandFor, BRAND, NOTICE_SHORT } = await load<{
       brandFor: (lang: string, token: string) => string;
       BRAND: { es: string; en: string };
+      NOTICE_SHORT: { es: string };
     }>("lib/copy.mjs");
     assert.equal(DEFAULT_TOKEN, "STUBX");
     assert.equal(TOKEN_MAX, 20);
@@ -1332,11 +1373,16 @@ describe("studio", () => {
         const notice = joined(card, "notice");
         assert.ok(notice.includes(phrase), notice);
         assert.ok(notice.includes(suffix), notice);
-        assert.equal(card.noticeLines, 1);
+        assert.ok(card.noticeLines >= 1);
         assert.equal(card.topBand, 0);
+        const minPx = Math.max(14, Math.ceil(height * 0.025));
+        const letterPx = noticeLetterPx(card);
+        assert.ok(letterPx >= minPx, `${lang} ${height} letra ${letterPx} < ${minPx}`);
+        assert.ok(letterPx >= 14, `${lang} ${height}`);
+        assert.ok(card.noticeInk >= minPx, `${lang} ${height} tinta ${card.noticeInk}`);
         const noticeGlyphs = card.glyphs.filter((glyph) => glyph.role === "notice");
         const right = Math.max(...noticeGlyphs.map((glyph) => glyph.x + glyph.w));
-        assert.ok(right <= card.width);
+        assert.ok(right <= card.width, `${lang} ${height} ${right}`);
         assert.ok(noticeGlyphs.some((glyph) => glyph.ch === "S" && glyph.y >= card.noticeTop));
         assert.ok(noticeGlyphs.every((glyph) => glyph.y >= card.noticeTop && glyph.y + glyph.h <= card.height));
       }
@@ -1512,7 +1558,8 @@ describe("studio", () => {
       watermark: false,
       origins: [],
     });
-    assert.ok(joined(disguised, "notice").startsWith("CONTENIDOCOMUNITARIO"));
+    const shortNotice = NOTICE_SHORT.es.toLocaleUpperCase("es-ES").replaceAll(" ", "");
+    assert.equal(joined(disguised, "notice"), shortNotice);
     assert.equal(joined(disguised, "notice").includes("NOOFICIALDESTUBXNIDESTUBX"), false);
     const fullwidth = await renderCard({
       width: 1080,
@@ -1525,7 +1572,7 @@ describe("studio", () => {
       origins: [],
     });
     assert.equal(joined(fullwidth, "token"), "STUBX");
-    assert.ok(joined(fullwidth, "notice").startsWith("CONTENIDOCOMUNITARIO"));
+    assert.equal(joined(fullwidth, "notice"), shortNotice);
   });
 
   test("el borrador se guarda y se borra en local", async () => {
@@ -1557,8 +1604,9 @@ describe("studio", () => {
       BRAND_FG: number[];
       contrastHex: (a: string, b: string) => number;
     }>("lib/render.mjs");
-    const { NOTICE_FULL, PNG_COMMENT } = await load<{
+    const { NOTICE_FULL, NOTICE_SHORT, PNG_COMMENT } = await load<{
       NOTICE_FULL: { es: string; en: string };
+      NOTICE_SHORT: { es: string; en: string };
       PNG_COMMENT: string;
     }>("lib/copy.mjs");
     const { readComments, injectComment } = await load<{
@@ -1584,15 +1632,15 @@ describe("studio", () => {
       zones: templates.zones,
     };
     const marked = await renderCard({ ...base, watermark: false });
-    assert.ok(marked.noticeFontSize >= marked.height * 0.025);
-    assert.ok(marked.noticeFontSize >= 14);
-    assert.ok(marked.noticeInk >= 14);
-    assert.equal(marked.noticeLines, 1);
+    assert.ok(noticeLetterPx(marked) >= minNoticePx(marked.height), String(noticeLetterPx(marked)));
+    assert.ok(noticeLetterPx(marked) >= 27);
+    assert.ok(marked.noticeInk >= 27);
+    assert.equal(marked.noticeLines, 2);
     assert.equal(marked.topBand, 0);
     assert.equal(marked.label, "");
     assert.equal(marked.glyphs.some((glyph) => glyph.role === "ai"), false);
-    assert.equal(marked.noticeText, NOTICE_FULL.es);
-    assert.equal(joined(marked, "notice"), NOTICE_FULL.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
+    assert.equal(marked.noticeText, NOTICE_SHORT.es);
+    assert.equal(joined(marked, "notice"), NOTICE_SHORT.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
     assert.equal(joined(marked, "notice").includes("ILUSTRACION"), false);
     assert.equal(marked.glyphs.some((glyph) => glyph.role === "brandTop" || glyph.role === "riskTop"), false);
     assert.ok(marked.watermarkAlpha >= 0.6);
@@ -1606,10 +1654,10 @@ describe("studio", () => {
     assert.ok(sameColor(pixel(marked, 2, marked.height - 2), [7, 20, 34, 255]));
     assert.equal(sameColor(pixel(marked, 2, 2), BRAND_BG), false);
 
-    const fill = marked.fill;
-    const wm = [255, 243, 245];
+    const plate = marked.watermarkPlate;
+    const wm = marked.watermarkColor;
     const blend = (channel: number, ink: number) => Math.round(channel * (1 - marked.watermarkAlpha) + ink * marked.watermarkAlpha);
-    const expected = [blend(fill[0] ?? 0, wm[0] ?? 0), blend(fill[1] ?? 0, wm[1] ?? 0), blend(fill[2] ?? 0, wm[2] ?? 0)];
+    const expected = [blend(plate[0] ?? 0, wm[0] ?? 0), blend(plate[1] ?? 0, wm[1] ?? 0), blend(plate[2] ?? 0, wm[2] ?? 0)];
     let corner = 0;
     let other = 0;
     const box = marked.watermarkBox;
@@ -1633,9 +1681,10 @@ describe("studio", () => {
     assert.equal(none.glyphs.some((glyph) => glyph.role === "ai"), false);
 
     const english = await renderCard({ ...base, lang: "en", origins: ["ninguno"], watermark: false });
-    assert.equal(english.noticeText, NOTICE_FULL.en);
-    assert.equal(joined(english, "notice"), NOTICE_FULL.en.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
+    assert.equal(english.noticeText, NOTICE_SHORT.en);
+    assert.equal(joined(english, "notice"), NOTICE_SHORT.en.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
     assert.equal(english.noticeLines, 1);
+    assert.ok(noticeLetterPx(english) >= 27);
     assert.equal(english.topBand, 0);
 
     for (const format of templates.formats) {
@@ -1651,14 +1700,17 @@ describe("studio", () => {
             origins: ["mascota"],
             zones: templates.zones,
           });
-          const floor = Math.max(14, Math.ceil(Math.min(format.height, 1080) * 0.025));
+          const floor = minNoticePx(format.height);
           assert.equal(card.fits, true, `${format.id} ${lang} ${template.title[lang]}`);
-          assert.ok(card.noticeFontSize >= floor);
-          assert.ok(card.noticeFontSize >= 14);
-          assert.equal(card.noticeLines, 1);
+          const letterPx = noticeLetterPx(card);
+          assert.ok(letterPx >= floor, `${format.id} ${lang} letra ${letterPx} < ${floor}`);
+          assert.ok(letterPx >= 14, `${format.id} ${lang}`);
+          assert.ok(card.noticeInk >= floor, `${format.id} ${lang} tinta ${card.noticeInk}`);
+          assert.ok(card.noticeLines >= 1);
           assert.equal(card.topBand, 0);
+          const approved = lang === "es" ? [NOTICE_FULL.es, NOTICE_SHORT.es] : [NOTICE_FULL.en, NOTICE_SHORT.en];
+          assert.ok(approved.includes(card.noticeText), card.noticeText);
           assert.ok(joined(card, "notice").includes(lang === "es" ? "CRIPTO" : "HIGH-RISK"));
-          assert.equal(joined(card, "notice").includes("CONTENIDO") || lang === "en", true);
         }
       }
     }
@@ -1698,13 +1750,14 @@ describe("studio", () => {
       ink: "#fff3f5",
     });
     assert.equal(NOTICE_FULL.es, "Contenido comunitario · No oficial · Cripto de alto riesgo · Puedes perderlo todo · No es consejo de inversión");
-    assert.equal(covered.noticeText, NOTICE_FULL.es);
-    assert.equal(joined(covered, "notice"), NOTICE_FULL.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
-    assert.equal(covered.noticeLines, 1);
+    assert.equal(covered.noticeText, NOTICE_SHORT.es);
+    assert.equal(joined(covered, "notice"), NOTICE_SHORT.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
+    assert.equal(covered.noticeLines, 2);
     assert.equal(covered.topBand, 0);
-    assert.ok(covered.noticeFontSize >= covered.height * NOTICE_RATIO);
-    assert.ok(covered.noticeFontSize >= NOTICE_MIN_PX);
-    assert.ok(covered.noticeInk >= NOTICE_MIN_PX);
+    assert.ok(noticeLetterPx(covered) >= Math.ceil(covered.height * NOTICE_RATIO), String(noticeLetterPx(covered)));
+    assert.ok(noticeLetterPx(covered) >= 27);
+    assert.ok(noticeLetterPx(covered) >= NOTICE_MIN_PX);
+    assert.ok(covered.noticeInk >= Math.ceil(covered.height * NOTICE_RATIO));
     const noticeGlyphs = covered.glyphs.filter((glyph) => glyph.role === "notice");
     assert.ok(noticeGlyphs.length > 20);
     assert.ok(Math.max(...noticeGlyphs.map((glyph) => glyph.x + glyph.w)) <= covered.width);
@@ -1736,9 +1789,22 @@ describe("studio", () => {
       watermark: false,
       origins: [],
     });
-    assert.equal(english.noticeText, NOTICE_FULL.en);
+    assert.equal(english.noticeText, NOTICE_SHORT.en);
     assert.equal(english.noticeLines, 1);
+    assert.ok(noticeLetterPx(english) >= 27);
     assert.ok(english.noticeInk >= NOTICE_MIN_PX);
+
+    const square1024 = await renderCard({
+      width: 1024,
+      height: 1024,
+      lang: "es",
+      title: "Hola",
+      body: "Texto corto.",
+      watermark: false,
+      origins: [],
+    });
+    assert.ok(noticeLetterPx(square1024) >= 26, String(noticeLetterPx(square1024)));
+    assert.ok(square1024.noticeInk >= Math.ceil(1024 * NOTICE_RATIO));
 
     const story = await renderCard({
       width: 1080,
@@ -1749,10 +1815,10 @@ describe("studio", () => {
       watermark: false,
       origins: [],
     });
-    assert.equal(story.noticeText, NOTICE_FULL.es);
-    assert.equal(story.noticeLines, 1);
-    assert.ok(story.noticeFontSize >= Math.ceil(1080 * NOTICE_RATIO));
-    assert.ok(story.noticeInk >= NOTICE_MIN_PX);
+    assert.equal(story.noticeText, NOTICE_SHORT.es);
+    assert.equal(story.noticeLines, 2);
+    assert.ok(noticeLetterPx(story) >= 48, String(noticeLetterPx(story)));
+    assert.ok(story.noticeInk >= Math.ceil(story.height * NOTICE_RATIO));
     assert.equal(story.topBand, 0);
 
     assert.equal(NOTICE_SHORT.es, "No oficial · Cripto de alto riesgo · Puedes perderlo todo · No es consejo de inversión");
@@ -1767,15 +1833,28 @@ describe("studio", () => {
           watermark: false,
           origins: [],
         });
-        assert.equal(card.noticeText, NOTICE_SHORT[lang], `${width}x${height} ${lang}`);
-        assert.equal(card.noticeLines, 1, `${width}x${height} ${lang}`);
-        assert.ok(card.noticeFontSize >= NOTICE_MIN_PX);
-        assert.ok(card.noticeInk >= NOTICE_MIN_PX, `${width}x${height} ink ${card.noticeInk}`);
-        assert.ok(card.noticeFontSize >= Math.max(NOTICE_MIN_PX, Math.ceil(Math.min(height, 1080) * NOTICE_RATIO)));
+        const approved = card.noticeText === NOTICE_FULL[lang] || card.noticeText === NOTICE_SHORT[lang];
+        assert.equal(approved, true, `${width}x${height} ${lang} ${card.noticeText}`);
+        assert.ok(card.noticeLines >= 1, `${width}x${height} ${lang}`);
+        const letterPx = noticeLetterPx(card);
+        const floor = Math.max(NOTICE_MIN_PX, Math.ceil(height * NOTICE_RATIO));
+        assert.ok(letterPx >= floor, `${width}x${height} letra ${letterPx} < ${floor}`);
+        assert.ok(card.noticeInk >= floor, `${width}x${height} ink ${card.noticeInk}`);
         const right = Math.max(...card.glyphs.filter((glyph) => glyph.role === "notice").map((glyph) => glyph.x + glyph.w));
         assert.ok(right <= card.width, `${width}x${height}`);
       }
     }
+    const wideShort = await renderCard({
+      width: 1080,
+      height: 720,
+      lang: "es",
+      title: "Hola",
+      body: "Texto corto.",
+      watermark: false,
+      origins: [],
+    });
+    assert.equal(wideShort.noticeText, NOTICE_FULL.es);
+    assert.equal(wideShort.noticeLines, 1);
 
     const stamp = await renderCard({
       width: 1080,
@@ -1803,12 +1882,15 @@ describe("studio", () => {
     assert.ok(box.y >= 0 && box.y + box.h < stamp.height * 0.12);
     assert.ok(box.y + box.h < stamp.noticeTop);
     const wm = stamp.watermarkColor;
+    const plate = stamp.watermarkPlate;
     const blend = (channel: number, ink: number) => Math.round(channel * (1 - stamp.watermarkAlpha) + ink * stamp.watermarkAlpha);
     const expected = [
-      blend(avatarColor[0] ?? 0, wm[0] ?? 0),
-      blend(avatarColor[1] ?? 0, wm[1] ?? 0),
-      blend(avatarColor[2] ?? 0, wm[2] ?? 0),
+      blend(plate[0] ?? 0, wm[0] ?? 0),
+      blend(plate[1] ?? 0, wm[1] ?? 0),
+      blend(plate[2] ?? 0, wm[2] ?? 0),
     ];
+    assert.deepEqual(pixel(stamp, box.x + 1, box.y + 1).slice(0, 3), plate);
+    assert.ok(contrastRgb(expected, plate) >= 3);
     let corner = 0;
     for (let y = box.y; y < box.y + box.h; y += 1) {
       for (let x = box.x; x < box.x + box.w; x += 1) {
@@ -1819,9 +1901,48 @@ describe("studio", () => {
     assert.ok(corner > 20, String(corner));
   });
 
+  test("la marca NO OFICIAL contrasta al menos 3:1 sobre cada fondo", { timeout: 60_000 }, async () => {
+    const { renderCard } = await load<{ renderCard: (options: Record<string, unknown>) => Promise<Card> }>("lib/render.mjs");
+    const catalog = JSON.parse(readStudio("catalog.json")) as {
+      items: { id: string; tipo: string; fill?: string; ink?: string }[];
+    };
+    const fondos = catalog.items.filter((item) => item.tipo === "fondo");
+    assert.equal(fondos.length, 13);
+    for (const fondo of fondos) {
+      const card = await renderCard({
+        width: 480,
+        height: 480,
+        lang: "es",
+        title: "",
+        body: "",
+        fill: fondo.fill,
+        ink: fondo.ink,
+        backgroundId: fondo.id,
+        watermark: false,
+        origins: [],
+      });
+      const box = card.watermarkBox;
+      const platePx = pixel(card, box.x + 1, box.y + 1);
+      assert.deepEqual(platePx.slice(0, 3), card.watermarkPlate, fondo.id);
+      let inkPx: number[] | null = null;
+      for (let y = box.y; y < box.y + box.h; y += 1) {
+        for (let x = box.x; x < box.x + box.w; x += 1) {
+          const sample = pixel(card, x, y);
+          if (sample[0] === platePx[0] && sample[1] === platePx[1] && sample[2] === platePx[2]) continue;
+          const sum = (sample[0] ?? 0) + (sample[1] ?? 0) + (sample[2] ?? 0);
+          if (!inkPx || sum > (inkPx[0] ?? 0) + (inkPx[1] ?? 0) + (inkPx[2] ?? 0)) inkPx = sample;
+        }
+      }
+      assert.ok(inkPx, fondo.id);
+      const ratio = contrastRgb(inkPx ?? [], platePx);
+      assert.ok(ratio >= 3, `${fondo.id} ${ratio.toFixed(2)}`);
+      assert.ok(card.watermarkAlpha >= 0.6, fondo.id);
+    }
+  });
+
   test("un texto largo con eñe sigue llevando pie y marca", { timeout: 60_000 }, async () => {
     const { renderCard } = await load<{ renderCard: (options: Record<string, unknown>) => Promise<Card> }>("lib/render.mjs");
-    const { NOTICE_FULL } = await load<{ NOTICE_FULL: { es: string } }>("lib/copy.mjs");
+    const { NOTICE_SHORT } = await load<{ NOTICE_SHORT: { es: string } }>("lib/copy.mjs");
     const line = "¿Ñandú pingüino sigue en la viñeta? ¡Sí! ";
     const card = await renderCard({
       width: 1080,
@@ -1833,8 +1954,8 @@ describe("studio", () => {
       origins: [],
     });
     assert.equal(card.fits, false);
-    assert.equal(joined(card, "notice"), NOTICE_FULL.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
-    assert.equal(card.noticeLines, 1);
+    assert.equal(joined(card, "notice"), NOTICE_SHORT.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
+    assert.equal(card.noticeLines, 2);
     assert.equal(card.topBand, 0);
     for (const ch of ["¿", "Ñ", "Ü", "¡"]) {
       const glyph = card.glyphs.find((item) => item.ch === ch && (item.role === "title" || item.role === "body"));
@@ -1850,10 +1971,11 @@ describe("studio", () => {
       watermark: false,
       origins: [],
     });
-    assert.ok(story.noticeFontSize >= 14);
-    assert.ok(story.noticeFontSize >= Math.ceil(1080 * 0.025));
-    assert.equal(story.noticeLines, 1);
-    assert.equal(joined(story, "notice"), NOTICE_FULL.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
+    assert.ok(noticeLetterPx(story) >= 48, String(noticeLetterPx(story)));
+    assert.ok(noticeLetterPx(story) >= 14);
+    assert.ok(story.noticeInk >= Math.ceil(story.height * 0.025));
+    assert.equal(story.noticeLines, 2);
+    assert.equal(joined(story, "notice"), NOTICE_SHORT.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
     assert.equal(story.topBand, 0);
   });
 

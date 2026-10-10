@@ -19,7 +19,8 @@ export const FOOTER = {
 
 /**
  * Aviso mínimo de la imagen. Legal aprueba estas cadenas: se cambian aquí y en ningún otro sitio.
- * NOTICE_FULL en imágenes de 1080 px o más en el lado corto. NOTICE_SHORT en formatos más pequeños.
+ * NOTICE_FULL si cabe en una línea al alto mínimo. Si no, NOTICE_SHORT. Si tampoco cabe, el texto
+ * pasa a dos líneas o las que hagan falta, sin bajar de noticeFloor.
  */
 export const NOTICE_FULL = {
   es: "Contenido comunitario · No oficial · Cripto de alto riesgo · Puedes perderlo todo · No es consejo de inversión",
@@ -48,16 +49,22 @@ export function isSmallFormat(width, height) {
   return shortSide < NOTICE_REFERENCE;
 }
 
+/** Alto mínimo de la letra, en px. Es el 2,5 % del alto completo de la imagen, y nunca baja de 14. */
 export function noticeFloor(height) {
   const h = Number(height) || 0;
-  return Math.max(NOTICE_MIN_PX, Math.ceil(Math.min(h, NOTICE_REFERENCE) * NOTICE_RATIO));
+  return Math.max(NOTICE_MIN_PX, Math.ceil(h * NOTICE_RATIO));
 }
 
-export function noticeFor(lang, token, width, height) {
+/** De la frase más larga a la más corta. Un token distinto de STUBX solo admite su frase propia. */
+export function noticeChoices(lang, token) {
   const code = lang === "en" ? "en" : "es";
   const name = clipToken(token ?? "");
-  if (name && !isStubxToken(name)) return `${brandFor(code, name)} · ${RISK_TAIL[code]}`;
-  return isSmallFormat(width, height) ? NOTICE_SHORT[code] : NOTICE_FULL[code];
+  if (name && !isStubxToken(name)) return [`${brandFor(code, name)} · ${RISK_TAIL[code]}`];
+  return [NOTICE_FULL[code], NOTICE_SHORT[code]];
+}
+
+export function noticeFor(lang, token) {
+  return noticeChoices(lang, token)[0];
 }
 
 export const PNG_COMMENT = "Community content, unofficial. Not from @stubxai.";

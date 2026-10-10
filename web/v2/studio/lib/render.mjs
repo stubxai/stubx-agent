@@ -1,7 +1,7 @@
-import { NOTICE_MIN_PX, PNG_COMMENT, WATERMARK, WATERMARK_ALPHA, aiLabel, noticeFloor, noticeFor } from "./copy.mjs";
+import { PNG_COMMENT, WATERMARK, WATERMARK_ALPHA, aiLabel, noticeChoices, noticeFloor } from "./copy.mjs";
 import { clipToken } from "./logo.mjs";
 import { paintBackground } from "./backgrounds.mjs";
-import { capInk, drawFace, fitFace, lineBox, loadFace, wrapFace } from "./draw.mjs";
+import { drawFace, fitFace, letterInk, lineBox, loadFace, wrapFace } from "./draw.mjs";
 import { measureFont } from "./ttf.mjs";
 import { BODY_FONT, NOTICE_FONT, headlineById } from "./headlines.mjs";
 import { encodePng } from "./png.mjs";
@@ -13,6 +13,9 @@ export const FOOTER_FG = Object.freeze([244, 247, 251, 255]);
 export { WATERMARK_ALPHA };
 export const PNG_TEXT = PNG_COMMENT;
 const WM_TEXT = "NO OFICIAL";
+const WM_PLATE = Object.freeze([7, 20, 34]);
+const WM_INK = Object.freeze([244, 247, 251]);
+const NOTICE_LETTERS = ["H", "N", "C", "U", "P", "M", "O"];
 
 export function contrastHex(a, b) {
   const lin = (hex) => {
@@ -105,9 +108,10 @@ function blit(rgba, width, height, zone, image) {
   }
 }
 
-function emForCap(font, minInk) {
-  let size = Math.ceil(minInk);
-  while (size < minInk * 4 && capInk(font, size) < minInk) size += 1;
+function emForLetters(font, minInk) {
+  let size = Math.max(8, Math.ceil(minInk));
+  const short = () => NOTICE_LETTERS.some((ch) => letterInk(font, ch, size) < minInk);
+  while (size < minInk * 4 && short()) size += 1;
   return size;
 }
 
@@ -163,15 +167,25 @@ export async function renderCard(options) {
   const pad = Math.round(width * 0.04);
   const inner = Math.max(8, width - pad * 2);
   const tokenText = clipToken(options.token ?? "");
-  const noticeText = noticeFor(lang, tokenText, width, height);
-  const inkFloor = emForCap(noticeFont, NOTICE_MIN_PX);
-  const floor = Math.max(noticeFloor(height), inkFloor);
-  let noticeSize = floor;
-  while (noticeSize < floor + 24 && measureFont(noticeFont, noticeText, noticeSize + 1) <= inner) noticeSize += 1;
-  const shrinkTo = measureFont(noticeFont, noticeText, inkFloor) <= inner ? inkFloor : NOTICE_MIN_PX;
-  while (noticeSize > shrinkTo && measureFont(noticeFont, noticeText, noticeSize) > inner) noticeSize -= 1;
+  const minInk = noticeFloor(height);
+  const noticeSize = emForLetters(noticeFont, minInk);
+  const choices = noticeChoices(lang, tokenText);
+  const fitsLine = (text) => measureFont(noticeFont, text, noticeSize) <= inner;
+  let noticeText = choices[choices.length - 1] ?? "";
+  let noticeLinesDrawn = [noticeText];
+  if (choices.length > 1 && fitsLine(choices[0])) {
+    noticeText = choices[0];
+    noticeLinesDrawn = [noticeText];
+  } else if (fitsLine(noticeText)) {
+    noticeLinesDrawn = [noticeText];
+  } else {
+    const wrapped = wrapFace(noticeFont, noticeText, inner, noticeSize);
+    noticeLinesDrawn = wrapped.length ? wrapped : [noticeText];
+  }
   const noticeMetrics = lineBox(noticeFont, noticeSize);
-  const noticeH = Math.ceil(noticeMetrics.ascent + noticeMetrics.descent + noticeSize * 0.35);
+  const padY = Math.max(2, Math.round(noticeSize * 0.16));
+  const block = noticeMetrics.ascent + noticeMetrics.descent + Math.max(0, noticeLinesDrawn.length - 1) * noticeMetrics.step;
+  const noticeH = Math.ceil(block + padY * 2);
   const footerTop = height - noticeH;
   const label = aiLabel(options.origins ?? [], lang);
   const aiSize = label ? Math.max(12, Math.round(Math.min(width, height) * 0.02)) : 0;
@@ -200,7 +214,7 @@ export async function renderCard(options) {
   blit(rgba, width, height, imageZone, options.avatar ?? null);
 
   const glyphs = [];
-  const titleFit = fitFace(titleFont, options.title ?? "", titleZone, Math.max(floor, height * 0.16), Math.max(22, Math.round(height * 0.045)));
+  const titleFit = fitFace(titleFont, options.title ?? "", titleZone, Math.max(minInk, height * 0.16), Math.max(22, Math.round(height * 0.045)));
   const bodyFit = fitFace(bodyFont, options.body ?? "", bodyZone, Math.max(18, height * 0.04), Math.max(14, Math.round(height * 0.02)));
   const tokenFit = fitFace(bodyFont, tokenText, tokenZone, Math.max(14, Math.round(height * 0.028)), 12);
   const inkRgb = [ink[0], ink[1], ink[2]];
@@ -211,20 +225,28 @@ export async function renderCard(options) {
   const wmSize = Math.max(13, Math.round(Math.min(width, height) * 0.026));
   const wmWidth = measureFont(bodyFont, WM_TEXT, wmSize);
   const wmMetrics = lineBox(bodyFont, wmSize);
-  const wmX = Math.max(pad, width - pad - wmWidth);
-  const wmBaseline = Math.round(height * 0.03) + wmMetrics.ascent;
-  const wmColor = luma(fill) > 0.45 ? [18, 10, 14] : [255, 243, 245];
+  const platePad = Math.max(4, Math.round(wmSize * 0.35));
+  let wmX = width - pad - wmWidth;
+  let plateX = Math.round(wmX - platePad);
+  let plateW = Math.ceil(wmWidth + platePad * 2);
+  if (plateX < 0) {
+    plateX = 0;
+    wmX = platePad;
+  }
+  if (plateX + plateW > width) {
+    plateX = Math.max(0, width - plateW);
+    wmX = plateX + platePad;
+  }
+  const plateY = Math.max(0, Math.round(height * 0.028));
+  const plateH = Math.ceil(wmMetrics.ascent + wmMetrics.descent + platePad * 2);
+  const wmBaseline = plateY + platePad + wmMetrics.ascent;
+  fillRect(rgba, width, height, plateX, plateY, plateW, plateH, [WM_PLATE[0], WM_PLATE[1], WM_PLATE[2], 255]);
   drawFace(rgba, width, height, bodyFont, [WM_TEXT], wmX, wmBaseline, wmSize, "watermark", glyphs, {
-    fill: wmColor,
+    fill: [WM_INK[0], WM_INK[1], WM_INK[2]],
     alpha: WATERMARK_ALPHA,
     crisp: true,
   });
-  const watermarkBox = {
-    x: Math.round(wmX),
-    y: Math.round(wmBaseline - wmMetrics.ascent),
-    w: Math.ceil(wmWidth),
-    h: Math.ceil(wmMetrics.ascent + wmMetrics.descent),
-  };
+  const watermarkBox = { x: plateX, y: plateY, w: plateW, h: plateH };
 
   if (aiLines.length) {
     const aiMetrics = lineBox(bodyFont, aiSize);
@@ -232,8 +254,8 @@ export async function renderCard(options) {
   }
 
   fillRect(rgba, width, height, 0, footerTop, width, noticeH, FOOTER_BG);
-  const noticeBaseline = footerTop + (noticeH - (noticeMetrics.ascent + noticeMetrics.descent)) / 2 + noticeMetrics.ascent;
-  drawFace(rgba, width, height, noticeFont, [noticeText], pad, noticeBaseline, noticeSize, "notice", glyphs, {
+  const noticeBaseline = footerTop + padY + noticeMetrics.ascent;
+  drawFace(rgba, width, height, noticeFont, noticeLinesDrawn, pad, noticeBaseline, noticeSize, "notice", glyphs, {
     fill: [FOOTER_FG[0], FOOTER_FG[1], FOOTER_FG[2]],
   });
 
@@ -251,7 +273,7 @@ export async function renderCard(options) {
     fits: titleFit.fits && bodyFit.fits && tokenFit.fits,
     brandFontSize: noticeSize,
     noticeFontSize: noticeSize,
-    noticeInk: capInk(noticeFont, noticeSize),
+    noticeInk: Math.min(...NOTICE_LETTERS.map((ch) => letterInk(noticeFont, ch, noticeSize))),
     noticeText,
     noticeLines: noticeLineCount,
     brandTop: footerTop,
@@ -261,7 +283,8 @@ export async function renderCard(options) {
     topBand: 0,
     contentBottom,
     watermarkAlpha: WATERMARK_ALPHA,
-    watermarkColor: wmColor,
+    watermarkColor: [WM_INK[0], WM_INK[1], WM_INK[2]],
+    watermarkPlate: [WM_PLATE[0], WM_PLATE[1], WM_PLATE[2]],
     watermarkBox,
     headline: headline.id,
     fill,

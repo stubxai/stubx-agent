@@ -284,9 +284,19 @@ export function drawFace(rgba, width, height, font, lines, x, baseline, size, ro
   });
 }
 
-export function capInk(font, size) {
-  const poly = glyphPolylines(font, "H", size);
+export function letterInk(font, ch, size) {
+  const poly = glyphPolylines(font, ch, size);
   let top = 0;
-  for (const line of poly.lines) for (const point of line) top = Math.max(top, point.y);
-  return top;
+  let bottom = 0;
+  for (const line of poly.lines) {
+    for (const point of line) {
+      top = Math.max(top, point.y);
+      bottom = Math.min(bottom, point.y);
+    }
+  }
+  return top - bottom;
+}
+
+export function capInk(font, size) {
+  return letterInk(font, "H", size);
 }

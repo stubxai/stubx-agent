@@ -1,6 +1,6 @@
 import catalog from "./catalog.json" with { type: "json" };
 import templates from "./templates.json" with { type: "json" };
-import { PNG_COMMENT, noticeFor } from "./lib/copy.mjs";
+import { PNG_COMMENT } from "./lib/copy.mjs";
 import { HEADLINES, headlineById } from "./lib/headlines.mjs";
 import { clearDraft, clipDraftText, loadDraft, saveDraft } from "./lib/draft.mjs";
 import { analyze, exportAllowed } from "./lib/filter.mjs";
@@ -249,7 +249,13 @@ async function draw() {
   detail.textContent = hits.slice(0, 5).map((hit) => hitLabel(hit, code)).join(", ");
   download.disabled = !allowed || !card.fits;
   share.disabled = download.disabled;
-  userLive.textContent = [name, titleInput.value, bodyInput.value, noticeFor(code, name, format().width, format().height), card.label].filter(Boolean).join(". ");
+  const vistaTexto = document.getElementById("vista-texto");
+  vistaTexto.replaceChildren();
+  const noticeLabel = document.createElement("span");
+  noticeLabel.lang = code;
+  noticeLabel.textContent = card.noticeText;
+  vistaTexto.append(noticeLabel);
+  userLive.textContent = [name, titleInput.value, bodyInput.value, card.noticeText, card.label].filter(Boolean).join(". ");
   persist();
   prepare();
 }
