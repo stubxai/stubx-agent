@@ -102,6 +102,13 @@ describe("v0.1.0 notes, without a tag", () => {
     assert.equal(/exec(File|Sync)?\(/.test(helper), false);
     assert.equal(helper.includes("child_process"), false);
 
+    const tagsOf = () => {
+      const listed = spawnSync("git", ["tag", "-l", "v0.1.0"], { cwd: root, encoding: "utf8" });
+      assert.equal(listed.status, 0);
+      return listed.stdout;
+    };
+    const before = tagsOf();
+
     const shown = spawnSync(process.execPath, ["scripts/prepare-v0.1.0-tag.mjs"], { cwd: root, encoding: "utf8" });
     assert.equal(shown.status, 0, shown.stderr);
     assert.match(shown.stdout, /no creado/);
@@ -114,9 +121,8 @@ describe("v0.1.0 notes, without a tag", () => {
     assert.equal(refused.status, 1);
     assert.match(refused.stderr, /No se crea el tag/);
 
-    const tags = spawnSync("git", ["tag", "-l", "v0.1.0"], { cwd: root, encoding: "utf8" });
-    assert.equal(tags.status, 0);
-    const listed = tags.stdout.trim();
+    assert.equal(tagsOf(), before);
+    const listed = before.trim();
     assert.ok(listed === "" || listed === "v0.1.0", listed);
     if (listed === "v0.1.0") {
       const peeled = spawnSync("git", ["rev-parse", "v0.1.0^{}"], { cwd: root, encoding: "utf8" });
