@@ -278,10 +278,10 @@ try {
   await wide.getByRole("button", { name: "Volver a consultar" }).click();
   await wide.waitForFunction(() => document.querySelectorAll("#lista-consultas article.ficha").length >= 2, null, { timeout: 15000 });
   const options = wide.locator("#comparar-izquierda option");
-  const first = await options.nth(1).getAttribute("value");
-  const second = await options.nth(2).getAttribute("value");
-  await wide.locator("#comparar-izquierda").selectOption(first);
-  await wide.locator("#comparar-derecha").selectOption(second);
+  const newest = await options.nth(1).getAttribute("value");
+  const older = await options.nth(2).getAttribute("value");
+  await wide.locator("#comparar-izquierda").selectOption(older);
+  await wide.locator("#comparar-derecha").selectOption(newest);
   await wide.locator("#comparar").click();
   const comparedText = await wide.locator("#comparacion").innerText();
   if (!comparedText.includes("igual")) {
