@@ -6,6 +6,7 @@ import { analyze, exportAllowed } from "./lib/filter.mjs";
 import { DEFAULT_TOKEN, LOGO_MAX_BYTES, TOKEN_MAX, clipToken, createLogoGate, isStubxToken, readLogoPng } from "./lib/logo.mjs";
 import { decodePng, injectComment } from "./lib/png.mjs";
 import { renderCard } from "./lib/render.mjs";
+import { FILE_NAME, REVOKE_MS, canShareFiles, isIOS, saveMode } from "./lib/save.mjs";
 
 const titleInput = document.getElementById("titulo");
 const bodyInput = document.getElementById("cuerpo");
@@ -14,6 +15,14 @@ const canvas = document.getElementById("vista");
 const download = document.getElementById("descargar");
 const share = document.getElementById("compartir");
 const clearButton = document.getElementById("borrar");
+const saveNotice = document.getElementById("aviso-guardar");
+const ios = isIOS(navigator);
+const shareProbe = new File([new Uint8Array(8)], FILE_NAME, { type: "image/png" });
+const shareFiles = canShareFiles(navigator, shareProbe);
+share.hidden = !shareFiles;
+let ready = null;
+let readyFor = 0;
+let drawCount = 0;
 const blockNotice = document.getElementById("aviso-bloqueo");
 const fitNotice = document.getElementById("aviso-cabe");
 const detail = document.getElementById("aviso-detalle");
@@ -204,6 +213,59 @@ async function draw() {
   share.disabled = download.disabled;
   userLive.textContent = [name, titleInput.value, bodyInput.value, brandFor(code, name), FOOTER[code], card.label].filter(Boolean).join(". ");
   persist();
+  prepare();
+}
+
+// La imagen se prepara antes del toque: iOS solo deja compartir o abrir una pestaña
+// si se hace en el mismo gesto, sin esperas largas.
+function prepare() {
+  const id = ++drawCount;
+  ready = null;
+  if (download.disabled) return;
+  exportedBlob().then((blob) => {
+    if (id === drawCount) {
+      ready = blob;
+      readyFor = id;
+    }
+  }).catch(() => {});
+}
+
+async function currentBlob() {
+  if (ready && readyFor === drawCount) return ready;
+  return exportedBlob();
+}
+
+function showSaveNotice() {
+  saveNotice.hidden = false;
+}
+
+function openImage(blob) {
+  const url = URL.createObjectURL(blob);
+  const tab = window.open(url, "_blank");
+  showSaveNotice();
+  setTimeout(() => URL.revokeObjectURL(url), REVOKE_MS);
+  return Boolean(tab);
+}
+
+function downloadFile(blob) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "studio.png";
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), REVOKE_MS);
+}
+
+async function shareFile(blob) {
+  const file = new File([blob], FILE_NAME, { type: "image/png" });
+  try {
+    await navigator.share({ files: [file] });
+  } catch (error) {
+    if (error && error.name === "AbortError") return;
+    openImage(blob);
+  }
 }
 
 function schedule() {
@@ -349,22 +411,17 @@ logoClear.addEventListener("click", () => {
   schedule();
 });
 download.addEventListener("click", async () => {
-  const blob = await exportedBlob();
+  const blob = await currentBlob();
   if (!blob) return;
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "studio.png";
-  link.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  const mode = saveMode({ ios, share: shareFiles });
+  if (mode === "share") return shareFile(blob);
+  if (mode === "open") return openImage(blob);
+  downloadFile(blob);
 });
 share.addEventListener("click", async () => {
-  const blob = await exportedBlob();
-  if (!blob || !navigator.share) return;
-  const file = new File([blob], "studio.png", { type: "image/png" });
-  const payload = { files: [file] };
-  if (navigator.canShare && !navigator.canShare(payload)) return;
-  await navigator.share(payload);
+  const blob = await currentBlob();
+  if (!blob || !shareFiles) return;
+  await shareFile(blob);
 });
 clearButton.addEventListener("click", () => {
   clearDraft(localStorage);
