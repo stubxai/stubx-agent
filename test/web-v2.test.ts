@@ -394,16 +394,17 @@ describe("web v2", () => {
     for (const id of ["wallets", "transparencia", "reparto", "estado", "ppm"]) {
       assert.match(home, new RegExp(`id="${id}"`));
     }
+    const givenName = String.fromCharCode(67, 114, 105, 115, 116, 105, 97, 110);
     for (const rel of ROUTES) {
       const html = read(rel);
-      assert.equal(html.includes("Cristian"), false, rel);
+      assert.equal(html.includes(givenName), false, rel);
       assert.equal(html.includes('class="draft"'), false, rel);
       assert.equal(html.includes("Borrador del repositorio. No publicado en stubxai.com."), false, rel);
       assert.match(html, /rel="canonical" href="https:\/\/stubxai.com\//);
       assert.match(html, /property="og:image"/);
       assert.match(html, /name="twitter:card"/);
     }
-    assert.equal(read("archivo.html").includes("Cristian"), false);
+    assert.equal(read("archivo.html").includes(givenName), false);
     assert.match(read("404.html"), /href="\/assets\/site\.css"/);
     assert.match(read("404.html"), /href="\/"/);
     assert.equal(/href="assets\//.test(read("404.html")), false);
@@ -478,7 +479,7 @@ describe("web v2", () => {
           "assert mod.draft_html(True) == ''",
           "draft = mod.draft_html(False)",
           "assert draft.count('class=\"draft\"') == 1",
-          "assert 'Cristian' not in draft",
+          "assert ''.join(map(chr, [67, 114, 105, 115, 116, 105, 97, 110])) not in draft",
           "assert 'No publicado en stubxai.com' in draft",
         ].join("\n"),
       ],

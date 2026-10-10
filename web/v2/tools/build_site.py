@@ -215,7 +215,7 @@ def shell(frm: str, current: str, title_es: str, title_en: str, desc_es: str, de
     worker_src = "'self'" if worker else "'none'"
     url = public_url(frm)
     banner = draft_html(PUBLISH)
-    # Indexable desde 2026-10-09 (AUTORIZO de Cristian). Solo el 404 y el marcador de Studio siguen fuera.
+    # Indexable desde 2026-10-09 (AUTORIZO del creador). Solo el 404 y el marcador de Studio siguen fuera.
     robots_meta = '<meta name="robots" content="noindex, nofollow">\n' if frm in NOINDEX_PAGES else ""
     return f"""<!DOCTYPE html>
 <html lang="es" data-lang="es">
