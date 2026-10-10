@@ -417,6 +417,8 @@ const PERSON_EN: Record<string, string> = {
 };
 
 const MILESTONE_EN: Record<string, string> = {
+  "2026-10-09 · Medición de uso: ninguna en el cliente":
+    "2026-10-09 · Usage measurement: none on the client",
   "2026-10-09 · Verify y Lab: lectura visible en el móvil":
     "2026-10-09 · Verify and Lab: the reading stays visible on a phone",
   "2026-10-09 · Revisión de seguridad de Verify y Lab (borrador, sin publicar)":

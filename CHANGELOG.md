@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-09 · Medición de uso: ninguna en el cliente
+
+- No hay baliza, cookie, tercero, IP guardada ni Cloudflare Web Analytics. Tampoco un contador agregado: la petición llevaría la IP al alojamiento aunque el programa no la escriba.
+- Las únicas cifras que se pueden mirar son las que GitHub ya enseña en la página del repositorio: estrellas, forks y watchers. No son visitas a la web. No se usa la API de tráfico.
+- La decisión está en [docs/medicion-uso.md](docs/medicion-uso.md). `npm test` falla si el HTML, el CSS o el JavaScript de la web trae una baliza.
+
 ## 2026-10-09 · Verify y Lab: lectura visible en el móvil
 
 - En menos de 600 px la cabecera deja de quedarse fija. Tras Comprobar, la página se desplaza al veredicto y el foco va al titular.
