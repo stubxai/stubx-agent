@@ -17,6 +17,7 @@ import {
   toExport,
   validateCard,
   validateExport,
+  visibleText,
   withNote,
   withinStoreLimit,
 } from "../shared/notebook-model.js";
@@ -42,6 +43,7 @@ const COPY = {
     cancel: "No se ha borrado nada.",
     empty: "Todavía no hay consultas guardadas.",
     importOk: "Copia importada. Cada ficha sigue siendo la de su fecha, no una lectura actual.",
+    imported: "Importada, no leída por este navegador.",
     fileBig: "El archivo pasa de 1 MB. No se importa.",
     fileRead: "No se pudo leer el archivo.",
     exportEmpty: "No hay consultas que exportar.",
@@ -101,6 +103,7 @@ const COPY = {
     cancel: "Nothing was deleted.",
     empty: "There are no saved queries yet.",
     importOk: "Copy imported. Each card is still the one from its date, not a current reading.",
+    imported: "Imported, not read by this browser.",
     fileBig: "The file is over 1 MB. It was not imported.",
     fileRead: "The file could not be read.",
     exportEmpty: "There are no queries to export.",
@@ -173,7 +176,7 @@ function el(tag, attrs) {
 
 function text(tag, value, attrs) {
   const node = el(tag, attrs);
-  node.textContent = value == null ? "" : String(value);
+  node.textContent = value == null ? "" : visibleText(value);
   return node;
 }
 
@@ -280,7 +283,7 @@ function shown(value) {
   if (value === null || value === undefined || value === "") return t("none");
   if (value === true) return t("yes");
   if (value === false) return t("no");
-  return String(value);
+  return visibleText(value);
 }
 
 function row(list, label, value, status) {
@@ -367,12 +370,13 @@ function renderRecords(records) {
   }
   for (const record of records) {
     const block = el("article", { class: "consulta-guardada", "data-id": record.id });
+    if (record.source === "importada") block.append(text("p", t("imported"), { class: "nota" }));
     block.append(renderCard(record.card));
     const note = el("div", { class: "nota-personal" });
     const label = text("label", t("noteLabel"));
     label.htmlFor = `nota-${record.id}`;
     const area = el("textarea", { id: `nota-${record.id}`, class: "nota", maxlength: String(MAX_NOTE) });
-    area.value = record.note;
+    area.value = visibleText(record.note);
     const save = el("button", { type: "button" });
     save.textContent = t("saveNote");
     save.addEventListener("click", () => saveNote(record.id, area.value));
@@ -449,7 +453,7 @@ async function consult(mint) {
     }
     if (result.error === "partial" || result.card.partial) showMessage(t("partial"), "error");
     else if (!result.ok) showMessage(t("network"), "error");
-    const record = { id: crypto.randomUUID(), note: "", card: result.card };
+    const record = { id: crypto.randomUUID(), note: "", card: result.card, source: "leida" };
     const saved = await persist(record);
     if (!saved) return;
     showMessage(result.card.partial ? t("partial") : t("saved"), result.card.partial ? "error" : "ok");
@@ -562,7 +566,7 @@ async function importCopy(file) {
   }
   try {
     const db = await database();
-    for (const record of parsed.records) await dbPut(db, record);
+    for (const record of parsed.records) await dbPut(db, { ...record, source: "importada" });
     showMessage(t("importOk"), "ok");
     await refresh();
   } catch (error) {

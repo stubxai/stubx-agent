@@ -280,6 +280,7 @@ try {
     const restored = await wide.locator("#lista-consultas").innerText();
     if (!restoredNotes.includes("nota de prueba")) failures.push(`la importación no recuperó la nota: ${restoredNotes.join(" | ")}`);
     if (!restored.includes("puede haber cambiado")) failures.push("la ficha importada parece actual");
+    if (!restored.includes("Importada, no leída por este navegador")) failures.push("la ficha importada no se marca");
   }
   await wide.getByRole("button", { name: "English" }).click();
   await wide.waitForFunction(() => (document.querySelector("#lista-consultas")?.textContent || "").includes("this may have changed"));

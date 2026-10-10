@@ -43,6 +43,7 @@ interface ModelModule {
   validateExport: (text: string) => { ok: boolean; error?: { es: string }; records?: Array<{ note: string; card: Card }> };
   validateCard: (card: Card) => { ok: boolean };
   withinStoreLimit: (existingCount: number, incomingNewCount: number) => boolean;
+  visibleText: (value: string) => string;
   toExport: (records: unknown[], exportedAt: string) => string;
   compareRecords: (left: { card: Card }, right: { card: Card }) => { ok: boolean; rows?: Array<{ field: { es: string }; same: boolean }> };
   staleLine: (consultedAt: string, lang: string) => string;
@@ -279,6 +280,7 @@ describe("lector y cuaderno", () => {
     assert.equal(model.withinStoreLimit(199, 1), true);
     assert.equal(model.withinStoreLimit(200, 1), false);
     assert.equal(model.withinStoreLimit(199, 2), false);
+    assert.equal(model.visibleText("ab\u202Ecd\u200F"), "abcd");
   });
 
   test("solo se comparan dos fichas del mismo mint y la antigua no se presenta como actual", async () => {

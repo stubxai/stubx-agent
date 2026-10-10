@@ -239,6 +239,10 @@ export function validateExport(text) {
   return { ok: true, records };
 }
 
+export function visibleText(value) {
+  return String(value).replace(/\p{Cf}/gu, "");
+}
+
 export function withinStoreLimit(existingCount, incomingNewCount) {
   if (!Number.isInteger(existingCount) || existingCount < 0) return false;
   if (!Number.isInteger(incomingNewCount) || incomingNewCount < 0) return false;
@@ -251,7 +255,7 @@ export function toExport(records, exportedAt) {
       schema: EXPORT_SCHEMA,
       schemaVersion: 1,
       exportedAt,
-      cards: records,
+      cards: records.map((record) => ({ id: record.id, note: record.note, card: record.card })),
     },
     null,
     2,
