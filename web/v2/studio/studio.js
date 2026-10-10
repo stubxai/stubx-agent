@@ -24,6 +24,7 @@ const tokenCount = document.getElementById("contador-token");
 const logoInput = document.getElementById("logo");
 const logoClear = document.getElementById("quitar-logo");
 const logoNotice = document.getElementById("aviso-logo");
+const logoFormatNotice = document.getElementById("aviso-logo-formato");
 const logoWeightNotice = document.getElementById("aviso-logo-peso");
 const logoSizeNotice = document.getElementById("aviso-logo-medida");
 const mascotNotice = document.getElementById("aviso-mascota");
@@ -272,6 +273,7 @@ tokenInput.addEventListener("input", () => {
 });
 function hideLogoErrors() {
   logoNotice.hidden = true;
+  logoFormatNotice.hidden = true;
   logoWeightNotice.hidden = true;
   logoSizeNotice.hidden = true;
 }
@@ -280,6 +282,7 @@ function showLogoError(message) {
   hideLogoErrors();
   if (message === "logo-bytes") logoWeightNotice.hidden = false;
   else if (message === "logo-size") logoSizeNotice.hidden = false;
+  else if (message === "logo-format") logoFormatNotice.hidden = false;
   else logoNotice.hidden = false;
 }
 

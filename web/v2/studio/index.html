@@ -88,12 +88,14 @@
 <div id="panel-avatar" role="tabpanel" data-panel="avatar" aria-labelledby="tab-avatar" hidden>
 <p><span class="lang es" lang="es">Los recursos de STUBX son la opción por defecto. El logo de tu token se queda en este navegador y no se envía a ningún servidor.</span><span class="lang en" lang="en">STUBX assets are the default option. Your token logo stays in this browser and is not sent to any server.</span></p>
 <label for="logo"><span class="lang es" lang="es">Logo de tu token</span><span class="lang en" lang="en">Your token logo</span></label>
-<input id="logo" type="file" accept="image/png">
+<input id="logo" type="file" accept="image/png,image/jpeg,image/webp">
+<p><span class="lang es" lang="es">JPG, PNG o WebP. Si pasa de 2048 px, se reduce.</span><span class="lang en" lang="en">JPG, PNG or WebP. If it is over 2048 px, it is reduced.</span></p>
 <p><span class="lang es" lang="es">Usa solo un logo que tengas derecho a usar. Si se hizo con IA, indícalo al publicar.</span><span class="lang en" lang="en">Only use a logo you have the right to use. If it was made with AI, say so when you post.</span></p>
 <p id="logo-estado" class="contador" role="status"></p>
-<p id="aviso-logo" class="aviso" role="status" hidden><span class="lang es" lang="es">Ese archivo no sirve como logo. Usa un PNG de hasta 2048 px y 1,5 MB.</span><span class="lang en" lang="en">That file cannot be used as a logo. Use a PNG up to 2048 px and 1.5 MB.</span></p>
-<p id="aviso-logo-peso" class="aviso" role="status" hidden><span class="lang es" lang="es">El archivo pesa demasiado (máx. 1,5 MB).</span><span class="lang en" lang="en">The file is too large (max. 1.5 MB).</span></p>
-<p id="aviso-logo-medida" class="aviso" role="status" hidden><span class="lang es" lang="es">La imagen es demasiado grande (máx. 2048 px).</span><span class="lang en" lang="en">The image is too large (max. 2048 px).</span></p>
+<p id="aviso-logo" class="aviso" role="status" hidden><span class="lang es" lang="es">Ese archivo no sirve como logo. Usa un JPG, PNG o WebP de hasta 8 MB.</span><span class="lang en" lang="en">That file cannot be used as a logo. Use a JPG, PNG or WebP up to 8 MB.</span></p>
+<p id="aviso-logo-formato" class="aviso" role="status" hidden><span class="lang es" lang="es">Este formato no se puede usar. Prueba con JPG o PNG.</span><span class="lang en" lang="en">This format cannot be used. Try JPG or PNG.</span></p>
+<p id="aviso-logo-peso" class="aviso" role="status" hidden><span class="lang es" lang="es">El archivo pesa demasiado (máx. 8 MB).</span><span class="lang en" lang="en">The file is too large (max. 8 MB).</span></p>
+<p id="aviso-logo-medida" class="aviso" role="status" hidden><span class="lang es" lang="es">La imagen es demasiado grande (máx. 8192 px).</span><span class="lang en" lang="en">The image is too large (max. 8192 px).</span></p>
 <p id="aviso-mascota" class="aviso" role="status" hidden><span class="lang es" lang="es">Con otro nombre no se usa la mascota de STUBX. La banda dice que no es oficial de ese token ni de STUBX.</span><span class="lang en" lang="en">With another name the STUBX mascot is not used. The band says it is not official from that token or STUBX.</span></p>
 <p><button type="button" id="quitar-logo"><span class="lang es" lang="es">Quitar logo</span><span class="lang en" lang="en">Remove logo</span></button></p>
 <div id="avatares" class="opciones" role="group" aria-label="Avatar / Avatar"></div>

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
+import { deflateSync } from "node:zlib";
 import { createHash } from "node:crypto";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
@@ -309,6 +310,58 @@ function pngWithIdat(width: number, height: number, idat: Uint8Array): Uint8Arra
 
 function pngDeclaring(width: number, height: number): Uint8Array {
   return pngWithIdat(width, height, Uint8Array.from([0, 1, 2, 3]));
+}
+
+function pngTyped(width: number, height: number, depth: number, color: number, idat: Uint8Array, extra: Uint8Array[] = [], interlace = 0): Uint8Array {
+  const ihdr = new Uint8Array(13);
+  const view = new DataView(ihdr.buffer);
+  view.setUint32(0, width);
+  view.setUint32(4, height);
+  ihdr[8] = depth;
+  ihdr[9] = color;
+  ihdr[12] = interlace;
+  const parts = [
+    Uint8Array.from([137, 80, 78, 71, 13, 10, 26, 10]),
+    pngChunk("IHDR", ihdr),
+    ...extra,
+    pngChunk("IDAT", idat),
+    pngChunk("IEND", new Uint8Array()),
+  ];
+  const out = new Uint8Array(parts.reduce((sum, part) => sum + part.length, 0));
+  let offset = 0;
+  for (const part of parts) {
+    out.set(part, offset);
+    offset += part.length;
+  }
+  return out;
+}
+
+function jpegBytes(width: number, height: number, orientation = 1): Uint8Array {
+  const app0 = [0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00];
+  const sof = [0xff, 0xc0, 0x00, 0x0b, 0x08, (height >> 8) & 255, height & 255, (width >> 8) & 255, width & 255, 0x01, 0x01, 0x11, 0x00];
+  const parts = [0xff, 0xd8, ...app0];
+  if (orientation > 1) {
+    const tiff = [0x49, 0x49, 0x2a, 0x00, 0x08, 0x00, 0x00, 0x00, 0x01, 0x00, 0x12, 0x01, 0x03, 0x00, 0x01, 0x00, 0x00, 0x00, orientation & 255, (orientation >> 8) & 255, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+    const payload = [0x45, 0x78, 0x69, 0x66, 0x00, 0x00, ...tiff];
+    const size = payload.length + 2;
+    parts.push(0xff, 0xe1, (size >> 8) & 255, size & 255, ...payload);
+  }
+  parts.push(...sof, 0xff, 0xd9);
+  return Uint8Array.from(parts);
+}
+
+function webpBytes(width: number, height: number): Uint8Array {
+  const out = new Uint8Array(30);
+  out.set([0x52, 0x49, 0x46, 0x46, 22, 0, 0, 0, 0x57, 0x45, 0x42, 0x50, 0x56, 0x50, 0x38, 0x58, 10, 0, 0, 0]);
+  const w = width - 1;
+  const h = height - 1;
+  out[24] = w & 255;
+  out[25] = (w >> 8) & 255;
+  out[26] = (w >> 16) & 255;
+  out[27] = h & 255;
+  out[28] = (h >> 8) & 255;
+  out[29] = (h >> 16) & 255;
+  return out;
 }
 
 /** IDAT zlib de ceros sin comprimir. El archivo pesa ~1,4 MB y al inflarse supera un 8×8. */
@@ -753,16 +806,20 @@ describe("studio", () => {
     assert.match(editor, /Name or ticker/);
     assert.match(editor, /value="STUBX"/);
     assert.match(editor, /id="logo"/);
-    assert.match(editor, /accept="image\/png"/);
+    assert.match(editor, /accept="image\/png,image\/jpeg,image\/webp"/);
+    assert.match(editor, /JPG, PNG o WebP\. Si pasa de 2048 px, se reduce\./);
+    assert.match(editor, /JPG, PNG or WebP\. If it is over 2048 px, it is reduced\./);
+    assert.match(editor, /Este formato no se puede usar\. Prueba con JPG o PNG\./);
+    assert.match(editor, /This format cannot be used\. Try JPG or PNG\./);
     assert.match(editor, /Los recursos de STUBX son la opción por defecto/);
     assert.match(editor, /STUBX assets are the default option/);
     assert.match(editor, /Ese archivo no sirve como logo/);
     assert.match(editor, /That file cannot be used as a logo/);
     assert.match(editor, /id="aviso-logo-peso"/);
-    assert.match(editor, /El archivo pesa demasiado \(máx\. 1,5 MB\)\./);
-    assert.match(editor, /The file is too large \(max\. 1\.5 MB\)\./);
-    assert.match(editor, /La imagen es demasiado grande \(máx\. 2048 px\)\./);
-    assert.match(editor, /The image is too large \(max\. 2048 px\)\./);
+    assert.match(editor, /El archivo pesa demasiado \(máx\. 8 MB\)\./);
+    assert.match(editor, /The file is too large \(max\. 8 MB\)\./);
+    assert.match(editor, /La imagen es demasiado grande \(máx\. 8192 px\)\./);
+    assert.match(editor, /The image is too large \(max\. 8192 px\)\./);
     assert.match(reglas, /El nombre del token pasa por el mismo filtro/);
     assert.match(reglas, /The token name goes through the same filter/);
     assert.match(reglas, /Los recursos de STUBX siguen como opción por defecto/);
@@ -787,17 +844,21 @@ describe("studio", () => {
     assert.match(logoSrc, /\.normalize\("NFKC"\)/);
     assert.equal(logoSrc.includes(String.raw`[\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF]`), false);
     assert.match(editor, /id="aviso-logo-medida"/);
-    assert.match(readStudio("studio.css"), /#aviso-logo \.lang, #aviso-logo-peso \.lang, #aviso-logo-medida \.lang \{ display: block; \}/);
+    assert.match(readStudio("studio.css"), /#aviso-logo \.lang, #aviso-logo-formato \.lang, #aviso-logo-peso \.lang, #aviso-logo-medida \.lang \{ display: block; \}/);
     assert.match(editor, /Con otro nombre no se usa la mascota de STUBX/);
     assert.match(editor, /With another name the STUBX mascot is not used/);
     assert.match(script, /message === "logo-bytes"/);
     assert.match(script, /message === "logo-size"/);
+    assert.match(script, /message === "logo-format"/);
     assert.match(script, /function hideLogoErrors\(\)/);
     assert.match(script, /createLogoGate/);
     assert.match(script, /stillCurrent\(\)/);
     assert.match(logoSrc, /new AbortController\(\)/);
     assert.match(logoSrc, /ticket \+= 1/);
     assert.match(logoSrc, /error\?\.message === "PNG demasiado grande"\) throw new Error\("logo-size"\)/);
+    assert.match(logoSrc, /createImageBitmap/);
+    assert.match(logoSrc, /imageOrientation: "from-image"/);
+    assert.equal(logoSrc.includes("createObjectURL"), false);
     const quitar = script.slice(script.indexOf("logoClear.addEventListener"), script.indexOf("download.addEventListener"));
     assert.match(quitar, /logoGate\.cancel\(\)/);
     const show = script.slice(script.indexOf("function showLogoError"), script.indexOf("function readBlob"));
@@ -885,18 +946,22 @@ describe("studio", () => {
   test("el nombre del token se dibuja y el logo se queda en un PNG local", async () => {
     const { renderCard } = await load<{ renderCard: (options: Record<string, unknown>) => Promise<Card> }>("lib/render.mjs");
     const { encodePng } = await load<{ encodePng: (rgba: Uint8ClampedArray, width: number, height: number) => Promise<Uint8Array> }>("lib/png.mjs");
-    const { clipToken, fitLogo, readLogoPng, isStubxToken, DEFAULT_TOKEN, TOKEN_MAX, LOGO_MAX_BYTES, LOGO_DRAW_EDGE } = await load<{
+    const { clipToken, fitLogo, readLogoPng, inspectLogo, isStubxToken, DEFAULT_TOKEN, TOKEN_MAX, LOGO_MAX_BYTES, LOGO_MAX_EDGE, LOGO_HARD_EDGE, LOGO_DRAW_EDGE } = await load<{
       clipToken: (value: string) => string;
       isStubxToken: (value: string) => boolean;
       fitLogo: (image: { width: number; height: number; rgba: Uint8ClampedArray }, edge: number) => { width: number; height: number };
       readLogoPng: (bytes: Uint8Array) => Promise<{ width: number; height: number; rgba: Uint8ClampedArray }>;
+      inspectLogo: (bytes: Uint8Array) => Promise<{ mime: string; width: number; height: number; resizeWidth: number; resizeHeight: number; simplePng: boolean }>;
       DEFAULT_TOKEN: string;
       TOKEN_MAX: number;
       LOGO_MAX_BYTES: number;
+      LOGO_MAX_EDGE: number;
+      LOGO_HARD_EDGE: number;
       LOGO_DRAW_EDGE: number;
     }>("lib/logo.mjs");
-    const { decodePng, pngDimensions, pngRawSize } = await load<{
+    const { decodePng, pngDimensions, pngRawSize, pngInflatedCap } = await load<{
       decodePng: (bytes: Uint8Array) => Promise<unknown>;
+      pngInflatedCap: (width: number, height: number, depth: number, color: number, interlace: number) => number;
       pngDimensions: (bytes: Uint8Array) => { width: number; height: number };
       pngRawSize: (width: number, height: number, depth: number, color: number) => number;
     }>("lib/png.mjs");
@@ -1037,7 +1102,10 @@ describe("studio", () => {
     const fitted = fitLogo(wide, 2);
     assert.equal(fitted.width, 2);
     assert.equal(fitted.height, 1);
-    await assert.rejects(() => readLogoPng(new Uint8Array([1, 2, 3, 4])));
+    await assert.rejects(() => readLogoPng(new Uint8Array([1, 2, 3, 4])), (error: Error) => {
+      assert.equal(error.message, "logo-format");
+      return true;
+    });
     await assert.rejects(() => readLogoPng(new Uint8Array(LOGO_MAX_BYTES + 1)), (error: Error) => {
       assert.equal(error.message, "logo-bytes");
       return true;
@@ -1059,6 +1127,10 @@ describe("studio", () => {
       return true;
     });
     await assert.rejects(() => readLogoPng(pngDeclaring(2049, 8)), (error: Error) => {
+      assert.notEqual(error.message, "logo-size");
+      return true;
+    });
+    await assert.rejects(() => readLogoPng(pngDeclaring(LOGO_HARD_EDGE + 1, 8)), (error: Error) => {
       assert.equal(error.message, "logo-size");
       return true;
     });
@@ -1066,6 +1138,7 @@ describe("studio", () => {
     const packed = pngWithIdat(8, 8, zlibStoredZeros(1_399_884));
     assert.ok(packed.length >= 1_400_000);
     assert.ok(packed.length < 1_500_000);
+    assert.ok(packed.length < LOGO_MAX_BYTES);
     assert.equal(pngDimensions(packed).width, 8);
     assert.equal(pngDimensions(packed).height, 8);
     await assert.rejects(() => decodePng(packed), (error: Error) => {
@@ -1076,6 +1149,56 @@ describe("studio", () => {
       assert.equal(error.message, "logo-size");
       return true;
     });
+    const phone = await inspectLogo(jpegBytes(4032, 3024, 6));
+    assert.equal(phone.mime, "image/jpeg");
+    assert.equal(phone.width, 3024);
+    assert.equal(phone.height, 4032);
+    assert.equal(Math.max(phone.resizeWidth, phone.resizeHeight), LOGO_MAX_EDGE);
+    assert.ok(phone.resizeWidth <= LOGO_MAX_EDGE && phone.resizeHeight <= LOGO_MAX_EDGE);
+    assert.ok(Math.abs(phone.resizeWidth / phone.resizeHeight - 3024 / 4032) < 0.02);
+    const turned = await inspectLogo(jpegBytes(400, 100, 6));
+    assert.equal(turned.width, 100);
+    assert.equal(turned.height, 400);
+    const webp = await inspectLogo(webpBytes(1000, 1000));
+    assert.equal(webp.mime, "image/webp");
+    assert.equal(webp.resizeWidth, 1000);
+    await assert.rejects(() => inspectLogo(jpegBytes(LOGO_HARD_EDGE + 1, 1000)), (error: Error) => {
+      assert.equal(error.message, "logo-size");
+      return true;
+    });
+    const heic = Uint8Array.from([0, 0, 0, 20, 0x66, 0x74, 0x79, 0x70, 0x68, 0x65, 0x69, 0x63, 0, 0, 0, 0, 0x68, 0x65, 0x69, 0x63]);
+    await assert.rejects(() => readLogoPng(heic), (error: Error) => {
+      assert.equal(error.message, "logo-format");
+      return true;
+    });
+    await assert.rejects(() => readLogoPng(new TextEncoder().encode("GIF89aXXXX")), (error: Error) => {
+      assert.equal(error.message, "logo-format");
+      return true;
+    });
+    const palette = pngTyped(8, 8, 8, 3, deflateSync(new Uint8Array(8 * 9)), [pngChunk("PLTE", Uint8Array.from([12, 200, 40]))]);
+    const indexed = await inspectLogo(palette);
+    assert.equal(indexed.simplePng, false);
+    assert.equal(indexed.mime, "image/png");
+    const adam = pngTyped(8, 8, 8, 2, deflateSync(new Uint8Array(pngInflatedCap(8, 8, 8, 2, 1))), [], 1);
+    assert.equal((await inspectLogo(adam)).simplePng, false);
+    const deep = pngTyped(2, 2, 16, 2, deflateSync(new Uint8Array(pngInflatedCap(2, 2, 16, 2, 0))));
+    assert.equal((await inspectLogo(deep)).width, 2);
+    const wideRgba = new Uint8ClampedArray(3000 * 8 * 4);
+    for (let i = 0; i < wideRgba.length; i += 4) {
+      wideRgba[i] = 12;
+      wideRgba[i + 1] = 200;
+      wideRgba[i + 2] = 40;
+      wideRgba[i + 3] = 255;
+    }
+    const widePng = await encodePng(wideRgba, 3000, 8);
+    const widePlan = await inspectLogo(widePng);
+    assert.equal(widePlan.resizeWidth, LOGO_MAX_EDGE);
+    assert.ok(widePlan.resizeHeight < LOGO_MAX_EDGE);
+    const reduced = await readLogoPng(widePng);
+    assert.ok(reduced.width <= LOGO_DRAW_EDGE);
+    assert.ok(reduced.height <= LOGO_DRAW_EDGE);
+    assert.equal(reduced.rgba[0], 12);
+    assert.equal(reduced.rgba[1], 200);
     const disguised = await renderCard({
       width: 1080,
       height: 1080,
