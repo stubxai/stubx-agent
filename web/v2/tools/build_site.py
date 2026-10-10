@@ -137,6 +137,7 @@ PRIMARY = [
     ("verify", "verify/index.html", "Verificar", "Verify"),
     ("lab", "lab/index.html", "Lab", "Lab"),
     ("tablero", "tablero/index.html", "Tablero", "Board"),
+    ("studio", "studio/index.html", "Studio", "Studio"),
 ]
 MORE = [
     ("methodology", "methodology/index.html", "Metodología", "Methodology"),
@@ -205,7 +206,7 @@ def nav(frm: str, current: str, absolute: bool = False) -> str:
     )
 
 
-NOINDEX_PAGES = {"404.html", "studio/index.html"}
+NOINDEX_PAGES = {"404.html"}
 
 
 def shell(frm: str, current: str, title_es: str, title_en: str, desc_es: str, desc_en: str, body: str, scripts: list[str], narrow: bool, worker: bool = False, absolute: bool = False) -> str:
@@ -215,7 +216,7 @@ def shell(frm: str, current: str, title_es: str, title_en: str, desc_es: str, de
     worker_src = "'self'" if worker else "'none'"
     url = public_url(frm)
     banner = draft_html(PUBLISH)
-    # Indexable desde 2026-10-09 (AUTORIZO de Cristian). Solo el 404 y el marcador de Studio siguen fuera.
+    # Indexable desde 2026-10-09. Fuera del índice solo queda el 404. Studio también se indexa.
     robots_meta = '<meta name="robots" content="noindex, nofollow">\n' if frm in NOINDEX_PAGES else ""
     return f"""<!DOCTYPE html>
 <html lang="es" data-lang="es">
@@ -343,7 +344,7 @@ def home() -> str:
 <article class="card"><p class="estado-pill">{t("Registro · 2026-10-09", "Record · 2026-10-09")}</p><h3>{t("Tablero", "Board")}</h3><p>{t("Estados reales del registro de la PR 14. Una idea, un código en el repositorio y una función publicada no son lo mismo.", "Real states from the PR 14 record. An idea, code in the repository, and a published function are not the same thing.")}</p><p><a href="/tablero/">{t("Abrir el tablero", "Open the board")}</a></p></article>
 </div>
 <div class="grid-3">
-<article class="slot"><p class="estado-pill">{t("No construido · 2026-10-09", "Not built · 2026-10-09")}</p><h3>Studio</h3><p>{t("No hay editor ni exportación. La ficha U02 sigue en propuesta.", "There is no editor and no export. Item U02 is still a proposal.")}</p><p><a href="/studio/">{t("Ver qué falta", "See what is missing")}</a></p></article>
+<article class="card"><p class="estado-pill">{t("En este navegador · 2026-10-09", "In this browser · 2026-10-09")}</p><h3>Studio</h3><p>{t("Crea una imagen para tu token, sin cuenta. Los recursos de STUBX vienen por defecto. El nombre, el logo y la exportación se quedan en este navegador.", "Create an image for your token, without an account. STUBX assets start as the default. The name, the logo, and the export stay in this browser.")}</p><p><a href="/studio/">{t("Abrir Studio", "Open Studio")}</a></p></article>
 <article class="slot"><p class="estado-pill">{t("No construido · 2026-10-09", "Not built · 2026-10-09")}</p><h3>{t("Cuaderno", "Notebook")}</h3><p>{t("No hay notas ni historial de consultas. Lab solo guarda el progreso de la misión.", "There are no notes and no query history. Lab only stores mission progress.")}</p><p><a href="/cuaderno/">{t("Ver qué falta", "See what is missing")}</a></p></article>
 <article class="slot"><p class="estado-pill">{t("No construido · 2026-10-09", "Not built · 2026-10-09")}</p><h3>{t("Contribuir", "Contribute")}</h3><p>{t("No hay formulario ni entrega de archivos. No se piden aportaciones.", "There is no form and no file upload. Contributions are not being requested.")}</p><p><a href="/contribuir/">{t("Ver qué falta", "See what is missing")}</a></p></article>
 </div>
@@ -986,6 +987,11 @@ def headers() -> str:
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
   Cross-Origin-Opener-Policy: same-origin
 
+# Studio no repite cabeceras: /* ya trae X-Frame-Options, nosniff y Referrer-Policy.
+# La CSP más estricta (default-src 'none', worker-src 'none', connect-src 'self')
+# vive en el meta del HTML y se cruza con la de /*. connect-src sigue en 'self'
+# porque el editor descarga los PNG de avatar. frame-ancestors queda solo en /*.
+
 /assets/*
   Cache-Control: public, max-age=0, must-revalidate
 /fonts/*
@@ -1015,8 +1021,6 @@ def headers() -> str:
 /site.webmanifest
   X-Robots-Tag: noindex, nofollow
 /404.html
-  X-Robots-Tag: noindex, nofollow
-/studio/*
   X-Robots-Tag: noindex, nofollow
 """
 
@@ -1094,6 +1098,8 @@ def sitemap() -> str:
         ("https://stubxai.com/verify/", "2026-10-09"),
         ("https://stubxai.com/lab/", "2026-10-09"),
         ("https://stubxai.com/tablero/", "2026-10-09"),
+        ("https://stubxai.com/studio/", "2026-10-09"),
+        ("https://stubxai.com/studio/reglas/", "2026-10-09"),
         ("https://stubxai.com/methodology/", "2026-10-09"),
         ("https://stubxai.com/security/", "2026-10-09"),
         ("https://stubxai.com/risks/", "2026-10-09"),
@@ -1151,15 +1157,8 @@ def main() -> None:
     write_page("build/index.html", "build", "STUBX · Versiones", "STUBX · Versions", "Lo hecho y lo que sigue siendo un objetivo.", "What is done and what is still a target.", build_page())
     write_page("avances/index.html", "avances", "STUBX · Avances", "STUBX · Progress", "El tablero vive en /tablero.", "The board lives at /tablero.", avances())
     write_page("aprender/index.html", "aprender", "STUBX · Aprender", "STUBX · Learn", "Glosario y guías de la misión, 2026-10-09.", "Mission glossary and guides, 2026-10-09.", aprender())
-    write_page(
-        "studio/index.html",
-        "studio",
-        "STUBX · Studio",
-        "STUBX · Studio",
-        "Studio no está construido.",
-        "Studio is not built.",
-        slot("Studio", "Studio", "No hay editor, catálogo activo ni exportación de imágenes. U02 es una propuesta del 2026-10-09.", "There is no editor, no active catalog, and no image export. U02 is a proposal from 2026-10-09.", "tarea-U02"),
-    )
+    # U02 vive en web/v2/studio/ y no se regenera desde aquí: el editor, el catálogo y las reglas
+    # se mantienen a mano. Un rebuild no debe borrar esa carpeta.
     write_page(
         "cuaderno/index.html",
         "cuaderno",
