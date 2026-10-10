@@ -679,6 +679,49 @@ describe("lectura universal con RPC simulado", () => {
     assert.equal(/reserva|\breserve\b|\bfondo\b/i.test(explain), false);
   });
 
+  test("una respuesta de 2 cuentas no convierte la que falta en ausencia", async () => {
+    const sample = fixture("revoked-mint");
+    const pump = registry[0]?.mint ?? "";
+    assert.equal(pump.endsWith("pump"), true);
+    const short = (mint: string) => {
+      const calls: string[] = [];
+      return {
+        calls,
+        reading: readAnyMint({
+          mint,
+          registry,
+          endpoints: ["https://rpc-a.invalid", "https://rpc-b.invalid"],
+          transport: async (endpoint) => {
+            calls.push(new URL(endpoint).host);
+            return {
+              status: 200,
+              body: JSON.stringify({
+                jsonrpc: "2.0",
+                result: { context: { slot: sample.slot }, value: [accountJson(sample.mintAccount), null] },
+              }),
+            };
+          },
+          maxRetries: 0,
+          minIntervalMs: 0,
+          sleep: async () => {},
+        }),
+      };
+    };
+    for (const mint of [sample.mint, pump]) {
+      const { calls, reading: pending } = short(mint);
+      const reading = await pending;
+      assert.equal(reading.ok, false);
+      assert.equal(reading.title.es, "No se pudo comprobar");
+      assert.equal(reading.title.en, "Could not be checked");
+      assert.equal(reading.signals.some((item) => item.id === "curva"), false);
+      assert.equal(`${reading.support.es} ${reading.support.en}`.includes("No aplica"), false);
+      assert.equal(`${reading.support.es} ${reading.support.en}`.includes("Not applicable"), false);
+      assert.equal(reading.support.es.includes("no existe"), false);
+      assert.equal(reading.usedFallback, false);
+      assert.deepEqual(calls, ["rpc-a.invalid"]);
+    }
+  });
+
   test("un token que no es de Pump.fun deja la curva fuera de lo que falta", async () => {
     const usdc = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
     const sample = fixture("revoked-mint");

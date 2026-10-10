@@ -1670,8 +1670,8 @@ class RpcClient {
     getMultipleAccounts(addresses) {
         return this.call("getMultipleAccounts", [addresses, { encoding: "base64", commitment: "confirmed" }], (result) => {
             const value = contextValue(result);
-            if (!Array.isArray(value)) {
-                throw new Error("getMultipleAccounts no devolvió una lista.");
+            if (!Array.isArray(value) || value.length !== addresses.length) {
+                throw new Error("getMultipleAccounts no devolvió todas las cuentas pedidas.");
             }
             return value.map((item) => parseAccount(item));
         });
