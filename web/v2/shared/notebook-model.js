@@ -2,6 +2,7 @@
  * Esquema, comparación e importación del cuaderno.
  * El texto importado no se ejecuta. Una ficha guardada no es una lectura actual.
  */
+import { factState } from "./fact-state.js";
 import { CARD_SCHEMA, CARD_VERSION, DISCLAIMER, OFFICIAL_MINT, isMintAddress } from "./solana-read.js";
 
 export const EXPORT_SCHEMA = "stubx.notebook.export";
@@ -289,20 +290,20 @@ export function toExport(records, exportedAt) {
 }
 
 const COMPARE_FIELDS = [
-  ["program", "Programa", "Program"],
-  ["mintAuthority.state", "Permiso de emisión", "Mint authority"],
-  ["freezeAuthority.state", "Permiso de congelación", "Freeze authority"],
-  ["supplyAccount", "Suministro en la cuenta", "Supply on the account"],
-  ["supplyRpc", "Suministro de getTokenSupply", "Supply from getTokenSupply"],
-  ["decimals", "Decimales", "Decimals"],
-  ["name.text", "Nombre", "Name"],
-  ["symbol.text", "Símbolo", "Symbol"],
-  ["metadataMutable", "Metadatos mutables", "Mutable metadata"],
-  ["curve.present", "Curva presente", "Curve present"],
-  ["curve.realToken", "Cantidad real de tokens de la curva", "Real curve token amount"],
-  ["curve.virtualToken", "Cantidad virtual de tokens de la curva", "Virtual curve token amount"],
-  ["curve.complete", "Curva completa", "Curve complete"],
-  ["slot", "Slot", "Slot"],
+  ["program", "programStatus", "Programa", "Program", false],
+  ["mintAuthority.state", "mintAuthority.status", "Permiso de emisión", "Mint authority", false],
+  ["freezeAuthority.state", "freezeAuthority.status", "Permiso de congelación", "Freeze authority", false],
+  ["supplyAccount", null, "Suministro en la cuenta", "Supply on the account", true],
+  ["supplyRpc", "supplyRpcStatus", "Suministro de getTokenSupply", "Supply from getTokenSupply", true],
+  ["decimals", null, "Decimales", "Decimals", false],
+  ["name.text", "name.status", "Nombre", "Name", false],
+  ["symbol.text", "symbol.status", "Símbolo", "Symbol", false],
+  ["metadataMutable", "metadataMutable", "Metadatos mutables", "Mutable metadata", false],
+  ["curve.present", "curve.status", "Curva presente", "Curve present", false],
+  ["curve.realToken", "curve.status", "Cantidad real de tokens de la curva", "Real curve token amount", true],
+  ["curve.virtualToken", "curve.status", "Cantidad virtual de tokens de la curva", "Virtual curve token amount", true],
+  ["curve.complete", "curve.status", "Curva completa", "Curve complete", false],
+  ["slot", "slotStatus", "Slot", "Slot", false],
 ];
 
 function readPath(card, path) {
@@ -315,18 +316,39 @@ function readPath(card, path) {
   return current;
 }
 
+function compareFact(status, value) {
+  if (status === "si" || status === "no" || status === true || status === false) return "ok";
+  const known = status === null || status === undefined
+    ? (value === null || value === undefined || value === "" ? "no_disponible" : "verificado")
+    : status;
+  return factState(known, value);
+}
+
+function determined(state) {
+  return state === "ok" || state === "ausente" || state === "no_aplica";
+}
+
 export function compareRecords(left, right) {
   if (!left || !right || left.card.mint !== right.card.mint) {
     return fail("Solo se comparan dos consultas de la misma dirección.", "Only two queries of the same address can be compared.");
   }
-  const rows = COMPARE_FIELDS.map(([path, es, en]) => {
+  const rows = COMPARE_FIELDS.map(([path, statusPath, es, en, amount]) => {
     const a = readPath(left.card, path);
     const b = readPath(right.card, path);
+    const leftState = compareFact(statusPath ? readPath(left.card, statusPath) : null, a);
+    const rightState = compareFact(statusPath ? readPath(right.card, statusPath) : null, b);
+    const verdict = determined(leftState) && determined(rightState)
+      ? (Object.is(a, b) ? "igual" : "cambio")
+      : "indeterminado";
     return {
       field: { es, en },
       left: a === null || a === undefined ? null : String(a),
       right: b === null || b === undefined ? null : String(b),
-      same: Object.is(a, b),
+      amount,
+      leftState,
+      rightState,
+      verdict,
+      same: verdict === "igual",
       leftAt: left.card.consultedAt,
       rightAt: right.card.consultedAt,
     };
@@ -334,10 +356,24 @@ export function compareRecords(left, right) {
   return {
     ok: true,
     mint: left.card.mint,
+    network: left.card.network,
     formatChanged: left.card.schemaVersion !== right.card.schemaVersion,
     rows,
+    changes: rows.filter((row) => row.verdict === "cambio"),
+    unknown: rows.filter((row) => row.verdict === "indeterminado"),
+    unchanged: rows.filter((row) => row.verdict === "igual"),
     notes: { left: left.note, right: right.note },
   };
+}
+
+export function pickPrevious(records, card, exceptId) {
+  if (!card || typeof card.mint !== "string" || typeof card.network !== "string") return null;
+  const matches = (Array.isArray(records) ? records : []).filter((item) => {
+    if (!item || !item.card || item.id === exceptId) return false;
+    return item.card.mint === card.mint && item.card.network === card.network;
+  });
+  matches.sort((a, b) => (a.card.consultedAt < b.card.consultedAt ? 1 : -1));
+  return matches[0] ?? null;
 }
 
 export function staleLine(consultedAt, lang) {

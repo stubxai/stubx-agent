@@ -70,6 +70,7 @@ export type LiveReading = {
   missing?: Localized;
   missingState?: "ok" | "falta";
   identity?: Localized | null;
+  report?: Localized;
 };
 
 export type ReadMintInput = {
@@ -697,6 +698,18 @@ async function readWith(
       ? `Project identity: this address (${mint}) is the official STUBX CA.`
       : `Project identity, separate from this analysis: the official STUBX CA is ${OFFICIAL_CA}.`,
   );
+  const checkedEs = facts.filter((item) => item.state === "ok").map((item) => item.label.es);
+  const checkedEn = facts.filter((item) => item.state === "ok").map((item) => item.label.en);
+  const attentionEs = signals
+    .filter((item) => item.level === "atencion" || item.level === "riesgo")
+    .map((item) => item.title.es);
+  const attentionEn = signals
+    .filter((item) => item.level === "atencion" || item.level === "riesgo")
+    .map((item) => item.title.en);
+  const report = loc(
+    `Qué se comprobó: ${checkedEs.length ? checkedEs.join(", ") : "ningún dato con valor leído"}. Qué pide atención: ${attentionEs.length ? attentionEs.join(", ") : "ninguna señal de atención"}. Qué falta: ${missing.es}`,
+    `What was checked: ${checkedEn.length ? checkedEn.join(", ") : "no fact with a read value"}. What needs attention: ${attentionEn.length ? attentionEn.join(", ") : "no attention signal"}. What is missing: ${missing.en}`,
+  );
   return {
     ok: true,
     kind: "lectura",
@@ -727,6 +740,7 @@ async function readWith(
     missing,
     missingState: missingItems.length ? "falta" : "ok",
     identity,
+    report,
   };
 }
 

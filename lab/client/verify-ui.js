@@ -66,6 +66,15 @@ function paintVerify(out, view) {
     note.textContent = view.partialNote[lang];
     out.append(note);
   }
+  if (view.report) {
+    var report = verifyEl("section", { class: "resumen-informe" });
+    var reportTitle = verifyEl("h3");
+    reportTitle.textContent = lang === "en" ? "Summary of this reading" : "Resumen de esta lectura";
+    var reportBody = verifyEl("p");
+    reportBody.textContent = view.report[lang];
+    report.append(reportTitle, reportBody);
+    out.append(report);
+  }
   if (view.missing) {
     var missing = verifyEl("p", { class: "resumen-datos", "data-estado": view.missingState || "falta" });
     missing.textContent = view.missing[lang];
@@ -98,6 +107,28 @@ function paintVerify(out, view) {
     var audit = verifyEl("p", { class: "aviso-fijo" });
     audit.textContent = AUDIT_NOTICE[lang];
     out.append(audit);
+  }
+  if (view.mint && view.kind === "lectura") {
+    var actions = verifyEl("div", { class: "acciones-consulta" });
+    var guide = "/aprender/#guia-identificar";
+    var signalIds = (view.signals || []).map(function (signal) { return signal.id; });
+    if (signalIds.indexOf("emision") >= 0 || signalIds.indexOf("congelacion") >= 0) guide = "/aprender/#guia-permisos";
+    else if (signalIds.indexOf("curva") >= 0) guide = "/aprender/#guia-liquidez";
+    function actionButton(id, es, en) {
+      var button = verifyEl("button", { type: "button", id: id, "data-mint": view.mint });
+      button.textContent = lang === "en" ? en : es;
+      return button;
+    }
+    var understand = verifyEl("a", { id: "entender-resultado", href: guide, "data-guia": guide });
+    understand.textContent = lang === "en" ? "Understand this result" : "Entender este resultado";
+    actions.append(
+      actionButton("guardar-consulta", "Guardar esta consulta", "Save this query"),
+      actionButton("comparar-anterior", "Comparar con la anterior", "Compare with the previous one"),
+      actionButton("ver-cambio", "Ver qué cambió", "See what changed"),
+      understand,
+    );
+    var compareOut = verifyEl("div", { id: "comparacion-verify" });
+    out.append(actions, compareOut);
   }
   if (view.rows && view.rows.length > 0) {
     var details = verifyEl("details", { class: "tecnico" });

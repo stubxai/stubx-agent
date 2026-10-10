@@ -39,6 +39,8 @@ interface Card {
   supplyAccount: string | null;
   program?: string;
   mint: string;
+  decimals?: number | null;
+  network?: string;
   mintAuthority?: { state: string; status: string };
   freezeAuthority?: { state: string; status: string };
 }
@@ -52,7 +54,8 @@ interface ModelModule {
   visibleText: (value: string) => string;
   withNote: (record: { id: string; card: Card }, note: string) => { ok: boolean; record?: { note: string } };
   toExport: (records: unknown[], exportedAt: string) => string;
-  compareRecords: (left: { card: Card }, right: { card: Card }) => { ok: boolean; rows?: Array<{ field: { es: string }; same: boolean }> };
+  compareRecords: (left: { card: Card }, right: { card: Card }) => { ok: boolean; rows?: Array<{ field: { es: string }; same: boolean; verdict?: string }> };
+  pickPrevious: (records: Array<{ id: string; card: Card }>, card: Card, exceptId: string) => { id: string } | null;
   staleLine: (consultedAt: string, lang: string) => string;
 }
 
@@ -395,9 +398,46 @@ describe("lector y cuaderno", () => {
     const right = { id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", note: "segunda", card: rightCard };
     const same = model.compareRecords(left, right);
     assert.equal(same.ok, true);
-    assert.equal(same.rows?.some((row) => row.field.es === "Suministro en la cuenta" && row.same === false), true);
+    const supply = same.rows?.find((row) => row.field.es === "Suministro en la cuenta");
+    assert.equal(supply?.same, false);
+    assert.equal(supply?.verdict, "indeterminado");
+    const bothBlank = model.compareRecords(left, { ...right, card: read.blankCard(CA, "2026-10-09T13:00:00.000Z", []) });
+    const blankSupply = bothBlank.rows?.find((row) => row.field.es === "Suministro en la cuenta");
+    assert.equal(blankSupply?.verdict, "indeterminado");
+    assert.equal(blankSupply?.same, false);
+    const older = read.blankCard(CA, WHEN, []);
+    const newer = read.blankCard(CA, "2026-10-09T13:00:00.000Z", []);
+    older.supplyAccount = "1000000";
+    newer.supplyAccount = "2000000";
+    older.decimals = 6;
+    newer.decimals = 6;
+    const moved = model.compareRecords({ ...left, card: older }, { ...right, card: newer });
+    const movedSupply = moved.rows?.find((row) => row.field.es === "Suministro en la cuenta");
+    assert.equal(movedSupply?.verdict, "cambio");
+    const previous = model.pickPrevious(
+      [
+        { id: "1", card: older },
+        { id: "2", card: { ...newer, mint: OTHER, network: "solana" } },
+      ],
+      newer,
+      "3",
+    );
+    assert.equal(previous?.id, "1");
+    assert.equal(model.pickPrevious([{ id: "1", card: { ...older, network: "otra" } }], newer, "3"), null);
     const other = model.compareRecords(left, { ...right, card: read.blankCard(OTHER, WHEN, []) });
     assert.equal(other.ok, false);
+    const amount = (await import(pathToFileURL(path.join(repoRoot(), "web/v2/shared/amount.js")).href)) as {
+      formatAmount: (raw: string, decimals: number, lang: string) => string | null;
+    };
+    assert.equal(amount.formatAmount("1000000000000000", 6, "es"), "1.000.000.000 tokens");
+    assert.equal(amount.formatAmount("1000000000000000", 6, "en"), "1,000,000,000 tokens");
+    assert.equal(amount.formatAmount("1000000", 6, "es"), "1 tokens");
+    assert.equal(amount.formatAmount(null as unknown as string, 6, "es"), null);
+    const actions = readFileSync(path.join(repoRoot(), "web/v2/assets/verificar-acciones.mjs"), "utf8");
+    assert.equal(actions.includes("localStorage"), false);
+    assert.equal(actions.includes("sessionStorage"), false);
+    assert.equal(actions.includes("searchParams"), false);
+    assert.match(actions, /stubx-cuaderno/);
     assert.match(model.staleLine(WHEN, "es"), /puede haber cambiado/);
     assert.match(model.staleLine(WHEN, "en"), /this may have changed/);
     assert.equal(model.staleLine(WHEN, "es").includes("actual"), false);

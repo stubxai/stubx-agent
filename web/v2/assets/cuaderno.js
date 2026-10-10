@@ -1,6 +1,7 @@
 /**
  * Cuaderno local. Solo lectura, sin cartera y sin ejecutar el JSON importado.
  */
+import { formatAmount } from "../shared/amount.js";
 import { factLine, factState, missingFacts } from "../shared/fact-state.js";
 import {
   PUBLICNODE_RPC,
@@ -82,11 +83,18 @@ const COPY = {
     token2022: "Token-2022",
     notMint: "No es una cuenta de mint",
     unknownProgram: "no disponible",
-    compareTitle: "Comparación",
+    compareTitle: "Comparar consultas",
     left: "Consulta A",
     right: "Consulta B",
     changed: "cambió",
     same: "igual",
+    unknownChange: "no se puede determinar si cambió",
+    changesTitle: "Qué cambió",
+    unknownTitle: "Lo que no se puede determinar",
+    unchangedTitle: "Lo que sigue igual",
+    noChange: "No hay un cambio en los datos leídos en las dos consultas.",
+    rawAccount: "Valor en bruto del suministro en la cuenta",
+    rawRpc: "Valor en bruto del suministro leído aparte",
     format: "La versión de la ficha no es la misma. Se comparan solo los campos que existen en las dos.",
   },
   en: {
@@ -144,11 +152,18 @@ const COPY = {
     token2022: "Token-2022",
     notMint: "Not a mint account",
     unknownProgram: "unavailable",
-    compareTitle: "Comparison",
+    compareTitle: "Compare queries",
     left: "Query A",
     right: "Query B",
     changed: "changed",
     same: "same",
+    unknownChange: "it cannot be determined whether it changed",
+    changesTitle: "What changed",
+    unknownTitle: "What cannot be determined",
+    unchangedTitle: "What stayed the same",
+    noChange: "There is no change in the facts read on both queries.",
+    rawAccount: "Raw supply on the account",
+    rawRpc: "Raw supply read separately",
     format: "The card version is not the same. Only fields that exist on both are compared.",
   },
 };
@@ -302,6 +317,11 @@ function plain(status, value) {
   return factLine(status, value, lang());
 }
 
+function amountText(raw, decimals, status) {
+  if (factState(status, raw) !== "ok") return plain(status, raw);
+  return formatAmount(raw, decimals, lang()) || plain(status, raw);
+}
+
 function dataRow(list, label, status, value) {
   const term = text("dt", label);
   const detail = text("dd", plain(status, value));
@@ -333,8 +353,8 @@ function renderCard(card) {
     : authorityLabel(card.freezeAuthority);
   facts.push(dataRow(list, t("mintAuth"), card.mintAuthority.status, mintAuth));
   facts.push(dataRow(list, t("freezeAuth"), card.freezeAuthority.status, freezeAuth));
-  facts.push(dataRow(list, t("supplyAccount"), supplyStatus, card.supplyAccount));
-  facts.push(dataRow(list, t("supplyRpc"), card.supplyRpcStatus, card.supplyRpc));
+  facts.push(dataRow(list, t("supplyAccount"), supplyStatus, amountText(card.supplyAccount, card.decimals, supplyStatus)));
+  facts.push(dataRow(list, t("supplyRpc"), card.supplyRpcStatus, amountText(card.supplyRpc, card.decimals, card.supplyRpcStatus)));
   facts.push(dataRow(list, t("decimals"), card.decimals === null ? "ausente" : "verificado", card.decimals));
   facts.push(dataRow(list, t("name"), card.name.status, card.name.text));
   facts.push(dataRow(list, t("symbol"), card.symbol.status, card.symbol.text));
@@ -358,8 +378,8 @@ function renderCard(card) {
   summaryTech.textContent = t("technical");
   const tech = el("dl");
   dataRow(tech, t("slot"), card.slotStatus, card.slot);
-  dataRow(tech, t("supplyAccount"), supplyStatus, card.supplyAccount);
-  dataRow(tech, t("supplyRpc"), card.supplyRpcStatus, card.supplyRpc);
+  dataRow(tech, t("rawAccount"), supplyStatus, card.supplyAccount);
+  dataRow(tech, t("rawRpc"), card.supplyRpcStatus, card.supplyRpc);
   if (card.errors.length) {
     const errors = el("ul");
     for (const item of card.errors) {
@@ -535,16 +555,45 @@ function renderComparison() {
   out.append(text("p", staleLine(left.card.consultedAt, lang()), { class: "sello" }));
   out.append(text("p", staleLine(right.card.consultedAt, lang()), { class: "sello" }));
   if (compared.formatChanged) out.append(text("p", t("format")));
-  const grid = el("div", { class: "comparacion" });
-  for (const rowItem of compared.rows) {
-    const article = el("article", { class: "ficha" });
-    article.append(text("h3", rowItem.field[lang()]));
-    article.append(text("p", `${t("left")}: ${rowItem.left ?? t("none")}`));
-    article.append(text("p", `${t("right")}: ${rowItem.right ?? t("none")}`));
-    article.append(text("p", rowItem.same ? t("same") : t("changed"), { class: rowItem.same ? "muted" : "nota" }));
-    grid.append(article);
+  const shownSide = (rowItem, side, card) => {
+    const raw = side === "left" ? rowItem.left : rowItem.right;
+    if (rowItem.amount && raw !== null) {
+      const formatted = formatAmount(raw, card.decimals, lang());
+      if (formatted) return formatted;
+    }
+    if (raw === "true") return t("yes");
+    if (raw === "false") return t("no");
+    return raw ?? t("none");
+  };
+  const gridFor = (rows, verdict) => {
+    const grid = el("div", { class: "comparacion" });
+    const word = verdict === "igual" ? t("same") : verdict === "cambio" ? t("changed") : t("unknownChange");
+    for (const rowItem of rows) {
+      const article = el("article", { class: "ficha", "data-veredicto": verdict });
+      article.append(text("h3", rowItem.field[lang()]));
+      article.append(text("p", `${t("left")}: ${shownSide(rowItem, "left", left.card)}`));
+      article.append(text("p", `${t("right")}: ${shownSide(rowItem, "right", right.card)}`));
+      article.append(text("p", word, { class: verdict === "cambio" ? "nota" : "muted" }));
+      grid.append(article);
+    }
+    return grid;
+  };
+  if (!compared.changes.length) out.append(text("p", t("noChange")));
+  else out.append(text("h3", t("changesTitle")), gridFor(compared.changes, "cambio"));
+  if (compared.unknown.length) {
+    const unknown = el("details", { class: "aviso-mas grupo-desconocido" });
+    const summary = el("summary");
+    summary.textContent = t("unknownTitle");
+    unknown.append(summary, gridFor(compared.unknown, "indeterminado"));
+    out.append(unknown);
   }
-  out.append(grid);
+  if (compared.unchanged.length) {
+    const sameBox = el("details", { class: "aviso-mas" });
+    const summary = el("summary");
+    summary.textContent = t("unchangedTitle");
+    sameBox.append(summary, gridFor(compared.unchanged, "igual"));
+    out.append(sameBox);
+  }
   if (compared.notes.left || compared.notes.right) {
     const notes = el("div", { class: "nota-personal" });
     notes.append(text("p", `${t("left")}: ${compared.notes.left}`));

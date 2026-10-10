@@ -140,7 +140,7 @@ PRIMARY = [
     ("tablero", "tablero/index.html", "Tablero", "Board"),
     ("studio", "studio/index.html", "Studio", "Studio"),
     ("pares", "pares/index.html", "Curva", "Curve"),
-    ("comparar", "comparar/index.html", "Comparar", "Compare"),
+    ("comparar", "comparar/index.html", "Ejemplo de curva", "Curve example"),
     ("contribuir", "contribuir/index.html", "Contribuir", "Contribute"),
 ]
 MORE = [
@@ -158,7 +158,7 @@ MORE = [
     ("avances", "avances/index.html", "Avances", "Progress"),
     ("studio", "studio/index.html", "Studio", "Studio"),
     ("pares", "pares/index.html", "Curva", "Curve"),
-    ("comparar", "comparar/index.html", "Comparar", "Compare"),
+    ("comparar", "comparar/index.html", "Ejemplo de curva", "Curve example"),
     ("cuaderno", "cuaderno/index.html", "Cuaderno", "Notebook"),
     ("contribuir", "contribuir/index.html", "Contribuir", "Contribute"),
 ]
@@ -396,7 +396,7 @@ def home() -> str:
 <article class="card"><p class="estado-pill">{t("Lectura · 2026-10-10", "Reading · 2026-10-10")}</p><h3>{t("Curva", "Curve")}</h3><p>{t("Pega cualquier dirección de Solana. La página dice la moneda base y el estado de la curva, tal como están en la cadena. Exporta una instantánea. Escribir una dirección no avala ese token.", "Paste any Solana address. The page states the base currency and the curve state, as they are on chain. It exports a snapshot. Writing an address does not endorse that token.")}</p><p><a href="/pares/">{t("Abrir la curva", "Open the curve")}</a></p></article>
 </div>
 <div class="grid-3 tool-grid">
-<article class="card"><p class="estado-pill">{t("Ejemplo · 2026-10-10", "Example · 2026-10-10")}</p><h3>{t("Comparar", "Compare")}</h3><p>{t("Ejemplo educativo fijo de cómo se lee una curva. No usa una dirección. Legal ya lo revisó. Cualquier versión con datos reales necesitará una revisión nueva.", "Fixed educational example of how a curve is read. It does not use an address. Legal has already reviewed it. Any version with real data will need a new review.")}</p><p><a href="/comparar/">{t("Ver el ejemplo", "See the example")}</a></p></article>
+<article class="card"><p class="estado-pill">{t("Ejemplo · 2026-10-10", "Example · 2026-10-10")}</p><h3>{t("Ejemplo de curva", "Curve example")}</h3><p>{t("Ejemplo educativo fijo de cómo se lee una curva. No usa una dirección. Legal ya lo revisó. Cualquier versión con datos reales necesitará una revisión nueva.", "Fixed educational example of how a curve is read. It does not use an address. Legal has already reviewed it. Any version with real data will need a new review.")}</p><p><a href="/comparar/">{t("Ver el ejemplo", "See the example")}</a></p></article>
 </div>
 <section id="transparencia">
 <h2>{t("Transparencia", "Transparency")}</h2>
@@ -1523,7 +1523,7 @@ def main() -> None:
     shutil.copyfile(current / "app.js", ROOT / "app.js")
 
     write_page("index.html", "home", "STUBX · Contrasta la dirección", "STUBX · Check the address", "Vista previa de STUBX. Lee un token en directo y solo en lectura. No es consejo de inversión.", "STUBX preview. Read a token live and read-only. Not investment advice.", home())
-    write_page("verify/index.html", "verify", "STUBX Verify", "STUBX Verify", "Lee cualquier token SPL o Token-2022 en directo y solo en lectura. Las fichas fechadas siguen como ejemplo.", "Read any SPL or Token-2022 token live and read-only. The dated cards remain as examples.", prepare_tool("verify"), ["assets/draft-address.js", "assets/verify.js"], True, connect=connect_src(True))
+    write_page("verify/index.html", "verify", "STUBX Verify", "STUBX Verify", "Lee cualquier token SPL o Token-2022 en directo y solo en lectura. Las fichas fechadas siguen como ejemplo.", "Read any SPL or Token-2022 token live and read-only. The dated cards remain as examples.", prepare_tool("verify"), ["assets/draft-address.js", "assets/verify.js"], True, connect=connect_src(True), modules=["assets/verificar-acciones.mjs"])
     write_page("comparar/index.html", "comparar", "STUBX · Ejemplo de una curva", "STUBX · Curve example", "Ejemplo hipotético, no leído de la cadena. No es una recomendación ni un aval.", "Hypothetical example, not read from the chain. It is not a recommendation or an endorsement.", comparar(), narrow=True)
     write_page("pares/index.html", "pares", "STUBX · Lectura de la curva", "STUBX · Curve reading", "Moneda base y estado de la curva, tal como están en la cadena. No es una auditoría ni una recomendación.", "Base currency and curve state, as they are on chain. It is not an audit or a recommendation.", pares(), narrow=True, connect=connect_src(True), modules=["assets/pares.mjs"])
     write_page("lab/index.html", "lab", "STUBX Lab", "STUBX Lab", "Misión para distinguir el mint del registro de un clon.", "A mission to tell the registry mint from a clone.", prepare_tool("lab"), ["assets/mission.js"], True, True)

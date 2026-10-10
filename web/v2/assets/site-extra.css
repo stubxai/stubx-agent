@@ -1221,3 +1221,15 @@ dd[data-estado="fallo"], dd[data-estado="ausente"], dd[data-estado="no_consultad
   .acciones-consulta { display: grid; }
   .acciones-consulta a, .acciones-consulta button { width: 100%; }
 }
+.resumen-informe {
+  margin: 0.75rem 0 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-elev);
+  color: var(--cream);
+}
+.resumen-informe h3 { margin: 0 0 0.35rem; font-family: var(--font); }
+.ficha[data-veredicto="cambio"] { border-left-color: var(--attention); }
+.ficha[data-veredicto="indeterminado"] { border-left-color: var(--line); }
+.grupo-desconocido { margin-top: 0.8rem; }

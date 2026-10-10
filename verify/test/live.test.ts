@@ -207,6 +207,9 @@ describe("lectura universal con RPC simulado", () => {
     assert.match(reading.rows.map((row) => row.value.es).join(" "), /slot 1/);
     assert.equal(reading.canSample, false);
     assert.match(reading.missing?.es ?? "", /ausente comprobado|No falta/);
+    assert.match(reading.report?.es ?? "", /Qué se comprobó/);
+    assert.match(reading.report?.es ?? "", /Qué pide atención/);
+    assert.match(reading.report?.es ?? "", /Qué falta/);
     assert.equal((reading.identity?.es ?? "").includes(mint), true);
   });
 
