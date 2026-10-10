@@ -870,10 +870,10 @@ function authoritySignal(
       ),
       explain: loc(
         minting
-          ? `La autoridad de emisión sigue asignada a ${authority.address ?? "una dirección"}. Puede aumentar el suministro.`
+          ? `La autoridad de emisión sigue asignada a ${authority.address ?? "una dirección"}. Puede aumentar el suministro. En una moneda estable eso es habitual: quien la emite añade unidades cuando entra dinero. Si un proyecto prometió un suministro fijo, el mismo permiso permite crear más. Esta lectura no dice cuál de los dos casos es.`
           : `La autoridad de congelación sigue asignada a ${authority.address ?? "una dirección"}. Puede impedir que una cuenta mueva sus tokens.`,
         minting
-          ? `The mint authority is still assigned to ${authority.address ?? "an address"}. It can increase the supply.`
+          ? `The mint authority is still assigned to ${authority.address ?? "an address"}. It can increase the supply. On a stablecoin that is common: the issuer adds units when money comes in. If a project promised a fixed supply, the same permission can create more. This reading does not say which of the two cases this is.`
           : `The freeze authority is still assigned to ${authority.address ?? "an address"}. It can stop an account from moving its tokens.`,
       ),
     };
