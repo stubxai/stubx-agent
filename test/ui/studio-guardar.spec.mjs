@@ -53,9 +53,7 @@ test("guardar: la descarga trae el avatar y el aviso sale en iPhone sin comparti
     if (!shareable) {
       await expect(page.locator("#aviso-guardar")).toBeVisible();
       await expect(page.locator("#aviso-guardar")).toContainText(/Guardar en Fotos|Save to Photos/);
-      const tab = await popup;
-      expect(tab).not.toBeNull();
-      expect(tab.url()).toMatch(/^blob:/);
+      await popup;
     }
   } else {
     const [download] = await Promise.all([page.waitForEvent("download"), page.click("#descargar")]);
@@ -102,4 +100,78 @@ test("guardar: en iPhone con share, Descargar abre la hoja de compartir", async 
   await page.click("#descargar");
   await expect.poll(() => page.evaluate(() => window.__shared || 0)).toBe(1);
   await expect(page.locator("#aviso-guardar")).toBeHidden();
+});
+
+// El archivo que se comparte o se abre es el PNG final (lienzo completo con banda,
+// marca de agua y pie, y el comentario PNG), no una vista previa reducida.
+async function expectFinalPng(page, bytes) {
+  expect(bytes.subarray(1, 4).toString()).toBe("PNG");
+  expect(bytes.includes(Buffer.from("Community content, unofficial. Not from @stubxai."))).toBe(true);
+  const img = await decodePng(new Uint8Array(bytes));
+  const canvas = await page.evaluate(() => {
+    const c = document.getElementById("vista");
+    const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data;
+    return { width: c.width, height: c.height, rgba: Array.from(d) };
+  });
+  expect([img.width, img.height]).toEqual([canvas.width, canvas.height]);
+  expect(img.width).toBeGreaterThanOrEqual(1080);
+  let diff = 0;
+  for (let i = 0; i < img.rgba.length; i++) if (Math.abs(img.rgba[i] - canvas.rgba[i]) > 2) diff++;
+  expect(diff / img.rgba.length).toBeLessThan(0.001);
+  // Banda superior y pie: filas con texto (no un color plano).
+  const rowVaries = (y) => {
+    const set = new Set();
+    for (let x = 0; x < img.width; x++) set.add(img.rgba[(y * img.width + x) * 4]);
+    return set.size >= 2; // la fuente pixel usa dos colores por fila
+  };
+  const bandRows = Array.from({ length: Math.floor(img.height * 0.06) }, (_, y) => y).filter(rowVaries).length;
+  const footRows = Array.from({ length: Math.floor(img.height * 0.08) }, (_, k) => img.height - 1 - k).filter(rowVaries).length;
+  expect(bandRows).toBeGreaterThan(3);
+  expect(footRows).toBeGreaterThan(3);
+}
+
+test("guardar: lo que se comparte es el PNG final", async ({ page }) => {
+  await page.addInitScript(() => {
+    navigator.canShare = (data) => Boolean(data && data.files && data.files.length);
+    navigator.share = async (data) => {
+      const buf = new Uint8Array(await data.files[0].arrayBuffer());
+      let s = ""; for (const b of buf) s += String.fromCharCode(b);
+      window.__sharedPng = btoa(s);
+      window.__sharedName = data.files[0].name;
+    };
+  });
+  await ready(page);
+  await page.click("#compartir");
+  await expect.poll(() => page.evaluate(() => Boolean(window.__sharedPng))).toBe(true);
+  expect(await page.evaluate(() => window.__sharedName)).toBe("studio.png");
+  await expectFinalPng(page, Buffer.from(await page.evaluate(() => window.__sharedPng), "base64"));
+});
+
+test("guardar: lo que se abre en la pestaña (noopener) es el PNG final", async ({ page }) => {
+  await page.addInitScript(() => {
+    const create = URL.createObjectURL.bind(URL);
+    window.__blobs = new Map();
+    URL.createObjectURL = (blob) => { const url = create(blob); window.__blobs.set(url, blob); return url; };
+    window.open = (url, target, features) => {
+      window.__opened = { url: String(url), target, features };
+      return null;
+    };
+  });
+  await ready(page);
+  const ios = await page.evaluate(() => /iPhone/.test(navigator.userAgent) && typeof navigator.canShare !== "function");
+  test.skip(!ios, "solo iPhone sin share");
+  await page.click("#descargar");
+  await expect.poll(() => page.evaluate(() => Boolean(window.__opened))).toBe(true);
+  const opened = await page.evaluate(() => window.__opened);
+  expect(opened.url).toMatch(/^blob:/);
+  expect(opened.target).toBe("_blank");
+  expect(opened.features).toBe("noopener");
+  await expect(page.locator("#aviso-guardar")).toBeVisible();
+  const b64 = await page.evaluate(async (url) => {
+    // La CSP no deja fetch a blob:; se lee el mismo Blob que recibió window.open.
+    const buf = new Uint8Array(await window.__blobs.get(url).arrayBuffer());
+    let s = ""; for (const b of buf) s += String.fromCharCode(b);
+    return btoa(s);
+  }, opened.url);
+  await expectFinalPng(page, Buffer.from(b64, "base64"));
 });

@@ -1661,5 +1661,7 @@ describe("Studio: guardar en iPhone", () => {
     assert.match(html, /id="compartir" hidden/);
     const js = readStudio("studio.js");
     assert.doesNotMatch(js, /revokeObjectURL\(url\), 1000\)/);
+    assert.match(js, /window\.open\(url, "_blank", "noopener"\)/);
+    assert.doesNotMatch(js, /= window\.open\(/);
   });
 });

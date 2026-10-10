@@ -241,10 +241,10 @@ function showSaveNotice() {
 
 function openImage(blob) {
   const url = URL.createObjectURL(blob);
-  const tab = window.open(url, "_blank");
+  // Con noopener window.open devuelve null; no se usa para decidir nada.
+  window.open(url, "_blank", "noopener");
   showSaveNotice();
   setTimeout(() => URL.revokeObjectURL(url), REVOKE_MS);
-  return Boolean(tab);
 }
 
 function downloadFile(blob) {
