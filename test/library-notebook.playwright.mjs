@@ -1,11 +1,11 @@
 /**
- * Biblioteca y cuaderno en 360 y 1280. El RPC se simula: no sale a la red.
+ * Biblioteca y cuaderno en Pixel 7, iPhone 14 y escritorio. El RPC se simula: no sale a la red.
  */
 import { createServer } from "node:http";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { chromium } from "playwright";
+import { chromium, devices } from "playwright";
 import { METADATA_PROGRAM, PUMP_PROGRAM, TOKEN_PROGRAM } from "../web/v2/shared/solana-read.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../web/v2");
@@ -174,62 +174,78 @@ async function mockRpc(page, counter) {
   });
 }
 
-function pageFor(width) {
-  return browser.newPage({
-    viewport: { width, height: width < 700 ? 740 : 900 },
-    hasTouch: width < 700,
-    isMobile: width < 700,
-  });
+function contextFor(device) {
+  const { defaultBrowserType, ...options } = device;
+  return browser.newContext(options);
 }
 
+const profiles = [
+  { id: "pixel7", device: devices["Pixel 7"] },
+  { id: "iphone14", device: devices["iPhone 14"] },
+  {
+    id: "escritorio",
+    device: {
+      viewport: { width: 1280, height: 900 },
+      deviceScaleFactor: 1,
+      isMobile: false,
+      hasTouch: false,
+    },
+  },
+];
+
 try {
-  const mobileLearn = await pageFor(360);
-  await mobileLearn.goto(`${base}/aprender/`, { waitUntil: "networkidle" });
-  await mobileLearn.getByRole("link", { name: "Identificar un token" }).click();
-  await mobileLearn.waitForFunction(() => location.hash === "#guia-identificar");
-  await shot(mobileLearn, "biblioteca-movil.png");
-  await mobileLearn.close();
+  for (const profile of profiles) {
+    const context = await contextFor(profile.device);
+    const learn = await context.newPage();
+    await learn.goto(`${base}/aprender/`, { waitUntil: "networkidle" });
+    await learn.getByRole("link", { name: "Identificar un token" }).click();
+    await learn.waitForFunction(() => location.hash === "#guia-identificar");
+    await shot(learn, `biblioteca-${profile.id}.png`);
+    if (profile.id === "escritorio") {
+      await learn.getByRole("button", { name: "English" }).click();
+      await learn.waitForFunction(() => document.documentElement.lang === "en");
+      const englishGuide = await learn.locator("#guia-identificar").innerText();
+      if (!englishGuide.includes("Identify a token")) failures.push("la guía en inglés no se muestra");
+      if (englishGuide.includes("USDC")) failures.push("la biblioteca nombra USDC");
+      await shot(learn, "biblioteca-escritorio-en.png");
+    }
+    await context.close();
 
-  const desktopLearn = await pageFor(1280);
-  await desktopLearn.goto(`${base}/aprender/`, { waitUntil: "networkidle" });
-  await desktopLearn.getByRole("button", { name: "English" }).click();
-  await desktopLearn.waitForFunction(() => document.documentElement.lang === "en");
-  const englishGuide = await desktopLearn.locator("#guia-identificar").innerText();
-  if (!englishGuide.includes("Identify a token")) failures.push("la guía en inglés no se muestra");
-  if (englishGuide.includes("USDC")) failures.push("la biblioteca nombra USDC");
-  await shot(desktopLearn, "biblioteca-escritorio-en.png");
-  await desktopLearn.close();
-
-  const narrow = await pageFor(360);
-  const narrowNet = { count: 0, external: 0 };
-  await mockRpc(narrow, narrowNet);
-  await narrow.goto(`${base}/cuaderno/`, { waitUntil: "networkidle" });
-  await narrow.locator("#direccion-cuaderno").fill("no-vale");
-  await narrow.locator("#consultar").click();
-  await narrow.waitForFunction(() => (document.getElementById("consulta-error")?.textContent || "").includes("no es válida"));
-  if (narrowNet.count !== 0) failures.push(`la dirección inválida llamó a la red ${narrowNet.count} veces`);
-  if (narrowNet.external !== 0) failures.push("hubo una petición a otro origen");
-  await shot(narrow, "cuaderno-movil-error.png");
-  await narrow.locator("#direccion-cuaderno").fill(official);
-  await narrow.locator("#consultar").click();
-  await narrow.waitForFunction(() => (document.getElementById("resultado")?.textContent || "").includes("puede haber cambiado"), null, { timeout: 15000 });
-  const narrowText = await narrow.locator("#resultado").innerText();
-  if (!narrowText.includes("Es la dirección oficial de STUBX")) failures.push("no marca la dirección oficial");
-  if (narrowText.includes("evil.example") && (await narrow.locator("#resultado a").count()) > 0) {
-    failures.push("la URI de metadatos se volvió un enlace");
+    const notebookContext = await contextFor(profile.device);
+    const page = await notebookContext.newPage();
+    const net = { count: 0, external: 0 };
+    await mockRpc(page, net);
+    await page.goto(`${base}/cuaderno/`, { waitUntil: "networkidle" });
+    await page.locator("#direccion-cuaderno").fill("no-vale");
+    await page.locator("#consultar").click();
+    await page.waitForFunction(() => (document.getElementById("consulta-error")?.textContent || "").includes("no es válida"));
+    if (net.count !== 0) failures.push(`${profile.id}: la dirección inválida llamó a la red ${net.count} veces`);
+    if (net.external !== 0) failures.push(`${profile.id}: hubo una petición a otro origen`);
+    await shot(page, `cuaderno-${profile.id}-error.png`);
+    await page.locator("#direccion-cuaderno").fill(official);
+    await page.locator("#consultar").click();
+    await page.waitForFunction(() => (document.getElementById("resultado")?.textContent || "").includes("puede haber cambiado"), null, { timeout: 15000 });
+    const text = await page.locator("#resultado").innerText();
+    if (!text.includes("Es la dirección oficial de STUBX")) failures.push(`${profile.id}: no marca la dirección oficial`);
+    if (text.includes("evil.example") && (await page.locator("#resultado a").count()) > 0) {
+      failures.push(`${profile.id}: la URI de metadatos se volvió un enlace`);
+    }
+    await shot(page, `cuaderno-${profile.id}-resultado.png`);
+    if (profile.device.isMobile) {
+      const covered = await page.evaluate(() => {
+        const title = document.querySelector("#resultado .sello");
+        const box = title?.getBoundingClientRect();
+        if (!box) return true;
+        const form = document.querySelector("form.consulta")?.getBoundingClientRect();
+        return Boolean(form && box.bottom > form.top && box.top < form.bottom);
+      });
+      if (covered) failures.push(`${profile.id}: el resultado del cuaderno queda tapado`);
+    }
+    await notebookContext.close();
   }
-  await shot(narrow, "cuaderno-movil-resultado.png");
-  const covered = await narrow.evaluate(() => {
-    const title = document.querySelector("#resultado .sello");
-    const box = title?.getBoundingClientRect();
-    if (!box) return true;
-    const form = document.querySelector("form.consulta")?.getBoundingClientRect();
-    return Boolean(form && box.bottom > form.top && box.top < form.bottom);
-  });
-  if (covered) failures.push("el resultado del cuaderno queda tapado en el móvil");
-  await narrow.close();
 
-  const wide = await pageFor(1280);
+  const desktop = await contextFor(profiles[2].device);
+  const wide = await desktop.newPage();
   const wideNet = { count: 0, external: 0 };
   await mockRpc(wide, wideNet);
   await wide.goto(`${base}/cuaderno/`, { waitUntil: "networkidle" });
@@ -288,7 +304,7 @@ try {
   if (wideNet.external !== 0) failures.push("el escritorio llamó a otro origen");
   await wide.close();
 
-  const verify = await pageFor(1280);
+  const verify = await desktop.newPage();
   await verify.goto(`${base}/verify/`, { waitUntil: "domcontentloaded" });
   await verify.locator("#direccion-token").fill(official);
   await verify.locator('a[href="/aprender/#direccion"]').click();
@@ -297,7 +313,7 @@ try {
   const kept = await verify.locator("#direccion-token").inputValue();
   if (kept !== official) failures.push(`Verify no conservó la dirección: ${kept}`);
   await shot(verify, "verify-direccion-conservada.png");
-  await verify.close();
+  await desktop.close();
 } catch (error) {
   failures.push(error instanceof Error ? error.stack || error.message : String(error));
 } finally {
