@@ -1,8 +1,8 @@
 # Changelog
 
-## [0.1.0] — 2026-10-09
+## [0.1.0] — 2026-10-10
 
-Lo que hay en este repositorio hasta el 2026-10-09. El paquete `@stubx/agents` sigue en `0.1.0`. El tag anotado `v0.1.0` está preparado y **no está creado**. Cómo crearlo a mano, y por qué esta entrega no lo hace: [docs/releases/v0.1.0/TAG.md](docs/releases/v0.1.0/TAG.md).
+Lo que hay en este repositorio hasta el 2026-10-10. El paquete `@stubx/agents` sigue en `0.1.0`. El tag anotado `v0.1.0` está preparado y **no está creado**. Cómo crearlo a mano, y por qué esta entrega no lo hace: [docs/releases/v0.1.0/TAG.md](docs/releases/v0.1.0/TAG.md).
 
 Notas de la versión: [español](docs/releases/v0.1.0/NOTAS.es.md) · [English](docs/releases/v0.1.0/NOTAS.en.md).
 

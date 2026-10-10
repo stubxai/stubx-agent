@@ -14,7 +14,8 @@ function read(rel: string): string {
 describe("v0.1.0 notes, without a tag", () => {
   test("the public changelog names Verify, Lab, web v2, and indexing", () => {
     const log = read("CHANGELOG.md");
-    assert.match(log, /## \[0\.1\.0\] — 2026-10-09/);
+    assert.match(log, /## \[0\.1\.0\] — 2026-10-10/);
+    assert.match(log, /Lo que hay en este repositorio hasta el 2026-10-10\./);
     assert.match(log, /### Verify/);
     assert.match(log, /### Lab/);
     assert.match(log, /### Web v2/);
@@ -45,6 +46,8 @@ describe("v0.1.0 notes, without a tag", () => {
       assert.match(text, /robots\.txt/);
       assert.match(text, /0\.1\.0/);
     }
+    assert.match(es, /Fecha de estas notas: 2026-10-10\./);
+    assert.match(en, /These notes are dated 2026-10-10\./);
     assert.match(es, /La web v2 se desplegó en stubxai.com el 2026-10-09, fuera de estas notas\. Estas notas no la despliegan ni la cambian\./);
     assert.match(en, /Web v2 was deployed to stubxai.com on 2026-10-09, outside these notes\. These notes do not deploy or change it\./);
     assert.match(es, /Este repositorio no inserta medición de visitas ni cookies\. Cloudflare Web Analytics debe estar apagado en el panel de la zona \(sin baliza en el HTML servido el 2026-10-10\)\./);
@@ -76,7 +79,7 @@ describe("v0.1.0 notes, without a tag", () => {
     const message = read("docs/releases/v0.1.0/tag-message.txt");
     const guide = read("docs/releases/v0.1.0/TAG.md");
     const helper = read("scripts/prepare-v0.1.0-tag.mjs");
-    assert.match(message, /STUBX 0\.1\.0/);
+    assert.match(message, /STUBX 0\.1\.0 \(2026-10-10\)/);
     assert.match(message, /You could lose everything/);
     assert.match(guide, /no creado/);
     assert.match(guide, /git tag -a v0\.1\.0 SHA/);

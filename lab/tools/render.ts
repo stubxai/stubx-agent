@@ -420,7 +420,7 @@ const PERSON_EN: Record<string, string> = {
 };
 
 const MILESTONE_EN: Record<string, string> = {
-  "[0.1.0] — 2026-10-09": "[0.1.0] — 2026-10-09",
+  "[0.1.0] — 2026-10-10": "[0.1.0] — 2026-10-10",
   "2026-09-26 · Esqueleto público (queda dentro de 0.1.0)":
     "2026-09-26 · Public skeleton (part of 0.1.0)",
   "2026-10-09 · Verify lee cualquier mint, solo lectura, sin publicar":
