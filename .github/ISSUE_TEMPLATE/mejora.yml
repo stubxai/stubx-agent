@@ -1,0 +1,61 @@
+name: Mejora
+description: Una explicación confusa, una traducción revisable o una prueba de accesibilidad.
+title: "[mejora] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        No se aceptan encargos de compra, de volumen ni de promoción.
+        No escribas semilla, clave privada, correo personal ni nombre real.
+        Purchase, volume, and promotion requests are out of scope.
+  - type: dropdown
+    id: tipo
+    attributes:
+      label: Tipo
+      options:
+        - Explicación confusa
+        - Traducción revisable
+        - Prueba de accesibilidad
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Versión
+      description: Número de package.json o fecha de la página.
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Qué no se entiende o qué falla
+    validations:
+      required: true
+  - type: textarea
+    id: propuesta
+    attributes:
+      label: Texto o cambio propuesto
+    validations:
+      required: true
+  - type: textarea
+    id: evidencia
+    attributes:
+      label: Evidencia
+      description: Dónde está el texto, o qué pasó en la prueba de teclado, texto grande o lector de pantalla.
+    validations:
+      required: false
+  - type: input
+    id: mint
+    attributes:
+      label: Dirección del token, si hace falta
+      description: Opcional. No avala el token.
+    validations:
+      required: false
+  - type: checkboxes
+    id: datos
+    attributes:
+      label: Datos
+      options:
+        - label: Este texto no incluye semilla, clave privada, correo personal ni nombre real.
+          required: true

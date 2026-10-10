@@ -1,0 +1,61 @@
+name: Informe de fallo
+description: Un error que se puede repetir en las herramientas de este repositorio.
+title: "[fallo] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Esta plantilla no pide cuenta de STUBX ni datos personales.
+        No escribas semilla, clave privada, correo personal ni nombre real.
+        Cualquier token de Solana puede ser el ejemplo. Escribir la dirección no avala el token.
+        Do not include a seed, a private key, a personal email, or a real name.
+  - type: input
+    id: version
+    attributes:
+      label: Versión
+      description: Número de package.json o fecha de la página.
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: textarea
+    id: pasos
+    attributes:
+      label: Pasos para repetirlo
+      description: Qué hiciste, en orden. Sin claves.
+    validations:
+      required: true
+  - type: textarea
+    id: esperado
+    attributes:
+      label: Resultado esperado
+    validations:
+      required: true
+  - type: textarea
+    id: observado
+    attributes:
+      label: Resultado observado
+    validations:
+      required: true
+  - type: textarea
+    id: evidencia
+    attributes:
+      label: Evidencia
+      description: Texto del error o qué se ve en pantalla.
+    validations:
+      required: true
+  - type: input
+    id: mint
+    attributes:
+      label: Dirección del token, si hace falta
+      description: Opcional. Solo para repetir el fallo. No dice que el token sea bueno, seguro o esté avalado.
+    validations:
+      required: false
+  - type: checkboxes
+    id: datos
+    attributes:
+      label: Datos
+      options:
+        - label: Este texto no incluye semilla, clave privada, correo personal ni nombre real.
+          required: true
+        - label: Si pido un agradecimiento público, basta el usuario de GitHub.
+          required: false
