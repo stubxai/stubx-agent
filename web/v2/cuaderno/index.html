@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
-<meta name="description" content="El cuaderno no está construido. / The notebook is not built.">
+<meta name="description" content="Cuaderno local de solo lectura para cualquier token de Solana. / Local read-only notebook for any Solana token.">
 <link rel="canonical" href="https://stubxai.com/cuaderno/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="STUBX">
@@ -12,7 +12,7 @@
 <meta property="og:locale:alternate" content="en_US">
 <meta property="og:url" content="https://stubxai.com/cuaderno/">
 <meta property="og:title" content="STUBX · Cuaderno / STUBX · Notebook">
-<meta property="og:description" content="El cuaderno no está construido. / The notebook is not built.">
+<meta property="og:description" content="Cuaderno local de solo lectura para cualquier token de Solana. / Local read-only notebook for any Solana token.">
 <meta property="og:image" content="https://stubxai.com/assets/og-stubx-2026-10b-1200x630.jpg">
 <meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1200">
@@ -21,10 +21,10 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:site" content="@stubxai">
 <meta name="twitter:title" content="STUBX · Cuaderno / STUBX · Notebook">
-<meta name="twitter:description" content="El cuaderno no está construido. / The notebook is not built.">
+<meta name="twitter:description" content="Cuaderno local de solo lectura para cualquier token de Solana. / Local read-only notebook for any Solana token.">
 <meta name="twitter:image" content="https://stubxai.com/assets/og-stubx-2026-10b-1200x630.jpg">
 <meta name="twitter:image:alt" content="STUBX: Agente Talón, mascota rosa con forma de ticket, sostiene un recibo junto a un globo terráqueo. Texto: «Un meme que pide pruebas. Qué es, qué funciona hoy y qué falta. CA oficial y pruebas en stubxai.com». Pie: «Cripto de alto riesgo · Puedes perderlo todo · No es consejo de inversión.» · Ilustración con elementos generados con IA. / STUBX: Agente Talón, a pink ticket-shaped mascot, holds a receipt next to a globe. Text: “A meme that asks for proof. What it is, what works today, and what is missing. Official CA and proofs at stubxai.com”. Footer: “High-risk crypto · You could lose everything · Not investment advice.” · Illustration with AI-generated elements.">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; manifest-src 'self'; media-src 'none'; frame-src 'none'; worker-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self' https://solana-rpc.publicnode.com https://api.mainnet-beta.solana.com; manifest-src 'self'; media-src 'none'; frame-src 'none'; worker-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <title data-title-es="STUBX · Cuaderno" data-title-en="STUBX · Notebook">STUBX · Cuaderno</title>
 <meta name="theme-color" content="#071422">
 <link rel="icon" href="../favicon.ico" sizes="any">
@@ -52,25 +52,72 @@
 </div></header>
 <main id="contenido" class="wrap">
 
-
-<article class="slot">
-<p class="estado-pill"><span class="lang es" lang="es">No construido · 2026-10-09</span><span class="lang en" lang="en">Not built · 2026-10-09</span></p>
 <h1><span class="lang es" lang="es">Cuaderno</span><span class="lang en" lang="en">Notebook</span></h1>
-<p><span class="lang es" lang="es">No hay lista de consultas, ni importar, ni exportar, ni borrar notas. U05 es una propuesta.</span><span class="lang en" lang="en">There is no query list, no import, no export, and no way to delete notes. U05 is a proposal.</span></p>
-<p><span class="lang es" lang="es">No hay botón de crear, guardar, exportar ni enviar. Cuando exista, usará esta navegación y estos estilos.</span><span class="lang en" lang="en">There is no create, save, export, or send button. When it exists, it will use this navigation and these styles.</span></p>
-<p><a href="/tablero/#tarea-U05"><span class="lang es" lang="es">Registro en el tablero</span><span class="lang en" lang="en">Record on the board</span></a></p>
-</article>
+<p class="lede"><span class="lang es" lang="es">Lee cualquier token de Solana y guarda la ficha en este navegador. No conecta una cartera, no firma y no envía.</span><span class="lang en" lang="en">Read any Solana token and save the card in this browser. It does not connect a wallet, it does not sign, and it does not send.</span></p>
+<p><span class="lang es" lang="es">Lo que escribes se guarda solo en este navegador. No escribas claves, frases semilla ni datos personales. Borrar lo elimina. Para leer la cadena, tu navegador consulta un servicio público de Solana (por defecto solana-rpc.publicnode.com, o el que elijas), que recibe la dirección consultada y tu IP.</span><span class="lang en" lang="en">What you write is stored only in this browser. Do not write keys, seed phrases, or personal data. Clear deletes it. To read the chain, your browser queries a public Solana service (by default solana-rpc.publicnode.com, or the one you choose), which receives the address and your IP.</span></p>
+<p class="sello"><span class="lang es" lang="es">No es una auditoría ni una recomendación. Muestra datos públicos de la cadena en el momento indicado; no dice si un token es bueno, seguro o una buena compra.</span><span class="lang en" lang="en">It is not an audit or a recommendation. It shows public chain data at the time stated; it does not say whether a token is good, safe, or a good purchase.</span></p>
+<p><span class="lang es" lang="es">Cada ficha guardada dice la hora y que puede haber cambiado. Una consulta nueva no convierte la anterior en la lectura actual.</span><span class="lang en" lang="en">Each saved card states the time and that this may have changed. A new query does not turn the earlier one into the current reading.</span></p>
+<noscript><p><span class="lang es" lang="es">Sin JavaScript no se puede consultar la red ni guardar fichas. La biblioteca sigue en Aprender.</span><span class="lang en" lang="en">Without JavaScript the network cannot be queried and cards cannot be saved. The library is still on Learn.</span></p></noscript>
+<p><a href="/aprender/"><span class="lang es" lang="es">Leer la biblioteca antes de consultar</span><span class="lang en" lang="en">Read the library before a query</span></a></p>
+
+<form id="consulta" class="consulta" action="#">
+<label for="direccion-cuaderno"><span class="lang es" lang="es">Dirección del token</span><span class="lang en" lang="en">Token address</span></label>
+<input id="direccion-cuaderno" name="direccion" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done">
+<button id="consultar" type="submit"><span class="lang es" lang="es">Consultar</span><span class="lang en" lang="en">Check</span></button>
+<p id="consulta-error" class="campo-error" role="status" hidden></p>
+</form>
+
+<details>
+<summary><span class="lang es" lang="es">Cambiar el lector público</span><span class="lang en" lang="en">Change the public reader</span></summary>
+<label for="rpc-url"><span class="lang es" lang="es">Lector público</span><span class="lang en" lang="en">Public reader</span></label>
+<select id="rpc-url" name="rpc">
+<option value="https://solana-rpc.publicnode.com" selected>solana-rpc.publicnode.com</option>
+<option value="https://api.mainnet-beta.solana.com">api.mainnet-beta.solana.com</option>
+</select>
+<p class="muted"><span class="lang es" lang="es">Solo hay dos lectores: api.mainnet-beta.solana.com y solana-rpc.publicnode.com. Si eliges otro lector, ese servicio recibe tus consultas y tu IP. STUBX no lo revisa.</span><span class="lang en" lang="en">There are only two readers: api.mainnet-beta.solana.com and solana-rpc.publicnode.com. If you choose another reader, that service receives your queries and your IP. STUBX does not review it.</span></p>
+</details>
+
+<section id="resultado" tabindex="-1" aria-live="polite"></section>
+
+<h2><span class="lang es" lang="es">Consultas guardadas</span><span class="lang en" lang="en">Saved queries</span></h2>
+<p><span class="lang es" lang="es">Este navegador guarda como máximo 200 fichas. Si llega al tope, borra alguna para guardar otra.</span><span class="lang en" lang="en">This browser stores at most 200 cards. When it is full, delete one to save another.</span></p>
+<div id="lista-consultas"></div>
+
+<h2><span class="lang es" lang="es">Comparar dos consultas de la misma dirección</span><span class="lang en" lang="en">Compare two queries of the same address</span></h2>
+<div class="comparacion">
+<p><label for="comparar-izquierda"><span class="lang es" lang="es">Consulta A</span><span class="lang en" lang="en">Query A</span></label>
+<select id="comparar-izquierda"></select></p>
+<p><label for="comparar-derecha"><span class="lang es" lang="es">Consulta B</span><span class="lang en" lang="en">Query B</span></label>
+<select id="comparar-derecha"></select></p>
+</div>
+<p><button id="comparar" type="button"><span class="lang es" lang="es">Comparar</span><span class="lang en" lang="en">Compare</span></button></p>
+<div id="comparacion"></div>
+
+<h2><span class="lang es" lang="es">Copia, importación y borrado</span><span class="lang en" lang="en">Copy, import, and delete</span></h2>
+<div class="cuaderno-acciones">
+<button id="exportar" type="button"><span class="lang es" lang="es">Exportar JSON</span><span class="lang en" lang="en">Export JSON</span></button>
+<label class="file" for="importar-archivo"><span class="lang es" lang="es">Elegir una copia JSON</span><span class="lang en" lang="en">Choose a JSON copy</span></label>
+<input id="importar-archivo" type="file" accept="application/json,.json">
+<button id="borrar" type="button"><span class="lang es" lang="es">Borrar todas las consultas</span><span class="lang en" lang="en">Delete every query</span></button>
+</div>
+<p id="confirmar-borrado" hidden>
+<span class="lang es" lang="es">Esto borra las fichas y las notas de este navegador. No se puede deshacer aquí.</span>
+<span class="lang en" lang="en">This deletes the cards and the notes in this browser. It cannot be undone here.</span>
+<button id="borrar-confirmar" type="button"><span class="lang es" lang="es">Sí, borrar</span><span class="lang en" lang="en">Yes, delete</span></button>
+<button id="borrar-cancelar" type="button"><span class="lang es" lang="es">Cancelar</span><span class="lang en" lang="en">Cancel</span></button>
+</p>
 
 </main>
+
 <footer class="site"><div class="wrap">
 <p><strong><span class="lang es" lang="es">Aviso:</span><span class="lang en" lang="en">Notice:</span></strong> <span class="lang es" lang="es">Cripto de alto riesgo · Puedes perderlo todo · No es consejo de inversión.</span><span class="lang en" lang="en">High-risk crypto · You could lose everything · Not investment advice.</span> <a href="/risks/"><span class="lang es" lang="es">Riesgos</span><span class="lang en" lang="en">Risks</span></a></p>
 <p class="mica"><strong><span class="lang es" lang="es">Aviso MiCA (art. 7.1.e):</span><span class="lang en" lang="en">MiCA notice (art. 7.1.e):</span></strong> <span class="lang es" lang="es">Esta comunicación publicitaria de criptoactivos no ha sido revisada ni aprobada por ninguna autoridad competente de ningún Estado miembro de la Unión Europea. El oferente del criptoactivo es el único responsable del contenido de esta comunicación publicitaria de criptoactivos.</span><span class="lang en" lang="en">This crypto-asset marketing communication has not been reviewed or approved by any competent authority in any Member State of the European Union. The offeror of the crypto-asset is solely responsible for the content of this crypto-asset marketing communication.</span></p>
 <p><span class="lang es" lang="es">CA oficial y única:</span><span class="lang en" lang="en">Official and only CA:</span> <code>TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump</code></p>
 <p><span class="lang es" lang="es">Canales oficiales:</span><span class="lang en" lang="en">Official channels:</span> <a href="https://x.com/stubxai">@stubxai</a> · <a href="https://github.com/stubxai/stubx-agent">github.com/stubxai/stubx-agent</a> · <a href="mailto:stubxai.hq@gmail.com">stubxai.hq@gmail.com</a> · <a href="https://t.me/stubxai">t.me/stubxai</a> · <a href="https://farcaster.xyz/stubxai">Farcaster</a> · <a href="https://www.tiktok.com/@stubxai">TikTok</a></p>
-<p><span class="lang es" lang="es">Sin cookies ni rastreadores. El idioma y el progreso de Lab, si se usa, se quedan en este navegador. El service worker solo se registra en Lab y no guarda la portada ni los avisos.</span><span class="lang en" lang="en">No cookies and no trackers. Language and Lab progress, if used, stay in this browser. The service worker registers only on Lab and does not store the home page or the notices.</span></p>
+<p><span class="lang es" lang="es">Sin cookies ni rastreadores. El idioma, el progreso de Lab, el borrador de Studio y el cuaderno, si se usan, se quedan en este navegador. El service worker solo se registra en Lab y no guarda la portada ni los avisos.</span><span class="lang en" lang="en">No cookies and no trackers. Language, Lab progress, the Studio draft, and the notebook, if they are used, stay in this browser. The service worker registers only on Lab and does not store the home page or the notices.</span></p>
 <p>STUBX · 2026 · <span class="lang es" lang="es">Código MIT · Kit con licencia propia · Imágenes de Agente Talón generadas con IA</span><span class="lang en" lang="en">MIT code · Kit under its own license · Agente Talón images generated with AI</span></p>
 </div></footer>
 
-
+<script type="module" src="../assets/cuaderno.js"></script>
 </body>
 </html>

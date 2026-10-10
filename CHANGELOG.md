@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-10-10 · Biblioteca y cuaderno publicados
+
+- `/cuaderno` está en stubxai.com/cuaderno desde el 2026-10-10 (PR #24). El tablero marca U05 como publicado. La dirección viaja en el fragmento `#a=` y se limpia al leerla; no llega al servidor ni queda en el historial.
+- `/aprender` sigue en stubxai.com/aprender con los enlaces de Verify y Lab de la PR #24.
+
 ## [0.1.0] — 2026-10-10
 
 Lo que hay en este repositorio hasta el 2026-10-10. El paquete `@stubx/agents` sigue en `0.1.0`. El tag anotado `v0.1.0` está preparado y **no está creado**. Cómo crearlo a mano, y por qué esta entrega no lo hace: [docs/releases/v0.1.0/TAG.md](docs/releases/v0.1.0/TAG.md).
@@ -50,6 +55,11 @@ Lo que el tablero de main da por abierto en la web, más lo fusionado después e
 ### Texto retirado
 
 - En README y LIMITS, la frase retirada «Memecoin experimental · puedes perderlo todo…» pasa al pie vigente. En inglés, «could», no «can».
+
+## 2026-10-09 · Biblioteca y cuaderno de solo lectura
+
+- `/aprender` explica, para cualquier token de Solana, la dirección, los permisos, las extensiones de Token-2022 y la curva. El único ejemplo con un token real es la dirección oficial de STUBX. Verify y Lab enlazan a esos términos sin borrar lo escrito ni el progreso local.
+- `/cuaderno` lee un mint con los mismos orígenes y la misma lista de métodos que Verify universal, guarda la ficha y la nota en este navegador, compara dos consultas de la misma dirección y permite exportar, importar y borrar. Una ficha antigua dice la hora y que puede haber cambiado. No conecta una cartera.
 
 ## 2026-10-09 · Medición de uso: ninguna en el cliente
 

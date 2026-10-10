@@ -15,6 +15,12 @@ const MICA_ES =
 const MICA_EN =
   "This crypto-asset marketing communication has not been reviewed or approved by any competent authority in any Member State of the European Union. The offeror of the crypto-asset is solely responsible for the content of this crypto-asset marketing communication.";
 
+function headerPathMatches(pattern: string, urlPath: string): boolean {
+  if (pattern === "/*") return urlPath.startsWith("/");
+  if (pattern.endsWith("/*")) return urlPath.startsWith(pattern.slice(0, -1));
+  return urlPath === pattern;
+}
+
 const ROUTES = [
   "index.html",
   "verify/index.html",
@@ -375,15 +381,6 @@ describe("web v2", () => {
     assert.match(read("sitemap.xml"), /https:\/\/stubxai\.com\/pares\//);
   });
 
-  test("unbuilt modules stay explanatory", () => {
-    const html = read("cuaderno/index.html");
-    assert.match(html, /No construido/);
-    assert.match(html, /Not built/);
-    assert.equal(/<form\b/.test(html), false);
-    assert.equal(/<input\b/.test(html), false);
-    assert.equal(/type="file"/.test(html), false);
-  });
-
   test("contributions link to GitHub and collect nothing", () => {
     const html = read("contribuir/index.html");
     const home = read("index.html");
@@ -702,7 +699,7 @@ describe("web v2", () => {
         .filter((header) => header.startsWith("Content-Security-Policy:"))
         .map((header) => ({ path: block.path, header })),
     );
-    assert.ok(policies.length >= 1);
+    assert.equal(policies.length, 6);
     assert.ok(policies.every((policy) => policy.header.includes("frame-ancestors 'none'")));
     const globalPolicy = policies.find((policy) => policy.path === "/*");
     assert.deepEqual(cspHosts(globalPolicy?.header ?? ""), []);
@@ -710,6 +707,39 @@ describe("web v2", () => {
     assert.deepEqual(cspHosts(verifyPolicy?.header ?? ""), ["solana-rpc.publicnode.com", "api.mainnet-beta.solana.com"]);
     const verifyBlock = blocks.find((block) => block.path === "/verify/*");
     assert.ok(verifyBlock?.headers.includes("! Content-Security-Policy"));
+    const notebookBlock = blocks.find((block) => block.path === "/cuaderno/*");
+    const unsetAt = notebookBlock?.headers.findIndex((header) => header.replace(/\s+/g, " ") === "! Content-Security-Policy") ?? -1;
+    const notebookCspAt = notebookBlock?.headers.findIndex((header) => header.startsWith("Content-Security-Policy:")) ?? -1;
+    assert.ok(unsetAt >= 0 && notebookCspAt > unsetAt);
+    const notebookPolicy = policies.find((policy) => policy.path === "/cuaderno/*");
+    assert.deepEqual(cspHosts(notebookPolicy?.header ?? ""), ["solana-rpc.publicnode.com", "api.mainnet-beta.solana.com"]);
+    const samples = ["/", "/verify/", "/lab/", "/lab/sw.js", "/aprender/", "/studio/", "/cuaderno/", "/cuaderno/index.html", "/token.json", "/assets/site.css", "/404.html"];
+    const seen = new Map<string, string>();
+    for (const sample of samples) {
+      const applied = new Map<string, string[]>();
+      for (const block of blocks) {
+        if (!headerPathMatches(block.path, sample)) continue;
+        for (const line of block.headers) {
+          const compact = line.replace(/\s+/g, " ");
+          if (compact.startsWith("! ")) {
+            applied.delete(compact.slice(2).trim().toLowerCase());
+            continue;
+          }
+          const split = line.indexOf(":");
+          const name = line.slice(0, split).trim().toLowerCase();
+          const value = line.slice(split + 1).trim();
+          const list = applied.get(name) ?? [];
+          list.push(value);
+          applied.set(name, list);
+        }
+      }
+      const csp = applied.get("content-security-policy") ?? [];
+      assert.equal(csp.length, 1, `${sample} recibe ${csp.length} CSP`);
+      seen.set(sample, csp[0] ?? "");
+    }
+    assert.equal(seen.get("/")?.includes("mainnet-beta"), false);
+    assert.match(seen.get("/cuaderno/") ?? "", /https:\/\/solana-rpc\.publicnode\.com/);
+    assert.match(seen.get("/verify/") ?? "", /https:\/\/api\.mainnet-beta\.solana\.com/);
     const star = blocks.find((block) => block.path === "/*");
     assert.ok(star?.headers.some((header) => header === "X-Frame-Options: DENY"));
     for (const file of htmlFiles(siteRoot())) {
@@ -910,6 +940,7 @@ test("las palabras prohibidas no salen en el texto visible, y token.json queda f
       .replaceAll("‘Holder’ (término del sector)", "")
       .replaceAll("‘Holder’ (industry term)", "")
       .replaceAll("termino-holder", "")
+      .replaceAll('id="holder"', "")
       .replaceAll("\"id\": \"holder\"", "")
       .replaceAll("\"id\":\"holder\"", "")
       .replaceAll("holdersNote_en", "")
