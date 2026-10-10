@@ -168,7 +168,7 @@ describe("lectura universal con RPC simulado", () => {
     assert.equal(/scam|recomendado|\bseguro\b/i.test(textOf(reading)), false);
   });
 
-  test("un nombre parecido a STUBX con otra dirección es posible copia", async () => {
+  test("un nombre parecido a STUBX con otra dirección no es la CA oficial", async () => {
     const reading = await readFixture(fixture("name-impersonation"));
     assert.equal(reading.title.es, "Lectura de este token");
     assert.match(reading.support.es, /No es la dirección oficial de STUBX/);

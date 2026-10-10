@@ -138,7 +138,7 @@ describe("lectura de una dirección", () => {
     assert.notEqual(far.kind, "lectura_caida");
   });
 
-  test("con el RPC caído un clon del registro no sale como posible copia ni en rojo", () => {
+  test("con el RPC caído un clon del registro sale en ámbar y no en rojo", () => {
     const down = classifyAddress(clone, cards, "caida", evm);
     assert.notEqual(down.light, "riesgo");
     assert.equal(/copia|riesgo/i.test(down.title.es), false);
