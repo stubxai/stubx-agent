@@ -1,5 +1,6 @@
 /** Logo elegido en el navegador. No sale del dispositivo. */
 
+import { INVISIBLE_CHARS } from "./filter.mjs";
 import { decodePng, pngDimensions } from "./png.mjs";
 
 export const DEFAULT_TOKEN = "STUBX";
@@ -9,7 +10,7 @@ export const LOGO_MAX_EDGE = 2048;
 export const LOGO_DRAW_EDGE = 512;
 
 export function clipToken(value) {
-  return String(value ?? "").replace(/[\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF]/g, "").replace(/[\u0000-\u001f]/g, "").trim().slice(0, TOKEN_MAX);
+  return String(value ?? "").normalize("NFKC").replace(INVISIBLE_CHARS, "").replace(/[\u0000-\u001f]/g, "").trim().slice(0, TOKEN_MAX);
 }
 
 export function isStubxToken(value) {

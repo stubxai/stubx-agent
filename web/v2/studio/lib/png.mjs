@@ -42,9 +42,50 @@ async function deflateBytes(data) {
   return new Uint8Array(await new Response(stream).arrayBuffer());
 }
 
-async function inflateBytes(data) {
+function samplesForColor(color) {
+  if (color === 0 || color === 3) return 1;
+  if (color === 2) return 3;
+  if (color === 4) return 2;
+  if (color === 6) return 4;
+  return 0;
+}
+
+/** Bytes del IDAT ya descomprimido: un byte de filtro por fila más las muestras. */
+export function pngRawSize(width, height, depth, color) {
+  const samples = samplesForColor(color);
+  if (!samples || depth < 1 || depth > 16) return 0;
+  const rowBytes = Math.ceil((width * samples * depth) / 8);
+  return height * (1 + rowBytes);
+}
+
+async function inflateBytes(data, maxOut) {
   const stream = new Blob([data]).stream().pipeThrough(new DecompressionStream("deflate"));
-  return new Uint8Array(await new Response(stream).arrayBuffer());
+  const reader = stream.getReader();
+  const parts = [];
+  let total = 0;
+  try {
+    while (true) {
+      const step = await reader.read();
+      if (step.done) break;
+      const value = step.value;
+      total += value.length;
+      if (total > maxOut) {
+        await reader.cancel().catch(() => {});
+        throw new Error("PNG demasiado grande");
+      }
+      parts.push(value);
+    }
+  } catch (error) {
+    await reader.cancel().catch(() => {});
+    throw error;
+  }
+  const out = new Uint8Array(total);
+  let offset = 0;
+  for (const part of parts) {
+    out.set(part, offset);
+    offset += part.length;
+  }
+  return out;
 }
 
 function textChunk(keyword, text) {
@@ -170,8 +211,9 @@ export async function decodePng(png) {
     throw new Error("PNG no soportado");
   }
   const channels = color === 6 ? 4 : 3;
+  const expected = pngRawSize(width, height, depth, color);
   const idat = concat(chunks.filter((item) => item.type === "IDAT").map((item) => item.data));
-  const raw = await inflateBytes(idat);
+  const raw = await inflateBytes(idat, expected);
   const rgba = new Uint8ClampedArray(width * height * 4);
   const stride = width * channels;
   let prev = new Uint8Array(stride);

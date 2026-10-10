@@ -67,9 +67,11 @@ function stripMarks(text) {
   return text.normalize("NFD").replace(/\p{M}/gu, "");
 }
 
+export const INVISIBLE_CHARS = /[\u00AD\u034F\u061C\u115F\u1160\u17B4\u17B5\u180E\u200B-\u200F\u202A-\u202E\u2060-\u2064\u2066-\u206F\u2800\u3164\uFE00-\uFE0F\uFEFF\uFFA0\uFFF9-\uFFFB]/g;
+
 function prepare(text) {
   const nfkc = String(text ?? "").normalize("NFKC");
-  const noZw = nfkc.replace(/[\u00AD\u034F\u061C\u115F\u1160\u17B4\u17B5\u180E\u200B-\u200F\u202A-\u202E\u2060-\u2064\u2066-\u206F\u2800\u3164\uFE00-\uFE0F\uFEFF\uFFA0\uFFF9-\uFFFB]/g, "");
+  const noZw = nfkc.replace(INVISIBLE_CHARS, "");
   const folded = stripMarks(foldHomoglyphs(foldSmall(foldExtra(noZw).toLowerCase())));
   return { original: noZw, folded };
 }

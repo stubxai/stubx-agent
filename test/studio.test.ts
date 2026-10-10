@@ -263,7 +263,7 @@ function pngChunk(type: string, data: Uint8Array): Uint8Array {
   return out;
 }
 
-function pngDeclaring(width: number, height: number): Uint8Array {
+function pngWithIdat(width: number, height: number, idat: Uint8Array): Uint8Array {
   const ihdr = new Uint8Array(13);
   const view = new DataView(ihdr.buffer);
   view.setUint32(0, width);
@@ -273,7 +273,7 @@ function pngDeclaring(width: number, height: number): Uint8Array {
   const parts = [
     Uint8Array.from([137, 80, 78, 71, 13, 10, 26, 10]),
     pngChunk("IHDR", ihdr),
-    pngChunk("IDAT", Uint8Array.from([0, 1, 2, 3])),
+    pngChunk("IDAT", idat),
     pngChunk("IEND", new Uint8Array()),
   ];
   const out = new Uint8Array(parts.reduce((sum, part) => sum + part.length, 0));
@@ -283,6 +283,39 @@ function pngDeclaring(width: number, height: number): Uint8Array {
     offset += part.length;
   }
   return out;
+}
+
+function pngDeclaring(width: number, height: number): Uint8Array {
+  return pngWithIdat(width, height, Uint8Array.from([0, 1, 2, 3]));
+}
+
+/** IDAT zlib de ceros sin comprimir. El archivo pesa ~1,4 MB y al inflarse supera un 8×8. */
+function zlibStoredZeros(payloadLength: number): Uint8Array {
+  const blocks = Math.ceil(payloadLength / 65535);
+  const out = new Uint8Array(2 + payloadLength + blocks * 5 + 4);
+  out[0] = 0x78;
+  out[1] = 0x01;
+  let cursor = 2;
+  let remaining = payloadLength;
+  while (remaining > 0) {
+    const len = Math.min(65535, remaining);
+    out[cursor] = remaining === len ? 1 : 0;
+    cursor += 1;
+    out[cursor] = len & 0xff;
+    out[cursor + 1] = (len >> 8) & 0xff;
+    cursor += 2;
+    const nlen = len ^ 0xffff;
+    out[cursor] = nlen & 0xff;
+    out[cursor + 1] = (nlen >> 8) & 0xff;
+    cursor += 2 + len;
+    remaining -= len;
+  }
+  const adler = (((payloadLength % 65521) << 16) | 1) >>> 0;
+  out[cursor] = (adler >>> 24) & 0xff;
+  out[cursor + 1] = (adler >>> 16) & 0xff;
+  out[cursor + 2] = (adler >>> 8) & 0xff;
+  out[cursor + 3] = adler & 0xff;
+  return out.subarray(0, cursor + 4);
 }
 
 function brandLinesOf(card: Card, role: string): string[] {
@@ -719,7 +752,13 @@ describe("studio", () => {
     assert.match(reglas, /ai: “AI-generated image”/);
     assert.match(editor, /Usa solo un logo que tengas derecho a usar\. Si se hizo con IA, indícalo al publicar\./);
     assert.match(editor, /Only use a logo you have the right to use\. If it was made with AI, say so when you post\./);
-    assert.match(readStudio("lib/logo.mjs"), /replace\(\/\[\\u200B-\\u200F\\u202A-\\u202E\\u2066-\\u2069\\uFEFF\]\/g, ""\)/);
+    const invisible = String.raw`[\u00AD\u034F\u061C\u115F\u1160\u17B4\u17B5\u180E\u200B-\u200F\u202A-\u202E\u2060-\u2064\u2066-\u206F\u2800\u3164\uFE00-\uFE0F\uFEFF\uFFA0\uFFF9-\uFFFB]`;
+    const filterSrc = readStudio("lib/filter.mjs");
+    const logoSrc = readStudio("lib/logo.mjs");
+    assert.ok(filterSrc.includes(`export const INVISIBLE_CHARS = /${invisible}/g`));
+    assert.ok(logoSrc.includes("INVISIBLE_CHARS"));
+    assert.match(logoSrc, /\.normalize\("NFKC"\)/);
+    assert.equal(logoSrc.includes(String.raw`[\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF]`), false);
     assert.match(editor, /id="aviso-logo-medida"/);
     assert.match(editor, /Ese PNG declara más de 2048 px de ancho o de alto y no se abre/);
     assert.match(editor, /That PNG declares more than 2048 px in width or height and will not be opened/);
@@ -818,9 +857,10 @@ describe("studio", () => {
       LOGO_MAX_BYTES: number;
       LOGO_DRAW_EDGE: number;
     }>("lib/logo.mjs");
-    const { decodePng, pngDimensions } = await load<{
+    const { decodePng, pngDimensions, pngRawSize } = await load<{
       decodePng: (bytes: Uint8Array) => Promise<unknown>;
       pngDimensions: (bytes: Uint8Array) => { width: number; height: number };
+      pngRawSize: (width: number, height: number, depth: number, color: number) => number;
     }>("lib/png.mjs");
     const { brandFor, BRAND } = await load<{
       brandFor: (lang: string, token: string) => string;
@@ -840,6 +880,17 @@ describe("studio", () => {
     assert.equal(brandFor("en", "LUNA"), "Not official from LUNA or STUBX");
     assert.equal(brandFor("es", "STUBX"), BRAND.es);
     assert.equal(brandFor("en", "stubx"), BRAND.en);
+    const stubxLooks = ["STUB\u2060X", "STUB\u00ADX", "STUB\u034FX", "\u180ESTUBX", "STUBX\uFEFF", "\uFF33\uFF34\uFF35\uFF22\uFF38", "stu\u2060bx"];
+    for (const sample of stubxLooks) {
+      assert.equal(clipToken(sample).toLowerCase(), "stubx", sample);
+      assert.equal(isStubxToken(sample), true, sample);
+      assert.equal(brandFor("es", sample), BRAND.es, sample);
+      assert.notEqual(brandFor("es", sample), "No oficial de STUBX ni de STUBX", sample);
+      assert.equal(brandFor("en", sample), BRAND.en, sample);
+    }
+    const { exportAllowed } = await load<{ exportAllowed: (title: string, body: string, list?: unknown, token?: string) => boolean }>("lib/filter.mjs");
+    assert.equal(exportAllowed("Hola", "Texto limpio.", undefined, "mo\u2060on"), false);
+    assert.equal(exportAllowed("Hola", "Texto limpio.", undefined, "\uFF33\uFF34\uFF35\uFF22\uFF38"), true);
     assert.equal(brandFor("es", "LUNA\u202E"), "No oficial de LUNA ni de STUBX");
     assert.equal(brandFor("en", ""), BRAND.en);
     const named = await renderCard({
@@ -966,6 +1017,44 @@ describe("studio", () => {
       assert.notEqual(error.message, "logo-size");
       return true;
     });
+    assert.equal(pngRawSize(8, 8, 8, 6), 264);
+    const packed = pngWithIdat(8, 8, zlibStoredZeros(1_399_884));
+    assert.ok(packed.length >= 1_400_000);
+    assert.ok(packed.length < 1_500_000);
+    assert.equal(pngDimensions(packed).width, 8);
+    assert.equal(pngDimensions(packed).height, 8);
+    await assert.rejects(() => decodePng(packed), (error: Error) => {
+      assert.equal(error.message, "PNG demasiado grande");
+      return true;
+    });
+    await assert.rejects(() => readLogoPng(packed), (error: Error) => {
+      assert.equal(error.message, "PNG demasiado grande");
+      return true;
+    });
+    const disguised = await renderCard({
+      width: 1080,
+      height: 1080,
+      lang: "es",
+      title: "Hola",
+      body: "Texto limpio.",
+      token: "STUB\u2060X",
+      watermark: false,
+      origins: [],
+    });
+    assert.equal(joined(disguised, "brand"), BRAND.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
+    assert.notEqual(joined(disguised, "brand"), "NOOFICIALDESTUBXNIDESTUBX");
+    const fullwidth = await renderCard({
+      width: 1080,
+      height: 1080,
+      lang: "es",
+      title: "Hola",
+      body: "Texto limpio.",
+      token: "\uFF33\uFF34\uFF35\uFF22\uFF38",
+      watermark: false,
+      origins: [],
+    });
+    assert.equal(joined(fullwidth, "token"), "STUBX");
+    assert.equal(joined(fullwidth, "brand"), BRAND.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
   });
 
   test("el borrador se guarda y se borra en local", async () => {
