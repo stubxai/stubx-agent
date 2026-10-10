@@ -562,6 +562,8 @@ describe("studio", () => {
       "mándame un DM",
       "DM",
       "por privado",
+      "hablamos por privado",
+      "mándame por privado",
       "soporte",
       "support",
       "ganar",
@@ -686,6 +688,12 @@ describe("studio", () => {
       "never share your seed phrase",
       "never share your recovery phrase",
       "Nunca envíes 1 SOL y te devolvemos 2",
+      "Los admins nunca escriben por privado",
+      "Los admins nunca escriben primero por privado",
+      "no escribas por privado",
+      "Nadie escribe por privado",
+      "Jamás escriben por privado",
+      "Si te escriben por privado, es una estafa",
     ];
     for (const sample of allowed) {
       assert.equal(analyze(sample).blocked, false, sample);
@@ -702,6 +710,10 @@ describe("studio", () => {
     assert.equal(analyze("c o r r e").hits.some((hit) => hit.kind === "short" && hit.term === "corre"), true);
     assert.equal(analyze("f u n d").hits.some((hit) => hit.kind === "short" && hit.term === "fund"), true);
     assert.equal(analyze("fondos").hits.some((hit) => hit.kind === "short" && hit.term === "fondos"), true);
+    assert.equal(analyze("fondo").hits.some((hit) => hit.kind === "short" && hit.term === "fondo"), true);
+    assert.equal(analyze("Los admins nunca escriben por privado en el fondo").hits.some((hit) => hit.term === "fondo"), true);
+    assert.equal(analyze("Los admins nunca escriben por privado").hits.some((hit) => hit.term === "por privado"), false);
+    assert.equal(analyze("escríbeme por privado").hits.some((hit) => hit.term === "escríbeme por privado" || hit.term === "por privado"), true);
     assert.equal(analyze("elefante").blocked, false);
     assert.equal(analyze("@CreadorSTUBX").hits.some((hit) => hit.kind === "handle"), true);
     assert.equal(analyze("equipo de STUBX").hits.some((hit) => hit.kind === "term"), true);

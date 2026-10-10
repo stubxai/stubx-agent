@@ -268,6 +268,35 @@ function maskNegatedAdvice(text) {
   return out;
 }
 
+function isPrivateAsk(word) {
+  if (REQUEST.has(word)) return true;
+  return /^(?:escrib|mand|habl|contact|pas|envi|mensaje|message|inbox|dm)/.test(word) && /(?:me|nos)$/.test(word);
+}
+
+function privatePhraseIsSafe(words, at) {
+  const before = words.slice(0, at);
+  let bareAsk = false;
+  for (let i = 0; i < before.length; i += 1) {
+    if (!isPrivateAsk(before[i])) continue;
+    const earlier = before.slice(0, i);
+    if (!earlier.some((word) => NEGATION.has(word))) bareAsk = true;
+  }
+  if (bareAsk) return false;
+  if (words.some((word) => NEGATION.has(word))) return true;
+  return words.some((word) => WARNING_CUE.has(word) || WARNING_END.has(word));
+}
+
+function maskPrivateContext(text) {
+  return text.split(/(?<=[.!?;:\n])/).map((sentence) => {
+    const words = wordList(sentence);
+    return sentence.replace(/(^|[^a-z0-9])(por(?:[^a-z0-9]+)?privado)(?![a-z0-9])/g, (full, lead, match, offset) => {
+      const at = wordList(sentence.slice(0, offset + lead.length)).length;
+      if (!privatePhraseIsSafe(words, at)) return full;
+      return `${lead}${" ".repeat(match.length)}`;
+    });
+  }).join("");
+}
+
 function maskWarnings(text) {
   const phrases = [...WARNING_SAFE].sort((a, b) => b.length - a.length);
   return text.split(/(?<=[.!?;:\n])/).map((sentence) => {
@@ -486,7 +515,7 @@ export function analyze(text, list = blocklist) {
   for (const word of plainWords) {
     if (DELIVERY.has(word)) pushHit(hits, seen, "term", word);
   }
-  const advised = maskWarnings(maskNegatedAdvice(maskExceptions(folded)));
+  const advised = maskPrivateContext(maskWarnings(maskNegatedAdvice(maskExceptions(folded))));
   if (hasSolDouble(advised) || hasSendSolBack(advised) || hasTypoDouble(advised)) pushHit(hits, seen, "term", "sol");
   const short = new Set((list.shortWords ?? []).map((word) => termKey(word)));
   const variants = [advised, leet(advised, "i"), leet(advised, "l")];
