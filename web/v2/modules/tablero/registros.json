@@ -1,6 +1,6 @@
 {
-  "version": "1.0.0",
-  "updated": "2026-10-09",
+  "version": "1.1.0",
+  "updated": "2026-10-10",
   "editor": "Equipo del repositorio. La revisión por una persona distinta está pendiente.",
   "note": {
     "es": "Estados de un registro, no fechas prometidas. Una idea, una implementación en el repositorio y una función publicada en la web son cosas distintas. Nada de esta página está publicado en stubxai.com.",
@@ -382,26 +382,46 @@
     },
     {
       "id": "U09",
-      "version": "0",
-      "title": { "es": "Pares de Pump e informes reutilizables", "en": "Pump pairs and reusable reports" },
-      "status": "propuesta",
+      "version": "1",
+      "title": { "es": "Pares e informe portable", "en": "Pairs and a portable report" },
+      "status": "en_revision",
       "webPublished": false,
       "scope": {
-        "es": "Idea de lectura de pares, condicionada. Estas páginas no declaran compatibilidad con pares nuevos.",
-        "en": "An idea for reading pairs, conditional. These pages do not claim compatibility with new pairs."
+        "es": "Identifica la moneda base y si hay un solo paso en una curva abierta con SOL. Exporta una instantánea. No está en stubxai.com.",
+        "en": "Identifies the base currency and whether one step exists on an open curve that uses SOL. Exports a snapshot. It is not on stubxai.com."
       },
-      "owner": "Sin asignar",
-      "reviewer": "No aplica todavía.",
-      "reviewedOn": null,
+      "owner": "Equipo del repositorio",
+      "reviewer": "Pendiente de una persona distinta del autor, antes de publicar.",
+      "reviewedOn": "2026-10-10",
       "block": {
-        "es": "Hace falta comprobar la modalidad real antes de decir que está soportada.",
-        "en": "The real mode has to be checked before saying it is supported."
+        "es": "Falta la revisión de otra persona y la autorización para publicar.",
+        "en": "Review by another person and authorization to publish are still missing."
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "label": { "es": "Página", "en": "Page" },
+          "path": "web/v2/pares/index.html",
+          "note": { "es": "Lectura de solo lectura en la web v2. No está en stubxai.com.", "en": "Read-only page in web v2. It is not on stubxai.com." }
+        },
+        {
+          "label": { "es": "Lectura", "en": "Read" },
+          "path": "web/v2/modules/chain-read.mjs",
+          "note": { "es": "Misma lista cerrada de métodos y los dos servicios públicos.", "en": "The same closed method list and the two public services." }
+        },
+        {
+          "label": { "es": "Informe", "en": "Report" },
+          "path": "web/v2/modules/pair-report.mjs",
+          "note": { "es": "Instantánea con hash. El hash detecta cambios y no certifica verdad.", "en": "Snapshot with a hash. The hash detects changes and does not certify truth." }
+        }
+      ],
       "history": [
         {
           "on": "2026-10-09",
           "change": { "es": "Anotada como propuesta. No se ha empezado.", "en": "Recorded as a proposal. Not started." }
+        },
+        {
+          "on": "2026-10-10",
+          "change": { "es": "Hay una página de solo lectura y una exportación de instantánea. Sigue fuera de stubxai.com.", "en": "There is a read-only page and a snapshot export. It is still off stubxai.com." }
         }
       ]
     }

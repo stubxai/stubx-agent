@@ -34,6 +34,7 @@ const ROUTES = [
   "aprender/index.html",
   "studio/index.html",
   "studio/reglas/index.html",
+  "pares/index.html",
   "cuaderno/index.html",
   "contribuir/index.html",
   "404.html",
@@ -303,6 +304,39 @@ describe("web v2", () => {
     assert.match(security, /COMUNIDAD/);
     assert.match(risks, /puedes perder todo lo que aportes/);
     assert.match(risks, /you could lose everything you put in/i);
+  });
+
+  test("the pair report is read-only and has one route policy", () => {
+    const html = read("pares/index.html");
+    const home = read("index.html");
+    assert.match(home, /Abrir pares/);
+    assert.match(home, /Open pairs/);
+    assert.match(html, /Pares e informe/);
+    assert.match(html, /Pairs and report/);
+    assert.match(html, /No es una auditoría ni una recomendación\./);
+    assert.match(html, /Un emparejamiento no es una colaboración ni un respaldo\./);
+    assert.match(html, /A pairing is not a collaboration or an endorsement\./);
+    assert.match(html, /id="consulta"/);
+    assert.match(html, /id="direccion-token"/);
+    assert.match(html, /id="resultado"/);
+    assert.match(html, /id="exportar"/);
+    assert.match(html, /type="module"/);
+    assert.match(html, /assets\/pares\.mjs/);
+    assert.match(html, /solana-rpc\.publicnode\.com/);
+    assert.match(html, /api\.mainnet-beta\.solana\.com/);
+    const meta = html.match(/Content-Security-Policy" content="([^"]+)"/)?.[1] ?? "";
+    assert.deepEqual(cspHosts(meta), ["solana-rpc.publicnode.com", "api.mainnet-beta.solana.com"]);
+    assert.equal(meta.includes("frame-ancestors"), false);
+    const headers = read("_headers");
+    const block = headers.split("/pares/*")[1]?.split("\n\n")[0] ?? "";
+    assert.match(block, /! Content-Security-Policy/);
+    assert.equal((block.match(/Content-Security-Policy:/g) ?? []).length, 1);
+    assert.deepEqual(cspHosts(block), ["solana-rpc.publicnode.com", "api.mainnet-beta.solana.com"]);
+    const bundle = read("assets/pares.mjs");
+    assert.equal(bundle.includes("sendTransaction"), false);
+    assert.equal(bundle.includes("localStorage"), false);
+    assert.equal(bundle.includes("innerHTML"), false);
+    assert.match(read("sitemap.xml"), /https:\/\/stubxai\.com\/pares\//);
   });
 
   test("unbuilt modules stay explanatory", () => {

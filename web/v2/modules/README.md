@@ -12,6 +12,7 @@ Una sola web estática. Verify, Lab y el tablero no son sitios aparte: el genera
 | Fichas | `modules/verify/cards.json` | Las fichas de `loadCards`, con textos de presentación añadidos (`statement_en`, `holdersNote_en` y las notas de la curva) sin cambiar los nombres de la API, más los ejemplos EVM. `snapshot.json` dice que el commit citado es ancestro de esta rama (`inBranch`) y que la lectura en vivo está activa (`liveNetwork`). `inBranch` no es la marca de publicación. |
 | Lab | `assets/mission.js` + `modules/lab/` | Misión de cinco pasos, glosario y tres guías. El progreso se queda en el navegador. |
 | Tablero | `modules/tablero/registros.json` | Registro del 2026-10-09, envuelto en el mismo cascarón. |
+| Pares | `pares/index.html`, `modules/pair-report.mjs` | Moneda base y un solo paso si la curva abierta usa SOL. La exportación es una instantánea. |
 | Huecos | `/studio`, `/cuaderno`, `/contribuir` | Texto fechado «No construido · 2026-10-09». Sin formulario ni botones de crear, guardar, exportar o enviar. |
 
 `/avances` no es un segundo tablero: explica que el tablero está en `/tablero`.
