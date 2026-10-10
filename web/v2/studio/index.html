@@ -64,11 +64,12 @@
 <div class="vista-caja">
 <canvas id="vista" width="1080" height="1080" role="img" aria-labelledby="vista-texto vista-usuario"></canvas>
 </div>
-<p id="vista-texto" class="sr-only"><span class="lang es" lang="es">Contenido comunitario · no oficial. Cripto de alto riesgo · Puedes perderlo todo · No es consejo de inversión.</span><span class="lang en" lang="en">Community content · unofficial. High-risk crypto · You could lose everything · Not investment advice.</span></p>
+<p id="vista-texto" class="sr-only"><span class="lang es" lang="es">Contenido comunitario · No oficial · Cripto de alto riesgo · Puedes perderlo todo · No es consejo de inversión</span><span class="lang en" lang="en">Community content · Unofficial · High-risk crypto · You could lose everything · Not investment advice</span></p>
 <p id="vista-usuario" class="sr-only"></p>
 <p><span class="lang es" lang="es">Exportar no es publicar; revisa tu texto.</span><span class="lang en" lang="en">Exporting is not posting; review your text.</span></p>
 <div class="tabs" role="tablist" aria-label="Controles / Controls">
 <button type="button" id="tab-texto" role="tab" data-tab="texto" aria-selected="true" aria-controls="panel-texto"><span class="lang es" lang="es">Texto</span><span class="lang en" lang="en">Text</span></button>
+<button type="button" id="tab-titular" role="tab" data-tab="titular" aria-selected="false" aria-controls="panel-titular" tabindex="-1"><span class="lang es" lang="es">Titular</span><span class="lang en" lang="en">Headline</span></button>
 <button type="button" id="tab-fondo" role="tab" data-tab="fondo" aria-selected="false" aria-controls="panel-fondo" tabindex="-1"><span class="lang es" lang="es">Fondo</span><span class="lang en" lang="en">Background</span></button>
 <button type="button" id="tab-avatar" role="tab" data-tab="avatar" aria-selected="false" aria-controls="panel-avatar" tabindex="-1"><span class="lang es" lang="es">Avatar</span><span class="lang en" lang="en">Avatar</span></button>
 <button type="button" id="tab-formato" role="tab" data-tab="formato" aria-selected="false" aria-controls="panel-formato" tabindex="-1"><span class="lang es" lang="es">Formato</span><span class="lang en" lang="en">Format</span></button>
@@ -82,8 +83,11 @@
 <textarea id="cuerpo" maxlength="180">El nombre no sustituye a comprobar la dirección.</textarea>
 <p id="contador" class="contador" aria-live="polite"><span class="lang es" lang="es">Nombre</span><span class="lang en" lang="en">Name</span> <span id="contador-token">5 / 20</span> · <span class="lang es" lang="es">Título</span><span class="lang en" lang="en">Title</span> <span id="contador-titulo">0 / 72</span> · <span class="lang es" lang="es">Cuerpo</span><span class="lang en" lang="en">Body</span> <span id="contador-cuerpo">0 / 180</span></p>
 </div>
+<div id="panel-titular" role="tabpanel" data-panel="titular" aria-labelledby="tab-titular" hidden>
+<div id="opcion-titular" class="opciones muestras" role="group" aria-label="Estilo de titular / Headline style"></div>
+</div>
 <div id="panel-fondo" role="tabpanel" data-panel="fondo" aria-labelledby="tab-fondo" hidden>
-<div id="opcion-fondo" class="opciones" role="group" aria-label="Imagen de fondo / Background image"></div>
+<div id="opcion-fondo" class="opciones muestras" role="group" aria-label="Imagen de fondo / Background image"></div>
 </div>
 <div id="panel-avatar" role="tabpanel" data-panel="avatar" aria-labelledby="tab-avatar" hidden>
 <p><span class="lang es" lang="es">Los recursos de STUBX son la opción por defecto. El logo de tu token se queda en este navegador y no se envía a ningún servidor.</span><span class="lang en" lang="en">STUBX assets are the default option. Your token logo stays in this browser and is not sent to any server.</span></p>

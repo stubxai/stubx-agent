@@ -19,6 +19,41 @@
   font-style: normal;
   font-display: swap;
 }
+@font-face {
+  font-family: "Studio Anton";
+  src: url("assets/Anton-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Studio Bangers";
+  src: url("assets/Bangers-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Studio Audiowide";
+  src: url("assets/Audiowide-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Studio Pixel";
+  src: url("assets/Silkscreen-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Studio Archivo";
+  src: url("assets/ArchivoBlack-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 
 .studio-app { font-family: "Inter Studio", system-ui, sans-serif; }
 .studio-app h1, .studio-app h2 { font-family: "Silkscreen Studio", system-ui, sans-serif; }
@@ -27,6 +62,26 @@ canvas#vista { display: block; width: 100%; height: auto; background: #071422; }
 .plantillas, .opciones, .tabs, .fila { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .plantillas { margin: 0 0 1rem; }
 .plantillas button, .opciones button, .tabs button, .fila button, #quitar-logo { min-height: 44px; min-width: 44px; }
+.opciones.muestras button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-width: 5.5rem;
+  padding: 0.35rem 0.45rem 0.45rem;
+  font-size: 0.95rem;
+  line-height: 1.1;
+}
+.opciones.muestras img {
+  width: 5.5rem;
+  height: 3.1rem;
+  object-fit: cover;
+  border-radius: 0.35rem;
+  background: #071422;
+  pointer-events: none;
+}
+#opcion-titular button { font-size: 1.15rem; letter-spacing: 0.01em; }
 .tabs { margin: 0.75rem 0; }
 .tabs button[aria-selected="true"], .opciones button[aria-pressed="true"], .plantillas button[aria-pressed="true"] {
   background: var(--accent);
