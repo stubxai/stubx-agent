@@ -289,15 +289,18 @@ describe("tablero", () => {
     assert.equal(byId.get("U03")?.status, "en_revision");
     assert.equal(byId.get("U06")?.status, "en_revision");
     assert.equal(byId.get("U08")?.status, "en_curso");
+    assert.equal(byId.get("U02")?.status, "en_revision");
+    assert.ok((byId.get("U02")?.evidence.length ?? 0) > 0);
     assert.equal(byId.get("U04")?.status, "en_revision");
     assert.ok((byId.get("U04")?.evidence.length ?? 0) > 0);
     assert.equal(byId.get("U04")?.webPublished, false);
-    for (const id of ["U02", "U05", "U07", "U09"]) {
+    for (const id of ["U05", "U07", "U09"]) {
       assert.equal(byId.get(id)?.status, "propuesta", id);
       assert.equal(byId.get(id)?.evidence.length, 0, id);
     }
+    const onWeb = new Set(["VERIFY", "U01", "U02", "U03", "U06"]);
     for (const task of board.tasks) {
-      assert.equal(task.webPublished, false, task.id);
+      assert.equal(task.webPublished, onWeb.has(task.id), task.id);
       assert.ok(task.history.length > 0, task.id);
     }
     assert.equal(board.tasks.some((task) => task.status === "publicada"), false);

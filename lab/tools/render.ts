@@ -466,6 +466,8 @@ function taskArticle(task: TaskRecord): string {
   return `<article class="tarea" id="tarea-${escapeHtml(task.id)}" data-status="${escapeHtml(task.status)}" data-web="${task.webPublished ? "si" : "no"}"><h3>${escapeHtml(task.id)} · ${both(task.title)}</h3><p class="estado">${both(status)} · ${both(task.webPublished ? { es: "En stubxai.com: sí", en: "On stubxai.com: yes" } : { es: "En stubxai.com: no", en: "On stubxai.com: no" })}</p><p>${both(task.scope)}</p><dl><dt>${both({ es: "Responsable", en: "Owner" })}</dt><dd>${both(personLabel(task.owner))}</dd><dt>${both({ es: "Revisión", en: "Review" })}</dt><dd>${both(personLabel(task.reviewer))}</dd><dt>${both({ es: "Fecha de revisión del registro", en: "Record review date" })}</dt><dd>${escapeHtml(reviewed)}</dd></dl>${block}<h4>${both({ es: "Evidencia", en: "Evidence" })}</h4>${evidence ? `<ul>${evidence}</ul>` : `<p>${both({ es: "Todavía no hay evidencia de implementación.", en: "There is no implementation evidence yet." })}</p>`}<h4>${both({ es: "Historial", en: "History" })}</h4><ul>${history}</ul></article>`;
 }
 
+const STATUS_ORDER = ["en_revision", "en_curso", "propuesta", "publicada"] as const;
+
 function renderBoard(repoRoot: string, board: BoardFile, options: RenderOptions): string {
   const changelog = changelogHeadings(readFileSync(path.join(repoRoot, "CHANGELOG.md"), "utf8"));
   const tests = listTestFiles(repoRoot);
@@ -474,6 +476,15 @@ function renderBoard(repoRoot: string, board: BoardFile, options: RenderOptions)
       const status = TASK_STATUS[task.status];
       return `<tr><th scope="row"><a href="#tarea-${escapeHtml(task.id)}">${escapeHtml(task.id)}</a></th><td>${both(task.title)}</td><td>${both(status)}</td><td>${both(task.webPublished ? { es: "sí", en: "yes" } : { es: "no", en: "no" })}</td></tr>`;
     })
+    .join("");
+  const groups = STATUS_ORDER.map((status) => {
+    const tasks = board.tasks.filter((task) => task.status === status);
+    if (tasks.length === 0) return "";
+    const label = TASK_STATUS[status];
+    return `<section id="grupo-${escapeHtml(status)}"><h2>${both(label)}</h2>${tasks.map((task) => taskArticle(task)).join("")}</section>`;
+  }).join("");
+  const jumps = STATUS_ORDER.filter((status) => board.tasks.some((task) => task.status === status))
+    .map((status) => `<a href="#grupo-${escapeHtml(status)}">${both(TASK_STATUS[status])}</a>`)
     .join("");
   const runs = board.ci.recordedRuns
     .map((run) => {
@@ -486,9 +497,25 @@ function renderBoard(repoRoot: string, board: BoardFile, options: RenderOptions)
   const main = `<h1>${both({ es: "Tablero de construcción", en: "Construction board" })}</h1>
 <p>${both(board.note)}</p>
 <p class="muted">${both({ es: `Registro ${board.version}, revisado el ${board.updated}. Editor: ${board.editor}`, en: `Record ${board.version}, reviewed on ${board.updated}. Editor: ${editorEn(board.editor)}` })}</p>
+<section class="card" id="como-leerlo">
+<h2>${both({ es: "Cómo leerlo", en: "How to read it" })}</h2>
+<ul class="clean">
+<li>${both({ es: "Propuesta: es una idea. Todavía no hay una entrega que puedas abrir.", en: "Proposal: it is an idea. There is no delivery you can open yet." })}</li>
+<li>${both({ es: "En curso o en revisión: hay trabajo en este repositorio. Puedes abrir la evidencia.", en: "In progress or in review: there is work in this repository. You can open the evidence." })}</li>
+<li>${both({ es: "La columna stubxai.com dice sí solo si la función se puede abrir hoy en la web.", en: "The stubxai.com column says yes only if the function can be opened on the website today." })}</li>
+<li>${both({ es: "Una fecha del historial dice cuándo se anotó el cambio. No es un plazo.", en: "A history date says when the change was written down. It is not a deadline." })}</li>
+</ul>
+</section>
+<nav class="grupos" aria-label="${escapeHtml("Estados / States")}">${jumps}</nav>
 <div class="tabla-scroll" tabindex="0"><table><caption>${both({ es: "Tareas de este registro", en: "Tasks in this record" })}</caption><thead><tr><th scope="col">ID</th><th scope="col">${both({ es: "Tarea", en: "Task" })}</th><th scope="col">${both({ es: "Estado", en: "State" })}</th><th scope="col">stubxai.com</th></tr></thead><tbody>${rows}</tbody></table></div>
-<p>${both({ es: "Propuesta es una idea. En curso o en revisión es trabajo en el repositorio. Publicada sería una función ya expuesta. Hoy ninguna tarea de este registro está en la web.", en: "Proposal means an idea. In progress or in review means work in the repository. Published would mean a function already exposed. Today no task in this record is on the website." })}</p>
-<div class="tareas">${board.tasks.map((task) => taskArticle(task)).join("")}</div>
+<p>${both({ es: "Propuesta es una idea. En curso o en revisión es trabajo en el repositorio. Publicada sería una función ya en stubxai.com.", en: "Proposal means an idea. In progress or in review means work in the repository. Published would mean a function already on stubxai.com." })}</p>
+<div class="tareas">${groups}</div>
+<section class="card" id="plantilla">
+<h2>${both({ es: "Plantilla para copiar", en: "Template to copy" })}</h2>
+<p>${both({ es: "El tablero de arriba es el de STUBX. La plantilla vacía no trae un token: otro proyecto puede copiar el archivo y rellenar su propio trabajo. Copiarla no hace socio ni representante de STUBX, y no avala ningún token.", en: "The board above is STUBX’s. The empty template carries no token: another project can copy the file and fill in its own work. Copying it does not make anyone a partner or a representative of STUBX, and it endorses no token." })}</p>
+<p><a class="primary" href="/modules/tablero/plantilla.json">${both({ es: "Descargar plantilla.json", en: "Download plantilla.json" })}</a></p>
+<p class="source">${both({ es: "Licencia MIT, la misma del código. El archivo no se envía a ningún sitio al descargarlo.", en: "MIT license, the same as the code. Downloading the file does not send it anywhere." })}</p>
+</section>
 <section><h2>${both({ es: "Integración continua", en: "Continuous integration" })}</h2><p><code>${escapeHtml(board.ci.workflow)}</code> · Node ${escapeHtml(board.ci.node)}</p><p>${both(board.ci.whatItRuns)}</p><p>${both(board.ci.limit)}</p>${ciHref ? `<p><a href="${escapeHtml(ciHref)}">${both({ es: "Workflow en Actions", en: "Workflow on Actions" })}</a></p>` : ""}<ul>${runs}</ul></section>
 <section><h2>${both({ es: "Pruebas en el repositorio", en: "Tests in the repository" })}</h2><ul>${tests.map((file) => `<li><code>${escapeHtml(file)}</code></li>`).join("")}</ul></section>
 <section><h2>${both({ es: "Hitos copiados de CHANGELOG.md", en: "Milestones copied from CHANGELOG.md" })}</h2><p class="muted">${both({ es: "Son encabezados del archivo, no compromisos de esta página.", en: "They are headings from the file, not commitments of this page." })}</p><ul>${changelog.map((line) => `<li>${both({ es: line, en: milestoneEn(line) })}</li>`).join("")}</ul></section>`;
