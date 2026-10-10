@@ -344,12 +344,15 @@ def home() -> str:
 <section class="hero">
 <div>
 <p class="kicker">{t("Solana · Pump.fun · Prototipo", "Solana · Pump.fun · Prototype")}</p>
+<p class="motto">{t("No stub, no story", "No stub, no story")}</p>
 <h1>{t("Contrasta la dirección antes de creer el nombre.", "Check the address before you trust the name.")}</h1>
-<p class="lede">{t("STUBX Verify lee en directo, y solo en lectura, cualquier token SPL o Token-2022. También compara con fichas de ejemplo: la oficial está releída el 2026-10-09, con el saldo de la curva y el de la creadora. No pide una cuenta y no dice qué comprar.", "STUBX Verify reads any SPL or Token-2022 token live, and read-only. It also compares with example cards: the official one was read again on 2026-10-09, with the curve balance and the creator balance. It does not ask for an account and it does not say what to buy.")}</p>
 <div class="hero-actions">
-<a class="primary" href="/verify/">{t("Analizar token", "Analyze token")}</a>
+<a class="primary" href="/verify/">{t("Verificar un token", "Verify a token")}</a>
+<a class="primary cta-gem" href="/studio/">{t("Crear en Studio", "Create in Studio")}</a>
+<a href="/verify/">{t("Analizar token", "Analyze token")}</a>
 <a href="/methodology/">{t("Ver la metodología", "Read the methodology")}</a>
 </div>
+<p class="lede">{t("STUBX Verify lee en directo, y solo en lectura, cualquier token SPL o Token-2022. También compara con fichas de ejemplo: la oficial está releída el 2026-10-09, con el saldo de la curva y el de la creadora. No pide una cuenta y no dice qué comprar.", "STUBX Verify reads any SPL or Token-2022 token live, and read-only. It also compares with example cards: the official one was read again on 2026-10-09, with the curve balance and the creator balance. It does not ask for an account and it does not say what to buy.")}</p>
 <p class="source">{t("La acción abre Verify: lectura en vivo y solo lectura, más las fichas fechadas del 2026-10-09 (commit 86df576). No es una puntuación. La PR 14 se fusionó en main el 2026-10-09.", "The action opens Verify: a live read-only reading, plus the dated cards of 2026-10-09 (commit 86df576). It is not a score. PR 14 was merged into main on 2026-10-09.")}</p>
 </div>
 <figure>
@@ -357,7 +360,7 @@ def home() -> str:
 <source media="(min-width: 900px)" srcset="assets/hero-talon-1000.webp" type="image/webp">
 <img src="assets/hero-talon-movil-800.webp" width="800" height="750" alt="{html.escape("Agente Talón, personaje de STUBX: ticket rosa con una gema verde. Ilustración con elementos generados con IA. / Agente Talón, the STUBX character: a pink ticket with a green gem. Illustration with AI-generated elements.")}">
 </picture>
-<figcaption>{t("Agente Talón. Ilustración con elementos generados con IA. No es un sello de aprobación.", "Agente Talón. Illustration with AI-generated elements. It is not a seal of approval.")}</figcaption>
+<figcaption>{t("Agente Talón. No es un sello de aprobación.", "Agente Talón. It is not a seal of approval.")}</figcaption>
 </figure>
 </section>
 <section class="ca-panel" id="contrato" aria-labelledby="ca-title">
@@ -379,20 +382,20 @@ def home() -> str:
 </div>
 <h2>{t("Herramientas de esta misma web", "Tools on this website")}</h2>
 <p>{t("Misma navegación, mismos estilos y el mismo selector de idioma. Lo que no está construido no tiene un botón que finja funcionar.", "Same navigation, same styles, and the same language switch. What is not built has no button pretending to work.")}</p>
-<div class="grid-3">
+<div class="grid-3 tool-grid">
 <article class="card"><p class="estado-pill">{t("Lectura en vivo + fichas del 2026-10-09", "Live reading + cards of 2026-10-09")}</p><h3>Verify</h3><p>{t("Pega la dirección de un token SPL o Token-2022. La página lee la cadena en directo y solo en lectura, y la compara con las fichas fechadas. No es una puntuación.", "Paste the address of an SPL or Token-2022 token. The page reads the chain live and read-only, and compares it with the dated cards. It is not a score.")}</p><p><a class="primary" href="/verify/">{t("Analizar token", "Analyze token")}</a></p></article>
 <article class="card"><p class="estado-pill">{t("Demo fechada · 2026-10-09", "Dated demo · 2026-10-09")}</p><h3>Lab</h3><p>{t("Una misión de cinco pasos para distinguir el mint del registro de un clon. El progreso se queda en este navegador.", "A five-step mission to tell the registry mint from a clone. Progress stays in this browser.")}</p><p><a href="/lab/">{t("Hacer la misión", "Start the mission")}</a></p></article>
 <article class="card"><p class="estado-pill">{t("Registro · 2026-10-10", "Record · 2026-10-10")}</p><h3>{t("Tablero", "Board")}</h3><p>{t("Qué está en idea, qué está en el repositorio y qué está en stubxai.com. Hay una plantilla vacía para copiar. No avala otros tokens ni promete fechas.", "What is an idea, what is in the repository, and what is on stubxai.com. There is an empty template to copy. It does not endorse other tokens and it promises no dates.")}</p><p><a href="/tablero/">{t("Abrir el tablero", "Open the board")}</a></p></article>
 </div>
-<div class="grid-3">
+<div class="grid-3 tool-grid">
 <article class="card"><p class="estado-pill">{t("En este navegador · 2026-10-09", "In this browser · 2026-10-09")}</p><h3>Studio</h3><p>{t("Crea una imagen para tu token, sin cuenta. Los recursos de STUBX vienen por defecto. El nombre, el logo y la exportación se quedan en este navegador.", "Create an image for your token, without an account. STUBX assets start as the default. The name, the logo, and the export stay in this browser.")}</p><p><a href="/studio/">{t("Abrir Studio", "Open Studio")}</a></p></article>
 <article class="card"><p class="estado-pill">{t("Solo lectura · 2026-10-09", "Read-only · 2026-10-09")}</p><h3>{t("Cuaderno", "Notebook")}</h3><p>{t("Guarda en este navegador la lectura de cualquier token de Solana, con una nota aparte. No conecta una cartera.", "It saves a reading of any Solana token in this browser, with a separate note. It does not connect a wallet.")}</p><p><a href="/cuaderno/">{t("Abrir el cuaderno", "Open the notebook")}</a></p></article>
 <article class="card"><p class="estado-pill">{t("Canal · 2026-10-10", "Channel · 2026-10-10")}</p><h3>{t("Contribuir", "Contribute")}</h3><p>{t("Informa un fallo o una mejora de estas herramientas. Cualquier token de Solana puede ser el ejemplo. No hay formulario, ni cuenta, ni datos personales: el informe se abre en GitHub.", "Report a bug or an improvement to these tools. Any Solana token can be the example. There is no form, no account, and no personal data: the report opens on GitHub.")}</p><p><a href="/contribuir/">{t("Abrir contribuciones", "Open contributions")}</a></p></article>
 </div>
-<div class="grid-3">
+<div class="grid-3 tool-grid">
 <article class="card"><p class="estado-pill">{t("Lectura · 2026-10-10", "Reading · 2026-10-10")}</p><h3>{t("Curva", "Curve")}</h3><p>{t("Pega cualquier dirección de Solana. La página dice la moneda base y el estado de la curva, tal como están en la cadena. Exporta una instantánea. Escribir una dirección no avala ese token.", "Paste any Solana address. The page states the base currency and the curve state, as they are on chain. It exports a snapshot. Writing an address does not endorse that token.")}</p><p><a href="/pares/">{t("Abrir la curva", "Open the curve")}</a></p></article>
 </div>
-<div class="grid-3">
+<div class="grid-3 tool-grid">
 <article class="card"><p class="estado-pill">{t("Ejemplo · 2026-10-10", "Example · 2026-10-10")}</p><h3>{t("Comparar", "Compare")}</h3><p>{t("Ejemplo educativo fijo de cómo se lee una curva. No usa una dirección. Legal ya lo revisó. Cualquier versión con datos reales necesitará una revisión nueva.", "Fixed educational example of how a curve is read. It does not use an address. Legal has already reviewed it. Any version with real data will need a new review.")}</p><p><a href="/comparar/">{t("Ver el ejemplo", "See the example")}</a></p></article>
 </div>
 <section id="transparencia">
@@ -484,7 +487,45 @@ def prepare_tool(name: str) -> str:
             + "</p>\n"
         )
         raw = raw.replace('<p class="aviso-fijo">', library + '<p class="aviso-fijo">', 1)
-    return raw
+    return fold_aviso(raw)
+
+
+def fold_aviso(raw: str) -> str:
+    """La primera línea visible queda fuera del desplegable. El resto no cambia de texto."""
+    marker = '<div class="aviso" data-disclaimer="si">'
+    start = raw.find(marker)
+    if start < 0:
+        return raw
+    end = raw.find("</div>", start)
+    if end < 0:
+        return raw
+    block = raw[start:end]
+    first_end = block.find("</p>")
+    if first_end < 0:
+        return raw
+    if 'class="aviso-mas"' in block:
+        return raw
+    open_end = block.find(">") + 1
+    lead = (
+        "<p>"
+        + t(
+            "Lectura informativa y solo lectura. No es una auditoría, ni un aval, ni una recomendación. Puedes perderlo todo.",
+            "Informational, read-only view. It is not an audit, an endorsement, or a recommendation. You could lose everything.",
+        )
+        + "</p>"
+    )
+    head = block[:open_end] + lead + block[open_end : first_end + 4]
+    rest = block[first_end + 4 :]
+    if not rest.strip():
+        return raw[:start] + head + raw[end:]
+    summary = (
+        '<details class="aviso-mas"><summary>'
+        + t("Leer el aviso completo", "Read the full notice")
+        + "</summary>"
+        + rest
+        + "</details>"
+    )
+    return raw[:start] + head + summary + raw[end:]
 
 
 def methodology() -> str:
