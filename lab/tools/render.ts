@@ -417,6 +417,9 @@ const PERSON_EN: Record<string, string> = {
 };
 
 const MILESTONE_EN: Record<string, string> = {
+  "[0.1.0] — 2026-10-09": "[0.1.0] — 2026-10-09",
+  "2026-09-26 · Esqueleto público (queda dentro de 0.1.0)":
+    "2026-09-26 · Public skeleton (part of 0.1.0)",
   "2026-10-09 · Verify y Lab: lectura visible en el móvil":
     "2026-10-09 · Verify and Lab: the reading stays visible on a phone",
   "2026-10-09 · Revisión de seguridad de Verify y Lab (borrador, sin publicar)":

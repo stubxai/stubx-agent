@@ -1,5 +1,42 @@
 # Changelog
 
+## [0.1.0] — 2026-10-09
+
+Lo que hay en este repositorio hasta el 2026-10-09. El paquete `@stubx/agents` sigue en `0.1.0`. El tag anotado `v0.1.0` está preparado y **no está creado**. Cómo crearlo a mano, y por qué esta entrega no lo hace: [docs/releases/v0.1.0/TAG.md](docs/releases/v0.1.0/TAG.md).
+
+Notas de la versión: [español](docs/releases/v0.1.0/NOTAS.es.md) · [English](docs/releases/v0.1.0/NOTAS.en.md).
+
+Esta entrada resume. No reescribe el detalle fechado que sigue debajo.
+
+### Verify
+
+- Componente aparte, de solo lectura: CLI `verify`, fichas JSON, Markdown y HTML, y pruebas sin red. No firma, no envía y no custodia. El agente de `src/` sigue sin contactar ningún RPC.
+- Ejemplos fechados del 2026-10-08 y del 2026-10-09, incluida la ficha oficial releída y los ejemplos añadidos ese día. Una ficha parcial no rellena el hueco.
+- En la web v2, `/verify` compara con esas fichas. No es una lectura en vivo.
+
+### Lab
+
+- Misión 1, cinco pasos, para distinguir la dirección del nombre. El progreso se queda en el navegador. No pide cartera ni pago.
+- Glosario y tres guías. El inglés de esa biblioteca sigue pendiente de revisión humana: si no coincide, manda el español.
+
+### Web v2
+
+- Misma navegación, mismos estilos y el mismo cambio de idioma en las páginas de la vista previa (`web/v2/`). Verify y Lab van dentro de ese cascarón, no en otra web.
+- Pie vigente: «Cripto de alto riesgo · Puedes perderlo todo · No es consejo de inversión.» / «High-risk crypto · You could lose everything · Not investment advice.»
+- Studio, el cuaderno y las contribuciones siguen como hueco en esta versión: la página dice que no están construidos.
+- Esta entrada no despliega `web/v2/`. stubxai.com no cambia por este documento.
+
+### Indexación
+
+- `web/v2/robots.txt` (v3, 2026-10-09) permite el rastreo general y publica el sitemap. Los rastreadores de entrenamiento de IA que esa lista nombra quedan en `Disallow`.
+- `web/v2/sitemap.xml` lista las páginas públicas con `lastmod`.
+- No hay `noindex` global. `X-Robots-Tag: noindex, nofollow` queda en el service worker de Lab, los JSON, el manifiesto, la 404 y `/studio/`.
+- La web de producción copiada en `web/current/` conserva su `noindex`. No es la vista previa.
+
+### Texto retirado
+
+- En README y LIMITS, la frase retirada «Memecoin experimental · puedes perderlo todo…» pasa al pie vigente. En inglés, «could», no «can».
+
 ## 2026-10-09 · Verify y Lab: lectura visible en el móvil
 
 - En menos de 600 px la cabecera deja de quedarse fija. Tras Comprobar, la página se desplaza al veredicto y el foco va al titular.
@@ -83,9 +120,9 @@ Fase P3: simulacro del kill-switch.
 - README y THREAT-MODEL: según confirmó su propietario el 26-09-2026, la cuenta de GitHub `stubxai` tiene activada la 2FA (no verificable desde fuera).
 - La casilla «Kill-switch» del PPM sigue sin marcar hasta tener al menos 2 simulacros públicos seguidos en verde y revisión.
 
-## 0.1.0 — 2026-09-26
+## 2026-09-26 · Esqueleto público (queda dentro de 0.1.0)
 
-Primera publicación del esqueleto público (fases P1 y P2).
+Primera publicación del esqueleto público (fases P1 y P2). El número de versión del paquete no cambia: esto es el origen de `0.1.0`, no otra versión.
 
 - Paquete `@stubx/agents` con licencia MIT. Sin dependencias de ejecución.
 - Dispatcher con lista cerrada de acciones. Un nombre de firma o de envío se rechaza aunque alguien lo añada a la lista.
