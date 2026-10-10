@@ -736,6 +736,11 @@ describe("studio", () => {
     assert.match(editor, /STUBX assets are the default option/);
     assert.match(editor, /Ese archivo no sirve como logo/);
     assert.match(editor, /That file cannot be used as a logo/);
+    assert.match(editor, /id="aviso-logo-peso"/);
+    assert.match(editor, /El archivo pesa demasiado \(máx\. 1,5 MB\)\./);
+    assert.match(editor, /The file is too large \(max\. 1\.5 MB\)\./);
+    assert.match(editor, /La imagen es demasiado grande \(máx\. 2048 px\)\./);
+    assert.match(editor, /The image is too large \(max\. 2048 px\)\./);
     assert.match(reglas, /El nombre del token pasa por el mismo filtro/);
     assert.match(reglas, /The token name goes through the same filter/);
     assert.match(reglas, /Los recursos de STUBX siguen como opción por defecto/);
@@ -760,11 +765,12 @@ describe("studio", () => {
     assert.match(logoSrc, /\.normalize\("NFKC"\)/);
     assert.equal(logoSrc.includes(String.raw`[\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF]`), false);
     assert.match(editor, /id="aviso-logo-medida"/);
-    assert.match(editor, /Ese PNG declara más de 2048 px de ancho o de alto y no se abre/);
-    assert.match(editor, /That PNG declares more than 2048 px in width or height and will not be opened/);
+    assert.match(readStudio("studio.css"), /#aviso-logo \.lang, #aviso-logo-peso \.lang, #aviso-logo-medida \.lang \{ display: block; \}/);
     assert.match(editor, /Con otro nombre no se usa la mascota de STUBX/);
     assert.match(editor, /With another name the STUBX mascot is not used/);
-    assert.match(script, /error\?\.message === "logo-size"/);
+    assert.match(script, /message === "logo-bytes"/);
+    assert.match(script, /message === "logo-size"/);
+    assert.match(script, /function hideLogoErrors\(\)/);
     assert.match(script, /const stubxName = isStubxToken\(name\)/);
     assert.match(script, /const avatar = stubxName \? avatarItem\(\) : null/);
     assert.equal(/type="file"|<form\b|gallery|galería|FormData/.test(script), false);
@@ -1000,7 +1006,10 @@ describe("studio", () => {
     assert.equal(fitted.width, 2);
     assert.equal(fitted.height, 1);
     await assert.rejects(() => readLogoPng(new Uint8Array([1, 2, 3, 4])));
-    await assert.rejects(() => readLogoPng(new Uint8Array(LOGO_MAX_BYTES + 1)));
+    await assert.rejects(() => readLogoPng(new Uint8Array(LOGO_MAX_BYTES + 1)), (error: Error) => {
+      assert.equal(error.message, "logo-bytes");
+      return true;
+    });
     assert.equal(LOGO_DRAW_EDGE, 512);
     const bomb = pngDeclaring(12000, 12000);
     assert.equal(pngDimensions(bomb).width, 12000);
@@ -1015,6 +1024,10 @@ describe("studio", () => {
     });
     await assert.rejects(() => readLogoPng(pngDeclaring(2048, 8)), (error: Error) => {
       assert.notEqual(error.message, "logo-size");
+      return true;
+    });
+    await assert.rejects(() => readLogoPng(pngDeclaring(2049, 8)), (error: Error) => {
+      assert.equal(error.message, "logo-size");
       return true;
     });
     assert.equal(pngRawSize(8, 8, 8, 6), 264);

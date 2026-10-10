@@ -40,9 +40,8 @@ export function fitLogo(image, edge) {
 }
 
 export async function readLogoPng(bytes) {
-  if (!(bytes instanceof Uint8Array) || bytes.length === 0 || bytes.length > LOGO_MAX_BYTES) {
-    throw new Error("logo");
-  }
+  if (!(bytes instanceof Uint8Array) || bytes.length === 0) throw new Error("logo");
+  if (bytes.length > LOGO_MAX_BYTES) throw new Error("logo-bytes");
   let width = 0;
   let height = 0;
   try {
