@@ -617,6 +617,7 @@ main h1::after {
 .aviso-fijo,
 footer.site p {
   color: var(--text);
+  font-size: max(1rem, 14px);
   background: var(--abyss);
   border: 1px solid rgba(142, 172, 207, 0.5);
   border-left: 6px solid var(--attention);
@@ -739,9 +740,12 @@ body:has(a[href="/verify/"][aria-current="page"]) #aviso-version,
 body:has(a[href="/lab/"][aria-current="page"]) #aviso-version,
 body:has(a[href="/tablero/"][aria-current="page"]) #aviso-version { order: 3; }
 body:has(a[href="/verify/"][aria-current="page"]) .herramienta { display: contents; }
-body:has(a[href="/verify/"][aria-current="page"]) form.consulta,
 body:has(a[href="/pares/"][aria-current="page"]) form.consulta,
 body:has(a[href="/cuaderno/"][aria-current="page"]) form.consulta { order: 2; }
+body:has(a[href="/verify/"][aria-current="page"]) main > .aviso,
+body:has(a[href="/lab/"][aria-current="page"]) main > .aviso,
+body:has(a[href="/tablero/"][aria-current="page"]) main > .aviso { order: 2; }
+body:has(a[href="/verify/"][aria-current="page"]) form.consulta { order: 3; }
 body:has(a[href="/verify/"][aria-current="page"]) main > .lede,
 body:has(a[href="/lab/"][aria-current="page"]) main > .lede,
 body:has(a[href="/pares/"][aria-current="page"]) main > .lede,
@@ -1011,14 +1015,12 @@ article.slot:has(> h1) {
 }
 article.slot:has(> h1)::before { content: none; }
 @media (min-width: 48.01rem) {
-  body:has(a[href="/verify/"][aria-current="page"]) main > h1,
   body:has(a[href="/pares/"][aria-current="page"]) main > h1,
   body:has(a[href="/cuaderno/"][aria-current="page"]) main > h1 {
     margin-bottom: -0.9rem;
     border-bottom: 0;
     border-radius: 1.35rem 1.35rem 0 0;
   }
-  body:has(a[href="/verify/"][aria-current="page"]) form.consulta,
   body:has(a[href="/pares/"][aria-current="page"]) form.consulta,
   body:has(a[href="/cuaderno/"][aria-current="page"]) form.consulta {
     margin-top: 0;

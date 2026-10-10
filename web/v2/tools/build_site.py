@@ -491,7 +491,7 @@ def prepare_tool(name: str) -> str:
 
 
 def fold_aviso(raw: str) -> str:
-    """Deja la primera línea del aviso fuera del desplegable, sin cambiar su texto."""
+    """La primera línea visible queda fuera del desplegable. El resto no cambia de texto."""
     marker = '<div class="aviso" data-disclaimer="si">'
     start = raw.find(marker)
     if start < 0:
@@ -503,10 +503,21 @@ def fold_aviso(raw: str) -> str:
     first_end = block.find("</p>")
     if first_end < 0:
         return raw
-    head = block[: first_end + 4]
-    rest = block[first_end + 4 :]
-    if not rest.strip() or 'class="aviso-mas"' in block:
+    if 'class="aviso-mas"' in block:
         return raw
+    open_end = block.find(">") + 1
+    lead = (
+        "<p>"
+        + t(
+            "Lectura informativa y solo lectura. No es una auditoría, ni un aval, ni una recomendación. Puedes perderlo todo.",
+            "Informative read-only reading. It is not an audit, an endorsement, or a recommendation. You could lose everything.",
+        )
+        + "</p>"
+    )
+    head = block[:open_end] + lead + block[open_end : first_end + 4]
+    rest = block[first_end + 4 :]
+    if not rest.strip():
+        return raw[:start] + head + raw[end:]
     summary = (
         '<details class="aviso-mas"><summary>'
         + t("Leer el aviso completo", "Read the full notice")
