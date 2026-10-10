@@ -495,25 +495,81 @@
     },
     {
       "id": "U04",
-      "version": "0",
+      "version": "1",
       "title": {
         "es": "Contribuciones útiles",
         "en": "Useful contributions"
       },
-      "status": "propuesta",
+      "status": "en_revision",
       "webPublished": false,
       "scope": {
-        "es": "Idea de un piloto manual. El 2026-10-10, stubxai.com/contribuir responde y la página dice que no está construida.",
-        "en": "Idea of a manual pilot. On 2026-10-10, stubxai.com/contribuir answers and the page says it is not built."
+        "es": "Canal en el repositorio para un fallo que se puede repetir, un texto confuso, una traducción o una prueba de accesibilidad. Cualquier token de Solana puede ser el ejemplo del fallo. La página no pide cuenta ni guarda datos. No está en stubxai.com.",
+        "en": "A channel in the repository for a repeatable bug, confusing text, a translation, or an accessibility check. Any Solana token can be the example of the bug. The page does not ask for an account and does not store data. It is not on stubxai.com."
       },
-      "owner": "Sin asignar",
-      "reviewer": "No aplica todavía.",
-      "reviewedOn": null,
+      "owner": "Equipo del repositorio",
+      "reviewer": "Pendiente de una persona distinta del autor, antes de publicar.",
+      "reviewedOn": "2026-10-10",
       "block": {
-        "es": "Hace falta definir el canal antes de pedir aportaciones.",
-        "en": "The channel has to be defined before asking for contributions."
+        "es": "Listo para marcar En stubxai.com como sí cuando se despliegue la página. Hoy la función no se abre en la web.",
+        "en": "Ready to mark On stubxai.com as yes when the page is deployed. Today the function does not open on the website."
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "label": {
+            "es": "Página Contribuir",
+            "en": "Contribute page"
+          },
+          "path": "web/v2/contribuir/index.html",
+          "note": {
+            "es": "Sin formulario. Enlaza con GitHub.",
+            "en": "No form. It links to GitHub."
+          }
+        },
+        {
+          "label": {
+            "es": "Plantilla de fallo",
+            "en": "Bug template"
+          },
+          "path": ".github/ISSUE_TEMPLATE/informe-fallo.yml",
+          "note": {
+            "es": "Versión, pasos, resultado y evidencia.",
+            "en": "Version, steps, result, and evidence."
+          }
+        },
+        {
+          "label": {
+            "es": "Plantilla de mejora",
+            "en": "Improvement template"
+          },
+          "path": ".github/ISSUE_TEMPLATE/mejora.yml",
+          "note": {
+            "es": "Explicación, traducción o accesibilidad.",
+            "en": "Explanation, translation, or accessibility."
+          }
+        },
+        {
+          "label": {
+            "es": "Plantilla de propuesta",
+            "en": "Proposal template"
+          },
+          "path": ".github/PULL_REQUEST_TEMPLATE.md",
+          "note": {
+            "es": "GitHub la muestra al abrir una propuesta.",
+            "en": "GitHub shows it when a proposal is opened."
+          }
+        },
+        {
+          "label": {
+            "es": "Plantilla descargable",
+            "en": "Downloadable template"
+          },
+          "path": "web/v2/contribuir/plantilla.md",
+          "note": {
+            "es": "La web no la recibe.",
+            "en": "The website does not receive it."
+          }
+        }
+      ],
       "history": [
         {
           "on": "2026-10-09",
@@ -525,8 +581,22 @@
         {
           "on": "2026-10-10",
           "change": {
-            "es": "stubxai.com/contribuir responde y la página dice que no está construida. Sigue sin publicar.",
-            "en": "stubxai.com/contribuir answers and the page says it is not built. Still not published."
+            "es": "Canal en el repositorio: página, plantillas de issue y plantilla de propuesta. Sigue fuera de stubxai.com.",
+            "en": "Channel in the repository: page, issue templates, and proposal template. Still absent from stubxai.com."
+          }
+        },
+        {
+          "on": "2026-10-10",
+          "change": {
+            "es": "El canal está en este repositorio. stubxai.com/contribuir responde y la página dice que no está construida. Sigue sin publicar.",
+            "en": "The channel is in this repository. stubxai.com/contribuir answers and the page says it is not built. Still not published."
+          }
+        },
+        {
+          "on": "2026-10-10",
+          "change": {
+            "es": "El registro queda listo. Al desplegar la página, la columna stubxai.com pasa a sí. El historial anterior se conserva.",
+            "en": "The record is ready. When the page is deployed, the stubxai.com column becomes yes. The earlier history is kept."
           }
         }
       ]
@@ -621,25 +691,59 @@
     },
     {
       "id": "U09",
-      "version": "0",
+      "version": "1",
       "title": {
-        "es": "Pares de Pump e informes reutilizables",
-        "en": "Pump pairs and reusable reports"
+        "es": "Lectura de la curva",
+        "en": "Curve reading"
       },
-      "status": "propuesta",
+      "status": "en_revision",
       "webPublished": false,
       "scope": {
-        "es": "Idea de lectura de pares, condicionada. Estas páginas no declaran compatibilidad con pares nuevos.",
-        "en": "An idea for reading pairs, conditional. These pages do not claim compatibility with new pairs."
+        "es": "Lectura de la moneda base y del estado de la curva, tal como están en la cadena. Cualquier mint. Sin firma y sin envío. No está en stubxai.com.",
+        "en": "A reading of the base currency and the curve state, as they are on chain. Any mint. No signing and no sending. It is not on stubxai.com."
       },
-      "owner": "Sin asignar",
-      "reviewer": "No aplica todavía.",
-      "reviewedOn": null,
+      "owner": "Equipo del repositorio",
+      "reviewer": "Pendiente de una persona distinta del autor, antes de publicar.",
+      "reviewedOn": "2026-10-10",
       "block": {
-        "es": "Hace falta comprobar la modalidad real antes de decir que está soportada.",
-        "en": "The real mode has to be checked before saying it is supported."
+        "es": "No publicar hasta una prueba en el móvil y una autorización explícita. El 2026-10-10, stubxai.com/pares no existe.",
+        "en": "Do not publish until a mobile test and an explicit authorization. On 2026-10-10, stubxai.com/pares does not exist."
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "label": {
+            "es": "Página",
+            "en": "Page"
+          },
+          "path": "web/v2/pares/index.html",
+          "note": {
+            "es": "Lectura de solo lectura en la web v2. No está en stubxai.com.",
+            "en": "Read-only page in web v2. It is not on stubxai.com."
+          }
+        },
+        {
+          "label": {
+            "es": "Lectura",
+            "en": "Read"
+          },
+          "path": "pares/chain-read.mjs",
+          "note": {
+            "es": "Misma lista cerrada de métodos y los dos servicios públicos.",
+            "en": "The same closed method list and the two public services."
+          }
+        },
+        {
+          "label": {
+            "es": "Informe",
+            "en": "Report"
+          },
+          "path": "web/v2/modules/pair-report.mjs",
+          "note": {
+            "es": "Instantánea con hash. El hash detecta cambios y no certifica verdad.",
+            "en": "Snapshot with a hash. The hash detects changes and does not certify truth."
+          }
+        }
+      ],
       "history": [
         {
           "on": "2026-10-09",
@@ -651,8 +755,15 @@
         {
           "on": "2026-10-10",
           "change": {
-            "es": "stubxai.com/pares no existe. Sigue como idea.",
-            "en": "stubxai.com/pares does not exist. It stays an idea."
+            "es": "Hay una página de solo lectura y una exportación de instantánea. Sigue fuera de stubxai.com.",
+            "en": "There is a read-only page and a snapshot export. It is still off stubxai.com."
+          }
+        },
+        {
+          "on": "2026-10-10",
+          "change": {
+            "es": "El título pasa a lectura de la curva. Sigue fuera de stubxai.com.",
+            "en": "The title becomes curve reading. Still absent from stubxai.com."
           }
         }
       ]

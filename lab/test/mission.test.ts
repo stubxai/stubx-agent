@@ -291,10 +291,18 @@ describe("tablero", () => {
     assert.equal(byId.get("U08")?.status, "en_curso");
     assert.equal(byId.get("U02")?.status, "en_revision");
     assert.ok((byId.get("U02")?.evidence.length ?? 0) > 0);
+    assert.equal(byId.get("U04")?.status, "en_revision");
+    assert.ok((byId.get("U04")?.evidence.length ?? 0) > 0);
+    assert.equal(byId.get("U04")?.webPublished, false);
+    assert.match(byId.get("U04")?.block?.es ?? "", /Listo para marcar En stubxai.com como sí cuando se despliegue la página/);
     assert.equal(byId.get("U07")?.status, "en_revision");
     assert.ok((byId.get("U07")?.evidence.length ?? 0) > 0);
     assert.equal(byId.get("U07")?.webPublished, false);
-    for (const id of ["U04", "U05", "U09"]) {
+    assert.match(byId.get("U07")?.block?.es ?? "", /Ejemplo educativo fijo, revisado por Legal/);
+    assert.equal(byId.get("U09")?.status, "en_revision");
+    assert.equal(byId.get("U09")?.webPublished, false);
+    assert.ok((byId.get("U09")?.evidence.length ?? 0) > 0);
+    for (const id of ["U05"]) {
       assert.equal(byId.get(id)?.status, "propuesta", id);
       assert.equal(byId.get(id)?.evidence.length, 0, id);
     }

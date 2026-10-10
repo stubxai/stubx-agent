@@ -305,6 +305,30 @@ export function encodeGlobalAccount(protocolBps, creatorBps) {
   return data;
 }
 
+export function encodeMetadataAccount(mint, name, symbol, uri) {
+  const mintBytes = decodePubkey(mint);
+  if (!mintBytes) return null;
+  const parts = [name, symbol, uri].map((text) => {
+    const raw = new TextEncoder().encode(text);
+    const out = new Uint8Array(4 + raw.length);
+    out[0] = raw.length & 255;
+    out[1] = (raw.length >> 8) & 255;
+    out[2] = (raw.length >> 16) & 255;
+    out[3] = (raw.length >> 24) & 255;
+    out.set(raw, 4);
+    return out;
+  });
+  const data = new Uint8Array(65 + parts.reduce((sum, part) => sum + part.length, 0));
+  data[0] = 4;
+  data.set(mintBytes, 33);
+  let cursor = 65;
+  for (const part of parts) {
+    data.set(part, cursor);
+    cursor += part.length;
+  }
+  return data;
+}
+
 export function decodeMint(owner, data) {
   if (owner !== TOKEN_PROGRAM && owner !== TOKEN_2022_PROGRAM) return null;
   if (data.length < 82 || data[45] !== 1) return null;

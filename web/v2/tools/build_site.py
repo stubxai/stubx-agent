@@ -139,7 +139,9 @@ PRIMARY = [
     ("lab", "lab/index.html", "Lab", "Lab"),
     ("tablero", "tablero/index.html", "Tablero", "Board"),
     ("studio", "studio/index.html", "Studio", "Studio"),
+    ("pares", "pares/index.html", "Curva", "Curve"),
     ("comparar", "comparar/index.html", "Comparar", "Compare"),
+    ("contribuir", "contribuir/index.html", "Contribuir", "Contribute"),
 ]
 MORE = [
     ("methodology", "methodology/index.html", "Metodología", "Methodology"),
@@ -155,6 +157,7 @@ MORE = [
     ("aprender", "aprender/index.html", "Aprender", "Learn"),
     ("avances", "avances/index.html", "Avances", "Progress"),
     ("studio", "studio/index.html", "Studio", "Studio"),
+    ("pares", "pares/index.html", "Curva", "Curve"),
     ("comparar", "comparar/index.html", "Comparar", "Compare"),
     ("cuaderno", "cuaderno/index.html", "Cuaderno", "Notebook"),
     ("contribuir", "contribuir/index.html", "Contribuir", "Contribute"),
@@ -371,7 +374,10 @@ def home() -> str:
 <div class="grid-3">
 <article class="card"><p class="estado-pill">{t("En este navegador · 2026-10-09", "In this browser · 2026-10-09")}</p><h3>Studio</h3><p>{t("Crea una imagen para tu token, sin cuenta. Los recursos de STUBX vienen por defecto. El nombre, el logo y la exportación se quedan en este navegador.", "Create an image for your token, without an account. STUBX assets start as the default. The name, the logo, and the export stay in this browser.")}</p><p><a href="/studio/">{t("Abrir Studio", "Open Studio")}</a></p></article>
 <article class="slot"><p class="estado-pill">{t("No construido · 2026-10-09", "Not built · 2026-10-09")}</p><h3>{t("Cuaderno", "Notebook")}</h3><p>{t("No hay notas ni historial de consultas. Lab solo guarda el progreso de la misión.", "There are no notes and no query history. Lab only stores mission progress.")}</p><p><a href="/cuaderno/">{t("Ver qué falta", "See what is missing")}</a></p></article>
-<article class="slot"><p class="estado-pill">{t("No construido · 2026-10-09", "Not built · 2026-10-09")}</p><h3>{t("Contribuir", "Contribute")}</h3><p>{t("No hay formulario ni entrega de archivos. No se piden aportaciones.", "There is no form and no file upload. Contributions are not being requested.")}</p><p><a href="/contribuir/">{t("Ver qué falta", "See what is missing")}</a></p></article>
+<article class="card"><p class="estado-pill">{t("Canal · 2026-10-10", "Channel · 2026-10-10")}</p><h3>{t("Contribuir", "Contribute")}</h3><p>{t("Informa un fallo o una mejora de estas herramientas. Cualquier token de Solana puede ser el ejemplo. No hay formulario, ni cuenta, ni datos personales: el informe se abre en GitHub.", "Report a bug or an improvement to these tools. Any Solana token can be the example. There is no form, no account, and no personal data: the report opens on GitHub.")}</p><p><a href="/contribuir/">{t("Abrir contribuciones", "Open contributions")}</a></p></article>
+</div>
+<div class="grid-3">
+<article class="card"><p class="estado-pill">{t("Lectura · 2026-10-10", "Reading · 2026-10-10")}</p><h3>{t("Curva", "Curve")}</h3><p>{t("Pega cualquier dirección de Solana. La página dice la moneda base y el estado de la curva, tal como están en la cadena. Exporta una instantánea. Escribir una dirección no avala ese token.", "Paste any Solana address. The page states the base currency and the curve state, as they are on chain. It exports a snapshot. Writing an address does not endorse that token.")}</p><p><a href="/pares/">{t("Abrir la curva", "Open the curve")}</a></p></article>
 </div>
 <div class="grid-3">
 <article class="card"><p class="estado-pill">{t("Ejemplo · 2026-10-10", "Example · 2026-10-10")}</p><h3>{t("Comparar", "Compare")}</h3><p>{t("Ejemplo educativo fijo de cómo se lee una curva. No usa una dirección. Legal ya lo revisó. Cualquier versión con datos reales necesitará una revisión nueva.", "Fixed educational example of how a curve is read. It does not use an address. Legal has already reviewed it. Any version with real data will need a new review.")}</p><p><a href="/comparar/">{t("Ver el ejemplo", "See the example")}</a></p></article>
@@ -951,6 +957,88 @@ def comparar() -> str:
 """
 
 
+def pares() -> str:
+    origins = " y ".join(rpc_origins())
+    origins_en = " and ".join(rpc_origins())
+    return f"""
+<h1>{t("Lectura de la curva", "Curve reading")}</h1>
+<p class="lede">{t("Pega cualquier mint de Solana. Si hay una curva de Pump.fun, verás la moneda base y el estado de la curva, tal como están en la cadena. Si no hay curva, la página lo dice.", "Paste any Solana mint. If there is a Pump.fun curve, you see the base currency and the curve state, as they are on chain. If there is no curve, the page says so.")}</p>
+<p><strong>{t("Lectura de datos públicos. No es una comparación de calidad, ni una recomendación, ni un aval. STUBX no tiene relación con estos tokens salvo la CA oficial.", "Public data reading. It is not a quality comparison, a recommendation, or an endorsement. STUBX has no relationship with these tokens except the official CA.")}</strong></p>
+<p><span class="lang es" lang="es">No es una auditoría ni una recomendación. Muestra datos públicos de la cadena en el momento indicado; no dice si un token es bueno, seguro o una buena compra.</span><span class="lang en" lang="en">It is not an audit or a recommendation. It shows public chain data at the stated time; it does not say whether a token is good, safe, or a good purchase.</span></p>
+<p>{t("Escribir una dirección no avala ese token. No conecta carteras, no firma y no envía.", "Writing an address does not endorse that token. It does not connect a wallet, it does not sign, and it does not send.")}</p>
+<p>{t("Un emparejamiento no es una colaboración ni un respaldo.", "A pairing is not a collaboration or an endorsement.")}</p>
+{source(
+    f"La lectura usa primero {origins}. Si el primero no responde, prueba el siguiente. Esos servicios reciben la dirección y la IP según sus condiciones. Esta página no guarda la dirección. El enlace de metadatos se muestra como texto y no se abre.",
+    f"The read uses {origins_en}, in that order. If the first one does not answer, it tries the next. Those services receive the address and the IP under their own terms. This page does not store the address. The metadata link is shown as text and is not opened.",
+)}
+<form id="consulta" class="consulta" action="#">
+<label for="direccion-token">{t("Dirección del token", "Token address")}</label>
+<input id="direccion-token" name="direccion" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done">
+<button type="submit">{t("Leer", "Read")}</button>
+<button type="button" id="exportar" hidden>{t("Exportar ficha", "Export card")}</button>
+</form>
+<section id="resultado" class="resultado" tabindex="-1" aria-live="polite">
+<h2>{t("El informe aparece aquí", "The report shows up here")}</h2>
+<p>{t("Si falta un dato, no se rellena con cero. No se inventa ningún dato.", "If a fact is missing, it is not filled in with zero. No data is invented.")}</p>
+</section>
+"""
+
+
+def contribuir() -> str:
+    fallo = "https://github.com/stubxai/stubx-agent/issues/new?template=informe-fallo.yml"
+    mejora = "https://github.com/stubxai/stubx-agent/issues/new?template=mejora.yml"
+    cambios = "https://github.com/stubxai/stubx-agent/compare"
+    politica = "https://github.com/stubxai/stubx-agent/security/policy"
+    return f"""
+<h1>{t("Contribuir", "Contribute")}</h1>
+<p class="lede">{t("Ayuda a mejorar las herramientas de este repositorio. Sirve un error que otra persona pueda repetir, un texto confuso, una traducción revisable o una prueba de accesibilidad. Cualquier token de Solana puede ser el ejemplo del fallo.", "Help improve the tools in this repository. A useful report is a bug someone else can repeat, confusing text, a translation that can be reviewed, or an accessibility check. Any Solana token can be the example of the bug.")}</p>
+<p>{t("Escribir una dirección no dice que ese token sea bueno, seguro o esté avalado. STUBX solo publica una CA oficial, y está en el pie de esta web.", "Writing an address does not say that token is good, safe, or endorsed. STUBX publishes one official CA, and it is in the footer of this website.")}</p>
+<p><strong>{t("No es una auditoría ni una recomendación.", "This is not an audit or a recommendation.")}</strong></p>
+<h2>{t("Qué se acepta", "What is accepted")}</h2>
+<ul class="clean">
+<li>{t("Un fallo con pasos para repetirlo.", "A bug with steps to repeat it.")}</li>
+<li>{t("Una explicación que no se entiende.", "An explanation that is hard to follow.")}</li>
+<li>{t("Una traducción para revisar.", "A translation to review.")}</li>
+<li>{t("Una prueba de accesibilidad: teclado, texto grande o lector de pantalla.", "An accessibility check: keyboard, large text, or a screen reader.")}</li>
+</ul>
+<h2>{t("Qué no se acepta", "What is not accepted")}</h2>
+<ul class="clean">
+<li>{t("Encargos de compra, de volumen o de promoción.", "Requests to buy, to add volume, or to promote.")}</li>
+<li>{t("Semilla, clave privada, correo personal o nombre real.", "A seed, a private key, a personal email, or a real name.")}</li>
+<li>{t("Pedir pago, tokens, recompensas o una parte del proyecto. Contribuir no da derecho a nada de eso. Si lo pides en el texto, un comentario público puede citar solo tu usuario de GitHub.", "Asking for payment, tokens, rewards, or a share of the project. Contributing gives no right to any of that. If you ask in the text, a public comment can cite only your GitHub username.")}</li>
+</ul>
+<h2>{t("Cómo enviarlo", "How to send it")}</h2>
+<p>{t("Esta página no tiene formulario y no guarda nada. No pide una cuenta de STUBX. GitHub pide su propia sesión para abrir el issue o la propuesta; STUBX no recibe esa sesión. Si el formulario de GitHub no carga, copia la plantilla de abajo en un issue nuevo.", "This page has no form and stores nothing. It does not ask for a STUBX account. GitHub asks for its own session to open the issue or the proposal; STUBX does not receive that session. If the GitHub form does not load, paste the template below into a new issue.")}</p>
+<p>{t("Un issue o una propuesta de cambio es público. Lo que escribas, y tu usuario, quedan en GitHub según sus condiciones y su política de privacidad.", "An issue or a change proposal is public. What you write, and your username, stay on GitHub under its terms and privacy policy.")}</p>
+<p>{t("Al enviar una propuesta de cambio, aceptas que se publique con la licencia MIT del repositorio. Las imágenes y el kit con licencia propia no entran: si aportas imágenes, di qué licencia tienen.", "By sending a change proposal, you agree that it is published under the repository's MIT license. Images and a kit with its own license are excluded: if you contribute images, say which license they have.")}</p>
+<div class="btn-row">
+<a class="primary" href="{fallo}">{t("Informar un fallo", "Report a bug")}</a>
+<a href="{mejora}">{t("Proponer una mejora", "Suggest an improvement")}</a>
+<a href="{cambios}">{t("Abrir una propuesta de cambio", "Open a change proposal")}</a>
+<a href="/contribuir/plantilla.md">{t("Descargar la plantilla", "Download the template")}</a>
+</div>
+<h2>{t("Qué hay que incluir", "What to include")}</h2>
+<ul class="clean">
+<li>{t("Versión: el número de package.json o la fecha de la página.", "Version: the package.json number or the date of the page.")}</li>
+<li>{t("Pasos, resultado esperado y resultado observado.", "Steps, the expected result, and the observed result.")}</li>
+<li>{t("Evidencia: el texto del error o qué se ve en pantalla. Sin claves.", "Evidence: the error text or what is on screen. No keys.")}</li>
+<li>{t("Dirección del token, solo si hace falta para repetir el fallo.", "The token address, only if it is needed to repeat the bug.")}</li>
+</ul>
+<h2>{t("Cómo se revisa", "How review works")}</h2>
+<p>{t("El registro es el issue de GitHub. Esta web no guarda una copia ni asigna un revisor aquí. El equipo escribe el estado en un comentario:", "The record is the GitHub issue. This website does not keep a copy and does not assign a reviewer here. The team writes the state in a comment:")}</p>
+<ul class="clean">
+<li>{t("Recibida: el issue está abierto y todavía no hay comentario.", "Received: the issue is open and there is no comment yet.")}</li>
+<li>{t("Pendiente: un comentario dice que se está revisando.", "Pending: a comment says it is being reviewed.")}</li>
+<li>{t("Aceptada: el cambio ya está en el repositorio.", "Accepted: the change is already in the repository.")}</li>
+<li>{t("Duplicada: el comentario señala otro issue igual y este se cierra.", "Duplicate: the comment points to an identical issue and this one is closed.")}</li>
+</ul>
+<p>{t("No hay un plazo. Un envío no se acepta por ser largo o por repetirse.", "There is no deadline. A submission is not accepted because it is long or because it is repeated.")}</p>
+<h2>{t("Si el fallo es sensible", "If the bug is sensitive")}</h2>
+<p>{t("No abras un issue público con el detalle. Escribe a", "Do not open a public issue with the detail. Write to")} <a href="mailto:stubxai.hq@gmail.com">stubxai.hq@gmail.com</a> {t("o lee la", "or read the")} <a href="{politica}">{t("política de seguridad", "security policy")}</a>. {t("No envíes semilla ni claves. No hay pago por informar.", "Do not send a seed or keys. There is no payment for a report.")}</p>
+<p class="source">{t("Plantillas del repositorio: .github/ISSUE_TEMPLATE/ y .github/PULL_REQUEST_TEMPLATE.md. La plantilla descargable no llega a ningún servidor de esta web.", "Repository templates: .github/ISSUE_TEMPLATE/ and .github/PULL_REQUEST_TEMPLATE.md. The downloadable template is not sent to any server on this website.")}</p>
+"""
+
+
 def slot(title_es: str, title_en: str, body_es: str, body_en: str, anchor: str) -> str:
     return f"""
 <article class="slot">
@@ -1055,6 +1143,12 @@ def headers() -> str:
   ! Content-Security-Policy
   {verify_csp}
 /verify/*
+  ! Content-Security-Policy
+  {verify_csp}
+/pares/
+  ! Content-Security-Policy
+  {verify_csp}
+/pares/*
   ! Content-Security-Policy
   {verify_csp}
 
@@ -1166,6 +1260,7 @@ def sitemap() -> str:
         ("https://stubxai.com/tablero/", "2026-10-09"),
         ("https://stubxai.com/studio/", "2026-10-09"),
         ("https://stubxai.com/studio/reglas/", "2026-10-09"),
+        ("https://stubxai.com/pares/", "2026-10-10"),
         ("https://stubxai.com/methodology/", "2026-10-09"),
         ("https://stubxai.com/security/", "2026-10-09"),
         ("https://stubxai.com/risks/", "2026-10-09"),
@@ -1177,6 +1272,7 @@ def sitemap() -> str:
         ("https://stubxai.com/marca/", "2026-10-09"),
         ("https://stubxai.com/build/", "2026-10-09"),
         ("https://stubxai.com/aprender/", "2026-10-09"),
+        ("https://stubxai.com/contribuir/", "2026-10-10"),
         ("https://stubxai.com/archivo", "2026-10-03"),
     ]
     rows = "\n".join(f"  <url><loc>{loc}</loc><lastmod>{day}</lastmod></url>" for loc, day in dated)
@@ -1209,6 +1305,7 @@ def main() -> None:
     write_page("index.html", "home", "STUBX · Contrasta la dirección", "STUBX · Check the address", "Vista previa de STUBX. Lee un token en directo y solo en lectura. No es consejo de inversión.", "STUBX preview. Read a token live and read-only. Not investment advice.", home())
     write_page("verify/index.html", "verify", "STUBX Verify", "STUBX Verify", "Lee cualquier token SPL o Token-2022 en directo y solo en lectura. Las fichas fechadas siguen como ejemplo.", "Read any SPL or Token-2022 token live and read-only. The dated cards remain as examples.", prepare_tool("verify"), ["assets/verify.js"], True, connect=connect_src(True))
     write_page("comparar/index.html", "comparar", "STUBX · Ejemplo de una curva", "STUBX · Curve example", "Ejemplo hipotético, no leído de la cadena. No es una recomendación ni un aval.", "Hypothetical example, not read from the chain. It is not a recommendation or an endorsement.", comparar(), narrow=True)
+    write_page("pares/index.html", "pares", "STUBX · Lectura de la curva", "STUBX · Curve reading", "Moneda base y estado de la curva, tal como están en la cadena. No es una auditoría ni una recomendación.", "Base currency and curve state, as they are on chain. It is not an audit or a recommendation.", pares(), narrow=True, connect=connect_src(True), modules=["assets/pares.mjs"])
     write_page("lab/index.html", "lab", "STUBX Lab", "STUBX Lab", "Misión para distinguir el mint del registro de un clon.", "A mission to tell the registry mint from a clone.", prepare_tool("lab"), ["assets/mission.js"], True, True)
     board = prepare_tool("tablero")
     write_page("tablero/index.html", "tablero", "STUBX · Tablero", "STUBX · Board", "Tablero de construcción con el registro del 2026-10-09.", "Construction board with the 2026-10-09 record.", board)
@@ -1240,9 +1337,9 @@ def main() -> None:
         "contribuir",
         "STUBX · Contribuir",
         "STUBX · Contribute",
-        "Las contribuciones no están abiertas.",
-        "Contributions are not open.",
-        slot("Contribuir", "Contribute", "No hay canal, plantilla descargable ni formulario. No se piden archivos ni datos. U04 es una propuesta, sin premios.", "There is no channel, no downloadable template, and no form. Files and data are not being requested. U04 is a proposal, with no prizes.", "tarea-U04"),
+        "Informa un fallo o una mejora. Sin formulario y sin datos personales.",
+        "Report a bug or an improvement. No form and no personal data.",
+        contribuir(),
     )
     write_page("404.html", "home", "STUBX · No está", "STUBX · Not here", "Esa ruta no está en la vista previa.", "That route is not in the preview.", not_found(), absolute=True)
     print("web v2 escrita")

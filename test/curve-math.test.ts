@@ -95,7 +95,7 @@ describe("el módulo no trae envío ni firma", () => {
     const root = repoRoot();
     assert.equal(existsSync(path.join(root, "web/v2/modules/curve-math.mjs")), false);
     assert.equal(existsSync(path.join(root, "web/v2/modules/chain-read.mjs")), false);
-    for (const rel of ["comparar/curve-math.mjs", "comparar/chain-read.mjs"]) {
+    for (const rel of ["comparar/curve-math.mjs", "pares/chain-read.mjs"]) {
       const text = readFileSync(path.join(root, rel), "utf8");
       assert.equal(text.includes("sendTransaction"), false, rel);
       assert.equal(text.includes("signTransaction"), false, rel);

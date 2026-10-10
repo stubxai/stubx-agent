@@ -75,8 +75,11 @@ async function check(page, name) {
   must((await page.locator('[data-web="no"]').count()) > 0, "sin publicar");
   const boardText = await page.locator("main").innerText();
   must(boardText.includes("La columna stubxai.com dice sí solo si la función se puede abrir hoy en la web."), "columna");
+  must(boardText.includes("Listo para marcar En stubxai.com como sí cuando se despliegue la página."), "u04");
+  must(boardText.includes("2026-10-09 · Medición de uso: ninguna en el cliente"), "medicion");
   must(!boardText.includes("Nada de esta página está publicado"), "frase falsa");
   must(!boardText.includes("Hoy ninguna lo está"), "ninguna");
+  must(!boardText.includes("Hace falta definir el canal"), "canal");
   await page.screenshot({ path: path.join(shots, `u03-tablero-${name}-es.png`), fullPage: name === "desktop" });
 
   await page.getByRole("button", { name: "English" }).click();
@@ -92,9 +95,10 @@ async function check(page, name) {
   await page.screenshot({ path: path.join(shots, `u03-tablero-${name}-en.png`), fullPage: false });
 }
 
+const mobile = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true };
 const projects = [
-  { name: "pixel-7", engine: chromium, device: devices["Pixel 7"] },
-  { name: "iphone-14", engine: webkit, device: devices["iPhone 14"] },
+  { name: "mobile", engine: chromium, device: { ...devices["Desktop Chrome"], ...mobile, userAgent: devices["Pixel 7"].userAgent } },
+  { name: "mobile-webkit", engine: webkit, device: { ...devices["Desktop Chrome"], ...mobile, userAgent: devices["iPhone 14"].userAgent } },
   { name: "desktop", engine: chromium, device: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 } } },
 ];
 

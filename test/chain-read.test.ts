@@ -9,7 +9,7 @@ import { findProgramAddress } from "../verify/pda.js";
 import { bondingCurvePda } from "../verify/programs.js";
 import { repoRoot } from "../src/paths.js";
 
-const readUrl = pathToFileURL(path.join(repoRoot(), "comparar/chain-read.mjs")).href;
+const readUrl = pathToFileURL(path.join(repoRoot(), "pares/chain-read.mjs")).href;
 const OFFICIAL = "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump";
 const CURVE = "3shQFExQ3rpFL6GaXPRQNTMYazVHmTvRfuazfv62toAE";
 
