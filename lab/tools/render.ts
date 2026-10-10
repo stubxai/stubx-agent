@@ -417,6 +417,7 @@ const PERSON_EN: Record<string, string> = {
   "Pendiente de una prueba con lector de pantalla por otra persona.":
     "Pending a screen-reader test by another person.",
   "No aplica todavía.": "Not applicable yet.",
+  "Revisado por Legal.": "Reviewed by Legal.",
 };
 
 const MILESTONE_EN: Record<string, string> = {

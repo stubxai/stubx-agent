@@ -140,6 +140,7 @@ PRIMARY = [
     ("tablero", "tablero/index.html", "Tablero", "Board"),
     ("studio", "studio/index.html", "Studio", "Studio"),
     ("pares", "pares/index.html", "Curva", "Curve"),
+    ("comparar", "comparar/index.html", "Comparar", "Compare"),
     ("contribuir", "contribuir/index.html", "Contribuir", "Contribute"),
 ]
 MORE = [
@@ -157,6 +158,7 @@ MORE = [
     ("avances", "avances/index.html", "Avances", "Progress"),
     ("studio", "studio/index.html", "Studio", "Studio"),
     ("pares", "pares/index.html", "Curva", "Curve"),
+    ("comparar", "comparar/index.html", "Comparar", "Compare"),
     ("cuaderno", "cuaderno/index.html", "Cuaderno", "Notebook"),
     ("contribuir", "contribuir/index.html", "Contribuir", "Contribute"),
 ]
@@ -376,6 +378,9 @@ def home() -> str:
 </div>
 <div class="grid-3">
 <article class="card"><p class="estado-pill">{t("Lectura · 2026-10-10", "Reading · 2026-10-10")}</p><h3>{t("Curva", "Curve")}</h3><p>{t("Pega cualquier dirección de Solana. La página dice la moneda base y el estado de la curva, tal como están en la cadena. Exporta una instantánea. Escribir una dirección no avala ese token.", "Paste any Solana address. The page states the base currency and the curve state, as they are on chain. It exports a snapshot. Writing an address does not endorse that token.")}</p><p><a href="/pares/">{t("Abrir la curva", "Open the curve")}</a></p></article>
+</div>
+<div class="grid-3">
+<article class="card"><p class="estado-pill">{t("Ejemplo · 2026-10-10", "Example · 2026-10-10")}</p><h3>{t("Comparar", "Compare")}</h3><p>{t("Ejemplo educativo fijo de cómo se lee una curva. No usa una dirección. Legal ya lo revisó. Cualquier versión con datos reales necesitará una revisión nueva.", "Fixed educational example of how a curve is read. It does not use an address. Legal has already reviewed it. Any version with real data will need a new review.")}</p><p><a href="/comparar/">{t("Ver el ejemplo", "See the example")}</a></p></article>
 </div>
 <section id="transparencia">
 <h2>{t("Transparencia", "Transparency")}</h2>
@@ -931,6 +936,27 @@ def avances() -> str:
 """
 
 
+def comparar() -> str:
+    return f"""
+<h1>{t("Ejemplo de una curva", "Curve example")}</h1>
+<p><strong>{t("Ejemplo educativo. No es una comparación de calidad, ni una recomendación, ni un aval. STUBX no tiene relación con ningún token de este ejemplo.", "Educational example. It is not a quality comparison, a recommendation, or an endorsement. STUBX has no relationship with any token in this example.")}</strong></p>
+<p class="lede">{t("Ejemplo hipotético, no leído de la cadena. Fecha del ejemplo: 2026-10-10.", "Hypothetical example, not read from the chain. Example date: 2026-10-10.")}</p>
+<p>{t("Una curva abierta junta dos cantidades virtuales: la de la moneda del token y la de SOL. Si una se mueve, la otra se mueve en el sentido contrario. Esta página no calcula ese movimiento.", "An open curve pairs two virtual amounts: the token currency and SOL. If one moves, the other moves the other way. This page does not calculate that move.")}</p>
+<p>{t("Cuando la curva está completa, ese paso ya no cabe. Si no hay curva, no hay cantidades que mostrar. Aquí las cantidades son redondas y de ejemplo.", "When the curve is complete, that step no longer fits. If there is no curve, there are no amounts to show. Here the amounts are round numbers, and they are an example.")}</p>
+<h2>{t("Cantidades del ejemplo", "Amounts in the example")}</h2>
+<dl>
+<dt>{t("Estado", "State")}</dt><dd>{t("abierta", "open")}</dd>
+<dt>{t("Moneda base", "Base currency")}</dt><dd>SOL</dd>
+<dt>{t("Cantidad virtual de la moneda del token", "Virtual amount of the token currency")}</dt><dd>1 000 000</dd>
+<dt>{t("Cantidad virtual de SOL", "Virtual amount of SOL")}</dt><dd>30</dd>
+<dt>{t("Cantidad real de la moneda del token", "Real amount of the token currency")}</dt><dd>800 000</dd>
+<dt>{t("Cantidad real de SOL", "Real amount of SOL")}</dt><dd>4</dd>
+</dl>
+<p>{t("Estos números no salen de ninguna dirección. No son una cotización.", "These numbers do not come from any address. They are not a quote.")}</p>
+<p>{t("No conecta carteras, no firma y no envía.", "It does not connect a wallet, it does not sign, and it does not send.")}</p>
+"""
+
+
 def pares() -> str:
     origins = " y ".join(rpc_origins())
     origins_en = " and ".join(rpc_origins())
@@ -1278,6 +1304,7 @@ def main() -> None:
 
     write_page("index.html", "home", "STUBX · Contrasta la dirección", "STUBX · Check the address", "Vista previa de STUBX. Lee un token en directo y solo en lectura. No es consejo de inversión.", "STUBX preview. Read a token live and read-only. Not investment advice.", home())
     write_page("verify/index.html", "verify", "STUBX Verify", "STUBX Verify", "Lee cualquier token SPL o Token-2022 en directo y solo en lectura. Las fichas fechadas siguen como ejemplo.", "Read any SPL or Token-2022 token live and read-only. The dated cards remain as examples.", prepare_tool("verify"), ["assets/verify.js"], True, connect=connect_src(True))
+    write_page("comparar/index.html", "comparar", "STUBX · Ejemplo de una curva", "STUBX · Curve example", "Ejemplo hipotético, no leído de la cadena. No es una recomendación ni un aval.", "Hypothetical example, not read from the chain. It is not a recommendation or an endorsement.", comparar(), narrow=True)
     write_page("pares/index.html", "pares", "STUBX · Lectura de la curva", "STUBX · Curve reading", "Moneda base y estado de la curva, tal como están en la cadena. No es una auditoría ni una recomendación.", "Base currency and curve state, as they are on chain. It is not an audit or a recommendation.", pares(), narrow=True, connect=connect_src(True), modules=["assets/pares.mjs"])
     write_page("lab/index.html", "lab", "STUBX Lab", "STUBX Lab", "Misión para distinguir el mint del registro de un clon.", "A mission to tell the registry mint from a clone.", prepare_tool("lab"), ["assets/mission.js"], True, True)
     board = prepare_tool("tablero")

@@ -634,25 +634,37 @@
     },
     {
       "id": "U07",
-      "version": "0",
+      "version": "1",
       "title": {
-        "es": "Comparación y simulación avanzada",
-        "en": "Advanced comparison and simulation"
+        "es": "Ejemplo hipotético de una curva",
+        "en": "Hypothetical curve example"
       },
-      "status": "propuesta",
+      "status": "en_revision",
       "webPublished": false,
       "scope": {
-        "es": "Idea posterior a una base de Verify fiable. No hay simulación ni botón de envío en Lab ni en estas páginas.",
-        "en": "Idea that follows a reliable Verify base. There is no simulation and no send button in Lab or on these pages."
+        "es": "Ejemplo educativo fijo de una curva, fechado el 2026-10-10 y no leído de la cadena. Sin dirección. No está en stubxai.com.",
+        "en": "A fixed educational example of a curve, dated 2026-10-10 and not read from the chain. No address. It is not on stubxai.com."
       },
-      "owner": "Sin asignar",
-      "reviewer": "No aplica todavía.",
-      "reviewedOn": null,
+      "owner": "Equipo del repositorio",
+      "reviewer": "Revisado por Legal.",
+      "reviewedOn": "2026-10-10",
       "block": {
-        "es": "Verify está en stubxai.com/verify. Esta ficha sigue siendo una idea. El 2026-10-10, stubxai.com/comparar no existe.",
-        "en": "Verify is on stubxai.com/verify. This item is still an idea. On 2026-10-10, stubxai.com/comparar does not exist."
+        "es": "Ejemplo educativo fijo, revisado por Legal. Cualquier versión con datos reales necesitará una revisión nueva. Hoy stubxai.com/comparar no existe.",
+        "en": "Fixed educational example, reviewed by Legal. Any version with real data will need a new review. Today stubxai.com/comparar does not exist."
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "label": {
+            "es": "Página de ejemplo",
+            "en": "Example page"
+          },
+          "path": "web/v2/comparar/index.html",
+          "note": {
+            "es": "Ejemplo fijo. No lee una dirección.",
+            "en": "Fixed example. It does not read an address."
+          }
+        }
+      ],
       "history": [
         {
           "on": "2026-10-09",
@@ -664,8 +676,15 @@
         {
           "on": "2026-10-10",
           "change": {
-            "es": "Verify ya está en la web. stubxai.com/comparar no existe. Esta ficha sigue como idea.",
-            "en": "Verify is already on the website. stubxai.com/comparar does not exist. This item stays an idea."
+            "es": "El ejemplo fijo sustituye a la calculadora. No hay dirección ni lectura de la cadena. Sigue fuera de stubxai.com.",
+            "en": "The fixed example replaces the calculator. There is no address and no chain read. Still absent from stubxai.com."
+          }
+        },
+        {
+          "on": "2026-10-10",
+          "change": {
+            "es": "Legal revisa este ejemplo educativo fijo. Cualquier versión con datos reales necesitará una revisión nueva. Sigue fuera de stubxai.com.",
+            "en": "Legal reviews this fixed educational example. Any version with real data will need a new review. Still absent from stubxai.com."
           }
         }
       ]
