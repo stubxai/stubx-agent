@@ -17,6 +17,34 @@ export function isStubxToken(value) {
   return clipToken(value).toLowerCase() === "stubx";
 }
 
+/** Una carga de logo. cancel() invalida el ticket y aborta la lectura en curso. */
+export function createLogoGate() {
+  let ticket = 0;
+  let controller = null;
+  function invalidate() {
+    ticket += 1;
+    controller?.abort();
+    controller = null;
+  }
+  return {
+    begin() {
+      invalidate();
+      const current = ticket;
+      controller = new AbortController();
+      const signal = controller.signal;
+      return {
+        signal,
+        stillCurrent() {
+          return ticket === current;
+        },
+      };
+    },
+    cancel() {
+      invalidate();
+    },
+  };
+}
+
 export function fitLogo(image, edge) {
   const limit = Math.max(1, edge);
   if (image.width <= limit && image.height <= limit) return image;
@@ -40,9 +68,8 @@ export function fitLogo(image, edge) {
 }
 
 export async function readLogoPng(bytes) {
-  if (!(bytes instanceof Uint8Array) || bytes.length === 0 || bytes.length > LOGO_MAX_BYTES) {
-    throw new Error("logo");
-  }
+  if (!(bytes instanceof Uint8Array) || bytes.length === 0) throw new Error("logo");
+  if (bytes.length > LOGO_MAX_BYTES) throw new Error("logo-bytes");
   let width = 0;
   let height = 0;
   try {
@@ -55,6 +82,11 @@ export async function readLogoPng(bytes) {
   if (width > LOGO_MAX_EDGE || height > LOGO_MAX_EDGE || width < 1 || height < 1) {
     throw new Error("logo-size");
   }
-  const image = await decodePng(bytes);
-  return fitLogo(image, LOGO_DRAW_EDGE);
+  try {
+    const image = await decodePng(bytes);
+    return fitLogo(image, LOGO_DRAW_EDGE);
+  } catch (error) {
+    if (error?.message === "PNG demasiado grande") throw new Error("logo-size");
+    throw error;
+  }
 }

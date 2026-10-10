@@ -96,7 +96,7 @@ function main(): void {
   const publishRequested = process.argv.includes("--publish");
   const publishConfirmed = process.env.STUBX_PUBLISH === "1";
   if (publishRequested !== publishConfirmed) {
-    process.stderr.write("El modo publicación solo se activa con STUBX_PUBLISH=1 y --publish, y solo cuando Cristian lo decida. El borrador no cambia.\n");
+    process.stderr.write("El modo publicación solo se activa con STUBX_PUBLISH=1 y --publish, y solo cuando el creador lo decida. El borrador no cambia.\n");
     process.exitCode = 1;
     return;
   }

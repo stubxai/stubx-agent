@@ -97,6 +97,19 @@ function siteRoot(): string {
   return path.join(repoRoot(), "web", "v2");
 }
 
+function hiddenNames(): string[] {
+  return [
+    ["Cri", "stian"],
+    ["Par", "do"],
+    ["Cama", "cho"],
+  ].map((parts) => parts.join("").toLowerCase());
+}
+
+function mentionsHiddenName(text: string): boolean {
+  const folded = text.toLowerCase();
+  return hiddenNames().some((name) => folded.includes(name));
+}
+
 function read(rel: string): string {
   return readFileSync(path.join(siteRoot(), rel), "utf8");
 }
@@ -455,16 +468,17 @@ describe("web v2", () => {
     for (const id of ["wallets", "transparencia", "reparto", "estado", "ppm"]) {
       assert.match(home, new RegExp(`id="${id}"`));
     }
+    for (const name of hiddenNames()) assert.equal(mentionsHiddenName(name.toUpperCase()), true);
     for (const rel of ROUTES) {
       const html = read(rel);
-      assert.equal(html.includes("Cristian"), false, rel);
+      assert.equal(mentionsHiddenName(html), false, rel);
       assert.equal(html.includes('class="draft"'), false, rel);
       assert.equal(html.includes("Borrador del repositorio. No publicado en stubxai.com."), false, rel);
       assert.match(html, /rel="canonical" href="https:\/\/stubxai.com\//);
       assert.match(html, /property="og:image"/);
       assert.match(html, /name="twitter:card"/);
     }
-    assert.equal(read("archivo.html").includes("Cristian"), false);
+    assert.equal(mentionsHiddenName(read("archivo.html")), false);
     assert.match(read("404.html"), /href="\/assets\/site\.css"/);
     assert.match(read("404.html"), /href="\/"/);
     assert.equal(/href="assets\//.test(read("404.html")), false);
@@ -548,7 +562,9 @@ describe("web v2", () => {
           "assert mod.draft_html(True) == ''",
           "draft = mod.draft_html(False)",
           "assert draft.count('class=\"draft\"') == 1",
-          "assert 'Cristian' not in draft",
+          "names = ['Cri' + 'stian', 'Par' + 'do', 'Cama' + 'cho']",
+          "low = draft.lower()",
+          "assert all(name.lower() not in low for name in names)",
           "assert 'No publicado en stubxai.com' in draft",
         ].join("\n"),
       ],

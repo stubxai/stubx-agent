@@ -3,7 +3,7 @@ import templates from "./templates.json" with { type: "json" };
 import { FOOTER, PNG_COMMENT, brandFor } from "./lib/copy.mjs";
 import { clearDraft, clipDraftText, loadDraft, saveDraft } from "./lib/draft.mjs";
 import { analyze, exportAllowed } from "./lib/filter.mjs";
-import { DEFAULT_TOKEN, TOKEN_MAX, clipToken, isStubxToken, readLogoPng } from "./lib/logo.mjs";
+import { DEFAULT_TOKEN, TOKEN_MAX, clipToken, createLogoGate, isStubxToken, readLogoPng } from "./lib/logo.mjs";
 import { decodePng, injectComment } from "./lib/png.mjs";
 import { renderCard } from "./lib/render.mjs";
 
@@ -24,6 +24,7 @@ const tokenCount = document.getElementById("contador-token");
 const logoInput = document.getElementById("logo");
 const logoClear = document.getElementById("quitar-logo");
 const logoNotice = document.getElementById("aviso-logo");
+const logoWeightNotice = document.getElementById("aviso-logo-peso");
 const logoSizeNotice = document.getElementById("aviso-logo-medida");
 const mascotNotice = document.getElementById("aviso-mascota");
 const logoState = document.getElementById("logo-estado");
@@ -39,6 +40,7 @@ let formatId = "square";
 let backgroundId = backgrounds[0]?.id ?? "";
 let avatarId = avatars[0]?.id ?? "";
 let customLogo = null;
+const logoGate = createLogoGate();
 let dirty = false;
 let timer = 0;
 let latest = null;
@@ -268,30 +270,66 @@ tokenInput.addEventListener("input", () => {
   paintChoices();
   schedule();
 });
+function hideLogoErrors() {
+  logoNotice.hidden = true;
+  logoWeightNotice.hidden = true;
+  logoSizeNotice.hidden = true;
+}
+
+function showLogoError(message) {
+  hideLogoErrors();
+  if (message === "logo-bytes") logoWeightNotice.hidden = false;
+  else if (message === "logo-size") logoSizeNotice.hidden = false;
+  else logoNotice.hidden = false;
+}
+
+function readBlob(blob, signal) {
+  return new Promise((resolve, reject) => {
+    const abort = () => reject(new DOMException("Aborted", "AbortError"));
+    if (signal?.aborted) {
+      abort();
+      return;
+    }
+    const onAbort = () => abort();
+    signal?.addEventListener("abort", onAbort, { once: true });
+    blob.arrayBuffer().then(
+      (buffer) => {
+        signal?.removeEventListener("abort", onAbort);
+        if (signal?.aborted) abort();
+        else resolve(buffer);
+      },
+      (error) => {
+        signal?.removeEventListener("abort", onAbort);
+        reject(error);
+      },
+    );
+  });
+}
+
 logoInput.addEventListener("change", () => {
   const file = logoInput.files?.[0];
   if (!file) return;
-  file.arrayBuffer().then((buffer) => readLogoPng(new Uint8Array(buffer))).then((image) => {
+  const load = logoGate.begin();
+  readBlob(file, load.signal).then((buffer) => readLogoPng(new Uint8Array(buffer))).then((image) => {
+    if (!load.stillCurrent()) return;
     customLogo = image;
-    logoNotice.hidden = true;
-    logoSizeNotice.hidden = true;
+    hideLogoErrors();
     paintChoices();
     schedule();
   }).catch((error) => {
+    if (!load.stillCurrent() || error?.name === "AbortError") return;
     customLogo = null;
     logoInput.value = "";
-    const size = error?.message === "logo-size";
-    logoNotice.hidden = size;
-    logoSizeNotice.hidden = !size;
+    showLogoError(error?.message);
     paintChoices();
     schedule();
   });
 });
 logoClear.addEventListener("click", () => {
+  logoGate.cancel();
   customLogo = null;
   logoInput.value = "";
-  logoNotice.hidden = true;
-  logoSizeNotice.hidden = true;
+  hideLogoErrors();
   paintChoices();
   schedule();
 });
@@ -317,9 +355,9 @@ clearButton.addEventListener("click", () => {
   clearDraft(localStorage);
   dirty = false;
   customLogo = null;
+  logoGate.cancel();
   logoInput.value = "";
-  logoNotice.hidden = true;
-  logoSizeNotice.hidden = true;
+  hideLogoErrors();
   tokenInput.value = DEFAULT_TOKEN;
   applyTemplate(templateId, lang(), false);
   paintChoices();
