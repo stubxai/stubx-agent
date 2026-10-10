@@ -1024,8 +1024,8 @@ describe("studio", () => {
     assert.equal(AI_LABEL.mascota.en, "Illustration with AI-generated elements.");
     assert.equal(aiLabel([], "es"), "");
     assert.equal(aiLabel(["ninguno"], "es"), "");
-    assert.equal(aiLabel(["mascota"], "es"), AI_LABEL.mascota.es);
-    assert.equal(aiLabel(["mascota"], "en"), AI_LABEL.mascota.en);
+    assert.equal(aiLabel(["mascota"], "es"), "");
+    assert.equal(aiLabel(["mascota"], "en"), "");
     assert.equal(aiLabel(["ai"], "es"), AI_LABEL.ai.es);
     assert.equal(aiLabel(["ai", "mascota", "ninguno"], "en"), AI_LABEL.ai.en);
 
@@ -1557,10 +1557,9 @@ describe("studio", () => {
       BRAND_FG: number[];
       contrastHex: (a: string, b: string) => number;
     }>("lib/render.mjs");
-    const { NOTICE_FULL, PNG_COMMENT, AI_LABEL } = await load<{
+    const { NOTICE_FULL, PNG_COMMENT } = await load<{
       NOTICE_FULL: { es: string; en: string };
       PNG_COMMENT: string;
-      AI_LABEL: { mascota: { es: string } };
     }>("lib/copy.mjs");
     const { readComments, injectComment } = await load<{
       readComments: (png: Uint8Array) => { keyword: string; text: string }[];
@@ -1590,10 +1589,11 @@ describe("studio", () => {
     assert.ok(marked.noticeInk >= 14);
     assert.equal(marked.noticeLines, 1);
     assert.equal(marked.topBand, 0);
-    assert.equal(marked.label, AI_LABEL.mascota.es);
+    assert.equal(marked.label, "");
+    assert.equal(marked.glyphs.some((glyph) => glyph.role === "ai"), false);
     assert.equal(marked.noticeText, NOTICE_FULL.es);
     assert.equal(joined(marked, "notice"), NOTICE_FULL.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
-    assert.equal(joined(marked, "ai"), AI_LABEL.mascota.es.toLocaleUpperCase("es-ES").replaceAll(" ", ""));
+    assert.equal(joined(marked, "notice").includes("ILUSTRACION"), false);
     assert.equal(marked.glyphs.some((glyph) => glyph.role === "brandTop" || glyph.role === "riskTop"), false);
     assert.ok(marked.watermarkAlpha >= 0.6);
     assert.ok(marked.watermarkBox.x > marked.width * 0.55);

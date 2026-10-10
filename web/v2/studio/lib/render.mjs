@@ -183,9 +183,9 @@ export async function renderCard(options) {
   const titleClear = Math.ceil(height * 0.078);
 
   const zones = options.zones ?? {
-    title: { x: 0.06, y: 0.09, w: 0.88, h: 0.2 },
-    body: { x: 0.06, y: 0.32, w: 0.56, h: 0.34 },
-    avatar: { x: 0.64, y: 0.32, w: 0.3, h: 0.34 },
+    title: { x: 0.05, y: 0.08, w: 0.9, h: 0.3 },
+    body: { x: 0.05, y: 0.4, w: 0.5, h: 0.38 },
+    avatar: { x: 0.5, y: 0.36, w: 0.46, h: 0.52 },
   };
   const titleZone = zoneOf(zones.title, width, height, contentBottom, titleClear);
   const bodyZone = zoneOf(zones.body, width, height, contentBottom, 0);
@@ -200,7 +200,7 @@ export async function renderCard(options) {
   blit(rgba, width, height, imageZone, options.avatar ?? null);
 
   const glyphs = [];
-  const titleFit = fitFace(titleFont, options.title ?? "", titleZone, Math.max(floor, height * 0.085), Math.max(16, Math.round(height * 0.028)));
+  const titleFit = fitFace(titleFont, options.title ?? "", titleZone, Math.max(floor, height * 0.16), Math.max(22, Math.round(height * 0.045)));
   const bodyFit = fitFace(bodyFont, options.body ?? "", bodyZone, Math.max(18, height * 0.04), Math.max(14, Math.round(height * 0.02)));
   const tokenFit = fitFace(bodyFont, tokenText, tokenZone, Math.max(14, Math.round(height * 0.028)), 12);
   const inkRgb = [ink[0], ink[1], ink[2]];

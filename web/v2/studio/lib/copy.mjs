@@ -85,6 +85,5 @@ export function aiLabel(origins, lang) {
   const set = new Set(origins);
   const code = lang === "en" ? "en" : "es";
   if (set.has("ai")) return AI_LABEL.ai[code];
-  if (set.has("mascota")) return AI_LABEL.mascota[code];
   return "";
 }

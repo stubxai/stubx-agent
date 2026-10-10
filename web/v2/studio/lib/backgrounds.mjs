@@ -112,24 +112,26 @@ function rand(seed) {
 }
 
 function solana(rgba, width, height) {
-  fill(rgba, width, height, [7, 4, 24]);
-  radial(rgba, width, height, width * 0.18, height * 0.16, width * 0.62, [153, 69, 255], 0.95);
-  radial(rgba, width, height, width * 0.86, height * 0.78, width * 0.55, [20, 241, 149], 0.72);
-  radial(rgba, width, height, width * 0.62, height * 0.42, width * 0.38, [0, 209, 255], 0.55);
-  for (let i = 0; i < 7; i += 1) {
-    const y = height * (0.18 + i * 0.1);
-    line(rgba, width, height, width * 0.04, y, width * 0.96, y + height * 0.08, [244, 247, 251], 0.05, Math.max(1, width * 0.004));
+  fill(rgba, width, height, [10, 4, 32]);
+  radial(rgba, width, height, width * 0.12, height * 0.08, width * 0.7, [153, 69, 255], 1);
+  radial(rgba, width, height, width * 0.92, height * 0.88, width * 0.62, [20, 241, 149], 0.95);
+  radial(rgba, width, height, width * 0.7, height * 0.38, width * 0.36, [0, 229, 255], 0.8);
+  radial(rgba, width, height, width * 0.28, height * 0.72, width * 0.28, [255, 45, 111], 0.45);
+  for (let i = 0; i < 5; i += 1) {
+    const y = height * (0.16 + i * 0.14);
+    line(rgba, width, height, width * 0.02, y, width * 0.98, y + height * 0.1, [244, 247, 251], 0.16, Math.max(2, width * 0.008));
   }
-  radial(rgba, width, height, width * 0.5, height * 0.5, width * 0.72, [0, 0, 0], 0.28);
+  disc(rgba, width, height, width * 0.18, height * 0.22, width * 0.04, [255, 255, 255], 0.35);
+  disc(rgba, width, height, width * 0.82, height * 0.18, width * 0.025, [20, 241, 149], 0.7);
 }
 
 function vineta(rgba, width, height) {
-  fill(rgba, width, height, [18, 8, 28]);
-  const cx = width * 0.46;
-  const cy = height * 0.5;
-  for (let i = 0; i < 46; i += 1) {
-    const angle = (i / 46) * Math.PI * 2;
-    const inner = Math.min(width, height) * 0.22;
+  fill(rgba, width, height, [28, 8, 36]);
+  const cx = width * 0.62;
+  const cy = height * 0.58;
+  for (let i = 0; i < 36; i += 1) {
+    const angle = (i / 36) * Math.PI * 2;
+    const inner = Math.min(width, height) * 0.08;
     const outer = Math.hypot(width, height);
     line(
       rgba,
@@ -139,84 +141,86 @@ function vineta(rgba, width, height) {
       cy + Math.sin(angle) * inner,
       cx + Math.cos(angle) * outer,
       cy + Math.sin(angle) * outer,
-      i % 2 ? [255, 225, 120] : [255, 45, 111],
-      0.55,
-      Math.max(2, width * 0.012),
+      i % 2 ? [255, 225, 74] : [255, 45, 111],
+      0.9,
+      Math.max(3, width * 0.016),
     );
   }
-  roundRect(rgba, width, height, width * 0.07, height * 0.08, width * 0.86, height * 0.72, width * 0.04, [12, 8, 22], 0.94);
-  roundRect(rgba, width, height, width * 0.09, height * 0.1, width * 0.82, height * 0.68, width * 0.035, [255, 45, 111], 0.18);
+  rect(rgba, width, height, 0, height * 0.08, width * 0.52, height * 0.7, [12, 6, 20], 0.72);
+  line(rgba, width, height, width * 0.04, height * 0.1, width * 0.48, height * 0.1, [255, 225, 74], 0.9, Math.max(3, width * 0.012));
+  line(rgba, width, height, width * 0.04, height * 0.76, width * 0.48, height * 0.76, [255, 45, 111], 0.9, Math.max(3, width * 0.012));
 }
 
 function talon(rgba, width, height) {
   fill(rgba, width, height, [7, 20, 34]);
-  radial(rgba, width, height, width * 0.72, height * 0.28, width * 0.46, [16, 36, 63], 0.95);
-  radial(rgba, width, height, width * 0.2, height * 0.8, width * 0.4, [255, 45, 111], 0.28);
-  const x = width * 0.58;
-  const y = height * 0.18;
-  const w = width * 0.3;
-  const h = height * 0.46;
-  roundRect(rgba, width, height, x, y, w, h, w * 0.18, [255, 45, 111], 1);
-  disc(rgba, width, height, x + w * 0.08, y + h * 0.32, w * 0.09, [7, 20, 34], 1);
-  disc(rgba, width, height, x + w * 0.92, y + h * 0.32, w * 0.09, [7, 20, 34], 1);
-  disc(rgba, width, height, x + w * 0.38, y + h * 0.4, w * 0.035, [255, 247, 250], 1);
-  disc(rgba, width, height, x + w * 0.62, y + h * 0.4, w * 0.035, [255, 247, 250], 1);
-  line(rgba, width, height, x + w * 0.4, y + h * 0.58, x + w * 0.6, y + h * 0.58, [20, 6, 12], 0.9, Math.max(2, w * 0.03));
-  for (let i = 0; i < 5; i += 1) {
-    disc(rgba, width, height, width * (0.12 + i * 0.08), height * (0.16 + (i % 2) * 0.08), width * 0.012, [142, 172, 207], 0.85);
+  radial(rgba, width, height, width * 0.22, height * 0.22, width * 0.5, [16, 36, 63], 1);
+  radial(rgba, width, height, width * 0.78, height * 0.62, width * 0.48, [255, 45, 111], 0.55);
+  radial(rgba, width, height, width * 0.3, height * 0.78, width * 0.32, [0, 209, 255], 0.28);
+  const x = width * 0.08;
+  const y = height * 0.42;
+  const w = width * 0.28;
+  const h = height * 0.34;
+  roundRect(rgba, width, height, x, y, w, h, w * 0.16, [255, 45, 111], 1);
+  disc(rgba, width, height, x + w * 0.08, y + h * 0.34, w * 0.08, [7, 20, 34], 1);
+  disc(rgba, width, height, x + w * 0.92, y + h * 0.34, w * 0.08, [7, 20, 34], 1);
+  disc(rgba, width, height, x + w * 0.5, y + h * 0.42, w * 0.06, [57, 255, 20], 1);
+  for (let i = 0; i < 8; i += 1) {
+    disc(rgba, width, height, width * (0.12 + (i % 4) * 0.08), height * (0.14 + Math.floor(i / 4) * 0.08), width * 0.016, i % 2 ? [255, 225, 74] : [142, 172, 207], 0.9);
   }
 }
 
 function pixel(rgba, width, height) {
-  fill(rgba, width, height, [8, 10, 22]);
-  const cell = Math.max(8, Math.round(Math.min(width, height) / 28));
-  const colors = [[255, 45, 111], [20, 241, 149], [124, 92, 255], [0, 209, 255], [16, 36, 63], [28, 22, 48]];
+  fill(rgba, width, height, [6, 8, 20]);
+  const cell = Math.max(10, Math.round(Math.min(width, height) / 18));
+  const colors = [[255, 45, 111], [20, 241, 149], [153, 69, 255], [0, 209, 255], [255, 225, 74], [16, 36, 63]];
   const next = rand(8619);
   const cols = Math.ceil(width / cell);
   const rows = Math.ceil(height / cell);
   for (let row = 0; row < rows; row += 1) {
     for (let col = 0; col < cols; col += 1) {
       const roll = next();
-      if (roll > 0.72) continue;
+      if (roll > 0.62) continue;
       const color = colors[Math.floor(next() * colors.length) % colors.length];
-      const inset = roll > 0.45 ? 1 : Math.max(1, Math.floor(cell * 0.18));
-      rect(rgba, width, height, col * cell + inset, row * cell + inset, cell - inset * 2, cell - inset * 2, color, roll > 0.45 ? 0.35 : 1);
+      rect(rgba, width, height, col * cell + 2, row * cell + 2, cell - 4, cell - 4, color, roll > 0.4 ? 1 : 0.55);
     }
   }
+  rect(rgba, width, height, 0, height * 0.08, width * 0.58, height * 0.28, [6, 8, 20], 0.55);
 }
 
 function velas(rgba, width, height) {
-  fill(rgba, width, height, [8, 14, 28]);
-  for (let i = 1; i < 6; i += 1) {
-    const y = height * (0.16 + i * 0.12);
-    rect(rgba, width, height, width * 0.06, y, width * 0.88, Math.max(1, height * 0.002), [142, 172, 207], 0.16);
+  fill(rgba, width, height, [6, 10, 22]);
+  radial(rgba, width, height, width * 0.5, height * 0.55, width * 0.55, [16, 40, 48], 0.7);
+  for (let i = 1; i < 5; i += 1) {
+    const y = height * (0.18 + i * 0.14);
+    rect(rgba, width, height, width * 0.06, y, width * 0.88, Math.max(2, height * 0.004), [142, 172, 207], 0.22);
   }
   const next = rand(1080);
-  const count = 14;
-  const gap = width * 0.78 / count;
+  const count = 11;
+  const gap = width * 0.84 / count;
   for (let i = 0; i < count; i += 1) {
-    const up = next() > 0.46;
-    const body = height * (0.08 + next() * 0.22);
-    const wick = body + height * (0.04 + next() * 0.1);
-    const mid = height * (0.28 + next() * 0.38);
-    const x = width * 0.12 + i * gap;
-    const color = up ? [20, 241, 149] : [255, 77, 109];
-    rect(rgba, width, height, x + gap * 0.42, mid - wick / 2, Math.max(1, gap * 0.08), wick, color, 0.95);
-    rect(rgba, width, height, x + gap * 0.22, mid - body / 2, gap * 0.5, body, color, 1);
+    const up = next() > 0.42;
+    const body = height * (0.12 + next() * 0.28);
+    const wick = body + height * (0.05 + next() * 0.08);
+    const mid = height * (0.32 + next() * 0.28);
+    const x = width * 0.08 + i * gap;
+    const color = up ? [20, 241, 149] : [255, 45, 111];
+    rect(rgba, width, height, x + gap * 0.46, mid - wick / 2, Math.max(2, gap * 0.08), wick, color, 1);
+    rect(rgba, width, height, x + gap * 0.18, mid - body / 2, gap * 0.64, body, color, 1);
   }
 }
 
 function confeti(rgba, width, height) {
-  fill(rgba, width, height, [16, 8, 24]);
-  radial(rgba, width, height, width * 0.5, height * 0.45, width * 0.48, [48, 16, 64], 0.55);
+  fill(rgba, width, height, [22, 6, 32]);
+  radial(rgba, width, height, width * 0.35, height * 0.3, width * 0.5, [90, 20, 80], 0.85);
+  radial(rgba, width, height, width * 0.75, height * 0.7, width * 0.4, [20, 80, 70], 0.4);
   const colors = [[255, 45, 111], [255, 225, 74], [20, 241, 149], [0, 209, 255], [153, 69, 255], [244, 247, 251]];
   const next = rand(2026);
-  for (let i = 0; i < 70; i += 1) {
+  for (let i = 0; i < 90; i += 1) {
     const color = colors[i % colors.length];
     const x = next() * width;
     const y = next() * height;
-    const w = width * (0.012 + next() * 0.03);
-    const h = height * (0.02 + next() * 0.045);
+    const w = width * (0.018 + next() * 0.04);
+    const h = height * (0.028 + next() * 0.05);
     const angle = next() * Math.PI;
     const steps = 8;
     for (let sy = -h; sy <= h; sy += h / steps) {
@@ -237,19 +241,19 @@ function confeti(rgba, width, height) {
 }
 
 function estrellas(rgba, width, height) {
-  fill(rgba, width, height, [5, 8, 22]);
-  radial(rgba, width, height, width * 0.3, height * 0.25, width * 0.5, [70, 30, 120], 0.7);
-  radial(rgba, width, height, width * 0.75, height * 0.7, width * 0.42, [10, 60, 90], 0.45);
+  fill(rgba, width, height, [4, 6, 18]);
+  radial(rgba, width, height, width * 0.25, height * 0.2, width * 0.55, [110, 40, 170], 0.9);
+  radial(rgba, width, height, width * 0.8, height * 0.75, width * 0.48, [0, 90, 120], 0.65);
   const next = rand(404);
-  for (let i = 0; i < 90; i += 1) {
+  for (let i = 0; i < 70; i += 1) {
     const x = Math.floor(next() * width);
     const y = Math.floor(next() * height);
-    const bright = 180 + Math.floor(next() * 75);
-    const arm = next() > 0.86 ? width * 0.014 : 0;
-    paint(rgba, width, x, y, [bright, bright, 255], 1);
+    const bright = 200 + Math.floor(next() * 55);
+    const arm = next() > 0.55 ? width * (0.012 + next() * 0.02) : 0;
+    disc(rgba, width, height, x, y, Math.max(2, width * 0.006), [bright, bright, 255], 1);
     if (arm) {
-      rect(rgba, width, height, x - arm, y, arm * 2, Math.max(1, width * 0.003), [bright, bright, 255], 0.8);
-      rect(rgba, width, height, x, y - arm, Math.max(1, width * 0.003), arm * 2, [bright, bright, 255], 0.8);
+      rect(rgba, width, height, x - arm, y - width * 0.002, arm * 2, Math.max(2, width * 0.004), [bright, bright, 255], 0.95);
+      rect(rgba, width, height, x - width * 0.002, y - arm, Math.max(2, width * 0.004), arm * 2, [bright, bright, 255], 0.95);
     }
   }
 }
@@ -282,7 +286,7 @@ function rafaga(rgba, width, height) {
     const r1 = (i + 1) % 2 ? radius : radius * 0.48;
     line(rgba, width, height, cx + Math.cos(angle) * r0, cy + Math.sin(angle) * r0, cx + Math.cos(next) * r1, cy + Math.sin(next) * r1, [255, 236, 160], 0.95, Math.max(2, width * 0.01));
   }
-  disc(rgba, width, height, cx, cy, radius * 0.42, [28, 8, 22], 0.92);
+  disc(rgba, width, height, cx, cy, radius * 0.28, [28, 8, 22], 0.55);
   const dot = Math.max(3, width * 0.008);
   for (let y = height * 0.08; y < height * 0.28; y += dot * 2.4) {
     for (let x = width * 0.08; x < width * 0.92; x += dot * 2.4) {

@@ -52,7 +52,7 @@
       "autor": "STUBX",
       "permitido": true,
       "aiOrigin": "ninguno",
-      "sha256": "2caaa1ae0311bc6b1a1f54cafde2d7a172ea44a164e8accfd0d7c58dd436ccc9"
+      "sha256": "ff8bdaa3d6006fb358700fdacd9cc4f9686aca9d1deab42d5fd2da90efa69a9c"
     },
     {
       "id": "fondo-vineta",
@@ -71,7 +71,7 @@
       "autor": "STUBX",
       "permitido": true,
       "aiOrigin": "ninguno",
-      "sha256": "53dac9d0fecb3a718d3526ab25c459feb1545a8a29abb9b5ff74ebff2d262d06"
+      "sha256": "c3ca4223a2ea07f6b1622ba561e465d67ed86a23f6f99a1fbfc1924dde72a44b"
     },
     {
       "id": "fondo-talon",
@@ -90,7 +90,7 @@
       "autor": "STUBX",
       "permitido": true,
       "aiOrigin": "ninguno",
-      "sha256": "33006ca7fce8a895cd112f553874ea553a710798dc4196987bc4097a7acc59de"
+      "sha256": "24254d94a482b1e30d1ff94701e6901da9ab57ca8a54b9fdc70364e239623a09"
     },
     {
       "id": "fondo-pixel",
@@ -109,7 +109,7 @@
       "autor": "STUBX",
       "permitido": true,
       "aiOrigin": "ninguno",
-      "sha256": "8ba7712b028284c652336ba6b5dca602a70b20dfb15be9e7a97499d6934bfd99"
+      "sha256": "8354acd4a1777562a0a720d96b6061d05acac8e7d9ac44c7add00b09d1469955"
     },
     {
       "id": "fondo-velas",
@@ -128,7 +128,7 @@
       "autor": "STUBX",
       "permitido": true,
       "aiOrigin": "ninguno",
-      "sha256": "110faf661f120e9ff455396de09547298dfe7428db0e4e37ec4693ddeac185ed"
+      "sha256": "07aec47a3de7a3fb16ed7c620530f8210d7d08c81c223bb499b412fe8bb9e021"
     },
     {
       "id": "fondo-confeti",
@@ -147,7 +147,7 @@
       "autor": "STUBX",
       "permitido": true,
       "aiOrigin": "ninguno",
-      "sha256": "9dfe4a628d5ba601d5c9a35212eb8c292e5898ff8845bcfcd488c26ad86b165c"
+      "sha256": "2614a2c4bb271464bf2605d722caf79faf609b50033da01d11e7bbeefdd07fbd"
     },
     {
       "id": "fondo-estrellas",
@@ -166,7 +166,7 @@
       "autor": "STUBX",
       "permitido": true,
       "aiOrigin": "ninguno",
-      "sha256": "b2d0219862b195682ec514fc9c3a138e29dfe44f2ccfb3feedfceaed4a56593e"
+      "sha256": "8471f0e935bb96312301a2b95b60ed84c6f9a07e14fd2ee2654c883812ffd3aa"
     },
     {
       "id": "fondo-rafaga",
@@ -185,7 +185,7 @@
       "autor": "STUBX",
       "permitido": true,
       "aiOrigin": "ninguno",
-      "sha256": "16ef2288c3e10f04253a514a8cc260fa75231553ee14b9375d0de5757d4f8212"
+      "sha256": "f784730aa005eacfdbe72533b68302890905a6c4f71868ad499675710d3f963c"
     },
     {
       "id": "fondo-carbon",
