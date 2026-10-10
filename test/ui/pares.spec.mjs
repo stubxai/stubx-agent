@@ -100,7 +100,7 @@ test("el informe lee un paso y cambia de idioma", async ({ page }, info) => {
   await expect(page.locator("#resultado")).toContainText("Curva: abierta");
   await expect(page.locator("#resultado")).toContainText("No se inventa ningún dato.");
   await expect(page.locator("#resultado")).toContainText("95");
-  await expect(page.locator("#resultado")).toContainText("Esta dirección coincide con la CA publicada de STUBX.");
+  await expect(page.locator("#resultado")).toContainText("Identidad del proyecto: esta dirección coincide con la CA publicada de STUBX.");
   await expect(page.locator("#resultado")).toContainText("Un emparejamiento no es una colaboración ni un respaldo.");
   await expect(page.locator("#resultado")).toContainText(NAME);
   await expect(page.locator("#resultado")).toContainText("no se abre");

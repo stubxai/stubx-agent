@@ -66,6 +66,11 @@ function paintVerify(out, view) {
     note.textContent = view.partialNote[lang];
     out.append(note);
   }
+  if (view.missing) {
+    var missing = verifyEl("p", { class: "resumen-datos", "data-estado": view.missingState || "falta" });
+    missing.textContent = view.missing[lang];
+    out.append(missing);
+  }
   if (view.signals && view.signals.length) {
     var signals = verifyEl("div", { class: "senales" });
     view.signals.forEach(function (signal) {
@@ -78,6 +83,11 @@ function paintVerify(out, view) {
       signals.append(card);
     });
     out.append(signals);
+  }
+  if (view.identity) {
+    var identity = verifyEl("p", { class: "franja-identidad" });
+    identity.textContent = view.identity[lang];
+    out.append(identity);
   }
   if (view.canSample) {
     var sampleBtn = verifyEl("button", { type: "button", id: "leer-cuentas" });

@@ -39,6 +39,8 @@ interface Card {
   supplyAccount: string | null;
   program?: string;
   mint: string;
+  mintAuthority?: { state: string; status: string };
+  freezeAuthority?: { state: string; status: string };
 }
 
 interface ModelModule {
@@ -167,6 +169,10 @@ describe("lector y cuaderno", () => {
     assert.equal(decoded?.supplyRaw, "4242");
     assert.equal(decoded?.mintAuthority.state, "revocada");
     assert.equal(decoded?.freezeAuthority.state, "activa");
+    const unreadable = Buffer.from(mintBytes());
+    unreadable.writeUInt32LE(2, 0);
+    const broken = read.decodeMintAccount(read.TOKEN_PROGRAM, unreadable);
+    assert.equal(broken?.mintAuthority.state, "no_decodificable");
     const meta = read.decodeMetadataAccount(metadataBytes("<script>alert(1)</script>", "ABC", "https://evil.example/phish", 1));
     assert.ok(meta);
     assert.equal(meta?.name.includes("<"), false);
@@ -187,6 +193,7 @@ describe("lector y cuaderno", () => {
           ]);
         }
         if (parsed.method === "getTokenSupply") return rpcOk({ amount: "1000", decimals: 6, uiAmount: null, uiAmountString: "skip" });
+        if (parsed.method === "getTokenLargestAccounts") return rpcOk([]);
         throw new Error(parsed.method);
       },
     });
@@ -197,8 +204,36 @@ describe("lector y cuaderno", () => {
     assert.equal(result.card?.name.text?.includes("<"), false);
     assert.equal(result.card?.uri.text, "https://evil.example/phish");
     assert.equal(JSON.stringify(result.card).includes("uiAmount"), false);
-    assert.deepEqual(calls, ["getMultipleAccounts", "getTokenSupply"]);
-    assert.equal(calls.includes("getTokenLargestAccounts"), false);
+    assert.deepEqual(calls, ["getMultipleAccounts", "getTokenSupply", "getTokenLargestAccounts"]);
+  });
+
+  test("un permiso que no se puede leer se guarda como fallo", async () => {
+    const { read, model } = await modules();
+    const bytes = Buffer.from(mintBytes());
+    bytes.writeUInt32LE(2, 0);
+    const result = await read.readMint({
+      mint: CA,
+      ...fastClock(),
+      transport: async (_endpoint: string, body: string) => {
+        const parsed = JSON.parse(body) as { method: string };
+        if (parsed.method === "getMultipleAccounts") {
+          return rpcOk([
+            account(read.TOKEN_PROGRAM, bytes),
+            account(read.METADATA_PROGRAM, metadataBytes("STB", "STB", "https://example.invalid/meta")),
+            null,
+          ]);
+        }
+        if (parsed.method === "getTokenSupply") return { status: 403, body: JSON.stringify({ jsonrpc: "2.0", id: 1, error: { message: "indexed request blocked" } }) };
+        if (parsed.method === "getTokenLargestAccounts") return { status: 429, body: "{}" };
+        throw new Error(parsed.method);
+      },
+    });
+    assert.equal(result.card?.mintAuthority?.state, "no_decodificable");
+    assert.equal(result.card?.mintAuthority?.status, "fallo");
+    assert.notEqual(result.card?.mintAuthority?.status, "verificado");
+    assert.equal(result.card?.freezeAuthority?.status, "verificado");
+    assert.equal(result.card?.partial, true);
+    assert.equal(model.validateCard(result.card as Card).ok, true);
   });
 
   test("429, cuenta ausente, no-mint y dirección inválida no inventan un cero", async () => {
@@ -608,5 +643,28 @@ describe("lector y cuaderno", () => {
     assert.equal(leaked.url(), "/aprender/#direccion");
     leaked.links[0]?.click();
     assert.equal(leaked.links[0]?.href, "/verify/");
+  });
+
+  test("un dato vacío no se llama verificado y un 403 no se llama ausencia", async () => {
+    const facts = (await import(pathToFileURL(path.join(repoRoot(), "web/v2/shared/fact-state.js")).href)) as {
+      factLine: (status: string, value: unknown, lang: string) => string;
+      factState: (status: string, value: unknown) => string;
+      missingFacts: (items: Array<{ label: string; state: string }>, lang: string) => { text: string };
+    };
+    assert.equal(facts.factState("verificado", ""), "ausente");
+    assert.equal(facts.factLine("verificado", "", "es"), "ausente comprobado");
+    assert.equal(facts.factLine("verificado", "", "es").includes("verificado"), false);
+    assert.equal(facts.factLine("verificado", "", "es").includes("no disponible"), false);
+    assert.equal(facts.factLine("fallo", null, "es"), "consulta fallida");
+    assert.equal(facts.factLine("no_consultado", null, "en"), "not queried");
+    assert.equal(facts.factLine("ok", null, "es"), "leído");
+    const summary = facts.missingFacts(
+      [
+        { label: "Enlace", state: "ausente" },
+        { label: "Cuentas", state: "fallo" },
+      ],
+      "es",
+    );
+    assert.match(summary.text, /Faltan datos: Enlace: ausente comprobado; Cuentas: consulta fallida/);
   });
 });

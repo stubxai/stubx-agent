@@ -1,4 +1,4 @@
-import { canonicalJson, describePair, drawSnapshot, evidenceRecord, PUBLIC_WARNING, readWithinLimit, sha256Hex, snapshotLines } from "../modules/pair-report.mjs";
+import { canonicalJson, describePair, drawSnapshot, evidenceRecord, FEE_CAVEAT, GLOBAL_FEE_ACCOUNT, PUBLIC_WARNING, readWithinLimit, sha256Hex, snapshotLines } from "../modules/pair-report.mjs";
 
 const TEXT = {
   direccion: ["Esa dirección no es válida. Suele tener entre 32 y 44 letras y números.", "That address is not valid. It is usually 32 to 44 letters and numbers."],
@@ -47,6 +47,48 @@ function show(lines) {
   out.focus();
 }
 
+function showReading(evidence, digest) {
+  const out = document.querySelector("#resultado");
+  if (!out) return;
+  out.replaceChildren();
+  const title = document.createElement("h2");
+  title.append(span("Informe", "Report"));
+  out.append(title);
+  const strip = document.createElement("p");
+  strip.className = "franja-identidad";
+  strip.append(
+    span(
+      evidence.official
+        ? "Identidad del proyecto: esta dirección coincide con la CA publicada de STUBX."
+        : "Identidad del proyecto, aparte de este análisis: STUBX no revisa ni respalda este token.",
+      evidence.official
+        ? "Project identity: this address matches the published STUBX CA."
+        : "Project identity, separate from this analysis: STUBX does not review or endorse this token.",
+    ),
+  );
+  out.append(strip);
+  for (const item of pageLines(evidence, digest)) {
+    const p = document.createElement("p");
+    p.append(span(item.es, item.en));
+    out.append(p);
+  }
+  const details = document.createElement("details");
+  details.className = "tecnico";
+  const summary = document.createElement("summary");
+  summary.append(span("Detalles técnicos", "Technical details"));
+  const slot = document.createElement("p");
+  slot.append(
+    span(
+      evidence.slot === null ? "El momento de la red no se leyó. No se inventa un número." : `Momento de la red: ${evidence.slot}.`,
+      evidence.slot === null ? "The network moment was not read. A number is not invented." : `Network moment: ${evidence.slot}.`,
+    ),
+  );
+  details.append(summary, slot);
+  out.append(details);
+  out.tabIndex = -1;
+  out.focus();
+}
+
 function fail(code) {
   current = null;
   const exportButton = document.querySelector("#exportar");
@@ -68,16 +110,18 @@ function hosts(reads) {
   return found;
 }
 
-function feeLine(labelEs, labelEn, bps) {
+function feeLine(field, offset, bps) {
   if (bps === null) {
     return {
-      es: `${labelEs}: no disponible. No se pone cero en su lugar.`,
-      en: `${labelEn}: not available. Zero is not used in its place.`,
+      es: `Cuenta Global de Pump.fun ${GLOBAL_FEE_ACCOUNT}, campo ${field}, desplazamiento ${offset}: no se leyó. No se pone cero en su lugar. ${FEE_CAVEAT.es}`,
+      en: `Pump.fun Global account ${GLOBAL_FEE_ACCOUNT}, field ${field}, offset ${offset}: not read. Zero is not used in its place. ${FEE_CAVEAT.en}`,
     };
   }
+  const percentEs = (bps / 100).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const percentEn = (bps / 100).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   return {
-    es: `${labelEs}: ${bps} diezmilésimas.`,
-    en: `${labelEn}: ${bps} basis points.`,
+    es: `Leído en la cuenta Global de Pump.fun ${GLOBAL_FEE_ACCOUNT}, campo ${field}, desplazamiento ${offset}: ${bps} diezmilésimas (${percentEs} %). ${FEE_CAVEAT.es}`,
+    en: `Read on the Pump.fun Global account ${GLOBAL_FEE_ACCOUNT}, field ${field}, offset ${offset}: ${bps} basis points (${percentEn}%). ${FEE_CAVEAT.en}`,
   };
 }
 
@@ -96,11 +140,6 @@ function pageLines(evidence, digest) {
     { es: "No es una auditoría ni una recomendación. Muestra datos públicos de la cadena en el momento indicado; no dice si un token es bueno, seguro o una buena compra.", en: "It is not an audit or a recommendation. It shows public chain data at the stated time; it does not say whether a token is good, safe, or a good purchase." },
     { es: `Token analizado: ${evidence.mint}`, en: `Token analyzed: ${evidence.mint}` },
   ];
-  if (evidence.official) {
-    lines.push({ es: "Esta dirección coincide con la CA publicada de STUBX.", en: "This address matches the published STUBX CA." });
-  } else {
-    lines.push({ es: "STUBX no revisa ni respalda este token.", en: "STUBX does not review or endorse this token." });
-  }
   lines.push({ es: "Un emparejamiento no es una colaboración ni un respaldo.", en: "A pairing is not a collaboration or an endorsement." });
   if (evidence.name) lines.push({ es: `Nombre leído: ${evidence.name}. Es un texto de la cuenta, no un aval.`, en: `Name read: ${evidence.name}. It is account text, not an endorsement.` });
   else lines.push({ es: "Nombre: no disponible. No se rellena.", en: "Name: not available. It is not filled in." });
@@ -108,11 +147,8 @@ function pageLines(evidence, digest) {
   lines.push(
     { es: base[0], en: base[1] },
     { es: curve[0], en: curve[1] },
-    feeLine("Comisión del protocolo", "Protocol fee", evidence.protocolFeeBps),
-    feeLine("Comisión de creación", "Creation fee", evidence.creatorFeeBps),
-    evidence.slot === null
-      ? { es: "Slot: no disponible.", en: "Slot: not available." }
-      : { es: `Slot: ${evidence.slot}`, en: `Slot: ${evidence.slot}` },
+    feeLine("fee_basis_points", 105, evidence.protocolFeeBps),
+    feeLine("creator_fee_basis_points", 154, evidence.creatorFeeBps),
     { es: `Hora UTC: ${evidence.readAt}`, en: `UTC time: ${evidence.readAt}` },
     { es: `Fuente de las lecturas que respondieron: ${evidence.source}`, en: `Source of the reads that answered: ${evidence.source}` },
     { es: "Instantánea: puede haber cambiado.", en: "Snapshot: it may have changed." },
@@ -192,7 +228,7 @@ async function onSubmit(event) {
     current = { evidence, json: JSON.stringify({ evidence, sha256: digest }, null, 2) };
     const exportButton = document.querySelector("#exportar");
     if (exportButton) exportButton.hidden = false;
-    show(pageLines(evidence, digest));
+    showReading(evidence, digest);
   } catch {
     fail("red");
   } finally {

@@ -11,7 +11,7 @@ export function isRetryableFailure(result: { ok: boolean; error?: string; httpSt
   if (status === 403 || status === 429 || status === 408 || (status !== null && status >= 500)) {
     return true;
   }
-  return /429|403|too many|rate limit|timeout|timed out|tiempo de espera|network|fetch failed|ECONN|ENET|ENOTFOUND|socket|access forbidden/i.test(
+  return /429|403|too many|rate limit|timeout|timed out|tiempo de espera|network|fetch failed|ECONN|ENET|ENOTFOUND|socket|access forbidden|personal token|indexed request|request blocked/i.test(
     result.error ?? "",
   );
 }

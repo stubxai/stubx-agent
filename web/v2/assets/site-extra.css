@@ -1193,3 +1193,31 @@ body:has(a[href="/studio/"][aria-current="page"]) .fila button.primary {
   .cuaderno-acciones { display: grid; }
   .cuaderno-acciones button, .cuaderno-acciones a, .cuaderno-acciones label.file { width: 100%; }
 }
+
+/* Entrega 1. Clases nuevas sobre las variables de tool.css. No reordena el sistema visual. */
+.franja-identidad {
+  margin: 0.75rem 0 0;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid var(--line);
+  border-left: 6px solid var(--pink);
+  border-radius: var(--radius-sm, 0.65rem);
+  background: var(--abyss, #040d1f);
+  color: var(--cream, #f9e6d0);
+  font-size: 0.92rem;
+}
+.resumen-datos {
+  margin: 0.75rem 0 0;
+  padding: 0.75rem 0.9rem;
+  border: 2px solid var(--attention);
+  border-radius: var(--radius-sm, 0.65rem);
+  background: var(--bg-elev);
+  color: var(--cream, #f9e6d0);
+}
+.resumen-datos[data-estado="ok"] { border-color: var(--gem, #1beb91); }
+dd[data-estado="fallo"], dd[data-estado="ausente"], dd[data-estado="no_consultado"] { color: var(--cream, #f9e6d0); }
+.acciones-consulta { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.9rem; }
+.acciones-consulta a, .acciones-consulta button { border-radius: var(--radius-sm, 0.65rem); }
+@media (max-width: 599px) {
+  .acciones-consulta { display: grid; }
+  .acciones-consulta a, .acciones-consulta button { width: 100%; }
+}
