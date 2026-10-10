@@ -1,0 +1,42 @@
+{
+  "version": "2026-10-09",
+  "limits": { "title": 72, "body": 180 },
+  "formats": [
+    { "id": "square", "width": 1080, "height": 1080, "nombre": { "es": "Cuadrado 1:1", "en": "Square 1:1" } },
+    { "id": "story", "width": 1080, "height": 1920, "nombre": { "es": "Vertical 9:16", "en": "Vertical 9:16" } }
+  ],
+  "zones": {
+    "title": { "x": 0.06, "y": 0.05, "w": 0.88, "h": 0.2 },
+    "body": { "x": 0.06, "y": 0.26, "w": 0.56, "h": 0.34 },
+    "avatar": { "x": 0.64, "y": 0.26, "w": 0.3, "h": 0.34 }
+  },
+  "templates": [
+    {
+      "id": "aprendizaje",
+      "nombre": { "es": "Aprendizaje", "en": "Learning" },
+      "title": { "es": "El nombre no basta", "en": "The name is not enough" },
+      "body": {
+        "es": "El nombre no sustituye a comprobar la dirección.",
+        "en": "The name does not replace checking the address."
+      }
+    },
+    {
+      "id": "bienvenida",
+      "nombre": { "es": "Bienvenida", "en": "Welcome" },
+      "title": { "es": "Hola", "en": "Hello" },
+      "body": {
+        "es": "Esto sirve para saludar y recordar que un nombre no demuestra nada.",
+        "en": "This image is a greeting and a reminder that a name proves nothing."
+      }
+    },
+    {
+      "id": "meme",
+      "nombre": { "es": "Meme educativo", "en": "Educational meme" },
+      "title": { "es": "Pide pruebas", "en": "Ask for proof" },
+      "body": {
+        "es": "Una viñeta para aprender. La gracia no sustituye a mirar la dirección entera.",
+        "en": "A panel for learning. A joke does not replace looking at the whole address."
+      }
+    }
+  ]
+}

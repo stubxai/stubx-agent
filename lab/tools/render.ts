@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { DISCLAIMER, DISCLAIMER_EN, DRAFT_LINE, HOW_LAB, HOW_VERIFY, OFFLINE_LINE, READONLY_LINE, UNKNOWN_LINE } from "../copy.js";
+import { repoRootFromMeta } from "../paths.js";
+import { AUDIT_EN, AUDIT_ES, DISCLAIMER, DISCLAIMER_EN, DRAFT_LINE, HOW_LAB, HOW_VERIFY, OFFLINE_LINE, PRIVACY_EN, PRIVACY_ES, READONLY_LINE, UNKNOWN_LINE } from "../copy.js";
 import { loadGlossary, loadMission } from "../mission/load.js";
 import type { CardSummary, GlossaryEntry, Localized, Mission, MissionStep } from "../mission/types.js";
 import { changelogHeadings, listTestFiles, loadBoard } from "../tablero/collect.js";
@@ -368,7 +369,9 @@ function renderVerify(cards: readonly CardSummary[], glossaryEntries: readonly G
     .map((entry) => glossaryArticle(entry))
     .join("");
   const main = `<h1>${both({ es: "Comprueba una dirección", en: "Check an address" })}</h1>
-<p class="lede">${both({ es: "Ejemplos fechados, no una lista completa de clones. Esta página no consulta la red.", en: "Dated examples, not a complete list of clones. This page does not query the network." })}</p>
+<p class="lede">${both({ es: "Cualquier token SPL o Token-2022, leído en directo y solo en lectura. Las fichas de abajo son ejemplos fechados, no una lista completa.", en: "Any SPL or Token-2022 token, read live and read-only. The cards below are dated examples, not a complete list." })}</p>
+<p class="aviso-fijo">${both({ es: AUDIT_ES, en: AUDIT_EN })}</p>
+<p class="aviso-fijo privacidad">${both({ es: PRIVACY_ES, en: PRIVACY_EN })}</p>
 ${howDetails(HOW_VERIFY)}
 <div class="herramienta">
 <form id="consulta" class="consulta" action="#">
@@ -380,7 +383,7 @@ ${howDetails(HOW_VERIFY)}
 <section id="resultado" class="resultado" data-state="vacio" data-luz="neutro" aria-live="polite">
 <h2>${both({ es: "La lectura aparece aquí", en: "The reading shows up here" })}</h2>
 <p class="apoyo">${both({ es: "La lectura será una de estas tres. Los detalles técnicos se quedan plegados.", en: "The reading will be one of these three. Technical details stay folded." })}</p>
-<ul class="leyenda"><li data-luz="ok">${both({ es: "Parece el STUBX oficial", en: "Looks like the official STUBX" })}</li><li data-luz="riesgo">${both({ es: "Cuidado: posible copia", en: "Careful: possible copy" })}</li><li data-luz="neutro">${both({ es: "No se pudo comprobar", en: "Could not be checked" })}</li></ul>
+<ul class="leyenda"><li data-luz="ok">${both({ es: "Dirección del registro de STUBX", en: "STUBX registry address" })}</li><li data-luz="atencion">${both({ es: "Se parece a STUBX, pero no es la CA oficial", en: "Looks like STUBX, but it is not the official CA" })}</li><li data-luz="neutro">${both({ es: "No se pudo comprobar", en: "Could not be checked" })}</li></ul>
 </section>
 </div>
 <details class="tecnico archivo"><summary>${both({ es: "Fichas de ejemplo", en: "Example cards" })}</summary>
@@ -419,6 +422,8 @@ const PERSON_EN: Record<string, string> = {
 const MILESTONE_EN: Record<string, string> = {
   "2026-10-09 · Medición de uso: ninguna en el cliente":
     "2026-10-09 · Usage measurement: none on the client",
+  "2026-10-09 · Verify lee cualquier mint, solo lectura, sin publicar":
+    "2026-10-09 · Verify reads any mint, read-only, unpublished",
   "2026-10-09 · Verify y Lab: lectura visible en el móvil":
     "2026-10-09 · Verify and Lab: the reading stays visible on a phone",
   "2026-10-09 · Revisión de seguridad de Verify y Lab (borrador, sin publicar)":
@@ -503,7 +508,7 @@ function renderIndex(options: RenderOptions): string {
   const main = `<h1>${both({ es: "Borradores para la web", en: "Drafts for the website" })}</h1>
 <p>${both({ es: "Tres páginas estáticas listas para copiar a stubxai.com cuando haya autorización. Este índice no se llama index.html: no sustituye la portada.", en: "Three static pages ready to copy onto stubxai.com when there is authorization. This index is not named index.html: it does not replace the homepage." })}</p>
 <ul>
-<li><a href="./verify/index.html">/verify</a> — ${both({ es: "fichas de ejemplo", en: "example cards" })}</li>
+<li><a href="./verify/index.html">/verify</a> — ${both({ es: "lectura en vivo y fichas de ejemplo", en: "live reading and example cards" })}</li>
 <li><a href="./lab/index.html">/lab</a> — ${both({ es: "misión 1", en: "mission 1" })}</li>
 <li><a href="./tablero/index.html">/tablero</a> — ${both({ es: "tablero de construcción", en: "construction board" })}</li>
 </ul>`;
@@ -590,24 +595,51 @@ self.addEventListener("fetch", function (event) {
 `;
 }
 
+function rpcOrigins(): string[] {
+  const limitsPath = path.join(repoRootFromMeta(import.meta.url), "verify/policy/limits.json");
+  const limits = JSON.parse(readFileSync(limitsPath, "utf8")) as { defaultRpcUrl?: string; fallbackRpcUrl?: string };
+  const origins: string[] = [];
+  for (const raw of [limits.defaultRpcUrl, limits.fallbackRpcUrl]) {
+    if (!raw) {
+      throw new Error("limits.json no trae los dos servicios de lectura.");
+    }
+    const url = new URL(raw);
+    if (url.protocol !== "https:") {
+      throw new Error(`El servicio de lectura tiene que ser https: ${raw}`);
+    }
+    const origin = url.origin;
+    if (!origins.includes(origin)) {
+      origins.push(origin);
+    }
+  }
+  return origins;
+}
+
 export function renderHeaders(): string {
-  const lines = [
-    "Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+  const shared = [
     "X-Content-Type-Options: nosniff",
     "Referrer-Policy: no-referrer",
     "Permissions-Policy:",
   ];
-  const paths = [
-    "/verify/*",
-    "/verify/index.html",
-    "/lab/*",
-    "/lab/index.html",
-    "/lab/sw.js",
-    "/tablero/*",
-    "/tablero/index.html",
-    "/indice-borrador.html",
+  const selfCsp =
+    "Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
+  const verifyCsp = selfCsp.replace("connect-src 'self'", `connect-src 'self' ${rpcOrigins().join(" ")}`);
+  const blocks: Array<[string, string]> = [
+    ["/verify/*", verifyCsp],
+    ["/verify/index.html", verifyCsp],
+    ["/lab/*", selfCsp],
+    ["/lab/index.html", selfCsp],
+    ["/lab/sw.js", selfCsp],
+    ["/tablero/*", selfCsp],
+    ["/tablero/index.html", selfCsp],
+    ["/indice-borrador.html", selfCsp],
   ];
-  return `${paths.map((item) => `${item}\n  ${lines.join("\n  ")}`).join("\n\n")}\n`;
+  return `${blocks
+    .map(([item, csp]) => {
+      const lines = item.startsWith("/verify") ? ["! Content-Security-Policy", csp, ...shared] : [csp, ...shared];
+      return `${item}\n  ${lines.join("\n  ")}`;
+    })
+    .join("\n\n")}\n`;
 }
 
 function madridStamp(iso: string | null): string {

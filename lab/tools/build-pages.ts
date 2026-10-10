@@ -7,6 +7,7 @@ import { loadCards, loadFuentes, loadGlossary, loadMission } from "../mission/lo
 import { validateMission } from "../mission/validate.js";
 import { renderCss } from "./css.js";
 import { bundleMission, bundleVerify } from "./bundle.js";
+import { inlineModule } from "./inline.js";
 import { renderPages } from "./render.js";
 import type { BuiltPage } from "./render.js";
 
@@ -27,14 +28,29 @@ export function buildOutputs(repoRoot: string, options: { publish?: boolean } = 
   }
   const lookupPath = path.join(repoRoot, "dist/lab/verify/lookup.js");
   const verifyUiPath = path.join(repoRoot, "lab/client/verify-ui.js");
+  const signalsPath = path.join(repoRoot, "dist/verify/signals.js");
+  const limits = JSON.parse(readFileSync(path.join(repoRoot, "verify/policy/limits.json"), "utf8")) as {
+    defaultRpcUrl: string;
+    fallbackRpcUrl: string;
+  };
+  const canonical = JSON.parse(readFileSync(path.join(repoRoot, "verify/registry/canonical.json"), "utf8")) as {
+    tokens: unknown[];
+  };
   const clones = JSON.parse(readFileSync(path.join(repoRoot, "verify/registry/clones.json"), "utf8")) as {
     evm?: unknown[];
   };
-  const verifyJs = bundleVerify(readFileSync(lookupPath, "utf8"), readFileSync(verifyUiPath, "utf8"), {
-    cards,
-    source: "lista" as const,
-    evm: Array.isArray(clones.evm) ? clones.evm : [],
-  });
+  const verifyJs = bundleVerify(
+    readFileSync(lookupPath, "utf8"),
+    inlineModule(signalsPath),
+    readFileSync(verifyUiPath, "utf8"),
+    {
+      cards,
+      source: "lista" as const,
+      evm: Array.isArray(clones.evm) ? clones.evm : [],
+      rpc: { primary: limits.defaultRpcUrl, fallback: limits.fallbackRpcUrl },
+      registry: canonical.tokens,
+    },
+  );
   const missionJs = bundleMission(readFileSync(enginePath, "utf8"), readFileSync(uiPath, "utf8"), {
     mission,
     cards: byMint,
@@ -80,7 +96,7 @@ function main(): void {
   const publishRequested = process.argv.includes("--publish");
   const publishConfirmed = process.env.STUBX_PUBLISH === "1";
   if (publishRequested !== publishConfirmed) {
-    process.stderr.write("El modo publicación solo se activa con STUBX_PUBLISH=1 y --publish, y solo cuando Cristian lo decida. El borrador no cambia.\n");
+    process.stderr.write("El modo publicación solo se activa con STUBX_PUBLISH=1 y --publish, y solo cuando el creador lo decida. El borrador no cambia.\n");
     process.exitCode = 1;
     return;
   }

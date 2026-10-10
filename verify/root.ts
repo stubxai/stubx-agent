@@ -21,6 +21,8 @@ export function readVerifyPolicy(root: string): {
   version: string;
   defaultRpcUrl: string;
   rpcUrlEnv: string;
+  fallbackRpcUrl: string;
+  fallbackRpcUrlEnv: string;
   timeoutMs: number;
   maxRetries: number;
   backoffBaseMs: number;

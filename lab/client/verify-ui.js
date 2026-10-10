@@ -22,7 +22,7 @@ function paintVerify(out, view) {
   out.replaceChildren();
   out.setAttribute("data-state", view.kind);
   out.setAttribute("data-luz", view.light);
-  out.setAttribute("aria-busy", view.kind === "comprobando" ? "true" : "false");
+  out.setAttribute("aria-busy", view.light === "espera" || view.kind === "comprobando" ? "true" : "false");
   if (view.kind === "vacio") {
     var emptyTitle = verifyEl("h2");
     emptyTitle.textContent = view.title[lang];
@@ -30,8 +30,8 @@ function paintVerify(out, view) {
     emptySupport.textContent = view.support[lang];
     var list = verifyEl("ul", { class: "leyenda" });
     list.append(
-      legendItem("ok", lang === "en" ? "Looks like the official STUBX" : "Parece el STUBX oficial"),
-      legendItem("riesgo", lang === "en" ? "Careful: possible copy" : "Cuidado: posible copia"),
+      legendItem("ok", lang === "en" ? "STUBX registry address" : "Dirección del registro de STUBX"),
+      legendItem("atencion", lang === "en" ? "Looks like STUBX, but it is not the official CA" : "Se parece a STUBX, pero no es la CA oficial"),
       legendItem("neutro", lang === "en" ? "Could not be checked" : "No se pudo comprobar"),
     );
     out.append(emptyTitle, emptySupport, list);
@@ -66,7 +66,30 @@ function paintVerify(out, view) {
     note.textContent = view.partialNote[lang];
     out.append(note);
   }
-  if (view.rows.length > 0) {
+  if (view.signals && view.signals.length) {
+    var signals = verifyEl("div", { class: "senales" });
+    view.signals.forEach(function (signal) {
+      var card = verifyEl("article", { class: signal.tone ? "senal " + signal.tone : "senal", "data-nivel": signal.level });
+      var heading = verifyEl("h3");
+      heading.textContent = signal.title[lang];
+      var body = verifyEl("p");
+      body.textContent = signal.explain[lang];
+      card.append(heading, body);
+      signals.append(card);
+    });
+    out.append(signals);
+  }
+  if (view.canSample) {
+    var sampleBtn = verifyEl("button", { type: "button", id: "leer-cuentas" });
+    sampleBtn.textContent = lang === "en" ? "Try to read the largest accounts" : "Intentar leer las cuentas más grandes";
+    out.append(sampleBtn);
+  }
+  if (view.kind !== "vacio" && typeof AUDIT_NOTICE !== "undefined") {
+    var audit = verifyEl("p", { class: "aviso-fijo" });
+    audit.textContent = AUDIT_NOTICE[lang];
+    out.append(audit);
+  }
+  if (view.rows && view.rows.length > 0) {
     var details = verifyEl("details", { class: "tecnico" });
     var summary = verifyEl("summary");
     summary.textContent = lang === "en" ? "Technical details" : "Detalles técnicos";
@@ -75,6 +98,7 @@ function paintVerify(out, view) {
       var term = verifyEl("dt");
       term.textContent = row.label[lang];
       var detail = verifyEl("dd");
+      if ((row.value[lang] || "").charAt(0) === "«") detail.className = "ajeno";
       detail.textContent = row.value[lang];
       rows.append(term, detail);
     });
@@ -129,7 +153,97 @@ function bootVerify() {
     if (reveal && view.kind !== "vacio" && view.kind !== "comprobando") revealVerdict();
   }
 
+  var generation = 0;
+
+  function datedSignal(cardView) {
+    if (cardView.kind === "oficial") {
+      return {
+        id: "ficha",
+        level: "ok",
+        title: { es: "Ficha fechada", en: "Dated card" },
+        explain: {
+          es: "Hay una ficha fechada de esta misma dirección. Es una foto anterior, no esta lectura.",
+          en: "There is a dated card for this same address. It is an earlier snapshot, not this reading.",
+        },
+      };
+    }
+    if (cardView.kind === "copia") {
+      return {
+        id: "ficha",
+        level: "atencion",
+        title: {
+          es: "La ficha fechada también dice que se parece a STUBX y no es la CA oficial",
+          en: "The dated card also says it looks like STUBX and is not the official CA",
+        },
+        explain: cardView.support,
+      };
+    }
+    if (cardView.kind === "otra") {
+      return {
+        id: "ficha",
+        level: "neutro",
+        title: { es: "Hay una ficha fechada y no es la del registro", en: "There is a dated card and it is not the registry one" },
+        explain: cardView.support,
+      };
+    }
+    return null;
+  }
+
+  var stamps = [];
+  var memory = new Map();
+  var currentAbort = null;
+  var inFlight = false;
+
+  function submitButton() {
+    return form.querySelector("button[type='submit']");
+  }
+
+  function setBusy(busy) {
+    inFlight = busy;
+    var submit = submitButton();
+    if (submit) submit.disabled = busy;
+    var extra = out.querySelector("#leer-cuentas");
+    if (extra) extra.disabled = busy;
+  }
+
+  function pauseView(mint) {
+    return {
+      ok: false,
+      kind: "limite",
+      mint: mint,
+      light: "neutro",
+      lightLabel: { es: "No se pudo comprobar", en: "Could not be checked" },
+      title: { es: "No se pudo comprobar", en: "Could not be checked" },
+      support: {
+        es: "Se han hecho 6 lecturas en un minuto. Espera un momento antes de comprobar otra. No se ha inventado un resultado.",
+        en: "6 readings were made in one minute. Wait a moment before checking another. No result was invented.",
+      },
+      signals: [],
+      rows: [],
+      endpointHost: null,
+      usedFallback: false,
+      slot: null,
+      fetchedAt: null,
+      sources: [],
+      canSample: false,
+    };
+  }
+
+  function endpointsOf() {
+    var rpc = STUBX_VERIFY.rpc || {};
+    return [rpc.primary, rpc.fallback].filter(function (item) { return !!item; });
+  }
+
+  function decorate(view, normalized) {
+    var cardView = classifyAddress(normalized, cards, "lista", evm);
+    if (cardView.compare) view.compare = cardView.compare;
+    var extra = datedSignal(cardView);
+    if (extra && view.ok && view.signals) view.signals = view.signals.concat([extra]);
+    return view;
+  }
+
   function run() {
+    if (inFlight) return;
     if (input.value.trim() === "") {
       apply(emptyView(), false);
       showFieldError();
@@ -137,15 +251,125 @@ function bootVerify() {
     }
     hideFieldError();
     var value = input.value;
-    apply(pendingView(value), false);
-    window.requestAnimationFrame(function () {
-      try {
-        apply(classifyAddress(value, cards, source, evm), true);
-      } catch (error) {
-        apply(classifyAddress(value, [], "caida", evm), true);
+    var ticket = ++generation;
+    if (typeof readAnyMint !== "function" || typeof loadingView !== "function") {
+      apply(pendingView(value), false);
+      window.requestAnimationFrame(function () {
+        try {
+          apply(classifyAddress(value, cards, source, evm), true);
+        } catch (error) {
+          apply(classifyAddress(value, [], "caida", evm), true);
+        }
+      });
+      return;
+    }
+    var normalized = normalizeAddress(value);
+    if (!normalized || /^0x/i.test(normalized) || !isAddress(normalized)) {
+      apply(classifyAddress(value, cards, source, evm), true);
+      return;
+    }
+    var now = Date.now();
+    var cached = typeof readCache === "function" ? readCache(memory, normalized, now, 60000) : null;
+    if (cached) {
+      apply(cached, true);
+      return;
+    }
+    var slot = typeof takeQuerySlot === "function" ? takeQuerySlot(stamps, now, 6, 60000) : { allowed: true, stamps: stamps };
+    stamps = slot.stamps;
+    if (!slot.allowed) {
+      apply(pauseView(normalized), true);
+      return;
+    }
+    if (currentAbort) currentAbort.abort();
+    var controller = new AbortController();
+    currentAbort = controller;
+    setBusy(true);
+    apply(loadingView(normalized), true);
+    var endpoints = endpointsOf();
+    readAnyMint({
+      mint: normalized,
+      registry: STUBX_VERIFY.registry || [],
+      endpoints: endpoints,
+      maxRetries: 0,
+      minIntervalMs: 200,
+      timeoutMs: 8000,
+      signal: controller.signal,
+    }).then(function (reading) {
+      if (ticket !== generation || controller.signal.aborted) return;
+      if (!reading.ok) {
+        apply(reserveWhenLiveFails(classifyAddress(normalized, cards, "lista", evm)), true);
+        return;
       }
+      var view = decorate(reading, normalized);
+      if (view.ok) memory.set(normalized, { at: Date.now(), value: view });
+      apply(view, true);
+    }).catch(function () {
+      if (ticket !== generation || controller.signal.aborted) return;
+      apply(reserveWhenLiveFails(classifyAddress(normalized, cards, "lista", evm)), true);
+    }).then(function () {
+      if (ticket === generation) setBusy(false);
     });
   }
+
+  function readSample() {
+    if (inFlight || !last || !last.canSample || !last.mint) return;
+    var now = Date.now();
+    var slot = typeof takeQuerySlot === "function" ? takeQuerySlot(stamps, now, 6, 60000) : { allowed: true, stamps: stamps };
+    stamps = slot.stamps;
+    if (!slot.allowed) {
+      apply(pauseView(last.mint), true);
+      return;
+    }
+    if (typeof readLargestAccounts !== "function") return;
+    var ticket = ++generation;
+    if (currentAbort) currentAbort.abort();
+    var controller = new AbortController();
+    currentAbort = controller;
+    setBusy(true);
+    var mint = last.mint;
+    readLargestAccounts({
+      mint: mint,
+      registry: STUBX_VERIFY.registry || [],
+      endpoints: endpointsOf(),
+      maxRetries: 0,
+      minIntervalMs: 200,
+      timeoutMs: 6000,
+      signal: controller.signal,
+    }).then(function (signal) {
+      if (ticket !== generation || controller.signal.aborted) return;
+      var view = last;
+      view.signals = (view.signals || []).map(function (item) {
+        return item.id === "cuentas" ? signal : item;
+      });
+      view.canSample = false;
+      memory.set(mint, { at: Date.now(), value: view });
+      apply(view, true);
+    }).catch(function () {
+      if (ticket !== generation || controller.signal.aborted) return;
+      var view = last;
+      var failed = {
+        id: "cuentas",
+        level: "atencion",
+        title: { es: "No se pudo comprobar", en: "Could not be checked" },
+        explain: {
+          es: "No se pudo comprobar. El servicio no devolvió las cuentas más grandes. No es una concentración de cero.",
+          en: "It could not be checked. The service did not return the largest accounts. It is not zero concentration.",
+        },
+      };
+      view.signals = (view.signals || []).map(function (item) {
+        return item.id === "cuentas" ? failed : item;
+      });
+      view.canSample = false;
+      apply(view, true);
+    }).then(function () {
+      if (ticket === generation) setBusy(false);
+    });
+  }
+
+  out.addEventListener("click", function (event) {
+    var target = event.target;
+    if (target && target.id === "leer-cuentas") readSample();
+  });
 
   apply(emptyView(), false);
   form.addEventListener("submit", function (event) {

@@ -9,6 +9,7 @@ import os
 import re
 import shutil
 import sys
+import urllib.parse
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -137,6 +138,7 @@ PRIMARY = [
     ("verify", "verify/index.html", "Verificar", "Verify"),
     ("lab", "lab/index.html", "Lab", "Lab"),
     ("tablero", "tablero/index.html", "Tablero", "Board"),
+    ("studio", "studio/index.html", "Studio", "Studio"),
 ]
 MORE = [
     ("methodology", "methodology/index.html", "Metodología", "Methodology"),
@@ -205,17 +207,37 @@ def nav(frm: str, current: str, absolute: bool = False) -> str:
     )
 
 
-NOINDEX_PAGES = {"404.html", "studio/index.html"}
+NOINDEX_PAGES = {"404.html"}
 
 
-def shell(frm: str, current: str, title_es: str, title_en: str, desc_es: str, desc_en: str, body: str, scripts: list[str], narrow: bool, worker: bool = False, absolute: bool = False) -> str:
+def rpc_origins() -> list[str]:
+    limits = json.loads((REPO / "verify" / "policy" / "limits.json").read_text(encoding="utf-8"))
+    origins: list[str] = []
+    for key in ("defaultRpcUrl", "fallbackRpcUrl"):
+        raw = str(limits[key])
+        parsed = urllib.parse.urlsplit(raw)
+        if parsed.scheme != "https" or not parsed.netloc:
+            raise SystemExit(f"RPC no válido en limits.json: {key}")
+        origin = f"https://{parsed.netloc}"
+        if origin not in origins:
+            origins.append(origin)
+    return origins
+
+
+def connect_src(include_rpc: bool) -> str:
+    if not include_rpc:
+        return "'self'"
+    return "'self' " + " ".join(rpc_origins())
+
+
+def shell(frm: str, current: str, title_es: str, title_en: str, desc_es: str, desc_en: str, body: str, scripts: list[str], narrow: bool, worker: bool = False, absolute: bool = False, connect: str | None = None) -> str:
     prefix = "/" if absolute else "../" * frm.count("/")
     wrap = "wrap estrecha" if narrow else "wrap"
     script_tags = "\n".join(f'<script src="{prefix}{src}"></script>' for src in scripts)
     worker_src = "'self'" if worker else "'none'"
     url = public_url(frm)
     banner = draft_html(PUBLISH)
-    # Indexable desde 2026-10-09 (AUTORIZO de Cristian). Solo el 404 y el marcador de Studio siguen fuera.
+    # Indexable desde 2026-10-09. Fuera del índice solo queda el 404. Studio también se indexa.
     robots_meta = '<meta name="robots" content="noindex, nofollow">\n' if frm in NOINDEX_PAGES else ""
     return f"""<!DOCTYPE html>
 <html lang="es" data-lang="es">
@@ -243,7 +265,7 @@ def shell(frm: str, current: str, title_es: str, title_en: str, desc_es: str, de
 <meta name="twitter:description" content="{html.escape(desc_es + " / " + desc_en)}">
 <meta name="twitter:image" content="{OG_IMAGE}">
 <meta name="twitter:image:alt" content="{html.escape(OG_ALT)}">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; manifest-src 'self'; media-src 'none'; frame-src 'none'; worker-src {worker_src}; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src {connect or "'self'"}; manifest-src 'self'; media-src 'none'; frame-src 'none'; worker-src {worker_src}; object-src 'none'; base-uri 'self'; form-action 'none'">
 <title data-title-es="{html.escape(title_es)}" data-title-en="{html.escape(title_en)}">{html.escape(title_es)}</title>
 <meta name="theme-color" content="#071422">
 <link rel="icon" href="{prefix}favicon.ico" sizes="any">
@@ -287,10 +309,10 @@ def shell(frm: str, current: str, title_es: str, title_en: str, desc_es: str, de
 """
 
 
-def write_page(rel: str, current: str, title_es: str, title_en: str, desc_es: str, desc_en: str, body: str, scripts: list[str] | None = None, narrow: bool = False, worker: bool = False, absolute: bool = False) -> None:
+def write_page(rel: str, current: str, title_es: str, title_en: str, desc_es: str, desc_en: str, body: str, scripts: list[str] | None = None, narrow: bool = False, worker: bool = False, absolute: bool = False, connect: str | None = None) -> None:
     path = ROOT / rel
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(shell(rel, current, title_es, title_en, desc_es, desc_en, body, scripts or [], narrow, worker, absolute), encoding="utf-8")
+    path.write_text(shell(rel, current, title_es, title_en, desc_es, desc_en, body, scripts or [], narrow, worker, absolute, connect), encoding="utf-8")
 
 
 def source(es: str, en: str) -> str:
@@ -303,12 +325,12 @@ def home() -> str:
 <div>
 <p class="kicker">{t("Solana · Pump.fun · Prototipo", "Solana · Pump.fun · Prototype")}</p>
 <h1>{t("Contrasta la dirección antes de creer el nombre.", "Check the address before you trust the name.")}</h1>
-<p class="lede">{t("STUBX Verify compara una dirección con fichas de ejemplo. La oficial está releída el 2026-10-09, con el saldo de la curva y el de la creadora. No consulta la red, no pide una wallet y no dice qué comprar.", "STUBX Verify compares an address with example cards. The official one was read again on 2026-10-09, with the curve balance and the creator balance. It does not query the network, it does not ask for a wallet, and it does not say what to buy.")}</p>
+<p class="lede">{t("STUBX Verify lee en directo, y solo en lectura, cualquier token SPL o Token-2022. También compara con fichas de ejemplo: la oficial está releída el 2026-10-09, con el saldo de la curva y el de la creadora. No pide una cuenta y no dice qué comprar.", "STUBX Verify reads any SPL or Token-2022 token live, and read-only. It also compares with example cards: the official one was read again on 2026-10-09, with the curve balance and the creator balance. It does not ask for an account and it does not say what to buy.")}</p>
 <div class="hero-actions">
 <a class="primary" href="/verify/">{t("Analizar token", "Analyze token")}</a>
 <a href="/methodology/">{t("Ver la metodología", "Read the methodology")}</a>
 </div>
-<p class="source">{t("La acción abre la demo fechada del 2026-10-09 (commit 86df576), no una lectura en vivo. La PR 14 sigue sin fusionarse en main.", "The action opens the dated demo of 2026-10-09 (commit 86df576), not a live reading. PR 14 is still not merged into main.")}</p>
+<p class="source">{t("La acción abre Verify: lectura en vivo y solo lectura, más las fichas fechadas del 2026-10-09 (commit 86df576). No es una puntuación. La PR 14 se fusionó en main el 2026-10-09.", "The action opens Verify: a live read-only reading, plus the dated cards of 2026-10-09 (commit 86df576). It is not a score. PR 14 was merged into main on 2026-10-09.")}</p>
 </div>
 <figure>
 <picture>
@@ -338,12 +360,12 @@ def home() -> str:
 <h2>{t("Herramientas de esta misma web", "Tools on this website")}</h2>
 <p>{t("Misma navegación, mismos estilos y el mismo selector de idioma. Lo que no está construido no tiene un botón que finja funcionar.", "Same navigation, same styles, and the same language switch. What is not built has no button pretending to work.")}</p>
 <div class="grid-3">
-<article class="card"><p class="estado-pill">{t("Demo fechada · 2026-10-09", "Dated demo · 2026-10-09")}</p><h3>Verify</h3><p>{t("Pega una dirección y lee el semáforo en lenguaje llano. Incluye la ficha oficial de ese día, los clones ERYyy y FMNb, los del 2026-10-08 y dos ejemplos 0x sin verificar en la cadena.", "Paste an address and read the traffic light in plain language. It includes that day’s official card, the ERYyy and FMNb clones, the 2026-10-08 ones, and two 0x examples that are not verified on-chain.")}</p><p><a class="primary" href="/verify/">{t("Analizar token", "Analyze token")}</a></p></article>
+<article class="card"><p class="estado-pill">{t("Lectura en vivo + fichas del 2026-10-09", "Live reading + cards of 2026-10-09")}</p><h3>Verify</h3><p>{t("Pega la dirección de un token SPL o Token-2022. La página lee la cadena en directo y solo en lectura, y la compara con las fichas fechadas. No es una puntuación.", "Paste the address of an SPL or Token-2022 token. The page reads the chain live and read-only, and compares it with the dated cards. It is not a score.")}</p><p><a class="primary" href="/verify/">{t("Analizar token", "Analyze token")}</a></p></article>
 <article class="card"><p class="estado-pill">{t("Demo fechada · 2026-10-09", "Dated demo · 2026-10-09")}</p><h3>Lab</h3><p>{t("Una misión de cinco pasos para distinguir el mint del registro de un clon. El progreso se queda en este navegador.", "A five-step mission to tell the registry mint from a clone. Progress stays in this browser.")}</p><p><a href="/lab/">{t("Hacer la misión", "Start the mission")}</a></p></article>
 <article class="card"><p class="estado-pill">{t("Registro · 2026-10-09", "Record · 2026-10-09")}</p><h3>{t("Tablero", "Board")}</h3><p>{t("Estados reales del registro de la PR 14. Una idea, un código en el repositorio y una función publicada no son lo mismo.", "Real states from the PR 14 record. An idea, code in the repository, and a published function are not the same thing.")}</p><p><a href="/tablero/">{t("Abrir el tablero", "Open the board")}</a></p></article>
 </div>
 <div class="grid-3">
-<article class="slot"><p class="estado-pill">{t("No construido · 2026-10-09", "Not built · 2026-10-09")}</p><h3>Studio</h3><p>{t("No hay editor ni exportación. La ficha U02 sigue en propuesta.", "There is no editor and no export. Item U02 is still a proposal.")}</p><p><a href="/studio/">{t("Ver qué falta", "See what is missing")}</a></p></article>
+<article class="card"><p class="estado-pill">{t("En este navegador · 2026-10-09", "In this browser · 2026-10-09")}</p><h3>Studio</h3><p>{t("Crea una imagen para tu token, sin cuenta. Los recursos de STUBX vienen por defecto. El nombre, el logo y la exportación se quedan en este navegador.", "Create an image for your token, without an account. STUBX assets start as the default. The name, the logo, and the export stay in this browser.")}</p><p><a href="/studio/">{t("Abrir Studio", "Open Studio")}</a></p></article>
 <article class="slot"><p class="estado-pill">{t("No construido · 2026-10-09", "Not built · 2026-10-09")}</p><h3>{t("Cuaderno", "Notebook")}</h3><p>{t("No hay notas ni historial de consultas. Lab solo guarda el progreso de la misión.", "There are no notes and no query history. Lab only stores mission progress.")}</p><p><a href="/cuaderno/">{t("Ver qué falta", "See what is missing")}</a></p></article>
 <article class="slot"><p class="estado-pill">{t("No construido · 2026-10-09", "Not built · 2026-10-09")}</p><h3>{t("Contribuir", "Contribute")}</h3><p>{t("No hay formulario ni entrega de archivos. No se piden aportaciones.", "There is no form and no file upload. Contributions are not being requested.")}</p><p><a href="/contribuir/">{t("Ver qué falta", "See what is missing")}</a></p></article>
 </div>
@@ -412,8 +434,8 @@ def prepare_tool(name: str) -> str:
             )
             + "</button></p><p class=\"source\">"
             + t(
-                "Ese botón no llama a la red. Enseña el mensaje que el motor ya tiene cuando la fuente no responde. La dirección que hayas escrito se conserva.",
-                "That button does not call the network. It shows the message the engine already has when the source does not respond. The address you typed stays in the field.",
+                "Ese botón no hace una consulta nueva. Enseña el aviso de lectura no disponible. La dirección escrita se queda en el campo y no se guarda en este sitio.",
+                "That button does not make a new query. It shows the reading-unavailable notice. The address you typed stays in the field and is not stored on this site.",
             )
             + "</p>"
         )
@@ -429,10 +451,10 @@ def methodology() -> str:
 <h2>{t("Qué hace Verify aquí", "What Verify does here")}</h2>
 <ul class="clean">
 <li>{t("Acepta una dirección y comprueba el formato. El nombre del token no sirve.", "It accepts an address and checks the format. The token name is not enough.")}</li>
-<li>{t("La compara con las fichas guardadas: la oficial releída el 2026-10-09, con la cuenta personal publicada 2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX, los clones ERYyy y FMNb de ese día, los tres clones y el contraste USDC del 2026-10-08, y dos ejemplos 0x sin verificar en la cadena. Commit 86df576 del 2026-10-09. La PR 14 sigue sin fusionarse en main.", "It compares it with the stored cards: the official one read again on 2026-10-09, including the published personal account 2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX, the ERYyy and FMNb clones from that day, the three clones and the USDC contrast from 2026-10-08, and two 0x examples that are not verified on-chain. Commit 86df576 of 2026-10-09. PR 14 is still not merged into main.")}</li>
-<li>{t("Si la dirección es válida, no es la oficial y no tiene ficha, el resultado es «No es la dirección oficial» y se muestra la oficial. Si mide lo mismo, se marcan los caracteres que cambian. Las fichas conocidas muestran su ficha. No se inventa un verde.", "If the address is valid, it is not the official one, and it has no card, the result is “Not the official address” and the official address is shown. If the length matches, the characters that change are marked. Known cards show their own card. A green result is not invented.")}</li>
-<li>{t("«Parece el STUBX oficial» significa que la dirección coincide con el registro de esa tanda. No es una garantía permanente ni una auditoría.", "“Looks like the official STUBX” means the address matches the registry for that batch. It is not a permanent guarantee or an audit.")}</li>
-<li>{t("Una señal de copia dice que el nombre, el símbolo, la imagen o un enlace coinciden y el mint es otro. No dice quién lo hizo.", "A copy signal says the name, symbol, image, or a link matches and the mint is a different one. It does not say who did it.")}</li>
+<li>{t("Si la dirección es de Solana, la lee en directo y solo en lectura. Tu navegador consulta directamente un servicio público de Solana (api.mainnet-beta.solana.com o solana-rpc.publicnode.com), solo en lectura. Este sitio no guarda la dirección, pero ese servicio recibe la dirección y tu IP según sus propias condiciones. Las fichas fechadas siguen: la oficial releída el 2026-10-09, con la cuenta personal publicada 2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX, los clones ERYyy y FMNb de ese día, los tres clones y el contraste USDC del 2026-10-08, y dos ejemplos 0x sin verificar en la cadena. Commit 86df576 del 2026-10-09. La PR 14 se fusionó en main el 2026-10-09.", "If the address is on Solana, it reads it live and read-only. Your browser queries a public Solana service directly (api.mainnet-beta.solana.com or solana-rpc.publicnode.com), read-only. This site does not store the address, but that service receives the address and your IP under its own terms. The dated cards remain: the official one read again on 2026-10-09, including the published personal account 2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX, the ERYyy and FMNb clones from that day, the three clones and the USDC contrast from 2026-10-08, and two 0x examples that are not verified on-chain. Commit 86df576 of 2026-10-09. PR 14 was merged into main on 2026-10-09.")}</li>
+<li>{t("Si el servicio no responde, lo dice y no inventa un resultado. Una dirección 0x no se lee como mint de Solana.", "If the service does not respond, it says so and does not invent a result. A 0x address is not read as a Solana mint.")}</li>
+<li>{t("«Esta dirección es la del registro de STUBX» significa que la dirección coincide con el registro. No es una garantía permanente ni una auditoría.", "“This address is the one in the STUBX registry” means the address matches the registry. It is not a permanent guarantee or an audit.")}</li>
+<li>{t("«Se parece a STUBX, pero no es la CA oficial» dice que el nombre o el símbolo se parece y el mint es otro. No dice quién lo hizo ni con qué intención.", "“Looks like STUBX, but it is not the official CA” says the name or the symbol looks similar and the mint is a different one. It does not say who did it or why.")}</li>
 </ul>
 <h2>{t("Desconocido no es comprobado", "Unknown is not verified")}</h2>
 <p>{t("No disponible significa que esa llamada no dejó un dato usable. Desconocido es lo que no se leyó. Ninguno de los dos se convierte en cero, en autoridad revocada ni en metadatos inmutables.", "Unavailable means that call did not leave a usable fact. Unknown is what was not read. Neither one becomes zero, a revoked authority, or immutable metadata.")}</p>
@@ -562,7 +584,7 @@ def legal() -> str:
 <li>{t("Este proyecto no guarda la IP. Cloudflare, como alojamiento, recibe la IP de cada visita y la trata según su propia política (registros del servidor que este proyecto no consulta ni exporta).", "This project does not store the IP address. Cloudflare, as the host, receives each visitor's IP and processes it under its own policy (server logs that this project does not query or export).")}</li>
 <li>{t("El selector de idioma guarda stubx-lab-lang en este navegador. Se puede borrar desde el propio navegador.", "The language switch stores stubx-lab-lang in this browser. You can delete it in the browser itself.")}</li>
 <li>{t("Lab guarda stubx-lab-mision-01 solo si haces la misión. Es progreso local, sin puntuación y sin valor. Se puede borrar.", "Lab stores stubx-lab-mision-01 only if you do the mission. It is local progress, with no score and no value. It can be deleted.")}</li>
-<li>{t("Verify no envía la dirección a ningún servidor. La lectura es local, con las fichas del 2026-10-09 y los ejemplos anteriores.", "Verify does not send the address to any server. The reading is local, with the 2026-10-09 cards and the earlier examples.")}</li>
+<li>{t("Tu navegador consulta directamente un servicio público de Solana (api.mainnet-beta.solana.com o solana-rpc.publicnode.com), solo en lectura. Este sitio no guarda la dirección, pero ese servicio recibe la dirección y tu IP según sus propias condiciones.", "Your browser queries a public Solana service directly (api.mainnet-beta.solana.com or solana-rpc.publicnode.com), read-only. This site does not store the address, but that service receives the address and your IP under its own terms.")}</li>
 <li>{t("El service worker solo se registra en Lab, con alcance /lab/. No guarda la portada ni las páginas de avisos. Recargar trae esta copia.", "The service worker registers only on Lab, with scope /lab/. It does not store the home page or the notice pages. Reloading fetches this copy.")}</li>
 </ul>
 <h2>{t("Contacto", "Contact")}</h2>
@@ -973,11 +995,21 @@ def not_found() -> str:
 
 
 def headers() -> str:
-    return """# www.stubxai.com lo sirve Cloudflare Pages (comprobado 2026-10-09). El apex pasa por el proxy de Cloudflare.
+    origins = " ".join(rpc_origins())
+    verify_csp = (
+        "Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; "
+        "img-src 'self'; font-src 'self'; connect-src 'self' "
+        + origins
+        + "; manifest-src 'self'; media-src 'none'; frame-src 'none'; worker-src 'none'; "
+        "object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests"
+    )
+    return f"""# www.stubxai.com lo sirve Cloudflare Pages (comprobado 2026-10-09). El apex pasa por el proxy de Cloudflare.
 # Netlify ya no sirve el dominio: solo superb-horse-9036f5.netlify.app, con la redirección 301 de _redirects.
 # HSTS va aquí porque Pages no lo envía solo. Sin preload.
 # worker-src 'self' deja registrar el service worker de Lab. Las páginas que no son Lab
 # repiten worker-src 'none' en la meta, y las dos políticas se cruzan.
+# connect-src global se queda en 'self'. /verify/ y /verify/* quitan esa política
+# con ! Content-Security-Policy y ponen la suya, solo con los dos RPC públicos.
 /*
   Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; manifest-src 'self'; media-src 'none'; frame-src 'none'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests
   Strict-Transport-Security: max-age=31536000; includeSubDomains
@@ -986,6 +1018,17 @@ def headers() -> str:
   Referrer-Policy: no-referrer
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
   Cross-Origin-Opener-Policy: same-origin
+
+# Studio no repite cabeceras: /* ya trae X-Frame-Options, nosniff y Referrer-Policy.
+# La CSP más estricta (default-src 'none', worker-src 'none', connect-src 'self')
+# vive en el meta del HTML y se cruza con la de /*. connect-src sigue en 'self'
+# porque el editor descarga los PNG de avatar. frame-ancestors queda solo en /*.
+/verify/
+  ! Content-Security-Policy
+  {verify_csp}
+/verify/*
+  ! Content-Security-Policy
+  {verify_csp}
 
 /assets/*
   Cache-Control: public, max-age=0, must-revalidate
@@ -1016,8 +1059,6 @@ def headers() -> str:
 /site.webmanifest
   X-Robots-Tag: noindex, nofollow
 /404.html
-  X-Robots-Tag: noindex, nofollow
-/studio/*
   X-Robots-Tag: noindex, nofollow
 """
 
@@ -1095,6 +1136,8 @@ def sitemap() -> str:
         ("https://stubxai.com/verify/", "2026-10-09"),
         ("https://stubxai.com/lab/", "2026-10-09"),
         ("https://stubxai.com/tablero/", "2026-10-09"),
+        ("https://stubxai.com/studio/", "2026-10-09"),
+        ("https://stubxai.com/studio/reglas/", "2026-10-09"),
         ("https://stubxai.com/methodology/", "2026-10-09"),
         ("https://stubxai.com/security/", "2026-10-09"),
         ("https://stubxai.com/risks/", "2026-10-09"),
@@ -1135,8 +1178,8 @@ def main() -> None:
     shutil.copyfile(current / "styles.css", ROOT / "styles.css")
     shutil.copyfile(current / "app.js", ROOT / "app.js")
 
-    write_page("index.html", "home", "STUBX · Contrasta la dirección", "STUBX · Check the address", "Vista previa de STUBX. Comprueba la dirección con fichas fechadas. No es consejo de inversión.", "STUBX preview. Check the address against dated cards. Not investment advice.", home())
-    write_page("verify/index.html", "verify", "STUBX Verify", "STUBX Verify", "Comprueba una dirección con las fichas del 2026-10-09 y los ejemplos anteriores.", "Check an address with the 2026-10-09 cards and the earlier examples.", prepare_tool("verify"), ["assets/verify.js"], True)
+    write_page("index.html", "home", "STUBX · Contrasta la dirección", "STUBX · Check the address", "Vista previa de STUBX. Lee un token en directo y solo en lectura. No es consejo de inversión.", "STUBX preview. Read a token live and read-only. Not investment advice.", home())
+    write_page("verify/index.html", "verify", "STUBX Verify", "STUBX Verify", "Lee cualquier token SPL o Token-2022 en directo y solo en lectura. Las fichas fechadas siguen como ejemplo.", "Read any SPL or Token-2022 token live and read-only. The dated cards remain as examples.", prepare_tool("verify"), ["assets/verify.js"], True, connect=connect_src(True))
     write_page("lab/index.html", "lab", "STUBX Lab", "STUBX Lab", "Misión para distinguir el mint del registro de un clon.", "A mission to tell the registry mint from a clone.", prepare_tool("lab"), ["assets/mission.js"], True, True)
     board = prepare_tool("tablero")
     write_page("tablero/index.html", "tablero", "STUBX · Tablero", "STUBX · Board", "Tablero de construcción con el registro del 2026-10-09.", "Construction board with the 2026-10-09 record.", board)
@@ -1152,15 +1195,8 @@ def main() -> None:
     write_page("build/index.html", "build", "STUBX · Versiones", "STUBX · Versions", "Lo hecho y lo que sigue siendo un objetivo.", "What is done and what is still a target.", build_page())
     write_page("avances/index.html", "avances", "STUBX · Avances", "STUBX · Progress", "El tablero vive en /tablero.", "The board lives at /tablero.", avances())
     write_page("aprender/index.html", "aprender", "STUBX · Aprender", "STUBX · Learn", "Glosario y guías de la misión, 2026-10-09.", "Mission glossary and guides, 2026-10-09.", aprender())
-    write_page(
-        "studio/index.html",
-        "studio",
-        "STUBX · Studio",
-        "STUBX · Studio",
-        "Studio no está construido.",
-        "Studio is not built.",
-        slot("Studio", "Studio", "No hay editor, catálogo activo ni exportación de imágenes. U02 es una propuesta del 2026-10-09.", "There is no editor, no active catalog, and no image export. U02 is a proposal from 2026-10-09.", "tarea-U02"),
-    )
+    # U02 vive en web/v2/studio/ y no se regenera desde aquí: el editor, el catálogo y las reglas
+    # se mantienen a mano. Un rebuild no debe borrar esa carpeta.
     write_page(
         "cuaderno/index.html",
         "cuaderno",

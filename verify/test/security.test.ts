@@ -58,8 +58,13 @@ describe("detector de suplantación", () => {
   test("la T griega y la S cirílica se pliegan antes de comparar", () => {
     assert.equal(normalizeToken("S\u03A4UBX"), "stubx");
     assert.equal(normalizeToken("\u0421TUBX"), "stubx");
+    assert.equal(normalizeToken("\u03A3TUBX"), "stubx");
+    assert.equal(normalizeToken("STU\u200BBX"), "stubx");
+    assert.equal(normalizeToken(cleanText("STU\u200BBX")), "stubx");
     assert.ok(signalsFor(["S\u03A4UBX"]).length > 0);
     assert.ok(signalsFor(["\u0421TUBX"]).length > 0);
+    assert.ok(signalsFor(["\u03A3TUBX"]).some((item) => item.startsWith("nombre ")));
+    assert.ok(signalsFor([cleanText("STU\u200BBX")]).some((item) => item.startsWith("nombre ")));
   });
 
   test("NFKC pliega las letras de ancho completo", () => {
