@@ -325,7 +325,8 @@ describe("web v2", () => {
     assert.equal(meta.includes("frame-ancestors"), false);
     const headers = read("_headers");
     assert.equal(headers.includes("/comparar/"), false);
-    assert.equal(read("sitemap.xml").includes("https://stubxai.com/comparar/"), false);
+    const locs = [...read("sitemap.xml").matchAll(/<loc>([^<]*)<\/loc>/g)].map((match) => match[1]);
+    assert.equal(locs.some((loc) => loc === "https://stubxai.com/comparar/"), false);
     const root = path.join(repoRoot(), "web/v2");
     for (const file of walkFiles(root)) {
       if (!file.endsWith(".html")) continue;

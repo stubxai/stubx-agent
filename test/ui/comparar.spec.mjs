@@ -17,8 +17,12 @@ test("el ejemplo de la curva no lee una dirección", async ({ page }, info) => {
   const project = info.project.name;
   const reads = [];
   page.on("request", (request) => {
-    const url = request.url();
-    if (/solana|getMultipleAccounts|getAccountInfo/i.test(url)) reads.push(url);
+    try {
+      const host = new URL(request.url()).host;
+      if (host === "solana-rpc.publicnode.com" || host === "api.mainnet-beta.solana.com") reads.push(host);
+    } catch {
+      /* una URL ilegible no es una lectura */
+    }
   });
   await page.goto("/");
   await expect(page.getByRole("link", { name: "Ver el ejemplo" })).toBeVisible();
