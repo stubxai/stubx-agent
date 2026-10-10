@@ -139,6 +139,7 @@ PRIMARY = [
     ("lab", "lab/index.html", "Lab", "Lab"),
     ("tablero", "tablero/index.html", "Tablero", "Board"),
     ("studio", "studio/index.html", "Studio", "Studio"),
+    ("pares", "pares/index.html", "Curva", "Curve"),
     ("contribuir", "contribuir/index.html", "Contribuir", "Contribute"),
 ]
 MORE = [
@@ -155,6 +156,7 @@ MORE = [
     ("aprender", "aprender/index.html", "Aprender", "Learn"),
     ("avances", "avances/index.html", "Avances", "Progress"),
     ("studio", "studio/index.html", "Studio", "Studio"),
+    ("pares", "pares/index.html", "Curva", "Curve"),
     ("cuaderno", "cuaderno/index.html", "Cuaderno", "Notebook"),
     ("contribuir", "contribuir/index.html", "Contribuir", "Contribute"),
 ]
@@ -231,10 +233,11 @@ def connect_src(include_rpc: bool) -> str:
     return "'self' " + " ".join(rpc_origins())
 
 
-def shell(frm: str, current: str, title_es: str, title_en: str, desc_es: str, desc_en: str, body: str, scripts: list[str], narrow: bool, worker: bool = False, absolute: bool = False, connect: str | None = None) -> str:
+def shell(frm: str, current: str, title_es: str, title_en: str, desc_es: str, desc_en: str, body: str, scripts: list[str], narrow: bool, worker: bool = False, absolute: bool = False, connect: str | None = None, modules: list[str] | None = None) -> str:
     prefix = "/" if absolute else "../" * frm.count("/")
     wrap = "wrap estrecha" if narrow else "wrap"
     script_tags = "\n".join(f'<script src="{prefix}{src}"></script>' for src in scripts)
+    module_tags = "\n".join(f'<script type="module" src="{prefix}{src}"></script>' for src in (modules or []))
     worker_src = "'self'" if worker else "'none'"
     url = public_url(frm)
     banner = draft_html(PUBLISH)
@@ -305,15 +308,16 @@ def shell(frm: str, current: str, title_es: str, title_en: str, desc_es: str, de
 <p>STUBX · 2026 · {t("Código MIT · Kit con licencia propia · Imágenes de Agente Talón generadas con IA", "MIT code · Kit under its own license · Agente Talón images generated with AI")}</p>
 </div></footer>
 {script_tags}
+{module_tags}
 </body>
 </html>
 """
 
 
-def write_page(rel: str, current: str, title_es: str, title_en: str, desc_es: str, desc_en: str, body: str, scripts: list[str] | None = None, narrow: bool = False, worker: bool = False, absolute: bool = False, connect: str | None = None) -> None:
+def write_page(rel: str, current: str, title_es: str, title_en: str, desc_es: str, desc_en: str, body: str, scripts: list[str] | None = None, narrow: bool = False, worker: bool = False, absolute: bool = False, connect: str | None = None, modules: list[str] | None = None) -> None:
     path = ROOT / rel
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(shell(rel, current, title_es, title_en, desc_es, desc_en, body, scripts or [], narrow, worker, absolute, connect), encoding="utf-8")
+    path.write_text(shell(rel, current, title_es, title_en, desc_es, desc_en, body, scripts or [], narrow, worker, absolute, connect, modules), encoding="utf-8")
 
 
 def source(es: str, en: str) -> str:
@@ -369,6 +373,9 @@ def home() -> str:
 <article class="card"><p class="estado-pill">{t("En este navegador · 2026-10-09", "In this browser · 2026-10-09")}</p><h3>Studio</h3><p>{t("Crea una imagen para tu token, sin cuenta. Los recursos de STUBX vienen por defecto. El nombre, el logo y la exportación se quedan en este navegador.", "Create an image for your token, without an account. STUBX assets start as the default. The name, the logo, and the export stay in this browser.")}</p><p><a href="/studio/">{t("Abrir Studio", "Open Studio")}</a></p></article>
 <article class="slot"><p class="estado-pill">{t("No construido · 2026-10-09", "Not built · 2026-10-09")}</p><h3>{t("Cuaderno", "Notebook")}</h3><p>{t("No hay notas ni historial de consultas. Lab solo guarda el progreso de la misión.", "There are no notes and no query history. Lab only stores mission progress.")}</p><p><a href="/cuaderno/">{t("Ver qué falta", "See what is missing")}</a></p></article>
 <article class="card"><p class="estado-pill">{t("Canal · 2026-10-10", "Channel · 2026-10-10")}</p><h3>{t("Contribuir", "Contribute")}</h3><p>{t("Informa un fallo o una mejora de estas herramientas. Cualquier token de Solana puede ser el ejemplo. No hay formulario, ni cuenta, ni datos personales: el informe se abre en GitHub.", "Report a bug or an improvement to these tools. Any Solana token can be the example. There is no form, no account, and no personal data: the report opens on GitHub.")}</p><p><a href="/contribuir/">{t("Abrir contribuciones", "Open contributions")}</a></p></article>
+</div>
+<div class="grid-3">
+<article class="card"><p class="estado-pill">{t("Lectura · 2026-10-10", "Reading · 2026-10-10")}</p><h3>{t("Curva", "Curve")}</h3><p>{t("Pega cualquier dirección de Solana. La página dice la moneda base y el estado de la curva, tal como están en la cadena. Exporta una instantánea. Escribir una dirección no avala ese token.", "Paste any Solana address. The page states the base currency and the curve state, as they are on chain. It exports a snapshot. Writing an address does not endorse that token.")}</p><p><a href="/pares/">{t("Abrir la curva", "Open the curve")}</a></p></article>
 </div>
 <section id="transparencia">
 <h2>{t("Transparencia", "Transparency")}</h2>
@@ -924,6 +931,33 @@ def avances() -> str:
 """
 
 
+def pares() -> str:
+    origins = " y ".join(rpc_origins())
+    origins_en = " and ".join(rpc_origins())
+    return f"""
+<h1>{t("Lectura de la curva", "Curve reading")}</h1>
+<p class="lede">{t("Pega cualquier mint de Solana. Si hay una curva de Pump.fun, verás la moneda base y el estado de la curva, tal como están en la cadena. Si no hay curva, la página lo dice.", "Paste any Solana mint. If there is a Pump.fun curve, you see the base currency and the curve state, as they are on chain. If there is no curve, the page says so.")}</p>
+<p><strong>{t("Lectura de datos públicos. No es una comparación de calidad, ni una recomendación, ni un aval. STUBX no tiene relación con estos tokens salvo la CA oficial.", "Public data reading. It is not a quality comparison, a recommendation, or an endorsement. STUBX has no relationship with these tokens except the official CA.")}</strong></p>
+<p><span class="lang es" lang="es">No es una auditoría ni una recomendación. Muestra datos públicos de la cadena en el momento indicado; no dice si un token es bueno, seguro o una buena compra.</span><span class="lang en" lang="en">It is not an audit or a recommendation. It shows public chain data at the stated time; it does not say whether a token is good, safe, or a good purchase.</span></p>
+<p>{t("Escribir una dirección no avala ese token. No conecta carteras, no firma y no envía.", "Writing an address does not endorse that token. It does not connect a wallet, it does not sign, and it does not send.")}</p>
+<p>{t("Un emparejamiento no es una colaboración ni un respaldo.", "A pairing is not a collaboration or an endorsement.")}</p>
+{source(
+    f"La lectura usa primero {origins}. Si el primero no responde, prueba el siguiente. Esos servicios reciben la dirección y la IP según sus condiciones. Esta página no guarda la dirección. El enlace de metadatos se muestra como texto y no se abre.",
+    f"The read uses {origins_en}, in that order. If the first one does not answer, it tries the next. Those services receive the address and the IP under their own terms. This page does not store the address. The metadata link is shown as text and is not opened.",
+)}
+<form id="consulta" class="consulta" action="#">
+<label for="direccion-token">{t("Dirección del token", "Token address")}</label>
+<input id="direccion-token" name="direccion" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done">
+<button type="submit">{t("Leer", "Read")}</button>
+<button type="button" id="exportar" hidden>{t("Exportar ficha", "Export card")}</button>
+</form>
+<section id="resultado" class="resultado" tabindex="-1" aria-live="polite">
+<h2>{t("El informe aparece aquí", "The report shows up here")}</h2>
+<p>{t("Si falta un dato, no se rellena con cero. No se inventa ningún dato.", "If a fact is missing, it is not filled in with zero. No data is invented.")}</p>
+</section>
+"""
+
+
 def contribuir() -> str:
     fallo = "https://github.com/stubxai/stubx-agent/issues/new?template=informe-fallo.yml"
     mejora = "https://github.com/stubxai/stubx-agent/issues/new?template=mejora.yml"
@@ -1085,6 +1119,12 @@ def headers() -> str:
 /verify/*
   ! Content-Security-Policy
   {verify_csp}
+/pares/
+  ! Content-Security-Policy
+  {verify_csp}
+/pares/*
+  ! Content-Security-Policy
+  {verify_csp}
 
 /assets/*
   Cache-Control: public, max-age=0, must-revalidate
@@ -1194,6 +1234,7 @@ def sitemap() -> str:
         ("https://stubxai.com/tablero/", "2026-10-09"),
         ("https://stubxai.com/studio/", "2026-10-09"),
         ("https://stubxai.com/studio/reglas/", "2026-10-09"),
+        ("https://stubxai.com/pares/", "2026-10-10"),
         ("https://stubxai.com/methodology/", "2026-10-09"),
         ("https://stubxai.com/security/", "2026-10-09"),
         ("https://stubxai.com/risks/", "2026-10-09"),
@@ -1237,6 +1278,7 @@ def main() -> None:
 
     write_page("index.html", "home", "STUBX · Contrasta la dirección", "STUBX · Check the address", "Vista previa de STUBX. Lee un token en directo y solo en lectura. No es consejo de inversión.", "STUBX preview. Read a token live and read-only. Not investment advice.", home())
     write_page("verify/index.html", "verify", "STUBX Verify", "STUBX Verify", "Lee cualquier token SPL o Token-2022 en directo y solo en lectura. Las fichas fechadas siguen como ejemplo.", "Read any SPL or Token-2022 token live and read-only. The dated cards remain as examples.", prepare_tool("verify"), ["assets/verify.js"], True, connect=connect_src(True))
+    write_page("pares/index.html", "pares", "STUBX · Lectura de la curva", "STUBX · Curve reading", "Moneda base y estado de la curva, tal como están en la cadena. No es una auditoría ni una recomendación.", "Base currency and curve state, as they are on chain. It is not an audit or a recommendation.", pares(), narrow=True, connect=connect_src(True), modules=["assets/pares.mjs"])
     write_page("lab/index.html", "lab", "STUBX Lab", "STUBX Lab", "Misión para distinguir el mint del registro de un clon.", "A mission to tell the registry mint from a clone.", prepare_tool("lab"), ["assets/mission.js"], True, True)
     board = prepare_tool("tablero")
     write_page("tablero/index.html", "tablero", "STUBX · Tablero", "STUBX · Board", "Tablero de construcción con el registro del 2026-10-09.", "Construction board with the 2026-10-09 record.", board)

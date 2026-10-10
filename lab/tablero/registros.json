@@ -672,25 +672,59 @@
     },
     {
       "id": "U09",
-      "version": "0",
+      "version": "1",
       "title": {
-        "es": "Pares de Pump e informes reutilizables",
-        "en": "Pump pairs and reusable reports"
+        "es": "Lectura de la curva",
+        "en": "Curve reading"
       },
-      "status": "propuesta",
+      "status": "en_revision",
       "webPublished": false,
       "scope": {
-        "es": "Idea de lectura de pares, condicionada. Estas páginas no declaran compatibilidad con pares nuevos.",
-        "en": "An idea for reading pairs, conditional. These pages do not claim compatibility with new pairs."
+        "es": "Lectura de la moneda base y del estado de la curva, tal como están en la cadena. Cualquier mint. Sin firma y sin envío. No está en stubxai.com.",
+        "en": "A reading of the base currency and the curve state, as they are on chain. Any mint. No signing and no sending. It is not on stubxai.com."
       },
-      "owner": "Sin asignar",
-      "reviewer": "No aplica todavía.",
-      "reviewedOn": null,
+      "owner": "Equipo del repositorio",
+      "reviewer": "Pendiente de una persona distinta del autor, antes de publicar.",
+      "reviewedOn": "2026-10-10",
       "block": {
-        "es": "Hace falta comprobar la modalidad real antes de decir que está soportada.",
-        "en": "The real mode has to be checked before saying it is supported."
+        "es": "No publicar hasta una prueba en el móvil y una autorización explícita. El 2026-10-10, stubxai.com/pares no existe.",
+        "en": "Do not publish until a mobile test and an explicit authorization. On 2026-10-10, stubxai.com/pares does not exist."
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "label": {
+            "es": "Página",
+            "en": "Page"
+          },
+          "path": "web/v2/pares/index.html",
+          "note": {
+            "es": "Lectura de solo lectura en la web v2. No está en stubxai.com.",
+            "en": "Read-only page in web v2. It is not on stubxai.com."
+          }
+        },
+        {
+          "label": {
+            "es": "Lectura",
+            "en": "Read"
+          },
+          "path": "pares/chain-read.mjs",
+          "note": {
+            "es": "Misma lista cerrada de métodos y los dos servicios públicos.",
+            "en": "The same closed method list and the two public services."
+          }
+        },
+        {
+          "label": {
+            "es": "Informe",
+            "en": "Report"
+          },
+          "path": "web/v2/modules/pair-report.mjs",
+          "note": {
+            "es": "Instantánea con hash. El hash detecta cambios y no certifica verdad.",
+            "en": "Snapshot with a hash. The hash detects changes and does not certify truth."
+          }
+        }
+      ],
       "history": [
         {
           "on": "2026-10-09",
@@ -702,8 +736,15 @@
         {
           "on": "2026-10-10",
           "change": {
-            "es": "stubxai.com/pares no existe. Sigue como idea.",
-            "en": "stubxai.com/pares does not exist. It stays an idea."
+            "es": "Hay una página de solo lectura y una exportación de instantánea. Sigue fuera de stubxai.com.",
+            "en": "There is a read-only page and a snapshot export. It is still off stubxai.com."
+          }
+        },
+        {
+          "on": "2026-10-10",
+          "change": {
+            "es": "El título pasa a lectura de la curva. Sigue fuera de stubxai.com.",
+            "en": "The title becomes curve reading. Still absent from stubxai.com."
           }
         }
       ]
