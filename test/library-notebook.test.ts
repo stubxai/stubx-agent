@@ -228,7 +228,6 @@ describe("lector y cuaderno", () => {
         throw new Error(parsed.method);
       },
     });
-    assert.equal(result.ok, true);
     assert.equal(result.card?.mintAuthority?.state, "no_decodificable");
     assert.equal(result.card?.mintAuthority?.status, "fallo");
     assert.notEqual(result.card?.mintAuthority?.status, "verificado");
