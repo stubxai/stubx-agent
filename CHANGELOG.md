@@ -5,6 +5,13 @@
 - `/aprender` explica, para cualquier token de Solana, la dirección, los permisos, las extensiones de Token-2022 y la curva. El único ejemplo con un token real es la dirección oficial de STUBX. Verify y Lab enlazan a esos términos sin borrar lo escrito ni el progreso local.
 - `/cuaderno` lee un mint con una lista cerrada de métodos, guarda la ficha y la nota en este navegador, compara dos consultas de la misma dirección y permite exportar, importar y borrar. Una ficha antigua dice la hora y que puede haber cambiado. No conecta una cartera.
 
+## 2026-10-09 · Verify lee cualquier mint, solo lectura, sin publicar
+
+- La página `/verify` lee en el navegador, sin backend, cualquier mint SPL o Token-2022. El primer servicio es `https://solana-rpc.publicnode.com`, que responde desde el navegador. Si ese devuelve 403, 429 o se agota el tiempo, se prueba `https://api.mainnet-beta.solana.com`: ese fallo es del servicio, no del mint ni de su autoridad. Una respuesta rechazada no se anota como fuente de ese dato. Si los dos fallan, la página dice «No se pudo comprobar» y no inventa cifras. `connect-src` de `/*` se queda en `'self'`. Solo `/verify/` y `/verify/*` abren esos dos orígenes, con `! Content-Security-Policy`.
+- El aviso fijo y el de privacidad dicen que no es una auditoría ni un aval, y que el servicio público recibe la dirección y la IP. No hay puntuación de seguro, recomendado ni estafa.
+- Un nombre o un símbolo parecido a STUBX, ya plegado (NFKC, homoglifos y sin invisibles), sale en ámbar: «Se parece a STUBX, pero no es la CA oficial». El titular del resto de mints sigue siendo «Lectura de este token», con la línea «No es la dirección oficial de STUBX.» solo en ese caso. La muestra de cuentas no se pide sola.
+- En menos de 600 px la cabecera deja de quedarse fija y el veredicto se desplaza a la vista. El campo vacío avisa en línea. `frame-ancestors` queda solo en `_headers`. Hay como máximo 6 lecturas por minuto y una memoria de 60 segundos en la pestaña. La PR 14 ya está en main (2026-10-09). Esta vista previa no se despliega antes del 2026-10-20.
+
 ## 2026-10-09 · Verify y Lab: lectura visible en el móvil
 
 - En menos de 600 px la cabecera deja de quedarse fija. Tras Comprobar, la página se desplaza al veredicto y el foco va al titular.

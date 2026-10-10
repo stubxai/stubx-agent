@@ -15,6 +15,7 @@ interface ReadModule {
   METADATA_PROGRAM: string;
   PUMP_PROGRAM: string;
   ALLOWED_METHODS: readonly string[];
+  ALLOWED_RPCS: readonly string[];
   metadataPda: (mint: string) => Promise<string>;
   bondingCurvePda: (mint: string) => Promise<string>;
   decodeMintAccount: (owner: string, data: Uint8Array) => { supplyRaw: string; mintAuthority: { state: string }; freezeAuthority: { state: string } } | null;
@@ -128,6 +129,17 @@ function fastClock() {
 }
 
 describe("lector y cuaderno", () => {
+  test("los RPC y los métodos son los de Verify universal", async () => {
+    const { read } = await modules();
+    const limits = JSON.parse(readFileSync(path.join(repoRoot(), "verify/policy/limits.json"), "utf8")) as {
+      defaultRpcUrl: string;
+      fallbackRpcUrl: string;
+      allowedRpcMethods: string[];
+    };
+    assert.deepEqual([...read.ALLOWED_RPCS], [limits.defaultRpcUrl, limits.fallbackRpcUrl]);
+    assert.deepEqual([...read.ALLOWED_METHODS], limits.allowedRpcMethods);
+  });
+
   test("las PDA coinciden con Verify y solo hay métodos de lectura", async () => {
     const { read } = await modules();
     const programs = (await import(pathToFileURL(path.join(repoRoot(), "dist/verify/programs.js")).href)) as {
@@ -418,7 +430,7 @@ describe("lector y cuaderno", () => {
     assert.match(notebook, /Si eliges otro lector, ese servicio recibe tus consultas y tu IP\. STUBX no lo revisa\./);
     assert.match(notebook, /If you choose another reader, that service receives your queries and your IP\. STUBX does not review it\./);
     assert.equal(notebook.toLowerCase().includes("mala inversión"), false);
-    assert.match(notebook, /connect-src 'self' https:\/\/api\.mainnet-beta\.solana\.com https:\/\/solana-rpc\.publicnode\.com/);
+    assert.match(notebook, /connect-src 'self' https:\/\/solana-rpc\.publicnode\.com https:\/\/api\.mainnet-beta\.solana\.com/);
     assert.match(notebook, /<select id="rpc-url"/);
     assert.equal(notebook.includes('id="rpc-url" name="rpc" type="url"'), false);
     assert.match(notebook, /Este navegador guarda como máximo 200 fichas/);

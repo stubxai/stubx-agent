@@ -13,7 +13,7 @@ export const MINT_BASE_LEN = 82;
 export const ACCOUNT_BASE_LEN = 165;
 export const PUMP_DISCRIMINATOR = Uint8Array.from([23, 183, 248, 55, 96, 216, 172, 96]);
 
-/** Reserva real inicial de la curva clásica de Pump.fun (6 decimales). Documentada, no leída de la cuenta. */
+/** Cantidad real inicial de la curva clásica de Pump.fun (6 decimales). Documentada, no leída de la cuenta. */
 export const CLASSIC_INITIAL_REAL_TOKEN_RESERVES = 793_100_000_000_000n;
 export const CLASSIC_TOKEN_TOTAL_SUPPLY = 1_000_000_000_000_000n;
 

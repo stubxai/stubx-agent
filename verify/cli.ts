@@ -6,6 +6,7 @@ import { fetchBytes, fetchJson } from "./http.js";
 import { readVerifyPolicy, repoRootFrom } from "./root.js";
 import { buildReport, redactEndpoint } from "./report.js";
 import { reportHtml, reportJson, reportMarkdown } from "./render.js";
+import { FallbackRpc } from "./fallback.js";
 import { RpcClient } from "./rpc.js";
 import type { CanonicalToken } from "./types.js";
 
@@ -16,6 +17,7 @@ const USAGE = `Uso: verify <mint> [--format json|md|html] [--out dir]
 Lee datos públicos de un mint SPL en mainnet-beta y escribe una ficha.
 No firma, no envía transacciones y no usa claves.
 RPC_URL sustituye el endpoint público por defecto.
+RPC_FALLBACK_URL sustituye el servicio de respaldo.
 `;
 
 function main(): void {
@@ -74,14 +76,24 @@ function main(): void {
   const policy = readVerifyPolicy(root);
   const endpoint = process.env[policy.rpcUrlEnv]?.trim() || policy.defaultRpcUrl;
   assertMainnet(endpoint);
+  const fallbackRaw = process.env[policy.fallbackRpcUrlEnv]?.trim() || policy.fallbackRpcUrl;
+  const endpoints = [endpoint];
+  if (fallbackRaw && fallbackRaw !== endpoint) {
+    assertMainnet(fallbackRaw);
+    endpoints.push(fallbackRaw);
+  }
   const registry = loadRegistry(root);
-  const rpc = new RpcClient({
-    endpoint,
-    timeoutMs: policy.timeoutMs,
-    maxRetries: policy.maxRetries,
-    backoffBaseMs: policy.backoffBaseMs,
-    minIntervalMs: policy.minIntervalMs,
-  });
+  const readers = endpoints.map(
+    (item) =>
+      new RpcClient({
+        endpoint: item,
+        timeoutMs: policy.timeoutMs,
+        maxRetries: policy.maxRetries,
+        backoffBaseMs: policy.backoffBaseMs,
+        minIntervalMs: policy.minIntervalMs,
+      }),
+  );
+  const rpc = new FallbackRpc(readers, endpoints);
   buildReport({
     mint: checked.mint,
     rpc,

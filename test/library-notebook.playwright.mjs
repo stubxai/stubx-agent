@@ -43,7 +43,7 @@ function serve(dir) {
         res.writeHead(200, {
           "content-type": `${type}; charset=utf-8`,
           "content-security-policy": file.endsWith("cuaderno/index.html")
-            ? "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self' https://api.mainnet-beta.solana.com https://solana-rpc.publicnode.com; object-src 'none'; base-uri 'self'"
+            ? "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self' https://solana-rpc.publicnode.com https://api.mainnet-beta.solana.com; object-src 'none'; base-uri 'self'"
             : "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'",
         });
         res.end(body);

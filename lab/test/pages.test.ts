@@ -12,6 +12,18 @@ import { loadCards, loadFuentes } from "../mission/load.js";
 
 const root = repoRootFromMeta(import.meta.url);
 
+function cspHosts(policy: string): string[] {
+  const connect = policy
+    .split(";")
+    .map((part) => part.trim())
+    .find((part) => /(^|\s)connect-src\b/.test(part));
+  if (!connect) return [];
+  return connect
+    .split(/\s+/)
+    .filter((token) => token.startsWith("https://"))
+    .map((token) => new URL(token).host);
+}
+
 function page(pages: Array<{ rel: string; body: string }>, suffix: string): string {
   const found = pages.find((item) => item.rel.endsWith(suffix));
   assert.ok(found, suffix);
@@ -145,8 +157,10 @@ describe("páginas estáticas", () => {
     assert.match(lab, /For anyone who wants more detail/);
     assert.match(lab, /id="biblioteca"/);
     assert.match(verify, /Pega la dirección del token/);
-    assert.match(verify, /Parece el STUBX oficial/);
-    assert.match(verify, /Cuidado: posible copia/);
+    assert.match(verify, /Dirección del registro de STUBX/);
+    assert.match(verify, /Se parece a STUBX, pero no es la CA oficial/);
+    assert.match(verify, /No es una auditoría, ni una recomendación, ni un aval/);
+    assert.match(verify, /ese servicio recibe la dirección y tu IP/);
     assert.match(verify, /No se pudo comprobar/);
     assert.match(verify, /id="direccion-token"/);
     assert.match(verify, /id="direccion-error"/);
@@ -180,6 +194,11 @@ describe("páginas estáticas", () => {
     assert.match(verify, /partial: yes|partial: no/);
     const headers = page(pages, "_headers");
     assert.match(headers, /Content-Security-Policy: default-src 'none'/);
+    const verifyHeaders = headers.split("/verify/*")[1]?.split("\n\n")[0] ?? "";
+    assert.deepEqual(cspHosts(verifyHeaders), ["solana-rpc.publicnode.com", "api.mainnet-beta.solana.com"]);
+    assert.match(verifyHeaders, /! Content-Security-Policy/);
+    const labHeaders = headers.split("/lab/*")[1]?.split("\n\n")[0] ?? "";
+    assert.deepEqual(cspHosts(labHeaders), []);
     assert.equal(headers.includes("\n/*\n") || headers.startsWith("/*"), false);
     assert.equal(existsSync(path.join(root, "site-drafts/sw.js")), false);
     assert.equal(existsSync(path.join(root, "site-drafts/index.html")), false);

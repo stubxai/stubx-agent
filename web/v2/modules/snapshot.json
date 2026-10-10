@@ -1,12 +1,12 @@
 {
-  "kind": "pr14-browser-snapshot",
-  "pr": 14,
-  "branch": "feat/lab-mision-1",
+  "kind": "verify-browser-snapshot",
+  "pr": 21,
+  "branch": "feat/verify-universal",
   "commit": "fa9a500dac16251aa5d3831d59717981fb434be6",
   "commitDate": "2026-10-09T22:35:33+00:00",
   "cardsDate": "2026-10-09",
   "earlierCardsDate": "2026-10-08",
-  "liveNetwork": false,
+  "liveNetwork": true,
   "inBranch": true,
   "serviceWorker": "lab/sw.js",
   "serviceWorkerScope": "/lab/",
@@ -14,5 +14,5 @@
   "missionBundle": "assets/mission.js",
   "browserApi": "modules/verify/lookup.mjs",
   "cards": "modules/verify/cards.json",
-  "note": "Bundle regenerado desde lab/ en fa9a500dac16251aa5d3831d59717981fb434be6. La ficha oficial incluye la cuenta personal publicada 2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX. inBranch significa que ese commit está en esta rama, no que se haya fusionado en main ni publicado."
+  "note": "Bundle regenerado desde lab/ en fa9a500dac16251aa5d3831d59717981fb434be6, rama feat/verify-universal, PR 21. La página /verify/ lee en el navegador, solo lectura, con los servicios públicos de limits.json. Este sitio no guarda la dirección, pero ese servicio recibe la dirección y la IP según sus propias condiciones. La ficha oficial incluye la cuenta personal publicada 2fS12sTD4TNEEE9MoCEt19brV41UjGdAnaNaxWcmiWvX. inBranch significa que el commit citado es ancestro de esta rama. Esta copia no está publicada."
 }

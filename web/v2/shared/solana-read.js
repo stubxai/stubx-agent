@@ -13,7 +13,8 @@ export const PUMP_PROGRAM = "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P";
 export const OFFICIAL_MINT = "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump";
 export const DEFAULT_RPC = ["https://api.", "mainnet-beta", ".solana.com"].join("");
 export const PUBLICNODE_RPC = "https://solana-rpc.publicnode.com";
-export const ALLOWED_RPCS = Object.freeze([DEFAULT_RPC, PUBLICNODE_RPC]);
+// Mismos dos orígenes y el mismo orden que verify/policy/limits.json (default, luego fallback).
+export const ALLOWED_RPCS = Object.freeze([PUBLICNODE_RPC, DEFAULT_RPC]);
 export const ALLOWED_METHODS = Object.freeze([
   "getAccountInfo",
   "getMultipleAccounts",
@@ -471,7 +472,26 @@ function authorityField(value) {
   return { state: value.state, address: value.address, status: "verificado" };
 }
 
+function endpointsFor(preferred) {
+  const first = ALLOWED_RPCS.find((item) => new URL(item).origin === new URL(preferred).origin) ?? preferred;
+  return [first, ...ALLOWED_RPCS.filter((item) => new URL(item).origin !== new URL(first).origin)];
+}
+
 async function rpcCall(state, method, params) {
+  const endpoints = state.endpoints?.length ? state.endpoints : [state.endpoint];
+  let last = null;
+  for (const endpoint of endpoints) {
+    state.endpoint = endpoint;
+    last = await rpcCallOnce(state, method, params);
+    if (last.ok) return last;
+    const status = last.httpStatus;
+    const retryable = status === null || status === 429 || status >= 500;
+    if (!retryable) return last;
+  }
+  return last;
+}
+
+async function rpcCallOnce(state, method, params) {
   if (!ALLOWED_METHODS.includes(method)) {
     return { ok: false, method, error: "Método RPC no permitido.", httpStatus: null, fetchedAt: state.now().toISOString() };
   }
@@ -533,6 +553,7 @@ export async function readMint(options) {
   }
   const state = {
     endpoint,
+    endpoints: endpointsFor(endpoint),
     transport: options.transport,
     timeoutMs: options.timeoutMs ?? 8000,
     maxRetries: options.maxRetries ?? 2,

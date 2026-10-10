@@ -3,6 +3,8 @@
 # HSTS va aquí porque Pages no lo envía solo. Sin preload.
 # worker-src 'self' deja registrar el service worker de Lab. Las páginas que no son Lab
 # repiten worker-src 'none' en la meta, y las dos políticas se cruzan.
+# connect-src global se queda en 'self'. /verify/ y /verify/* quitan esa política
+# con ! Content-Security-Policy y ponen la suya, solo con los dos RPC públicos.
 /*
   Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; manifest-src 'self'; media-src 'none'; frame-src 'none'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests
   Strict-Transport-Security: max-age=31536000; includeSubDomains
@@ -11,6 +13,17 @@
   Referrer-Policy: no-referrer
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
   Cross-Origin-Opener-Policy: same-origin
+
+# Studio no repite cabeceras: /* ya trae X-Frame-Options, nosniff y Referrer-Policy.
+# La CSP más estricta (default-src 'none', worker-src 'none', connect-src 'self')
+# vive en el meta del HTML y se cruza con la de /*. connect-src sigue en 'self'
+# porque el editor descarga los PNG de avatar. frame-ancestors queda solo en /*.
+/verify/
+  ! Content-Security-Policy
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self' https://solana-rpc.publicnode.com https://api.mainnet-beta.solana.com; manifest-src 'self'; media-src 'none'; frame-src 'none'; worker-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests
+/verify/*
+  ! Content-Security-Policy
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self' https://solana-rpc.publicnode.com https://api.mainnet-beta.solana.com; manifest-src 'self'; media-src 'none'; frame-src 'none'; worker-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests
 
 /assets/*
   Cache-Control: public, max-age=0, must-revalidate
@@ -42,8 +55,6 @@
   X-Robots-Tag: noindex, nofollow
 /404.html
   X-Robots-Tag: noindex, nofollow
-/studio/*
-  X-Robots-Tag: noindex, nofollow
 /cuaderno/*
   ! Content-Security-Policy
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self' https://api.mainnet-beta.solana.com https://solana-rpc.publicnode.com; manifest-src 'self'; media-src 'none'; frame-src 'none'; worker-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self' https://solana-rpc.publicnode.com https://api.mainnet-beta.solana.com; manifest-src 'self'; media-src 'none'; frame-src 'none'; worker-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests

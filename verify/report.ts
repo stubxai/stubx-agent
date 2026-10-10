@@ -6,7 +6,7 @@ import { decodeMetaplex, readJsonMetadata } from "./metadata.js";
 import { decodeMint, readTokenAccount } from "./mint.js";
 import { PUMP_PROGRAM, associatedTokenAddress, bondingCurvePda, metadataPda } from "./programs.js";
 import { decodeBondingCurve } from "./pump.js";
-import { RpcClient, type AccountInfo, type RpcResult } from "./rpc.js";
+import { type AccountInfo, type ChainReader, type RpcResult } from "./rpc.js";
 import {
   DISCLAIMER,
   LEGITIMACY_LIMIT,
@@ -21,11 +21,11 @@ import {
   type Source,
 } from "./types.js";
 
-const NO_RESPONSE = "Sin respuesta utilizable. No se interpreta como autoridad revocada, como inmutabilidad ni como reserva cero.";
+const NO_RESPONSE = "Sin respuesta utilizable. No se interpreta como autoridad revocada, como inmutabilidad ni como cantidad cero.";
 
 export type BuildInput = {
   mint: string;
-  rpc: RpcClient;
+  rpc: ChainReader;
   rpcEndpoint: string;
   registry: readonly CanonicalToken[];
   now?: () => Date;
@@ -163,7 +163,7 @@ export async function buildReport(input: BuildInput): Promise<Report> {
       owner,
       amountRaw: row.amount,
       percent: denominator === null ? null : percentTruncated(amount, denominator, 4),
-      label: labeled ? "cuenta técnica: reserva de la curva de Pump.fun (PDA derivada)" : null,
+      label: labeled ? "cuenta técnica: cantidad de la curva de Pump.fun (PDA derivada)" : null,
     };
   });
 
@@ -250,7 +250,7 @@ export async function buildReport(input: BuildInput): Promise<Report> {
 
   const limitations = [
     LEGITIMACY_LIMIT,
-    "La muestra de holders tiene como máximo 20 cuentas. No es un censo ni un recuento de personas. Una cuenta puede ser un custodio.",
+    "La muestra de cuentas con tokens tiene como máximo 20. No es un censo ni un recuento de personas. Una cuenta puede ser un custodio.",
     "Si los slots de las consultas no coinciden, no es una instantánea atómica.",
     "STUBX Verify no firma, no envía transacciones y no custodia claves.",
     "Cada consulta nueva produce un id nuevo. Esta ficha no se actualiza sola.",
@@ -264,7 +264,7 @@ export async function buildReport(input: BuildInput): Promise<Report> {
     limitations.push("La cuenta no es un mint SPL o Token-2022 inicializado. No se calcula una puntuación.");
   }
   if (!curve && curveInfo?.ok && curveInfo.value === null) {
-    limitations.push("No hay cuenta de curva de Pump.fun en la PDA derivada. El módulo de otros mercados no está disponible. La ausencia no se anota como reserva 0.");
+    limitations.push("No hay cuenta de curva de Pump.fun en la PDA derivada. El módulo de otros mercados no está disponible. La ausencia no se anota como cantidad 0.");
   }
   if (curve && curve.complete) {
     limitations.push("La curva está marcada complete. Esta versión no lee el pool posterior.");
@@ -499,7 +499,7 @@ function buildFindings(report: Report, attentionBps: number, mismatch: boolean, 
     findings.push({
       id: "holders",
       level: "atención",
-      title: "Muestra de holders no disponible",
+      title: "Muestra de cuentas con tokens no disponible",
       reason: "No hubo lista de cuentas. No se interpreta como concentración cero.",
     });
   } else if (isHolderRows(report.distribution.sample.value)) {
@@ -519,7 +519,7 @@ function buildFindings(report: Report, attentionBps: number, mismatch: boolean, 
       findings.push({
         id: "holders",
         level: bps >= BigInt(attentionBps) ? "atención" : "ok",
-        title: bps >= BigInt(attentionBps) ? "Concentración alta en la muestra" : "Muestra de holders leída",
+        title: bps >= BigInt(attentionBps) ? "Concentración alta en la muestra" : "Muestra de cuentas con tokens leída",
         reason: `La mayor cuenta de la muestra sin etiqueta técnica representa el ${shown}% del suministro verificado. Umbral informativo: ${attentionBps / 100}%. No es un censo ni un recuento de personas.`,
       });
     }
@@ -539,7 +539,7 @@ function buildFindings(report: Report, attentionBps: number, mismatch: boolean, 
       id: "market",
       level: "atención",
       title: "Curva de Pump.fun marcada complete",
-      reason: "El campo complete es verdadero. Esta versión no lee el pool posterior. No afirma que la reserva sea 0.",
+      reason: "El campo complete es verdadero. Esta versión no lee el pool posterior. No afirma que la cantidad de la curva sea 0.",
     });
   }
   return findings;
@@ -729,7 +729,7 @@ function marketBlock(
   }
   if (!curveInfo.value) {
     return {
-      module: field({ value: "no_disponible", status: "verificado", source, note: "No hay cuenta en la PDA. El módulo de otros mercados no está en esta versión. La ausencia no se rellena con una reserva de cero." }),
+      module: field({ value: "no_disponible", status: "verificado", source, note: "No hay cuenta en la PDA. El módulo de otros mercados no está en esta versión. La ausencia no se rellena con una cantidad de cero." }),
       bondingCurve: field({ value: curvePda, status: "verificado", source, note: "PDA derivada. La cuenta no existe en el estado consultado." }),
       present: field({ value: false, status: "verificado", source }),
       complete: field({ value: null, status: "no_aplica", source, note: "No hay curva." }),
@@ -750,7 +750,7 @@ function marketBlock(
         value: "no_disponible",
         status: "verificado",
         source,
-        note: "La dirección derivada tiene una cuenta cuyo propietario no es el programa de Pump.fun. No es una curva y no se rellenan reservas a cero.",
+        note: "La dirección derivada tiene una cuenta cuyo propietario no es el programa de Pump.fun. No es una curva y no se rellenan con cero las cantidades de la curva.",
       }),
       bondingCurve: field({ value: curvePda, status: "verificado", source, note: ownerNote }),
       present: field({ value: false, status: "verificado", source, note: ownerNote }),
@@ -788,7 +788,7 @@ function marketBlock(
     bondingCurve: field({ value: curvePda, status: "verificado", source }),
     present: field({ value: true, status: "verificado", source }),
     complete: field({ value: curve.complete, status: "verificado", source }),
-    virtualTokenReserves: reserve(curve.virtualTokenReserves, "unidades mínimas", "Reserva virtual de tokens, separada de la reserva real."),
+    virtualTokenReserves: reserve(curve.virtualTokenReserves, "unidades mínimas", "Cantidad virtual de tokens de la curva, separada de la cantidad real."),
     virtualQuoteReserves: reserve(curve.virtualQuoteReserves, "unidades mínimas", curve.quoteUnitNote),
     realTokenReserves: reserve(curve.realTokenReserves, "unidades mínimas", "Reserva real de tokens, separada de la virtual."),
     realQuoteReserves: reserve(curve.realQuoteReserves, "unidades mínimas", curve.quoteUnitNote),
@@ -890,7 +890,7 @@ function remember(result: RpcResult<unknown>, slots: Set<number>): void {
   }
 }
 
-const PUBLIC_RPC_HOSTS = new Set(["api.mainnet-beta.solana.com"]);
+const PUBLIC_RPC_HOSTS = new Set(["api.mainnet-beta.solana.com", "solana-rpc.publicnode.com"]);
 
 export function redactEndpoint(value: string): string {
   try {
@@ -907,7 +907,7 @@ export function redactEndpoint(value: string): string {
 }
 
 async function readKnownHolderAccounts(input: {
-  rpc: RpcClient;
+  rpc: ChainReader;
   mint: string;
   program: string;
   curvePda: string;
@@ -974,8 +974,8 @@ async function readKnownHolderAccounts(input: {
   const who = readPublished ? "la curva, de la creadora y de la cuenta personal publicada" : "la curva y de la creadora";
   const missing = missingPublished ? " La cuenta personal publicada no apareció en esta lectura." : "";
   const note = restPercent
-    ? `Saldos leídos de ${who}. El resto respecto al suministro es ${restPercent} %.${missing} No es un censo de holders.`
-    : `Saldos leídos de ${who}.${missing} No es un censo de holders.`;
+    ? `Saldos leídos de ${who}. El resto respecto al suministro es ${restPercent} %.${missing} No es un censo de cuentas con tokens.`
+    : `Saldos leídos de ${who}.${missing} No es un censo de cuentas con tokens.`;
   const detail = input.published.length > 0
     ? "ATA de la curva, ATA de la creadora si la curva la trae, y ATA de las cuentas publicadas del registro. No sustituye a getTokenLargestAccounts ni es un censo."
     : "ATA de la curva y, si la curva trae creadora, ATA de la creadora. No sustituye a getTokenLargestAccounts ni es un censo.";
