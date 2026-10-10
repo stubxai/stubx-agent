@@ -6,7 +6,7 @@ Estas páginas no están publicadas. Cuando haya autorización se pueden copiar 
 
 El service worker vive en `lab/sw.js`, con alcance `/lab/`. No se publica un `sw.js` en la raíz. No guarda `/`, `/index.html` ni páginas de avisos. Las navegaciones dentro de `/lab/` van primero a la red y, si falla, a la caché de esa misma ruta. `assets/site.js` solo lo registra cuando la ruta es `/lab/`.
 
-`_headers` aplica la CSP y el resto de cabeceras solo a `/verify`, `/lab`, `/tablero` y a `indice-borrador.html`. No hay una regla `/*`: no debe imponerse a las páginas que ya están en stubxai.com. Antes de activarla en el hosting, Cristian tiene que comprobar que no rompe esas páginas.
+`_headers` aplica la CSP y el resto de cabeceras solo a `/verify`, `/lab`, `/tablero` y a `indice-borrador.html`. No hay una regla `/*`: no debe imponerse a las páginas que ya están en stubxai.com. Antes de activarla en el hosting, el creador tiene que comprobar que no rompe esas páginas.
 
 No usan CDN ni fuentes externas. No hay analítica, cuentas ni firma.
 
@@ -14,7 +14,7 @@ Cada HTML, el worker de `/lab/` y `_headers` los genera `npm run lab:build`. Si 
 
 El aviso de cada página es fijo: «Herramienta educativa con datos públicos. No es consejo de inversión. Cripto de alto riesgo · Puedes perderlo todo.» También dice que es solo lectura, que no conecta carteras ni firma, y que las fichas no son una auditoría ni una garantía. Las fichas de la misión son del 2026-10-08. Los ejemplos posteriores, si los hay, van fechados. Lo desconocido no es lo mismo que lo comprobado. La lista de clones de ejemplo no es completa.
 
-## Publicar, solo si Cristian lo decide
+## Publicar, solo si el creador lo decide
 
 El borrador lleva `noindex` y la línea «No publicado». Para regenerar sin eso hacen falta las dos cosas a la vez:
 
