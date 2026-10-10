@@ -37,7 +37,7 @@ npm run verify -- <mint> --format html --out directorio
 
 Sin `--format` y sin `--out`, escribe JSON por la salida estándar. Con `--out` y sin `--format`, escribe `<mint>.json`, `<mint>.md` y `<mint>.html`.
 
-`RPC_URL` sustituye el endpoint por defecto (`https://api.mainnet-beta.solana.com`). `RPC_FALLBACK_URL` sustituye el servicio de respaldo (`https://solana-rpc.publicnode.com` en `verify/policy/limits.json`). Tiene que ser `https`. Esta versión rechaza un host que contenga `devnet` o `testnet`. Si la URL lleva usuario, contraseña o query, la ficha solo guarda el origen.
+`RPC_URL` sustituye el endpoint por defecto (`https://solana-rpc.publicnode.com`). `RPC_FALLBACK_URL` sustituye el servicio de respaldo (`https://api.mainnet-beta.solana.com` en `verify/policy/limits.json`). Tiene que ser `https`. Esta versión rechaza un host que contenga `devnet` o `testnet`. Si la URL lleva usuario, contraseña o query, la ficha solo guarda el origen. Un HTTP 403, un 429 o un tiempo agotado del primero pasa al segundo. Un error sobre la cuenta no pasa.
 
 La página `web/v2/verify/` usa el mismo lector en el navegador, sin backend: solo lectura, con esos dos orígenes en `connect-src` y en ningún otro dominio. No guarda la dirección consultada. `VERIFY_SMOKE=1` lanza un humo opcional contra mainnet; la CI no lo activa.
 

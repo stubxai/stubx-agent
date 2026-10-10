@@ -316,7 +316,7 @@ describe("web v2", () => {
     assert.equal(html.includes("\uFFFD"), false);
     assert.match(html, /assets\/verify\.js/);
     const meta = html.match(/Content-Security-Policy" content="([^"]+)"/)?.[1] ?? "";
-    assert.deepEqual(cspHosts(meta), ["api.mainnet-beta.solana.com", "solana-rpc.publicnode.com"]);
+    assert.deepEqual(cspHosts(meta), ["solana-rpc.publicnode.com", "api.mainnet-beta.solana.com"]);
     const home = read("index.html");
     const homeMeta = home.match(/Content-Security-Policy" content="([^"]+)"/)?.[1] ?? "";
     assert.deepEqual(cspHosts(homeMeta), []);
@@ -569,7 +569,7 @@ describe("web v2", () => {
     const globalPolicy = policies.find((policy) => policy.path === "/*");
     assert.deepEqual(cspHosts(globalPolicy?.header ?? ""), []);
     const verifyPolicy = policies.find((policy) => policy.path === "/verify/*");
-    assert.deepEqual(cspHosts(verifyPolicy?.header ?? ""), ["api.mainnet-beta.solana.com", "solana-rpc.publicnode.com"]);
+    assert.deepEqual(cspHosts(verifyPolicy?.header ?? ""), ["solana-rpc.publicnode.com", "api.mainnet-beta.solana.com"]);
     const verifyBlock = blocks.find((block) => block.path === "/verify/*");
     assert.ok(verifyBlock?.headers.includes("! Content-Security-Policy"));
     const star = blocks.find((block) => block.path === "/*");

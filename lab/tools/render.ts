@@ -420,6 +420,8 @@ const PERSON_EN: Record<string, string> = {
 };
 
 const MILESTONE_EN: Record<string, string> = {
+  "2026-10-09 · Verify lee cualquier mint, solo lectura, sin publicar":
+    "2026-10-09 · Verify reads any mint, read-only, unpublished",
   "2026-10-09 · Verify y Lab: lectura visible en el móvil":
     "2026-10-09 · Verify and Lab: the reading stays visible on a phone",
   "2026-10-09 · Revisión de seguridad de Verify y Lab (borrador, sin publicar)":

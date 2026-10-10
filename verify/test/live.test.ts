@@ -266,9 +266,116 @@ describe("lectura universal con RPC simulado", () => {
       minIntervalMs: 0,
       sleep: async () => {},
     });
-    assert.equal(refused.ok, false);
-    assert.equal(refused.usedFallback, false);
-    assert.equal(refused.title.es, "No se pudo comprobar");
+    assert.equal(refused.ok, true);
+    assert.equal(refused.usedFallback, true);
+    assert.equal(refused.endpointHost, "rpc-b.invalid");
+    assert.match(refused.rows.map((row) => row.value.es).join(" "), /slot/);
+    const aboutTheMint = await readAnyMint({
+      mint: sample.mint,
+      registry,
+      endpoints: ["https://rpc-a.invalid", "https://rpc-b.invalid"],
+      transport: async (endpoint, body) => {
+        if (endpoint === "https://rpc-a.invalid") {
+          return {
+            status: 200,
+            body: JSON.stringify({
+              jsonrpc: "2.0",
+              error: { code: -32602, message: "Invalid param: not a Token mint" },
+              id: 1,
+            }),
+          };
+        }
+        return transportFor({
+          slot: sample.slot,
+          accounts,
+          supply: { amount: "1000000000000000", decimals: 6 },
+          largest: [],
+        })(endpoint, body, 8000);
+      },
+      maxRetries: 0,
+      minIntervalMs: 0,
+      sleep: async () => {},
+    });
+    assert.equal(aboutTheMint.ok, false);
+    assert.equal(aboutTheMint.usedFallback, false);
+    assert.equal(aboutTheMint.title.es, "No se pudo comprobar");
+    assert.notEqual(aboutTheMint.light, "ok");
+    const bothDown = await readAnyMint({
+      mint: sample.mint,
+      registry,
+      endpoints: ["https://rpc-a.invalid", "https://rpc-b.invalid"],
+      transport: async () => ({ status: 403, body: "" }),
+      maxRetries: 0,
+      minIntervalMs: 0,
+      sleep: async () => {},
+    });
+    assert.equal(bothDown.ok, false);
+    assert.equal(bothDown.usedFallback, true);
+    assert.equal(bothDown.title.es, "No se pudo comprobar");
+    assert.equal(bothDown.light, "neutro");
+    const supplyRefused = await readAnyMint({
+      mint: sample.mint,
+      registry,
+      endpoints: ["https://rpc-a.invalid", "https://rpc-b.invalid"],
+      transport: async (endpoint, body, timeoutMs) => {
+        const method = (JSON.parse(body) as { method: string }).method;
+        if (method === "getTokenSupply") {
+          return { status: 403, body: "" };
+        }
+        return transportFor({
+          slot: sample.slot,
+          accounts,
+          supply: { amount: "1000000000000000", decimals: 6 },
+          largest: [],
+        })(endpoint, body, timeoutMs);
+      },
+      maxRetries: 0,
+      minIntervalMs: 0,
+      sleep: async () => {},
+    });
+    assert.equal(supplyRefused.ok, true);
+    assert.equal(supplyRefused.title.es === "No se pudo comprobar", false);
+    const supplyHosts = supplyRefused.rows.map((row) => row.value.es).join(" ");
+    assert.match(supplyHosts, /rpc-a\.invalid/);
+    assert.equal(supplyHosts.includes("rpc-b.invalid"), false);
+    assert.match(supplyRefused.signals.find((item) => item.id === "suministro")?.explain.es ?? "", /no respondió/);
+  });
+
+  test("si un dato sale de otro servicio, la ficha lo dice", async () => {
+    const sample = fixture("revoked-mint");
+    const accounts = new Map<string, AccountFixture | null>([
+      [sample.mint, sample.mintAccount],
+      [metadataPda(sample.mint), null],
+      [bondingCurvePda(sample.mint), null],
+    ]);
+    const base = transportFor({
+      slot: sample.slot,
+      accounts,
+      supply: { amount: "1000000000000000", decimals: 6 },
+      largest: [],
+    });
+    const reading = await readAnyMint({
+      mint: sample.mint,
+      registry,
+      endpoints: ["https://rpc-a.invalid", "https://rpc-b.invalid"],
+      transport: async (endpoint, body, timeoutMs) => {
+        const method = (JSON.parse(body) as { method: string }).method;
+        if (endpoint === "https://rpc-a.invalid" && method === "getTokenSupply") {
+          return { status: 429, body: "" };
+        }
+        return base(endpoint, body, timeoutMs);
+      },
+      maxRetries: 0,
+      minIntervalMs: 0,
+      sleep: async () => {},
+    });
+    assert.equal(reading.ok, true);
+    const text = reading.rows.map((row) => `${row.label.es} ${row.value.es}`).join("\n");
+    assert.match(text, /rpc-a\.invalid/);
+    assert.match(text, /rpc-b\.invalid/);
+    assert.match(text, /slot/);
+    assert.match(text, /Madrid/);
+    assert.match(text, /Esta lectura junta más de un servicio/);
   });
 
   test("la lectura automática no pide las cuentas más grandes", async () => {

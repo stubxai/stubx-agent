@@ -5,11 +5,13 @@ export function isRetryableFailure(result: { ok: boolean; error?: string; httpSt
     return false;
   }
   const status = result.httpStatus ?? null;
-  // Un 403 es un rechazo, no un fallo pasajero: no se prueba el servicio siguiente.
-  if (status === 429 || status === 408 || (status !== null && status >= 500)) {
+  // 403, 429 y el tiempo agotado los pone el servicio (cortafuegos, cupo o corte).
+  // No dicen nada del mint ni de su autoridad, así que el RPC siguiente puede leer
+  // la misma cuenta. Un error JSON-RPC de la cuenta no entra aquí.
+  if (status === 403 || status === 429 || status === 408 || (status !== null && status >= 500)) {
     return true;
   }
-  return /429|too many|rate limit|timeout|timed out|tiempo de espera|network|fetch failed|ECONN|ENET|ENOTFOUND|socket/i.test(
+  return /429|403|too many|rate limit|timeout|timed out|tiempo de espera|network|fetch failed|ECONN|ENET|ENOTFOUND|socket|access forbidden/i.test(
     result.error ?? "",
   );
 }
@@ -68,7 +70,11 @@ export class FallbackRpc implements ChainReader {
       last = result;
       this.lastEndpoint = this.endpoints[index] ?? this.lastEndpoint;
       if (result.ok || !isRetryableFailure(result) || index === this.readers.length - 1) {
-        this.reads.push({ method, endpoint: this.lastEndpoint });
+        // Solo una respuesta correcta entra como fuente. Un 403 no se lista
+        // como si ese dato se hubiera leído.
+        if (result.ok) {
+          this.reads.push({ method, endpoint: this.lastEndpoint });
+        }
         if (index > 0) {
           this.usedFallback = true;
         }
