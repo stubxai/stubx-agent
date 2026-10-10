@@ -3,7 +3,7 @@
 ## 2026-10-09 · Biblioteca y cuaderno de solo lectura
 
 - `/aprender` explica, para cualquier token de Solana, la dirección, los permisos, las extensiones de Token-2022 y la curva. El único ejemplo con un token real es la dirección oficial de STUBX. Verify y Lab enlazan a esos términos sin borrar lo escrito ni el progreso local.
-- `/cuaderno` lee un mint con una lista cerrada de métodos, guarda la ficha y la nota en este navegador, compara dos consultas de la misma dirección y permite exportar, importar y borrar. Una ficha antigua dice la hora y que puede haber cambiado. No conecta una cartera.
+- `/cuaderno` lee un mint con los mismos orígenes y la misma lista de métodos que Verify universal, guarda la ficha y la nota en este navegador, compara dos consultas de la misma dirección y permite exportar, importar y borrar. Una ficha antigua dice la hora y que puede haber cambiado. No conecta una cartera.
 
 ## 2026-10-09 · Verify lee cualquier mint, solo lectura, sin publicar
 
@@ -11,13 +11,6 @@
 - El aviso fijo y el de privacidad dicen que no es una auditoría ni un aval, y que el servicio público recibe la dirección y la IP. No hay puntuación de seguro, recomendado ni estafa.
 - Un nombre o un símbolo parecido a STUBX, ya plegado (NFKC, homoglifos y sin invisibles), sale en ámbar: «Se parece a STUBX, pero no es la CA oficial». El titular del resto de mints sigue siendo «Lectura de este token», con la línea «No es la dirección oficial de STUBX.» solo en ese caso. La muestra de cuentas no se pide sola.
 - En menos de 600 px la cabecera deja de quedarse fija y el veredicto se desplaza a la vista. El campo vacío avisa en línea. `frame-ancestors` queda solo en `_headers`. Hay como máximo 6 lecturas por minuto y una memoria de 60 segundos en la pestaña. La PR 14 ya está en main (2026-10-09). Esta vista previa no se despliega antes del 2026-10-20.
-
-## 2026-10-09 · Verify y Lab: lectura visible en el móvil
-
-- En menos de 600 px la cabecera deja de quedarse fija. Tras Comprobar, la página se desplaza al veredicto y el foco va al titular.
-- Una dirección válida que no es la oficial y no tiene ficha dice «No es la dirección oficial» y muestra la oficial. Si mide lo mismo, marca los caracteres que cambian. Las fichas conocidas siguen mostrando su ficha. El campo vacío avisa en línea. La dirección no válida incluye un ejemplo.
-- `frame-ancestors` queda solo en `_headers`. El beacon de Cloudflare Web Analytics no se toca aquí: hay que apagarlo en el panel de la zona.
-- Cada pregunta del Lab lleva una frase llana. El número largo de la curva sale en Detalles. El glosario del paso lista sus términos. El avance espera a «Siguiente paso». El pie tiene enlaces de 44 px, la biblioteca va plegada y la pantalla final tiene «Empezar de nuevo».
 
 ## 2026-10-09 · Revisión de seguridad de Verify y Lab (borrador, sin publicar)
 
