@@ -21,6 +21,8 @@ describe("v0.1.0 notes, without a tag", () => {
     assert.match(log, /### Indexación/);
     assert.match(log, /robots\.txt/);
     assert.match(log, /sitemap\.xml/);
+    assert.match(log, /Esta entrada no despliega `web\/v2\/`\. stubxai.com no cambia por este documento\. La v2 ya está desplegada desde el 2026-10-09\./);
+    assert.match(log, /Este repositorio no inserta medición de visitas ni cookies\. Cloudflare Web Analytics debe estar apagado en el panel de la zona \(sin baliza en el HTML servido el 2026-10-10\)\./);
     assert.match(log, /no está creado/);
     assert.match(log, /2026-09-26 · Esqueleto público/);
     assert.equal(log.includes("## 0.1.0 — 2026-09-26"), false);
@@ -37,6 +39,12 @@ describe("v0.1.0 notes, without a tag", () => {
       assert.match(text, /robots\.txt/);
       assert.match(text, /0\.1\.0/);
     }
+    assert.match(es, /La web v2 se desplegó en stubxai.com el 2026-10-09, fuera de estas notas\. Estas notas no la despliegan ni la cambian\./);
+    assert.match(en, /Web v2 was deployed to stubxai.com on 2026-10-09, outside these notes\. These notes do not deploy or change it\./);
+    assert.match(es, /Este repositorio no inserta medición de visitas ni cookies\. Cloudflare Web Analytics debe estar apagado en el panel de la zona \(sin baliza en el HTML servido el 2026-10-10\)\./);
+    assert.match(en, /This repository inserts no visit measurement or cookies\. Cloudflare Web Analytics must be off in the zone dashboard \(no beacon in the HTML served on 2026-10-10\)\./);
+    assert.equal(es.includes("vista previa"), false);
+    assert.equal(en.toLowerCase().includes("preview"), false);
     assert.match(es, /Puedes perderlo todo/);
     assert.match(en, /You could lose everything/);
     assert.equal(en.includes("You can lose"), false);

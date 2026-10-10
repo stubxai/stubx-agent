@@ -2,7 +2,7 @@
 
 Fecha de estas notas: 2026-10-09. El número del paquete `@stubx/agents` es `0.1.0`. El tag `v0.1.0` está descrito en [TAG.md](TAG.md) y no está creado.
 
-Esto no es una auditoría, ni un consejo de inversión, ni un anuncio de que la web de producción haya cambiado. Cripto de alto riesgo · Puedes perderlo todo · No es consejo de inversión.
+Esto no es una auditoría ni un consejo de inversión. Cripto de alto riesgo · Puedes perderlo todo · No es consejo de inversión.
 
 ## Qué puedes hacer hoy, en este repositorio
 
@@ -11,7 +11,7 @@ Cuatro piezas, todas de lectura o de aprendizaje. Ninguna pide una cartera, una 
 1. **El agente** (`src/`). Lista cerrada de acciones. No tiene claves, no firma, no custodia y no envía transacciones. No llama a la red principal.
 2. **Verify**. Comprueba datos públicos de un mint y deja una ficha con fecha y fuente. En la web, la demo usa fichas ya guardadas: no consulta la red al abrir la página.
 3. **Lab**. Una misión corta para practicar la diferencia entre el nombre de un token y su dirección. El progreso se queda en el navegador.
-4. **La web v2**. Las mismas páginas, en español y en inglés, con la misma navegación. Es una vista previa dentro del repositorio.
+4. **La web v2**. Las mismas páginas, en español y en inglés, con la misma navegación. La web v2 se desplegó en stubxai.com el 2026-10-09, fuera de estas notas. Estas notas no la despliegan ni la cambian.
 
 ## Verify
 
@@ -30,24 +30,24 @@ Una ficha no dice si un token es bueno, seguro o una buena compra.
 ## Web v2
 
 - Vive en `web/v2/`. Portada, Verify, Lab, tablero, metodología, seguridad, riesgos, legal, pruebas, estado, reparto, canales, marca, versiones, aprender y el archivo de posts.
-- El cambio de idioma está en la cabecera. El pie legal es el mismo en todas las páginas de esa vista previa.
+- El cambio de idioma está en la cabecera. El pie legal es el mismo en todas las páginas de `web/v2/`. La web v2 se desplegó en stubxai.com el 2026-10-09, fuera de estas notas. Estas notas no la despliegan ni la cambian.
 - Studio, el cuaderno y contribuir se ven, y dicen que no están construidos. No hay un botón que finja guardarlos o enviarlos.
 - La copia recuperable de lo que ya estaba publicado sigue en `web/current/`.
 
 ## Indexación
 
-Hecho el 2026-10-09, en la vista previa:
+Hecho el 2026-10-09:
 
 - `web/v2/robots.txt` deja rastrear el sitio y señala `https://stubxai.com/sitemap.xml`. Pide a los rastreadores de entrenamiento de IA nombrados en ese archivo que no usen el contenido.
 - `web/v2/sitemap.xml` enumera las URLs públicas, con fecha `lastmod`.
 - Las páginas públicas de `web/v2/` no llevan `noindex`. Sí lo llevan, con `X-Robots-Tag`, el service worker de Lab, los JSON, el manifiesto, la página 404 y `/studio/`.
-- `web/current/` sigue con `noindex`. Publicar la vista previa sería otro paso, y esta versión no lo da.
+- `web/current/` sigue con `noindex`. La web v2 se desplegó en stubxai.com el 2026-10-09, fuera de estas notas. Estas notas no la despliegan ni la cambian.
 
 ## Lo que esta versión no hace
 
 - No crea el tag.
 - No fusiona nada por sí sola y no despliega.
 - No conecta carteras.
-- No mide visitas. No hay cookies ni analítica en estas páginas.
+- Este repositorio no inserta medición de visitas ni cookies. Cloudflare Web Analytics debe estar apagado en el panel de la zona (sin baliza en el HTML servido el 2026-10-10).
 
 El detalle de cada cambio fechado está en [CHANGELOG.md](../../../CHANGELOG.md).

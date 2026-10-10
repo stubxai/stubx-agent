@@ -21,17 +21,18 @@ Esta entrada resume. No reescribe el detalle fechado que sigue debajo.
 
 ### Web v2
 
-- Misma navegación, mismos estilos y el mismo cambio de idioma en las páginas de la vista previa (`web/v2/`). Verify y Lab van dentro de ese cascarón, no en otra web.
+- Misma navegación, mismos estilos y el mismo cambio de idioma en las páginas de `web/v2/`. Verify y Lab van dentro de ese cascarón, no en otra web.
 - Pie vigente: «Cripto de alto riesgo · Puedes perderlo todo · No es consejo de inversión.» / «High-risk crypto · You could lose everything · Not investment advice.»
 - Studio, el cuaderno y las contribuciones siguen como hueco en esta versión: la página dice que no están construidos.
-- Esta entrada no despliega `web/v2/`. stubxai.com no cambia por este documento.
+- Esta entrada no despliega `web/v2/`. stubxai.com no cambia por este documento. La v2 ya está desplegada desde el 2026-10-09.
+- Este repositorio no inserta medición de visitas ni cookies. Cloudflare Web Analytics debe estar apagado en el panel de la zona (sin baliza en el HTML servido el 2026-10-10).
 
 ### Indexación
 
 - `web/v2/robots.txt` (v3, 2026-10-09) permite el rastreo general y publica el sitemap. Los rastreadores de entrenamiento de IA que esa lista nombra quedan en `Disallow`.
 - `web/v2/sitemap.xml` lista las páginas públicas con `lastmod`.
 - No hay `noindex` global. `X-Robots-Tag: noindex, nofollow` queda en el service worker de Lab, los JSON, el manifiesto, la 404 y `/studio/`.
-- La web de producción copiada en `web/current/` conserva su `noindex`. No es la vista previa.
+- La copia en `web/current/` conserva su `noindex`. La v2 ya está desplegada desde el 2026-10-09.
 
 ### Texto retirado
 
