@@ -325,6 +325,9 @@ html.js .estatica { display: none; }
   header.site { position: static; }
   #resultado, #mision-app section, #mision-app .feedback { scroll-margin-top: 0.75rem; }
 }
+@media (max-width: 48rem) {
+  #resultado { scroll-margin-bottom: 9rem; }
+}
 
 @font-face {
   font-family: Inter;
@@ -543,4 +546,50 @@ details.mapa nav ul { padding-top: 0.75rem; }
 }
 @media (max-width: 599px) {
   header.site { position: static; }
+}
+.ayuda-terminos { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.ayuda-terminos a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.35rem 0.8rem;
+  border: 1px solid var(--line);
+  text-decoration: none;
+}
+.nota-personal {
+  display: grid;
+  gap: 0.5rem;
+  margin: 1rem 0;
+  padding: 0.8rem 0 0.8rem 0.9rem;
+  border-left: 4px solid var(--line);
+}
+textarea.nota, .consulta select, select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.65rem 0.8rem;
+  font: inherit;
+  color: var(--text);
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+}
+textarea.nota { min-height: 6rem; }
+.cuaderno-acciones { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.cuaderno-acciones button, .cuaderno-acciones a, .cuaderno-acciones label.file {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+}
+input[type="file"] { min-height: 44px; max-width: 100%; }
+.sello {
+  margin: 0.5rem 0 1rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--line);
+  background: var(--bg-elev);
+}
+.comparacion { display: grid; gap: 0.75rem; }
+.comparacion article { min-width: 0; }
+@media (max-width: 599px) {
+  .cuaderno-acciones { display: grid; }
+  .cuaderno-acciones button, .cuaderno-acciones a, .cuaderno-acciones label.file { width: 100%; }
 }

@@ -33,10 +33,12 @@
     "logs:verify": "tsc && node dist/src/cli.js logs:verify",
     "logs:status": "tsc && node dist/src/cli.js logs:status",
     "logs:daily": "tsc && node dist/src/cli.js logs:daily",
-    "verify:all": "tsc && node scripts/verify-all.mjs"
+    "verify:all": "tsc && node scripts/verify-all.mjs",
+    "test:browser": "node web/v2/test/library-notebook.playwright.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.19.0",
+    "playwright": "^1.55.1",
     "typescript": "^7.0.2"
   }
 }

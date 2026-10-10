@@ -264,7 +264,7 @@ describe("web v2", () => {
   });
 
   test("unbuilt modules stay explanatory", () => {
-    for (const rel of ["studio/index.html", "cuaderno/index.html", "contribuir/index.html"]) {
+    for (const rel of ["studio/index.html", "contribuir/index.html"]) {
       const html = read(rel);
       assert.match(html, /No construido/);
       assert.match(html, /Not built/);
@@ -509,9 +509,13 @@ describe("web v2", () => {
         .filter((header) => header.startsWith("Content-Security-Policy:"))
         .map((header) => ({ path: block.path, header })),
     );
-    assert.equal(policies.length, 1);
-    assert.equal(policies[0]?.path, "/*");
-    assert.match(policies[0]?.header ?? "", /frame-ancestors 'none'/);
+    assert.equal(policies.length, 2);
+    assert.ok(policies.every((policy) => policy.header.includes("frame-ancestors 'none'")));
+    const globalPolicy = policies.find((policy) => policy.path === "/*");
+    const notebookPolicy = policies.find((policy) => policy.path === "/cuaderno/*");
+    assert.equal(globalPolicy?.header.includes("mainnet-beta"), false);
+    assert.match(notebookPolicy?.header ?? "", /connect-src 'self' https:\/\/api\.mainnet-beta\.solana\.com/);
+    assert.equal(/\bconnect-src[^;]*\*/.test(notebookPolicy?.header ?? ""), false);
     const star = blocks.find((block) => block.path === "/*");
     assert.ok(star?.headers.some((header) => header === "X-Frame-Options: DENY"));
     for (const file of htmlFiles(siteRoot())) {
@@ -704,6 +708,7 @@ test("las palabras prohibidas no salen en el texto visible, y token.json queda f
       .replaceAll("‘Holder’ (término del sector)", "")
       .replaceAll("‘Holder’ (industry term)", "")
       .replaceAll("termino-holder", "")
+      .replaceAll('id="holder"', "")
       .replaceAll("\"id\": \"holder\"", "")
       .replaceAll("\"id\":\"holder\"", "")
       .replaceAll("holdersNote_en", "")

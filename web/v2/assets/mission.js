@@ -311,6 +311,13 @@ function bootLab() {
       ? "Opening help does not change local progress."
       : "Abrir la ayuda no cambia el progreso local.";
     body.append(stay);
+    var more = el("p");
+    var link = el("a", { href: "/aprender/?from=lab#" + id });
+    link.textContent = lang === "en"
+      ? "Open this term in the library. Lab progress stays in this browser."
+      : "Abrir este término en la biblioteca. El progreso de Lab se queda en este navegador.";
+    more.append(link);
+    body.append(more);
     if (closeBtn) closeBtn.textContent = lang === "en" ? "Close" : "Cerrar";
     dialog.returnFocus = document.activeElement;
     dialog.showModal();

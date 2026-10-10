@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-10-09 · Biblioteca y cuaderno de solo lectura
+
+- `/aprender` explica, para cualquier token de Solana, la dirección, los permisos, las extensiones de Token-2022 y la curva. El único ejemplo con un token real es la dirección oficial de STUBX. Verify y Lab enlazan a esos términos sin borrar lo escrito ni el progreso local.
+- `/cuaderno` lee un mint con una lista cerrada de métodos, guarda la ficha y la nota en este navegador, compara dos consultas de la misma dirección y permite exportar, importar y borrar. Una ficha antigua dice la hora y que puede haber cambiado. No conecta una cartera.
+
 ## 2026-10-09 · Verify y Lab: lectura visible en el móvil
 
 - En menos de 600 px la cabecera deja de quedarse fija. Tras Comprobar, la página se desplaza al veredicto y el foco va al titular.
