@@ -179,6 +179,11 @@ describe("páginas estáticas", () => {
     assert.match(verify, /EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/);
     assert.match(verify, /no disponible/);
     assert.match(board, /data-status="en_revision"/);
+    assert.match(board, /id="como-leerlo"/);
+    assert.match(board, /id="plantilla"/);
+    assert.match(board, /id="grupo-en_revision"/);
+    assert.match(board, /No es un plazo/);
+    assert.match(board, /It is not a deadline/);
     assert.match(board, /id="tarea-U01"/);
     assert.equal(board.includes('id="tarea-U01" data-status="publicada"'), false);
     assert.equal(board.includes('data-web="si"'), false);

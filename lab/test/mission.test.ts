@@ -289,7 +289,9 @@ describe("tablero", () => {
     assert.equal(byId.get("U03")?.status, "en_revision");
     assert.equal(byId.get("U06")?.status, "en_revision");
     assert.equal(byId.get("U08")?.status, "en_curso");
-    for (const id of ["U02", "U04", "U05", "U07", "U09"]) {
+    assert.equal(byId.get("U02")?.status, "en_revision");
+    assert.ok((byId.get("U02")?.evidence.length ?? 0) > 0);
+    for (const id of ["U04", "U05", "U07", "U09"]) {
       assert.equal(byId.get(id)?.status, "propuesta", id);
       assert.equal(byId.get(id)?.evidence.length, 0, id);
     }

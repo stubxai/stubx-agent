@@ -1,10 +1,10 @@
 {
-  "version": "1.0.0",
-  "updated": "2026-10-09",
+  "version": "1.1.0",
+  "updated": "2026-10-10",
   "editor": "Equipo del repositorio. La revisión por una persona distinta está pendiente.",
   "note": {
-    "es": "Estados de un registro, no fechas prometidas. Una idea, una implementación en el repositorio y una función publicada en la web son cosas distintas. Nada de esta página está publicado en stubxai.com.",
-    "en": "These are record states, not promised dates. An idea, an implementation in the repository, and a function published on the website are different things. Nothing on this page is published on stubxai.com."
+    "es": "Estados de un registro, no fechas prometidas. Una idea, código en el repositorio y una función en stubxai.com son cosas distintas. Este tablero solo cuenta el trabajo de STUBX. Citar la dirección de otro token, si hiciera falta en una prueba, no lo avala. Nada de esta página está publicado en stubxai.com.",
+    "en": "These are record states, not promised dates. An idea, code in the repository, and a function on stubxai.com are different things. This board only records STUBX work. Citing another token’s address, if a test needs it, does not endorse it. Nothing on this page is published on stubxai.com."
   },
   "ci": {
     "workflow": ".github/workflows/ci.yml",
@@ -40,8 +40,8 @@
       "status": "en_revision",
       "webPublished": false,
       "scope": {
-        "es": "Fichas de un mint a partir de datos públicos. Implementado en la rama feat/verify-mvp. La PR 13 está en borrador contra main. No está en la web.",
-        "en": "Cards for one mint from public data. Implemented on branch feat/verify-mvp. PR 13 is a draft against main. It is not on the website."
+        "es": "Lectura en el repositorio, en web/v2/verify, de cualquier mint SPL o Token-2022, solo lectura. La nota del 2026-10-08 describía la PR 13. Hoy el código está en este repositorio y no está en stubxai.com.",
+        "en": "Read-only reading in the repository, at web/v2/verify, of any SPL or Token-2022 mint. The 2026-10-08 note described PR 13. Today the code is in this repository and it is not on stubxai.com."
       },
       "owner": "Equipo del repositorio",
       "reviewer": "Pendiente de una persona distinta del autor, antes de publicar.",
@@ -85,6 +85,13 @@
           "change": {
             "es": "Sigue sin fusionar y sin publicar en la web. Lab usa las fichas ya guardadas; no las vuelve a consultar.",
             "en": "Still unmerged and not published on the website. Lab uses the cards already stored; it does not query them again."
+          }
+        },
+        {
+          "on": "2026-10-10",
+          "change": {
+            "es": "El lector en vivo está en web/v2 de este repositorio. Sigue sin estar en stubxai.com. El historial anterior no se borra.",
+            "en": "The live reader is in web/v2 of this repository. It is still not on stubxai.com. The earlier history is kept."
           }
         }
       ]
@@ -142,6 +149,13 @@
             "es": "PR 14 abierta en borrador contra main. Sigue sin publicar.",
             "en": "PR 14 opened as a draft against main. Still not published."
           }
+        },
+        {
+          "on": "2026-10-10",
+          "change": {
+            "es": "La misión está en web/v2/lab de este repositorio. No está en stubxai.com.",
+            "en": "The mission is in web/v2/lab of this repository. It is not on stubxai.com."
+          }
         }
       ]
     },
@@ -152,8 +166,8 @@
       "status": "en_revision",
       "webPublished": false,
       "scope": {
-        "es": "Página estática generada desde registros del repositorio, el changelog, la lista de pruebas y una ejecución de CI ya cerrada. Lista para revisar. No publicada.",
-        "en": "Static page generated from repository records, the changelog, the test list, and one CI run that already finished. Ready for review. Not published."
+        "es": "Página estática en web/v2/tablero, generada desde este registro. Incluye la plantilla vacía para copiar. No está en stubxai.com y no promete fechas.",
+        "en": "Static page at web/v2/tablero, generated from this record. It includes the empty template to copy. It is not on stubxai.com and it promises no dates."
       },
       "owner": "Equipo del repositorio",
       "reviewer": "El creador, antes de cualquier publicación, como pide la ficha.",
@@ -176,7 +190,12 @@
         {
           "label": { "es": "Página borrador", "en": "Draft page" },
           "path": "site-drafts/tablero/index.html",
-          "note": { "es": "Generada. No está en la web.", "en": "Generated. It is not on the website." }
+          "note": { "es": "Generada. No está en stubxai.com.", "en": "Generated. It is not on stubxai.com." }
+        },
+        {
+          "label": { "es": "Plantilla vacía", "en": "Empty template" },
+          "path": "lab/tablero/plantilla.json",
+          "note": { "es": "No nombra un token. Se puede copiar con la licencia MIT.", "en": "It names no token. It can be copied under the MIT license." }
         }
       ],
       "history": [
@@ -185,6 +204,13 @@
           "change": {
             "es": "Primera versión del tablero, en borrador, sin fechas de entrega.",
             "en": "First version of the board, as a draft, with no delivery dates."
+          }
+        },
+        {
+          "on": "2026-10-10",
+          "change": {
+            "es": "Se añade la plantilla vacía y se separan idea, código en el repositorio y publicación en stubxai.com. El historial del 2026-10-09 se conserva.",
+            "en": "The empty template is added, and an idea, code in the repository, and publication on stubxai.com stay separate. The 2026-10-09 history is kept."
           }
         }
       ]
@@ -230,6 +256,13 @@
             "es": "Contenido mínimo junto con la misión 1. Sin publicar.",
             "en": "Minimum content shipped with mission 1. Not published."
           }
+        },
+        {
+          "on": "2026-10-10",
+          "change": {
+            "es": "El glosario y las tres guías están en web/v2/aprender. El inglés sigue pendiente de revisión humana.",
+            "en": "The glossary and the three guides are at web/v2/aprender. English is still waiting for human review."
+          }
         }
       ]
     },
@@ -247,8 +280,8 @@
       "reviewer": "Pendiente de una prueba con lector de pantalla por otra persona.",
       "reviewedOn": "2026-10-09",
       "block": {
-        "es": "Solo cubre estos borradores. La web existente no se ha modificado.",
-        "en": "It only covers these drafts. The existing website has not been changed."
+        "es": "La pasada no certifica toda la web ni stubxai.com. Falta una prueba con lector de pantalla por otra persona.",
+        "en": "The pass does not certify the whole website or stubxai.com. A screen-reader test by another person is still missing."
       },
       "evidence": [
         {
@@ -274,33 +307,53 @@
             "es": "Primera pasada en los HTML de site-drafts. Sigue en curso: falta revisión externa.",
             "en": "First pass on the site-drafts HTML. Still in progress: external review is missing."
           }
+        },
+        {
+          "on": "2026-10-10",
+          "change": {
+            "es": "Sigue en curso. No se presenta como certificación de stubxai.com.",
+            "en": "Still in progress. It is not presented as a certification of stubxai.com."
+          }
         }
       ]
     },
     {
       "id": "U02",
-      "version": "0",
+      "version": "1.0.0",
       "title": { "es": "STUBX Studio", "en": "STUBX Studio" },
-      "status": "propuesta",
+      "status": "en_revision",
       "webPublished": false,
       "scope": {
-        "es": "Idea del plan del 2026-10-09: plantillas y exportación local. No hay editor en este repositorio.",
-        "en": "Idea from the 2026-10-09 plan: templates and local export. There is no editor in this repository."
+        "es": "Editor en web/v2/studio: plantillas, vista previa y descarga en el navegador, sin cuenta. No está en stubxai.com.",
+        "en": "Editor at web/v2/studio: templates, preview, and download in the browser, with no account. It is not on stubxai.com."
       },
-      "owner": "Sin asignar",
-      "reviewer": "No aplica todavía.",
-      "reviewedOn": null,
+      "owner": "Equipo del repositorio",
+      "reviewer": "Pendiente de una persona distinta del autor, antes de publicar.",
+      "reviewedOn": "2026-10-10",
       "block": {
-        "es": "El plan la deja para después de probar la primera misión.",
-        "en": "The plan leaves it until the first mission has been tried."
+        "es": "Falta la autorización para publicarlo en stubxai.com.",
+        "en": "Authorization to publish it on stubxai.com is missing."
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "label": { "es": "Editor", "en": "Editor" },
+          "path": "web/v2/studio/index.html",
+          "note": { "es": "Está en el repositorio. No está en stubxai.com.", "en": "It is in the repository. It is not on stubxai.com." }
+        }
+      ],
       "history": [
         {
           "on": "2026-10-09",
           "change": {
             "es": "Anotada como propuesta. No se ha empezado.",
             "en": "Recorded as a proposal. Not started."
+          }
+        },
+        {
+          "on": "2026-10-10",
+          "change": {
+            "es": "El editor está en el repositorio. Pasa a en revisión. No está en stubxai.com. La nota del 2026-10-09 se conserva.",
+            "en": "The editor is in the repository. It moves to in review. It is not on stubxai.com. The 2026-10-09 note is kept."
           }
         }
       ]
