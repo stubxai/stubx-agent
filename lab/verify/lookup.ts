@@ -370,3 +370,23 @@ export function classifyAddress(
   }
   return notOfficialView(mint, official);
 }
+
+const DATED_CARD_NOTE = pair(
+  "Es la ficha del 2026-10-09. No es una lectura en directo.",
+  "It is the 2026-10-09 card. It is not a live reading.",
+);
+
+/** La ficha fechada sigue, pero un fallo de los dos RPC no la pinta como lectura en verde. */
+export function reserveWhenLiveFails(view: LookupView): LookupView {
+  if (view.kind !== "oficial") return view;
+  const previous = view.partialNote;
+  return {
+    ...view,
+    light: "neutro",
+    lightLabel: pair("No se pudo comprobar en directo", "Could not check live"),
+    title: pair("No se pudo comprobar en directo", "Could not check live"),
+    partialNote: previous
+      ? pair(`${DATED_CARD_NOTE.es} ${previous.es}`, `${DATED_CARD_NOTE.en} ${previous.en}`)
+      : DATED_CARD_NOTE,
+  };
+}

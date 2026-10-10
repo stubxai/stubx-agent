@@ -5,7 +5,7 @@ import { describe, test } from "node:test";
 import { loadCards, loadFuentes } from "../mission/load.js";
 import { repoRootFromMeta } from "../paths.js";
 import { bannedHits } from "../text.js";
-import { classifyAddress, emptyView, pendingView, type EvmExample } from "../verify/lookup.js";
+import { classifyAddress, emptyView, pendingView, reserveWhenLiveFails, type EvmExample } from "../verify/lookup.js";
 
 const root = repoRootFromMeta(import.meta.url);
 const cards = loadCards(root, loadFuentes(root));
@@ -136,6 +136,30 @@ describe("lectura de una dirección", () => {
     const far = classifyAddress(wrappedSol, cards, "caida", evm);
     assert.equal(far.title.es, "No es la dirección oficial");
     assert.notEqual(far.kind, "lectura_caida");
+  });
+
+  test("con la CA oficial y los RPC caídos la ficha no sale en verde", () => {
+    const card = classifyAddress(official, cards, "lista", evm);
+    assert.equal(card.light, "ok");
+    assert.equal(card.title.es, "Parece el STUBX oficial");
+    const down = reserveWhenLiveFails(card);
+    assert.equal(down.kind, "oficial");
+    assert.equal(down.mint, official);
+    assert.equal(down.light, "neutro");
+    assert.notEqual(down.light, "ok");
+    assert.equal(down.title.es, "No se pudo comprobar en directo");
+    assert.equal(down.title.en, "Could not check live");
+    assert.equal(down.lightLabel.es, "No se pudo comprobar en directo");
+    assert.equal(down.lightLabel.en, "Could not check live");
+    assert.match(down.partialNote?.es ?? "", /Es la ficha del 2026-10-09/);
+    assert.match(down.partialNote?.en ?? "", /2026-10-09 card/);
+    assert.equal((down.partialNote?.es ?? "").includes("Parece el STUBX oficial"), false);
+    assert.ok(down.rows.length > 0);
+    assert.match(down.partialNote?.es ?? "", /censo|cuenta personal publicada/);
+    const cloneCard = classifyAddress(clone, cards, "lista", evm);
+    const cloneDown = reserveWhenLiveFails(cloneCard);
+    assert.equal(cloneDown.title.es, "Se parece a STUBX, pero no es la CA oficial");
+    assert.equal(cloneDown.light, "atencion");
   });
 
   test("con el RPC caído un clon del registro sale en ámbar y no en rojo", () => {

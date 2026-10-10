@@ -52,6 +52,7 @@ type View = {
 
 type Lookup = {
   classifyAddress: (raw: string, cards: readonly object[], source?: string, evm?: readonly object[]) => View;
+  reserveWhenLiveFails: (view: View) => View;
   emptyView: () => View;
   pendingView: (raw: string) => View;
   isAddress: (value: string) => boolean;
@@ -374,6 +375,12 @@ describe("web v2", () => {
     const official = lookup.classifyAddress(`  ${CA.slice(0, 8)} ${CA.slice(8)}  `, data.cards, "lista", data.evm);
     assert.equal(official.kind, "oficial");
     assert.equal(official.light, "ok");
+    const liveDown = lookup.reserveWhenLiveFails(official);
+    assert.equal(liveDown.light, "neutro");
+    assert.equal(liveDown.title.es, "No se pudo comprobar en directo");
+    assert.equal(liveDown.title.en, "Could not check live");
+    assert.match(liveDown.partialNote?.es ?? "", /Es la ficha del 2026-10-09/);
+    assert.equal(liveDown.title.es.includes("Parece el STUBX oficial"), false);
     assert.equal(official.mint, CA);
     assert.match(official.partialNote?.es ?? "", /cuenta personal publicada/);
     assert.match(official.partialNote?.es ?? "", /censo/);

@@ -297,7 +297,7 @@ function bootVerify() {
     }).then(function (reading) {
       if (ticket !== generation || controller.signal.aborted) return;
       if (!reading.ok) {
-        apply(classifyAddress(normalized, cards, "lista", evm), true);
+        apply(reserveWhenLiveFails(classifyAddress(normalized, cards, "lista", evm)), true);
         return;
       }
       var view = decorate(reading, normalized);
@@ -305,7 +305,7 @@ function bootVerify() {
       apply(view, true);
     }).catch(function () {
       if (ticket !== generation || controller.signal.aborted) return;
-      apply(classifyAddress(normalized, cards, "lista", evm), true);
+      apply(reserveWhenLiveFails(classifyAddress(normalized, cards, "lista", evm)), true);
     }).then(function () {
       if (ticket === generation) setBusy(false);
     });
