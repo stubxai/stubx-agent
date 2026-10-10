@@ -142,6 +142,40 @@ function titleStyle(id, ink) {
     : { fill: paper, stroke: night, strokeWidth: 0.09 };
 }
 
+function decoRatio(style) {
+  return Math.max(style.strokeWidth ?? 0, style.glowRadius ?? 0, style.shadow ?? 0);
+}
+
+function watermarkLayout(width, height, bodyFont) {
+  const pad = Math.round(width * 0.04);
+  const wmSize = Math.max(13, Math.round(Math.min(width, height) * 0.026));
+  const wmWidth = measureFont(bodyFont, WM_TEXT, wmSize);
+  const wmMetrics = lineBox(bodyFont, wmSize);
+  const platePad = Math.max(4, Math.round(wmSize * 0.35));
+  let wmX = width - pad - wmWidth;
+  let plateX = Math.round(wmX - platePad);
+  let plateW = Math.ceil(wmWidth + platePad * 2);
+  if (plateX < 0) {
+    plateX = 0;
+    wmX = platePad;
+  }
+  if (plateX + plateW > width) {
+    plateX = Math.max(0, width - plateW);
+    wmX = plateX + platePad;
+  }
+  const plateY = Math.max(0, Math.round(height * 0.028));
+  const plateH = Math.ceil(wmMetrics.ascent + wmMetrics.descent + platePad * 2);
+  return {
+    wmSize,
+    wmX,
+    wmBaseline: plateY + platePad + wmMetrics.ascent,
+    plateX,
+    plateY,
+    plateW,
+    plateH,
+  };
+}
+
 function placeText(rgba, width, height, font, fit, zone, role, glyphs, style) {
   if (!fit.lines.length || zone.h < 4) return;
   const metrics = lineBox(font, fit.size);
@@ -190,8 +224,10 @@ export async function renderCard(options) {
   const label = aiLabel(options.origins ?? [], lang);
   const aiSize = label ? Math.max(12, Math.round(Math.min(width, height) * 0.02)) : 0;
   const aiLines = label ? wrapFace(bodyFont, label, inner, aiSize) : [];
-  const aiStep = aiLines.length ? lineBox(bodyFont, aiSize).step : 0;
-  const aiH = aiLines.length ? Math.ceil(aiLines.length * aiStep + aiSize * 0.35) : 0;
+  const aiMetrics = aiLines.length ? lineBox(bodyFont, aiSize) : null;
+  const aiPad = aiLines.length ? Math.max(4, Math.round(aiSize * 0.35)) : 0;
+  const aiBlock = aiMetrics ? aiMetrics.ascent + aiMetrics.descent + Math.max(0, aiLines.length - 1) * aiMetrics.step : 0;
+  const aiH = aiLines.length ? Math.ceil(aiBlock + aiPad * 2) : 0;
   const aiTop = footerTop - aiH;
   const contentBottom = aiTop;
   const titleClear = Math.ceil(height * 0.078);
@@ -213,44 +249,47 @@ export async function renderCard(options) {
     : { x: avatarZone.x, y: avatarZone.y, w: avatarZone.w, h: 0 };
   blit(rgba, width, height, imageZone, options.avatar ?? null);
 
+  const mark = watermarkLayout(width, height, bodyFont);
+  const watermarkBox = { x: mark.plateX, y: mark.plateY, w: mark.plateW, h: mark.plateH };
   const glyphs = [];
-  const titleFit = fitFace(titleFont, options.title ?? "", titleZone, Math.max(minInk, height * 0.16), Math.max(22, Math.round(height * 0.045)));
+  const inkRgb = [ink[0], ink[1], ink[2]];
+  const titleLook = titleStyle(headline.id, inkRgb);
+  const titleFit = fitFace(
+    titleFont,
+    options.title ?? "",
+    titleZone,
+    Math.max(minInk, height * 0.16),
+    Math.max(22, Math.round(height * 0.045)),
+    { x: watermarkBox.x, y: watermarkBox.y, w: watermarkBox.w, h: watermarkBox.h, padRatio: decoRatio(titleLook), slack: 2 },
+  );
   const bodyFit = fitFace(bodyFont, options.body ?? "", bodyZone, Math.max(18, height * 0.04), Math.max(14, Math.round(height * 0.02)));
   const tokenFit = fitFace(bodyFont, tokenText, tokenZone, Math.max(14, Math.round(height * 0.028)), 12);
-  const inkRgb = [ink[0], ink[1], ink[2]];
-  placeText(rgba, width, height, titleFont, titleFit, titleZone, "title", glyphs, titleStyle(headline.id, inkRgb));
+  placeText(rgba, width, height, titleFont, titleFit, titleZone, "title", glyphs, titleLook);
   placeText(rgba, width, height, bodyFont, bodyFit, bodyZone, "body", glyphs, { fill: inkRgb, shadow: 0.05, shadowAlpha: 0.75 });
   placeText(rgba, width, height, bodyFont, tokenFit, tokenZone, "token", glyphs, { fill: inkRgb });
 
-  const wmSize = Math.max(13, Math.round(Math.min(width, height) * 0.026));
-  const wmWidth = measureFont(bodyFont, WM_TEXT, wmSize);
-  const wmMetrics = lineBox(bodyFont, wmSize);
-  const platePad = Math.max(4, Math.round(wmSize * 0.35));
-  let wmX = width - pad - wmWidth;
-  let plateX = Math.round(wmX - platePad);
-  let plateW = Math.ceil(wmWidth + platePad * 2);
-  if (plateX < 0) {
-    plateX = 0;
-    wmX = platePad;
-  }
-  if (plateX + plateW > width) {
-    plateX = Math.max(0, width - plateW);
-    wmX = plateX + platePad;
-  }
-  const plateY = Math.max(0, Math.round(height * 0.028));
-  const plateH = Math.ceil(wmMetrics.ascent + wmMetrics.descent + platePad * 2);
-  const wmBaseline = plateY + platePad + wmMetrics.ascent;
-  fillRect(rgba, width, height, plateX, plateY, plateW, plateH, [WM_PLATE[0], WM_PLATE[1], WM_PLATE[2], 255]);
-  drawFace(rgba, width, height, bodyFont, [WM_TEXT], wmX, wmBaseline, wmSize, "watermark", glyphs, {
+  fillRect(rgba, width, height, mark.plateX, mark.plateY, mark.plateW, mark.plateH, [WM_PLATE[0], WM_PLATE[1], WM_PLATE[2], 255]);
+  drawFace(rgba, width, height, bodyFont, [WM_TEXT], mark.wmX, mark.wmBaseline, mark.wmSize, "watermark", glyphs, {
     fill: [WM_INK[0], WM_INK[1], WM_INK[2]],
     alpha: WATERMARK_ALPHA,
     crisp: true,
   });
-  const watermarkBox = { x: plateX, y: plateY, w: plateW, h: plateH };
 
-  if (aiLines.length) {
-    const aiMetrics = lineBox(bodyFont, aiSize);
-    drawFace(rgba, width, height, bodyFont, aiLines, pad, aiTop + aiMetrics.ascent, aiSize, "ai", glyphs, { fill: [244, 247, 251] });
+  let labelBox = null;
+  if (aiLines.length && aiMetrics) {
+    const aiWidth = Math.max(...aiLines.map((line) => measureFont(bodyFont, line, aiSize)));
+    labelBox = {
+      x: Math.max(0, pad - aiPad),
+      y: aiTop,
+      w: Math.min(width - Math.max(0, pad - aiPad), Math.ceil(aiWidth + aiPad * 2)),
+      h: aiH,
+    };
+    fillRect(rgba, width, height, labelBox.x, labelBox.y, labelBox.w, labelBox.h, [WM_PLATE[0], WM_PLATE[1], WM_PLATE[2], 255]);
+    drawFace(rgba, width, height, bodyFont, aiLines, labelBox.x + aiPad, labelBox.y + aiPad + aiMetrics.ascent, aiSize, "ai", glyphs, {
+      fill: [WM_INK[0], WM_INK[1], WM_INK[2]],
+      alpha: WATERMARK_ALPHA,
+      crisp: true,
+    });
   }
 
   fillRect(rgba, width, height, 0, footerTop, width, noticeH, FOOTER_BG);
@@ -286,6 +325,7 @@ export async function renderCard(options) {
     watermarkColor: [WM_INK[0], WM_INK[1], WM_INK[2]],
     watermarkPlate: [WM_PLATE[0], WM_PLATE[1], WM_PLATE[2]],
     watermarkBox,
+    labelBox,
     headline: headline.id,
     fill,
     ink,

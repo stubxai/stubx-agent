@@ -91,6 +91,7 @@ export function brandFor(lang, token) {
 export function aiLabel(origins, lang) {
   const set = new Set(origins);
   const code = lang === "en" ? "en" : "es";
+  if (set.has("mascota")) return "";
   if (set.has("ai")) return AI_LABEL.ai[code];
   return "";
 }

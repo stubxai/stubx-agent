@@ -23,22 +23,28 @@ async function readAsset(file) {
 }
 
 export function wrapFace(font, text, maxWidth, size) {
+  const limit = typeof maxWidth === "function" ? maxWidth : () => maxWidth;
   const lines = [];
   for (const paragraph of String(text ?? "").split(/\n/)) {
     const words = paragraph.split(/\s+/).filter(Boolean);
     if (words.length === 0) continue;
     let line = "";
+    let lineIndex = lines.length;
+    const room = () => Math.max(1, limit(lineIndex));
     const pushWord = (word) => {
-      if (measureFont(font, word, size) <= maxWidth) {
+      if (measureFont(font, word, size) <= room()) {
         line = word;
         return;
       }
       let chunk = "";
       for (const ch of word) {
         const next = chunk + ch;
-        if (measureFont(font, next, size) <= maxWidth) chunk = next;
+        if (measureFont(font, next, size) <= room()) chunk = next;
         else {
-          if (chunk) lines.push(chunk);
+          if (chunk) {
+            lines.push(chunk);
+            lineIndex += 1;
+          }
           chunk = ch;
         }
       }
@@ -46,9 +52,12 @@ export function wrapFace(font, text, maxWidth, size) {
     };
     for (const word of words) {
       const next = line ? `${line} ${word}` : word;
-      if (measureFont(font, next, size) <= maxWidth) line = next;
+      if (measureFont(font, next, size) <= room()) line = next;
       else {
-        if (line) lines.push(line);
+        if (line) {
+          lines.push(line);
+          lineIndex += 1;
+        }
         pushWord(word);
       }
     }
@@ -63,19 +72,40 @@ export function lineBox(font, size) {
   return { ascent, descent, step: ascent + descent + size * 0.12 };
 }
 
-export function fitFace(font, text, zone, maxSize, minSize) {
+function widthFor(font, zone, size, avoid) {
+  if (!avoid) return () => zone.w;
+  const metrics = lineBox(font, size);
+  const pad = size * (avoid.padRatio ?? 0) + (avoid.slack ?? 0);
+  return (index) => {
+    const top = zone.y + index * metrics.step - pad;
+    const bottom = top + metrics.ascent + metrics.descent + pad * 2;
+    const hits = top < avoid.y + avoid.h && bottom > avoid.y && zone.x < avoid.x + avoid.w && zone.x + zone.w > avoid.x;
+    if (!hits) return zone.w;
+    return Math.max(8, Math.min(zone.w, avoid.x - zone.x - pad));
+  };
+}
+
+export function fitFace(font, text, zone, maxSize, minSize, avoid) {
   const value = String(text ?? "");
   if (!value.trim() || zone.h <= 0 || zone.w <= 0) return { lines: [], size: minSize, fits: !value.trim() };
+  const packed = (size) => {
+    const limit = widthFor(font, zone, size, avoid);
+    const lines = wrapFace(font, value, limit, size);
+    const tall = lines.length * lineBox(font, size).step <= zone.h;
+    const wide = lines.every((line, index) => measureFont(font, line, size) <= limit(index) + 0.01);
+    return { lines, ok: tall && wide && lines.length > 0 };
+  };
   let size = Math.ceil(maxSize);
   const floor = Math.max(8, Math.floor(minSize));
   while (size > floor) {
-    const lines = wrapFace(font, value, zone.w, size);
-    if (lines.length * lineBox(font, size).step <= zone.h) return { lines, size, fits: true };
+    const fit = packed(size);
+    if (fit.ok) return { lines: fit.lines, size, fits: true };
     size -= 1;
   }
-  const lines = wrapFace(font, value, zone.w, floor);
+  const fit = packed(floor);
   const maxLines = Math.max(0, Math.floor(zone.h / lineBox(font, floor).step));
-  return { lines: lines.slice(0, maxLines), size: floor, fits: lines.length <= maxLines };
+  const lines = fit.lines.slice(0, maxLines);
+  return { lines, size: floor, fits: fit.ok && fit.lines.length <= maxLines };
 }
 
 function raster(lines, width, height) {

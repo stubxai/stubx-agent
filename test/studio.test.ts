@@ -189,6 +189,7 @@ type Card = {
   watermarkColor: number[];
   watermarkPlate: number[];
   watermarkBox: { x: number; y: number; w: number; h: number };
+  labelBox: { x: number; y: number; w: number; h: number } | null;
   topBand: number;
   noticeFontSize: number;
   noticeInk: number;
@@ -1067,7 +1068,9 @@ describe("studio", () => {
     assert.equal(aiLabel(["mascota"], "es"), "");
     assert.equal(aiLabel(["mascota"], "en"), "");
     assert.equal(aiLabel(["ai"], "es"), AI_LABEL.ai.es);
-    assert.equal(aiLabel(["ai", "mascota", "ninguno"], "en"), AI_LABEL.ai.en);
+    assert.equal(aiLabel(["ai"], "en"), AI_LABEL.ai.en);
+    assert.equal(aiLabel(["ai", "mascota", "ninguno"], "en"), "");
+    assert.equal(aiLabel(["ai", "mascota"], "es"), "");
 
     const catalog = JSON.parse(readStudio("catalog.json")) as {
       items: { archivo: string; licencia: string | { es: string; en: string }; permitido: boolean; aiOrigin: string; sha256: string }[];
@@ -1937,6 +1940,85 @@ describe("studio", () => {
       const ratio = contrastRgb(inkPx ?? [], platePx);
       assert.ok(ratio >= 3, `${fondo.id} ${ratio.toFixed(2)}`);
       assert.ok(card.watermarkAlpha >= 0.6, fondo.id);
+    }
+  });
+
+  test("un titular largo no entra en la placa y la mascota no lleva la etiqueta de IA", { timeout: 120_000 }, async () => {
+    const { renderCard } = await load<{ renderCard: (options: Record<string, unknown>) => Promise<Card> }>("lib/render.mjs");
+    const { HEADLINES } = await load<{ HEADLINES: { id: string }[] }>("lib/headlines.mjs");
+    const { AI_LABEL } = await load<{ AI_LABEL: { ai: { es: string; en: string } } }>("lib/copy.mjs");
+    const templates = JSON.parse(readStudio("templates.json")) as {
+      formats: { id: string; width: number; height: number }[];
+    };
+    const padFor = (id: string) => {
+      if (id === "comic") return 0.11;
+      if (id === "neon") return 0.16;
+      if (id === "pixel") return 0.07;
+      if (id === "bold") return 0.08;
+      return 0.09;
+    };
+    const hits = (a: { x: number; y: number; w: number; h: number }, b: { x: number; y: number; w: number; h: number }) =>
+      a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+    const longTitle = "prueba ".repeat(12).trim().slice(0, 72).trim();
+    assert.ok(longTitle.length >= 60, longTitle);
+    for (const format of templates.formats) {
+      for (const headline of HEADLINES) {
+        const card = await renderCard({
+          width: format.width,
+          height: format.height,
+          lang: "es",
+          title: longTitle,
+          body: "Texto de apoyo.",
+          headline: headline.id,
+          origins: ["mascota", "ai"],
+          watermark: false,
+          fill: "#0a090d",
+          ink: "#fff3f5",
+        });
+        const titles = card.glyphs.filter((glyph) => glyph.role === "title");
+        assert.ok(titles.length > 8, `${format.id} ${headline.id}`);
+        assert.equal(card.label, "", `${format.id} ${headline.id}`);
+        assert.equal(card.glyphs.some((glyph) => glyph.role === "ai"), false, `${format.id} ${headline.id}`);
+        const plate = card.watermarkBox;
+        for (const glyph of titles) {
+          const pad = glyph.size * padFor(headline.id) + 1;
+          const box = { x: glyph.x - pad, y: glyph.y - pad, w: glyph.w + pad * 2, h: glyph.h + pad * 2 };
+          assert.equal(hits(box, plate), false, `${format.id} ${headline.id} ${glyph.ch}`);
+        }
+      }
+    }
+    for (const [width, height] of [[1080, 1080], [1080, 1920]] as const) {
+      const card = await renderCard({
+        width,
+        height,
+        lang: "es",
+        title: "Hola",
+        body: "Texto corto.",
+        origins: ["ai"],
+        watermark: false,
+        fill: "#fff3f5",
+        ink: "#120a0e",
+      });
+      assert.equal(card.label, AI_LABEL.ai.es, `${width}x${height}`);
+      assert.ok(card.glyphs.some((glyph) => glyph.role === "ai"), `${width}x${height}`);
+      const box = card.labelBox;
+      assert.ok(box, `${width}x${height}`);
+      const platePx = pixel(card, (box?.x ?? 0) + 1, (box?.y ?? 0) + 1);
+      assert.deepEqual(platePx.slice(0, 3), card.watermarkPlate, `${width}x${height}`);
+      let inkPx: number[] | null = null;
+      const x1 = Math.min(card.width, (box?.x ?? 0) + (box?.w ?? 0));
+      const y1 = Math.min(card.height, (box?.y ?? 0) + (box?.h ?? 0));
+      for (let y = box?.y ?? 0; y < y1; y += 1) {
+        for (let x = box?.x ?? 0; x < x1; x += 1) {
+          const sample = pixel(card, x, y);
+          if (sample[0] === platePx[0] && sample[1] === platePx[1] && sample[2] === platePx[2]) continue;
+          const sum = (sample[0] ?? 0) + (sample[1] ?? 0) + (sample[2] ?? 0);
+          if (!inkPx || sum > (inkPx[0] ?? 0) + (inkPx[1] ?? 0) + (inkPx[2] ?? 0)) inkPx = sample;
+        }
+      }
+      assert.ok(inkPx, `${width}x${height}`);
+      assert.ok(contrastRgb(inkPx ?? [], platePx) >= 3, `${width}x${height}`);
+      assert.ok((box?.y ?? 0) + (box?.h ?? 0) <= card.noticeTop, `${width}x${height}`);
     }
   });
 
