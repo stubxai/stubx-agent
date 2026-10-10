@@ -191,6 +191,7 @@ describe("páginas estáticas", () => {
     assert.match(board, /La columna stubxai.com dice sí solo si la función se puede abrir hoy en la web/);
     assert.equal(board.includes("Nada de esta página está publicado"), false);
     assert.equal(board.includes("Hoy ninguna lo está"), false);
+    assert.match(board, /2026-10-09 · Usage measurement: none on the client/);
     assert.match(board, /https:\/\/github.com\/stubxai\/stubx-agent\/pull\/13/);
     assert.match(board, /lab\/test\/mission\.test\.ts/);
     assert.match(board, /\.github\/workflows\/ci\.yml/);
