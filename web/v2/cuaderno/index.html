@@ -24,7 +24,7 @@
 <meta name="twitter:description" content="Cuaderno local de solo lectura para cualquier token de Solana. / Local read-only notebook for any Solana token.">
 <meta name="twitter:image" content="https://stubxai.com/assets/og-stubx-2026-10b-1200x630.jpg">
 <meta name="twitter:image:alt" content="STUBX: Agente Talón, mascota rosa con forma de ticket, sostiene un recibo junto a un globo terráqueo. Texto: «Un meme que pide pruebas. Qué es, qué funciona hoy y qué falta. CA oficial y pruebas en stubxai.com». Pie: «Cripto de alto riesgo · Puedes perderlo todo · No es consejo de inversión.» · Ilustración con elementos generados con IA. / STUBX: Agente Talón, a pink ticket-shaped mascot, holds a receipt next to a globe. Text: “A meme that asks for proof. What it is, what works today, and what is missing. Official CA and proofs at stubxai.com”. Footer: “High-risk crypto · You could lose everything · Not investment advice.” · Illustration with AI-generated elements.">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self' https://api.mainnet-beta.solana.com; manifest-src 'self'; media-src 'none'; frame-src 'none'; worker-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self' https://api.mainnet-beta.solana.com https://solana-rpc.publicnode.com; manifest-src 'self'; media-src 'none'; frame-src 'none'; worker-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <title data-title-es="STUBX · Cuaderno" data-title-en="STUBX · Notebook">STUBX · Cuaderno</title>
 <meta name="theme-color" content="#071422">
 <link rel="icon" href="../favicon.ico" sizes="any">
@@ -69,14 +69,18 @@
 
 <details>
 <summary><span class="lang es" lang="es">Cambiar el lector público</span><span class="lang en" lang="en">Change the public reader</span></summary>
-<label for="rpc-url"><span class="lang es" lang="es">Dirección https del lector</span><span class="lang en" lang="en">Reader https address</span></label>
-<input id="rpc-url" name="rpc" type="url" inputmode="url" autocomplete="off" spellcheck="false">
-<p class="muted"><span class="lang es" lang="es">Déjalo vacío para usar el lector público por defecto. Solo https, sin usuario, sin contraseña y sin una consulta en la dirección. Si eliges otro lector, ese servicio recibe tus consultas y tu IP. STUBX no lo revisa.</span><span class="lang en" lang="en">Leave it empty to use the default public reader. https only, with no user, no password, and no query in the address. If you choose another reader, that service receives your queries and your IP. STUBX does not review it.</span></p>
+<label for="rpc-url"><span class="lang es" lang="es">Lector público</span><span class="lang en" lang="en">Public reader</span></label>
+<select id="rpc-url" name="rpc">
+<option value="https://api.mainnet-beta.solana.com" selected>api.mainnet-beta.solana.com</option>
+<option value="https://solana-rpc.publicnode.com">solana-rpc.publicnode.com</option>
+</select>
+<p class="muted"><span class="lang es" lang="es">Solo hay dos lectores: api.mainnet-beta.solana.com y solana-rpc.publicnode.com. Si eliges otro lector, ese servicio recibe tus consultas y tu IP. STUBX no lo revisa.</span><span class="lang en" lang="en">There are only two readers: api.mainnet-beta.solana.com and solana-rpc.publicnode.com. If you choose another reader, that service receives your queries and your IP. STUBX does not review it.</span></p>
 </details>
 
 <section id="resultado" tabindex="-1" aria-live="polite"></section>
 
 <h2><span class="lang es" lang="es">Consultas guardadas</span><span class="lang en" lang="en">Saved queries</span></h2>
+<p><span class="lang es" lang="es">Este navegador guarda como máximo 200 fichas. Si llega al tope, borra alguna para guardar otra.</span><span class="lang en" lang="en">This browser stores at most 200 cards. When it is full, delete one to save another.</span></p>
 <div id="lista-consultas"></div>
 
 <h2><span class="lang es" lang="es">Comparar dos consultas de la misma dirección</span><span class="lang en" lang="en">Compare two queries of the same address</span></h2>

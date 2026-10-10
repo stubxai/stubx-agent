@@ -11,12 +11,14 @@ import {
 import {
   MAX_BYTES,
   MAX_NOTE,
+  MAX_STORED,
   compareRecords,
   staleLine,
   toExport,
   validateCard,
   validateExport,
   withNote,
+  withinStoreLimit,
 } from "../shared/notebook-model.js";
 
 const DB_NAME = "stubx-cuaderno";
@@ -26,7 +28,8 @@ const COPY = {
   es: {
     consulting: "Consultando la red…",
     invalid: "Esa dirección no es válida. Una dirección de Solana suele tener entre 32 y 44 letras y números, sin 0, O, I ni l.",
-    rpc: "Ese lector no vale: tiene que ser https, sin usuario, sin contraseña y sin una consulta en la dirección. No se ha llamado a la red.",
+    rpc: "Ese lector no está en la lista. Solo se puede usar api.mainnet-beta.solana.com o solana-rpc.publicnode.com. No se ha llamado a la red.",
+    full: `Este navegador ya tiene ${MAX_STORED} fichas. Borra alguna para guardar otra.`,
     partial: "La lectura está incompleta. Lo que falta no se ha puesto a cero.",
     network: "No se pudo leer la red. Revisa la conexión e inténtalo otra vez. No se ha inventado un resultado.",
     saved: "Consulta guardada en este navegador. No es una lectura en vivo.",
@@ -84,7 +87,8 @@ const COPY = {
   en: {
     consulting: "Reading the network…",
     invalid: "That address is not valid. A Solana address is usually 32 to 44 letters and numbers, with no 0, O, I, or l.",
-    rpc: "That reader address is not allowed: it must be https, with no user, no password, and no query. The network was not called.",
+    rpc: "That reader is not on the list. Only api.mainnet-beta.solana.com or solana-rpc.publicnode.com can be used. The network was not called.",
+    full: `This browser already has ${MAX_STORED} cards. Delete one to save another.`,
     partial: "The reading is incomplete. What is missing was not filled in with zero.",
     network: "The network could not be read. Check the connection and try again. No result was invented.",
     saved: "Query saved in this browser. It is not a live reading.",
@@ -248,7 +252,7 @@ async function browserTransport(endpoint, body, timeoutMs) {
 
 function endpointFromForm() {
   const input = document.getElementById("rpc-url");
-  const value = input && input.value.trim();
+  const value = input && typeof input.value === "string" ? input.value.trim() : "";
   return value || DEFAULT_RPC;
 }
 
@@ -404,6 +408,11 @@ async function persist(record) {
     showMessage(checked.error[lang()], "error");
     return false;
   }
+  const replacing = records.some((item) => item.id === record.id);
+  if (!replacing && !withinStoreLimit(records.length, 1)) {
+    showMessage(t("full"), "error");
+    return false;
+  }
   const db = await database();
   await dbPut(db, { id: record.id, note: record.note, card: checked.card });
   return true;
@@ -415,7 +424,7 @@ async function consult(mint) {
   if (button) button.disabled = true;
   showMessage(t("consulting"), "info");
   const endpoint = endpointFromForm();
-  if (endpoint !== DEFAULT_RPC && !isAllowedRpcUrl(endpoint)) {
+  if (!isAllowedRpcUrl(endpoint)) {
     showMessage(t("rpc"), "error");
     if (button) button.disabled = false;
     return;
@@ -544,6 +553,11 @@ async function importCopy(file) {
   const parsed = validateExport(textValue);
   if (!parsed.ok) {
     showMessage(parsed.error[lang()], "error");
+    return;
+  }
+  const incomingNew = parsed.records.filter((record) => !records.some((item) => item.id === record.id)).length;
+  if (!withinStoreLimit(records.length, incomingNew)) {
+    showMessage(t("full"), "error");
     return;
   }
   try {

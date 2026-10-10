@@ -15,6 +15,12 @@ const MICA_ES =
 const MICA_EN =
   "This crypto-asset marketing communication has not been reviewed or approved by any competent authority in any Member State of the European Union. The offeror of the crypto-asset is solely responsible for the content of this crypto-asset marketing communication.";
 
+function headerPathMatches(pattern: string, urlPath: string): boolean {
+  if (pattern === "/*") return urlPath.startsWith("/");
+  if (pattern.endsWith("/*")) return urlPath.startsWith(pattern.slice(0, -1));
+  return urlPath === pattern;
+}
+
 const ROUTES = [
   "index.html",
   "verify/index.html",
@@ -512,10 +518,41 @@ describe("web v2", () => {
     assert.equal(policies.length, 2);
     assert.ok(policies.every((policy) => policy.header.includes("frame-ancestors 'none'")));
     const globalPolicy = policies.find((policy) => policy.path === "/*");
+    const notebookBlock = blocks.find((block) => block.path === "/cuaderno/*");
+    const unsetAt = notebookBlock?.headers.findIndex((header) => header.replace(/\s+/g, " ") === "! Content-Security-Policy") ?? -1;
+    const notebookCspAt = notebookBlock?.headers.findIndex((header) => header.startsWith("Content-Security-Policy:")) ?? -1;
+    assert.ok(unsetAt >= 0 && notebookCspAt > unsetAt);
     const notebookPolicy = policies.find((policy) => policy.path === "/cuaderno/*");
     assert.equal(globalPolicy?.header.includes("mainnet-beta"), false);
-    assert.match(notebookPolicy?.header ?? "", /connect-src 'self' https:\/\/api\.mainnet-beta\.solana\.com/);
+    assert.equal(globalPolicy?.header.includes("publicnode"), false);
+    assert.match(notebookPolicy?.header ?? "", /connect-src 'self' https:\/\/api\.mainnet-beta\.solana\.com https:\/\/solana-rpc\.publicnode\.com/);
     assert.equal(/\bconnect-src[^;]*\*/.test(notebookPolicy?.header ?? ""), false);
+    const samples = ["/", "/verify/", "/lab/", "/lab/sw.js", "/aprender/", "/studio/", "/cuaderno/", "/cuaderno/index.html", "/token.json", "/assets/site.css", "/404.html"];
+    const seen = new Map<string, string>();
+    for (const sample of samples) {
+      const applied = new Map<string, string[]>();
+      for (const block of blocks) {
+        if (!headerPathMatches(block.path, sample)) continue;
+        for (const line of block.headers) {
+          const compact = line.replace(/\s+/g, " ");
+          if (compact.startsWith("! ")) {
+            applied.delete(compact.slice(2).trim().toLowerCase());
+            continue;
+          }
+          const split = line.indexOf(":");
+          const name = line.slice(0, split).trim().toLowerCase();
+          const value = line.slice(split + 1).trim();
+          const list = applied.get(name) ?? [];
+          list.push(value);
+          applied.set(name, list);
+        }
+      }
+      const csp = applied.get("content-security-policy") ?? [];
+      assert.equal(csp.length, 1, `${sample} recibe ${csp.length} CSP`);
+      seen.set(sample, csp[0] ?? "");
+    }
+    assert.equal(seen.get("/")?.includes("mainnet-beta"), false);
+    assert.match(seen.get("/cuaderno/") ?? "", /https:\/\/solana-rpc\.publicnode\.com/);
     const star = blocks.find((block) => block.path === "/*");
     assert.ok(star?.headers.some((header) => header === "X-Frame-Options: DENY"));
     for (const file of htmlFiles(siteRoot())) {

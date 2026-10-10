@@ -6,9 +6,9 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
-import { METADATA_PROGRAM, PUMP_PROGRAM, TOKEN_PROGRAM } from "../shared/solana-read.js";
+import { METADATA_PROGRAM, PUMP_PROGRAM, TOKEN_PROGRAM } from "../web/v2/shared/solana-read.js";
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../web/v2");
 const shots = "/opt/cursor/artifacts/screenshots";
 const official = "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump";
 mkdirSync(shots, { recursive: true });
@@ -43,7 +43,7 @@ function serve(dir) {
         res.writeHead(200, {
           "content-type": `${type}; charset=utf-8`,
           "content-security-policy": file.endsWith("cuaderno/index.html")
-            ? "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self' https://api.mainnet-beta.solana.com; object-src 'none'; base-uri 'self'"
+            ? "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self' https://api.mainnet-beta.solana.com https://solana-rpc.publicnode.com; object-src 'none'; base-uri 'self'"
             : "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'",
         });
         res.end(body);
@@ -129,7 +129,8 @@ function allowedRequest(url) {
     return false;
   }
   if (parsed.origin === base) return true;
-  return parsed.protocol === "https:" && parsed.hostname === "api.mainnet-beta.solana.com";
+  const allowed = ["https://api.mainnet-beta.solana.com", "https://solana-rpc.publicnode.com"];
+  return allowed.some((item) => parsed.origin === new URL(item).origin);
 }
 
 async function mockRpc(page, counter) {

@@ -12,6 +12,8 @@ export const METADATA_PROGRAM = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s";
 export const PUMP_PROGRAM = "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P";
 export const OFFICIAL_MINT = "TNWwnzecb37272ZoySDE6D2UcmqNnU12EqtycNSpump";
 export const DEFAULT_RPC = ["https://api.", "mainnet-beta", ".solana.com"].join("");
+export const PUBLICNODE_RPC = "https://solana-rpc.publicnode.com";
+export const ALLOWED_RPCS = Object.freeze([DEFAULT_RPC, PUBLICNODE_RPC]);
 export const ALLOWED_METHODS = Object.freeze([
   "getAccountInfo",
   "getMultipleAccounts",
@@ -105,10 +107,12 @@ export function isAllowedRpcUrl(value) {
   } catch {
     return false;
   }
-  if (url.protocol !== "https:") return false;
-  if (url.username || url.password) return false;
-  if (url.search || url.hash) return false;
-  return true;
+  if (url.protocol !== "https:" || url.username || url.password || url.search || url.hash) return false;
+  if (url.pathname !== "/" && url.pathname !== "") return false;
+  return ALLOWED_RPCS.some((item) => {
+    const allowed = new URL(item);
+    return url.origin === allowed.origin;
+  });
 }
 
 function mod(a) {
@@ -235,15 +239,61 @@ function readCOption(data, offset) {
   return { state: "no_decodificable", address: null };
 }
 
+function pubkeyOrNull(bytes) {
+  if (bytes.length !== 32 || bytes.every((byte) => byte === 0)) return null;
+  return encodeBase58(bytes);
+}
+
+function readTokenMetadataExtension(value) {
+  if (value.length < 64) return null;
+  const updateAuthority = pubkeyOrNull(value.subarray(0, 32));
+  let offset = 64;
+  const name = readBorshString(value, offset);
+  if (!name) return null;
+  offset = name.next;
+  const symbol = readBorshString(value, offset);
+  if (!symbol) return null;
+  offset = symbol.next;
+  const uri = readBorshString(value, offset);
+  if (!uri) return null;
+  offset = uri.next;
+  if (offset < value.length) {
+    const count = readU32(value, offset);
+    offset += 4;
+    if (count === null || count > 32) return null;
+    for (let i = 0; i < count; i += 1) {
+      const key = readBorshString(value, offset);
+      if (!key) return null;
+      offset = key.next;
+      const extra = readBorshString(value, offset);
+      if (!extra) return null;
+      offset = extra.next;
+    }
+  }
+  return {
+    updateAuthority,
+    name: name.text,
+    symbol: symbol.text,
+    uri: uri.text,
+    mutable: updateAuthority ? "si" : "no",
+  };
+}
+
+function emptyExtensions(status) {
+  return { status, items: [], tokenMetadata: null, metadataPointer: null };
+}
+
 function parseExtensions(data) {
-  if (data.length === MINT_BASE_LEN) return { status: "no_aplica", items: [] };
+  if (data.length === MINT_BASE_LEN) return emptyExtensions("no_aplica");
   if (data.length <= ACCOUNT_BASE_LEN || data[ACCOUNT_BASE_LEN] !== 1) {
-    return { status: "no_disponible", items: [] };
+    return emptyExtensions("no_disponible");
   }
   for (let i = MINT_BASE_LEN; i < ACCOUNT_BASE_LEN; i += 1) {
-    if (data[i] !== 0) return { status: "no_disponible", items: [] };
+    if (data[i] !== 0) return emptyExtensions("no_disponible");
   }
   const items = [];
+  let tokenMetadata = null;
+  let metadataPointer = null;
   let offset = 0;
   const tlv = data.subarray(ACCOUNT_BASE_LEN + 1);
   while (offset < tlv.length) {
@@ -251,9 +301,12 @@ function parseExtensions(data) {
     const type = readU16(tlv, offset);
     const length = readU16(tlv, offset + 2);
     if (type === null || length === null || offset + 4 + length > tlv.length) {
-      return { status: "no_disponible", items };
+      return { status: "no_disponible", items, tokenMetadata: null, metadataPointer: null };
     }
     if (type === 0) break;
+    const raw = tlv.subarray(offset + 4, offset + 4 + length);
+    if (type === 19) tokenMetadata = readTokenMetadataExtension(raw);
+    if (type === 18 && length === 64) metadataPointer = pubkeyOrNull(raw.subarray(32, 64));
     const known = Object.hasOwn(EXTENSION_NAMES, type);
     items.push({
       type,
@@ -261,9 +314,9 @@ function parseExtensions(data) {
       status: known ? "verificado" : "no_soportada",
     });
     offset += 4 + length;
-    if (items.length > 40) return { status: "no_disponible", items };
+    if (items.length > 40) return { status: "no_disponible", items, tokenMetadata: null, metadataPointer: null };
   }
-  return { status: "verificado", items };
+  return { status: "verificado", items, tokenMetadata, metadataPointer };
 }
 
 export function decodeMintAccount(owner, data) {
@@ -605,6 +658,23 @@ export async function readMint(options) {
     card.symbol.status = "no_disponible";
     card.uri.status = "no_disponible";
     card.metadataMutable = "no_disponible";
+  }
+  if (card.name.text === null && decoded.standard === "token-2022") {
+    const pointer = decoded.extensions.metadataPointer;
+    const embedded = decoded.extensions.tokenMetadata;
+    if (pointer && pointer !== mint) {
+      errors.push({
+        method: "local",
+        httpStatus: null,
+        message: "El puntero de metadatos no apunta a este mint. El nombre incrustado no se da como verificado.",
+        at: accounts.fetchedAt,
+      });
+    } else if (embedded) {
+      card.name = { text: embedded.name, status: "verificado" };
+      card.symbol = { text: embedded.symbol, status: "verificado" };
+      card.uri = { text: embedded.uri, status: "verificado" };
+      card.metadataMutable = embedded.mutable;
+    }
   }
   if (curveAccount) {
     const curve = decodeCurveAccount(curveAccount.owner, curveAccount.data);

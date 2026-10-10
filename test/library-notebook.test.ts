@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { describe, test } from "node:test";
 import { pathToFileURL } from "node:url";
@@ -11,6 +11,7 @@ const WHEN = "2026-10-09T12:00:00.000Z";
 
 interface ReadModule {
   TOKEN_PROGRAM: string;
+  TOKEN_2022_PROGRAM: string;
   METADATA_PROGRAM: string;
   PUMP_PROGRAM: string;
   ALLOWED_METHODS: readonly string[];
@@ -28,6 +29,7 @@ interface Card {
   partial?: boolean;
   officialStubx?: boolean;
   name: { text: string | null };
+  symbol?: { text: string | null };
   uri: { text: string | null };
   supplyRpc: string | null;
   supplyAccount: string | null;
@@ -37,8 +39,10 @@ interface Card {
 
 interface ModelModule {
   MAX_BYTES: number;
+  MAX_STORED: number;
   validateExport: (text: string) => { ok: boolean; error?: { es: string }; records?: Array<{ note: string; card: Card }> };
   validateCard: (card: Card) => { ok: boolean };
+  withinStoreLimit: (existingCount: number, incomingNewCount: number) => boolean;
   toExport: (records: unknown[], exportedAt: string) => string;
   compareRecords: (left: { card: Card }, right: { card: Card }) => { ok: boolean; rows?: Array<{ field: { es: string }; same: boolean }> };
   staleLine: (consultedAt: string, lang: string) => string;
@@ -231,6 +235,11 @@ describe("lector y cuaderno", () => {
     assert.equal(touched, false);
     assert.equal(read.isAllowedRpcUrl("http://api.mainnet-beta.solana.com"), false);
     assert.equal(read.isAllowedRpcUrl("https://user:secret@example.com"), false);
+    assert.equal(read.isAllowedRpcUrl("https://evil.example"), false);
+    assert.equal(read.isAllowedRpcUrl("https://api.mainnet-beta.solana.com.evil.com"), false);
+    assert.equal(read.isAllowedRpcUrl("https://api.mainnet-beta.solana.com/extra"), false);
+    assert.equal(read.isAllowedRpcUrl("https://api.mainnet-beta.solana.com"), true);
+    assert.equal(read.isAllowedRpcUrl("https://solana-rpc.publicnode.com"), true);
   });
 
   test("importar rechaza script, 10 MB y un esquema roto, y una copia válida vuelve", async () => {
@@ -254,6 +263,22 @@ describe("lector y cuaderno", () => {
     const priced = JSON.parse(copy) as { price?: number };
     priced.price = 1;
     assert.equal(model.validateExport(JSON.stringify(priced)).ok, false);
+    const forged = JSON.parse(copy) as { cards: Array<{ card: { mint: string; slot: number | null; curve: { extra?: boolean } } }> };
+    const forgedCard = forged.cards[0];
+    assert.ok(forgedCard);
+    forgedCard.card.mint = "O".repeat(44);
+    assert.equal(model.validateExport(JSON.stringify(forged)).ok, false);
+    forgedCard.card.mint = OTHER;
+    forgedCard.card.slot = 1e300;
+    assert.equal(model.validateExport(JSON.stringify(forged)).ok, false);
+    forgedCard.card.slot = Number.MAX_SAFE_INTEGER;
+    assert.equal(model.validateExport(JSON.stringify(forged)).ok, true);
+    forgedCard.card.curve.extra = true;
+    assert.equal(model.validateExport(JSON.stringify(forged)).ok, false);
+    assert.equal(model.MAX_STORED, 200);
+    assert.equal(model.withinStoreLimit(199, 1), true);
+    assert.equal(model.withinStoreLimit(200, 1), false);
+    assert.equal(model.withinStoreLimit(199, 2), false);
   });
 
   test("solo se comparan dos fichas del mismo mint y la antigua no se presenta como actual", async () => {
@@ -270,6 +295,57 @@ describe("lector y cuaderno", () => {
     assert.match(model.staleLine(WHEN, "es"), /puede haber cambiado/);
     assert.match(model.staleLine(WHEN, "en"), /this may have changed/);
     assert.equal(model.staleLine(WHEN, "es").includes("actual"), false);
+  });
+
+  test("el nombre de Token-2022 sale de la extensión si no hay cuenta Metaplex", async () => {
+    const { read } = await modules();
+    const name = "STUBX";
+    const symbol = "STUBX";
+    const uri = "https://example.invalid/meta.json";
+    const base = Buffer.alloc(166);
+    mintBytes().copy(base, 0);
+    base[165] = 1;
+    const value = Buffer.concat([Buffer.alloc(64), borshString(name), borshString(symbol), borshString(uri), u32(0)]);
+    const header = Buffer.alloc(4);
+    header.writeUInt16LE(19, 0);
+    header.writeUInt16LE(value.length, 2);
+    const data = Buffer.concat([base, header, value]);
+    const result = await read.readMint({
+      mint: CA,
+      ...fastClock(),
+      transport: async () => rpcOk([account(read.TOKEN_2022_PROGRAM, data), null, null]),
+    });
+    assert.equal(result.card?.program, "token-2022");
+    assert.equal(result.card?.name.text, name);
+    assert.equal(result.card?.symbol?.text, symbol);
+    const pointed = Buffer.concat([base, (() => {
+      const pointer = Buffer.alloc(4 + 64);
+      pointer.writeUInt16LE(18, 0);
+      pointer.writeUInt16LE(64, 2);
+      pointer.fill(7, 4 + 32, 4 + 64);
+      return pointer;
+    })(), header, value]);
+    const hidden = await read.readMint({
+      mint: CA,
+      ...fastClock(),
+      transport: async () => rpcOk([account(read.TOKEN_2022_PROGRAM, pointed), null, null]),
+    });
+    assert.equal(hidden.card?.name.text, null);
+  });
+
+  test("el test de navegador no vive dentro de la web que se publica", () => {
+    const root = path.join(repoRoot(), "web/v2");
+    const hits: string[] = [];
+    const walk = (dir: string) => {
+      for (const name of readdirSync(dir)) {
+        const full = path.join(dir, name);
+        const rel = path.relative(root, full);
+        if (name === "test" || name.endsWith(".playwright.mjs")) hits.push(rel);
+        if (statSync(full).isDirectory()) walk(full);
+      }
+    };
+    walk(root);
+    assert.deepEqual(hits, []);
   });
 
   test("las páginas nuevas no firman, no nombran otros tokens y llevan el pie", () => {
@@ -340,7 +416,10 @@ describe("lector y cuaderno", () => {
     assert.match(notebook, /Si eliges otro lector, ese servicio recibe tus consultas y tu IP\. STUBX no lo revisa\./);
     assert.match(notebook, /If you choose another reader, that service receives your queries and your IP\. STUBX does not review it\./);
     assert.equal(notebook.toLowerCase().includes("mala inversión"), false);
-    assert.match(notebook, /connect-src 'self' https:\/\/api\.mainnet-beta\.solana\.com/);
+    assert.match(notebook, /connect-src 'self' https:\/\/api\.mainnet-beta\.solana\.com https:\/\/solana-rpc\.publicnode\.com/);
+    assert.match(notebook, /<select id="rpc-url"/);
+    assert.equal(notebook.includes('id="rpc-url" name="rpc" type="url"'), false);
+    assert.match(notebook, /Este navegador guarda como máximo 200 fichas/);
     assert.equal(notebook.includes("frame-ancestors"), false);
     assert.match(notebook, /No es una auditoría ni una recomendación\./);
     assert.equal(notebook.toLowerCase().includes("phantom"), false);

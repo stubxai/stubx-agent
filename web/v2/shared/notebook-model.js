@@ -2,12 +2,15 @@
  * Esquema, comparación e importación del cuaderno.
  * El texto importado no se ejecuta. Una ficha guardada no es una lectura actual.
  */
-import { CARD_SCHEMA, CARD_VERSION, DISCLAIMER, OFFICIAL_MINT } from "./solana-read.js";
+import { CARD_SCHEMA, CARD_VERSION, DISCLAIMER, OFFICIAL_MINT, isMintAddress } from "./solana-read.js";
 
 export const EXPORT_SCHEMA = "stubx.notebook.export";
 export const MAX_BYTES = 1_000_000;
 export const MAX_CARDS = 40;
+export const MAX_STORED = 200;
 export const MAX_NOTE = 2_000;
+
+const CURVE_KEYS = ["present", "status", "virtualToken", "virtualQuote", "realToken", "realQuote", "complete"];
 
 const CARD_KEYS = [
   "schema",
@@ -103,14 +106,14 @@ export function validateCard(card) {
   if (card.rulesVersion !== "0.1.0" || card.network !== "solana") {
     return fail("La ficha no dice la red o la versión de reglas.", "The card does not name the network or the rules version.");
   }
-  if (typeof card.mint !== "string" || card.mint.length < 32 || card.mint.length > 44) {
-    return fail("La dirección de la ficha no es válida.", "The address on the card is not valid.");
+  if (!isMintAddress(card.mint)) {
+    return fail("La dirección de la ficha no es una dirección de Solana.", "The address on the card is not a Solana address.");
   }
   if (typeof card.consultedAt !== "string" || !ISO.test(card.consultedAt)) {
     return fail("La ficha no trae una hora UTC.", "The card does not include a UTC time.");
   }
-  if (card.slot !== null && (!Number.isInteger(card.slot) || card.slot < 0)) {
-    return fail("El slot no es un entero.", "The slot is not an integer.");
+  if (card.slot !== null && (!Number.isSafeInteger(card.slot) || card.slot < 0)) {
+    return fail("El slot no es un entero razonable.", "The slot is not a reasonable integer.");
   }
   if (!STATUSES.has(card.slotStatus) || typeof card.partial !== "boolean" || typeof card.isMint !== "boolean") {
     return fail("Falta un estado de la ficha.", "A card status is missing.");
@@ -145,7 +148,7 @@ export function validateCard(card) {
     }
   }
   const curve = card.curve;
-  if (!curve || typeof curve !== "object") return fail("Falta la curva.", "The curve block is missing.");
+  if (!sameKeys(curve, CURVE_KEYS)) return fail("La curva tiene campos de más o de menos.", "The curve has extra or missing fields.");
   if (curve.present !== null && typeof curve.present !== "boolean") return fail("La curva no es un sí o un no.", "The curve is not a yes or a no.");
   if (!STATUSES.has(curve.status)) return fail("El estado de la curva no está en la lista.", "The curve status is not on the list.");
   for (const key of ["virtualToken", "virtualQuote", "realToken", "realQuote"]) {
@@ -234,6 +237,12 @@ export function validateExport(text) {
     records.push(checked.record);
   }
   return { ok: true, records };
+}
+
+export function withinStoreLimit(existingCount, incomingNewCount) {
+  if (!Number.isInteger(existingCount) || existingCount < 0) return false;
+  if (!Number.isInteger(incomingNewCount) || incomingNewCount < 0) return false;
+  return existingCount + incomingNewCount <= MAX_STORED;
 }
 
 export function toExport(records, exportedAt) {

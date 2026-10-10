@@ -1018,6 +1018,9 @@ def headers() -> str:
   X-Robots-Tag: noindex, nofollow
 /studio/*
   X-Robots-Tag: noindex, nofollow
+/cuaderno/*
+  ! Content-Security-Policy
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self' https://api.mainnet-beta.solana.com https://solana-rpc.publicnode.com; manifest-src 'self'; media-src 'none'; frame-src 'none'; worker-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests
 """
 
 
