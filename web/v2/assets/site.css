@@ -516,6 +516,16 @@ main .wrap > h2, main h2 { margin-top: 1.6rem; }
 }
 .mica { border-left: 6px solid var(--attention); padding-left: 0.9rem; }
 .slot { border-style: dashed; }
+.grupos { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.8rem 0 1rem; }
+.grupos a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.4rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  text-decoration: none;
+}
 .estado-pill {
   display: inline-block;
   margin: 0 0 0.45rem;

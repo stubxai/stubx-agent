@@ -24,6 +24,7 @@ function headerPathMatches(pattern: string, urlPath: string): boolean {
 const ROUTES = [
   "index.html",
   "verify/index.html",
+  "comparar/index.html",
   "lab/index.html",
   "tablero/index.html",
   "avances/index.html",
@@ -40,6 +41,7 @@ const ROUTES = [
   "aprender/index.html",
   "studio/index.html",
   "studio/reglas/index.html",
+  "pares/index.html",
   "cuaderno/index.html",
   "contribuir/index.html",
   "404.html",
@@ -311,15 +313,111 @@ describe("web v2", () => {
     assert.match(risks, /you could lose everything you put in/i);
   });
 
-  test("unbuilt modules stay explanatory", () => {
-    for (const rel of ["contribuir/index.html"]) {
-      const html = read(rel);
-      assert.match(html, /No construido/);
-      assert.match(html, /Not built/);
-      assert.equal(/<form\b/.test(html), false, rel);
-      assert.equal(/<input\b/.test(html), false, rel);
-      assert.equal(/type="file"/.test(html), false, rel);
+  test("the curve example is fixed and no route reads an address", () => {
+    const html = read("comparar/index.html");
+    const home = read("index.html");
+    assert.match(home, /Ver el ejemplo/);
+    assert.match(home, /See the example/);
+    assert.match(html, /Ejemplo hipotético, no leído de la cadena/);
+    assert.match(html, /Hypothetical example, not read from the chain/);
+    assert.match(html, /Ejemplo educativo\. No es una comparación de calidad, ni una recomendación, ni un aval\. STUBX no tiene relación con ningún token de este ejemplo\./);
+    assert.match(html, /Educational example\. It is not a quality comparison, a recommendation, or an endorsement\. STUBX has no relationship with any token in this example\./);
+    assert.equal(/<form\b/.test(html), false);
+    assert.equal(/<input\b/.test(html), false);
+    assert.equal(html.includes("assets/comparar.mjs"), false);
+    assert.equal(html.includes("chain-read.mjs"), false);
+    assert.equal(html.includes("getMultipleAccounts"), false);
+    const meta = html.match(/Content-Security-Policy" content="([^"]+)"/)?.[1] ?? "";
+    assert.deepEqual(cspHosts(meta), []);
+    assert.equal(meta.includes("frame-ancestors"), false);
+    const headers = read("_headers");
+    assert.equal(headers.includes("/comparar/"), false);
+    const locs = [...read("sitemap.xml").matchAll(/<loc>([^<]*)<\/loc>/g)].map((match) => match[1]);
+    assert.equal(locs.some((loc) => loc === "https://stubxai.com/comparar/"), false);
+    const root = path.join(repoRoot(), "web/v2");
+    for (const file of walkFiles(root)) {
+      if (!file.endsWith(".html")) continue;
+      const page = readFileSync(file, "utf8");
+      assert.equal(/<script[^>]+chain-read\.mjs/.test(page), false, file);
+      assert.equal(page.includes("assets/comparar.mjs"), false, file);
     }
+  });
+
+  test("the pair report is read-only and has one route policy", () => {
+    const html = read("pares/index.html");
+    const home = read("index.html");
+    assert.match(home, /Abrir la curva/);
+    assert.match(home, /Open the curve/);
+    assert.match(html, /Lectura de la curva/);
+    assert.match(html, /Curve reading/);
+    assert.match(html, /Lectura de datos públicos\. No es una comparación de calidad, ni una recomendación, ni un aval\. STUBX no tiene relación con estos tokens salvo la CA oficial\./);
+    assert.match(html, /No se inventa ningún dato\./);
+    assert.equal(html.includes("Conector"), false);
+    assert.equal(html.includes("favorable"), false);
+    assert.equal(/\bRuta:/.test(html), false);
+    assert.match(html, /No es una auditoría ni una recomendación\./);
+    assert.match(html, /Un emparejamiento no es una colaboración ni un respaldo\./);
+    assert.match(html, /A pairing is not a collaboration or an endorsement\./);
+    assert.match(html, /id="consulta"/);
+    assert.match(html, /id="direccion-token"/);
+    assert.match(html, /id="resultado"/);
+    assert.match(html, /id="exportar"/);
+    assert.match(html, /type="module"/);
+    assert.match(html, /assets\/pares\.mjs/);
+    assert.match(html, /solana-rpc\.publicnode\.com/);
+    assert.match(html, /api\.mainnet-beta\.solana\.com/);
+    const meta = html.match(/Content-Security-Policy" content="([^"]+)"/)?.[1] ?? "";
+    assert.deepEqual(cspHosts(meta), ["solana-rpc.publicnode.com", "api.mainnet-beta.solana.com"]);
+    assert.equal(meta.includes("frame-ancestors"), false);
+    const headers = read("_headers");
+    const block = headers.split("/pares/*")[1]?.split("\n\n")[0] ?? "";
+    assert.match(block, /! Content-Security-Policy/);
+    assert.equal((block.match(/Content-Security-Policy:/g) ?? []).length, 1);
+    assert.deepEqual(cspHosts(block), ["solana-rpc.publicnode.com", "api.mainnet-beta.solana.com"]);
+    const bundle = read("assets/pares.mjs");
+    assert.equal(bundle.includes("sendTransaction"), false);
+    assert.equal(bundle.includes("localStorage"), false);
+    assert.equal(bundle.includes("innerHTML"), false);
+    assert.match(read("sitemap.xml"), /https:\/\/stubxai\.com\/pares\//);
+  });
+
+  test("contributions link to GitHub and collect nothing", () => {
+    const html = read("contribuir/index.html");
+    const home = read("index.html");
+    assert.match(home, /Abrir contribuciones/);
+    assert.match(home, /Open contributions/);
+    const articles = [...home.matchAll(/<article class="(card|slot)">([\s\S]*?)<\/article>/g)];
+    const contrib = articles.find((item) => item[2]?.includes("Contribuir"));
+    assert.equal(contrib?.[1], "card");
+    assert.match(html, /<h1>[\s\S]*Contribuir/);
+    assert.match(html, /Contribute/);
+    assert.match(html, /No es una auditoría ni una recomendación/);
+    assert.match(html, /This is not an audit or a recommendation/);
+    assert.match(html, /Cripto de alto riesgo · Puedes perderlo todo · No es consejo de inversión\./);
+    assert.match(html, /High-risk crypto · You could lose everything · Not investment advice\./);
+    assert.match(html, /https:\/\/github\.com\/stubxai\/stubx-agent\/issues\/new\?template=informe-fallo\.yml/);
+    assert.match(html, /https:\/\/github\.com\/stubxai\/stubx-agent\/issues\/new\?template=mejora\.yml/);
+    assert.match(html, /https:\/\/github\.com\/stubxai\/stubx-agent\/compare/);
+    assert.match(html, /href="\/contribuir\/plantilla\.md"/);
+    assert.match(html, /mailto:stubxai\.hq@gmail\.com/);
+    assert.match(html, /security\/policy/);
+    assert.match(html, /aria-current="page"/);
+    assert.match(html, /data-set-lang="en"/);
+    assert.equal(/<form\b/.test(html), false);
+    assert.equal(/<input\b/.test(html), false);
+    assert.equal(/<textarea\b/.test(html), false);
+    assert.equal(/type="email"/.test(html), false);
+    assert.equal(/type="file"/.test(html), false);
+    const meta = html.match(/Content-Security-Policy" content="([^"]+)"/)?.[1] ?? "";
+    assert.deepEqual(cspHosts(meta), []);
+    assert.match(meta, /connect-src 'self'/);
+    assert.equal(meta.includes("frame-ancestors"), false);
+    assert.equal(read("_headers").includes("/contribuir/"), false);
+    assert.match(read("sitemap.xml"), /https:\/\/stubxai\.com\/contribuir\//);
+    const plantilla = read("contribuir/plantilla.md");
+    assert.match(plantilla, /La web no recibe este archivo/);
+    assert.match(plantilla, /This website does not receive this file/);
+    assert.equal(/@/.test(plantilla), false);
   });
 
   test("verify reads any mint live and keeps the dated cards", () => {
@@ -601,7 +699,7 @@ describe("web v2", () => {
         .filter((header) => header.startsWith("Content-Security-Policy:"))
         .map((header) => ({ path: block.path, header })),
     );
-    assert.equal(policies.length, 4);
+    assert.equal(policies.length, 6);
     assert.ok(policies.every((policy) => policy.header.includes("frame-ancestors 'none'")));
     const globalPolicy = policies.find((policy) => policy.path === "/*");
     assert.deepEqual(cspHosts(globalPolicy?.header ?? ""), []);

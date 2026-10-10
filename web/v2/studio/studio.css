@@ -45,13 +45,17 @@ input, textarea {
 }
 textarea { min-height: 7.5rem; resize: vertical; }
 .contador { color: var(--muted); }
-#aviso-logo .lang, #aviso-logo-peso .lang, #aviso-logo-medida .lang { display: block; }
+#aviso-logo .lang, #aviso-logo-formato .lang, #aviso-logo-peso .lang, #aviso-logo-medida .lang, #aviso-logo-reducir .lang { display: block; }
 html[data-lang="es"] #aviso-logo .lang.en,
+html[data-lang="es"] #aviso-logo-formato .lang.en,
 html[data-lang="es"] #aviso-logo-peso .lang.en,
 html[data-lang="es"] #aviso-logo-medida .lang.en,
+html[data-lang="es"] #aviso-logo-reducir .lang.en,
 html[data-lang="en"] #aviso-logo .lang.es,
+html[data-lang="en"] #aviso-logo-formato .lang.es,
 html[data-lang="en"] #aviso-logo-peso .lang.es,
-html[data-lang="en"] #aviso-logo-medida .lang.es { display: none; }
+html[data-lang="en"] #aviso-logo-medida .lang.es,
+html[data-lang="en"] #aviso-logo-reducir .lang.es { display: none; }
 .sr-only {
   position: absolute;
   width: 1px;

@@ -1,11 +1,11 @@
 /**
- * Biblioteca y cuaderno en Pixel 7, iPhone 14 y escritorio. El RPC se simula: no sale a la red.
+ * Biblioteca y cuaderno a 390×844 en WebKit y en Pixel, y en escritorio. El RPC se simula: no sale a la red.
  */
 import { createServer } from "node:http";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { chromium, devices } from "playwright";
+import { chromium, devices, webkit } from "playwright";
 import { METADATA_PROGRAM, PUMP_PROGRAM, TOKEN_PROGRAM } from "../web/v2/shared/solana-read.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../web/v2");
@@ -107,11 +107,12 @@ const server = await serve(root);
 const address = server.address();
 const port = typeof address === "object" && address ? address.port : 0;
 const base = `http://127.0.0.1:${port}`;
-const browser = await chromium.launch({
+const chrome = await chromium.launch({
   executablePath: process.env.CHROME_PATH || undefined,
   headless: true,
   args: ["--no-sandbox", "--disable-dev-shm-usage"],
 });
+const kit = await webkit.launch({ headless: true });
 
 const failures = [];
 
@@ -174,16 +175,32 @@ async function mockRpc(page, counter) {
   });
 }
 
-function contextFor(device) {
-  const { defaultBrowserType, ...options } = device;
-  return browser.newContext(options);
+function contextFor(profile) {
+  const { defaultBrowserType, ...options } = profile.device;
+  return profile.browser.newContext(options);
 }
 
+const phone = {
+  viewport: { width: 390, height: 844 },
+  deviceScaleFactor: 2,
+  isMobile: true,
+  hasTouch: true,
+};
+
 const profiles = [
-  { id: "pixel7", device: devices["Pixel 7"] },
-  { id: "iphone14", device: devices["iPhone 14"] },
+  {
+    id: "webkit-390",
+    browser: kit,
+    device: { ...phone, userAgent: devices["iPhone 14"].userAgent },
+  },
+  {
+    id: "pixel-390",
+    browser: chrome,
+    device: { ...phone, userAgent: devices["Pixel 7"].userAgent },
+  },
   {
     id: "escritorio",
+    browser: chrome,
     device: {
       viewport: { width: 1280, height: 900 },
       deviceScaleFactor: 1,
@@ -195,7 +212,7 @@ const profiles = [
 
 try {
   for (const profile of profiles) {
-    const context = await contextFor(profile.device);
+    const context = await contextFor(profile);
     const learn = await context.newPage();
     await learn.goto(`${base}/aprender/`, { waitUntil: "networkidle" });
     await learn.getByRole("link", { name: "Identificar un token" }).click();
@@ -211,7 +228,7 @@ try {
     }
     await context.close();
 
-    const notebookContext = await contextFor(profile.device);
+    const notebookContext = await contextFor(profile);
     const page = await notebookContext.newPage();
     const net = { count: 0, external: 0 };
     await mockRpc(page, net);
@@ -244,7 +261,7 @@ try {
     await notebookContext.close();
   }
 
-  const desktop = await contextFor(profiles[2].device);
+  const desktop = await contextFor(profiles.find((profile) => profile.id === "escritorio"));
   const wide = await desktop.newPage();
   const wideNet = { count: 0, external: 0 };
   await mockRpc(wide, wideNet);
@@ -325,7 +342,8 @@ try {
 } catch (error) {
   failures.push(error instanceof Error ? error.stack || error.message : String(error));
 } finally {
-  await browser.close();
+  await chrome.close();
+  await kit.close();
   await new Promise((resolve) => server.close(resolve));
 }
 
