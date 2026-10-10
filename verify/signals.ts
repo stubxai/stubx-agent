@@ -1,4 +1,4 @@
-import { formatUnits, percentTruncated } from "./bytes.js";
+import { formatUnitsLocale, percentTruncated } from "./bytes.js";
 import { FallbackRpc, classifyRpcFailure } from "./fallback.js";
 import { validateMint } from "./input.js";
 import { compareCanonical } from "./impersonation.js";
@@ -69,6 +69,7 @@ export type LiveReading = {
   facts?: ReadingFact[];
   missing?: Localized;
   missingState?: "ok" | "falta";
+  absent?: Localized;
   identity?: Localized | null;
   report?: Localized;
   shown?: Record<string, unknown> | null;
@@ -158,28 +159,31 @@ export function readCache<T>(
   return hit.value;
 }
 
+const SERVICE_ES = "El servicio público no respondió, prueba otra vez en un minuto.";
+const SERVICE_EN = "The public service did not respond, try again in a minute.";
+
 function failureReading(kind: "limite" | "tiempo" | "red", mint: string, host: string | null, usedFallback: boolean): LiveReading {
   const checked = loc("No se pudo comprobar", "Could not be checked");
   const copy = {
     limite: {
       title: checked,
       support: loc(
-        "El servicio público de lectura ha llegado al límite de peticiones. Prueba otra vez dentro de un momento. No se ha inventado un resultado.",
-        "The public read service has hit its request limit. Try again in a moment. No result was invented.",
+        `El servicio público de lectura ha llegado al límite de peticiones. ${SERVICE_ES} No se ha inventado un resultado.`,
+        `The public read service has hit its request limit. ${SERVICE_EN} No result was invented.`,
       ),
     },
     tiempo: {
       title: checked,
       support: loc(
-        "Se agotó el tiempo de espera del servicio de lectura. No se ha inventado un resultado.",
-        "The read service timed out. No result was invented.",
+        `Se agotó el tiempo de espera del servicio de lectura. ${SERVICE_ES} No se ha inventado un resultado.`,
+        `The read service timed out. ${SERVICE_EN} No result was invented.`,
       ),
     },
     red: {
       title: checked,
       support: loc(
-        "No se pudo comprobar: el servicio no respondió o rechazó la petición. No se ha inventado un resultado.",
-        "It could not be checked: the service did not respond or refused the request. No result was invented.",
+        `No se pudo comprobar: el servicio no respondió o rechazó la petición. ${SERVICE_ES} No se ha inventado un resultado.`,
+        `It could not be checked: the service did not respond or refused the request. ${SERVICE_EN} No result was invented.`,
       ),
     },
   }[kind];
@@ -337,7 +341,7 @@ export async function readLargestAccounts(input: ReadMintInput): Promise<Signal>
         endpoint,
         transport: input.transport,
         timeoutMs: input.timeoutMs ?? 6000,
-        maxRetries: 0,
+        maxRetries: input.maxRetries ?? 0,
         minIntervalMs: input.minIntervalMs ?? 200,
         now: input.now,
         sleep: input.sleep,
@@ -351,16 +355,16 @@ export async function readLargestAccounts(input: ReadMintInput): Promise<Signal>
     const kind = classifyRpcFailure(largest.error, largest.httpStatus);
     const text = {
       limite: loc(
-        "No se pudo comprobar. El servicio llegó al límite al pedir las cuentas más grandes. No es una concentración de cero.",
-        "It could not be checked. The service hit its limit while asking for the largest accounts. It is not zero concentration.",
+        `No se pudo comprobar. El servicio llegó al límite al pedir las cuentas más grandes. ${SERVICE_ES} No es una concentración de cero.`,
+        `It could not be checked. The service hit its limit while asking for the largest accounts. ${SERVICE_EN} It is not zero concentration.`,
       ),
       tiempo: loc(
-        "No se pudo comprobar. Se agotó el tiempo de 6 segundos al pedir las cuentas más grandes. No es una concentración de cero.",
-        "It could not be checked. The 6 second wait ran out while asking for the largest accounts. It is not zero concentration.",
+        `No se pudo comprobar. Se agotó el tiempo de 6 segundos al pedir las cuentas más grandes. ${SERVICE_ES} No es una concentración de cero.`,
+        `It could not be checked. The 6 second wait ran out while asking for the largest accounts. ${SERVICE_EN} It is not zero concentration.`,
       ),
       red: loc(
-        "No se pudo comprobar. El servicio no devolvió las cuentas más grandes. No es una concentración de cero.",
-        "It could not be checked. The service did not return the largest accounts. It is not zero concentration.",
+        `No se pudo comprobar. El servicio no devolvió las cuentas más grandes. ${SERVICE_ES} No es una concentración de cero.`,
+        `It could not be checked. The service did not return the largest accounts. ${SERVICE_EN} It is not zero concentration.`,
       ),
     }[kind];
     return { id: "cuentas", level: "atencion", title: loc("No se pudo comprobar", "Could not be checked"), explain: text };
@@ -371,6 +375,9 @@ export async function readLargestAccounts(input: ReadMintInput): Promise<Signal>
   return sample.signal;
 }
 
+// Mint, metadatos y curva salen en un solo getMultipleAccounts.
+// El suministro y las cuentas grandes van después, de una en una: un 429
+// se reintenta una vez con espera; un 403 no se repite en el mismo nodo.
 const OPTIONAL_SUPPLY_URL = "https://api.mainnet-beta.solana.com";
 
 async function optionalMainnetSupply(mint: string, input: ReadMintInput): Promise<RpcResult<TokenAmount>> {
@@ -378,7 +385,7 @@ async function optionalMainnetSupply(mint: string, input: ReadMintInput): Promis
     endpoint: OPTIONAL_SUPPLY_URL,
     transport: input.transport,
     timeoutMs: input.timeoutMs ?? 8000,
-    maxRetries: 0,
+    maxRetries: input.maxRetries ?? 0,
     minIntervalMs: input.minIntervalMs ?? 200,
     now: input.now,
     sleep: input.sleep,
@@ -386,6 +393,24 @@ async function optionalMainnetSupply(mint: string, input: ReadMintInput): Promis
     signal: input.signal,
   });
   return client.getTokenSupply(mint);
+}
+
+function groupFacts(facts: ReadingFact[]): { missing: Localized; missingState: "ok" | "falta"; absent: Localized } {
+  const failed = facts.filter((item) => item.state === "fallo" || item.state === "no_consultado");
+  const gone = facts.filter((item) => item.state === "ausente");
+  const missing = failed.length
+    ? loc(
+        `Faltan datos: ${failed.map((item) => item.label.es).join("; ")}. ${SERVICE_ES}`,
+        `Missing data: ${failed.map((item) => item.label.en).join("; ")}. ${SERVICE_EN}`,
+      )
+    : loc("No falta ningún dato pedido en esta lectura.", "No requested fact is missing in this reading.");
+  const absent = gone.length
+    ? loc(
+        `Comprobado: no existe: ${gone.map((item) => `${item.label.es}: ausente comprobado`).join("; ")}.`,
+        `Confirmed: it does not exist: ${gone.map((item) => `${item.label.en}: confirmed absent`).join("; ")}.`,
+      )
+    : loc("", "");
+  return { missing, missingState: failed.length ? "falta" : "ok", absent };
 }
 
 async function readWith(
@@ -437,10 +462,14 @@ async function readWith(
       canSample: false,
       shown: { kind: "ausente", mint, consultedAt: packed.fetchedAt, slot: packed.slot },
       missing: loc(
-        "Faltan datos: la cuenta: ausente comprobado.",
-        "Missing data: the account: confirmed absent.",
+        "No falta ningún dato pedido en esta lectura.",
+        "No requested fact is missing in this reading.",
       ),
-      missingState: "falta",
+      missingState: "ok",
+      absent: loc(
+        "Comprobado: no existe: la cuenta.",
+        "Confirmed: it does not exist: the account.",
+      ),
       identity: loc(
         `Identidad del proyecto, aparte de este análisis: la CA oficial de STUBX es ${OFFICIAL_CA}.`,
         `Project identity, separate from this analysis: the official STUBX CA is ${OFFICIAL_CA}.`,
@@ -536,7 +565,8 @@ async function readWith(
         : "This is an SPL Token mint. That program does not carry Token-2022 extensions.",
     ),
   });
-  const byteSupply = formatUnits(decoded.supplyRaw, decoded.decimals);
+  const supplyEs = formatUnitsLocale(decoded.supplyRaw, decoded.decimals, "es");
+  const supplyEn = formatUnitsLocale(decoded.supplyRaw, decoded.decimals, "en");
   const supplyMatches =
     supply.ok && supply.value.amount === decoded.supplyRaw.toString() && supply.value.decimals === decoded.decimals;
   signals.push({
@@ -546,14 +576,14 @@ async function readWith(
     explain: loc(
       supply.ok
         ? supplyMatches
-          ? `Hay ${byteSupply} tokens, con ${decoded.decimals} decimales, leídos de los bytes del mint. La lectura extra coincide.`
-          : `Los bytes del mint dicen ${byteSupply} con ${decoded.decimals} decimales, y la lectura extra no coincide. Se muestra la cifra de los bytes. No se calculan porcentajes.`
-        : `Hay ${byteSupply} tokens, con ${decoded.decimals} decimales, leídos de los bytes del mint. La consulta extra del suministro es una consulta fallida: no respondió. Eso no cambia esta cifra y no es una ausencia.`,
+          ? `Hay ${supplyEs} tokens, con ${decoded.decimals} decimales, leídos de los bytes del mint. La lectura extra coincide.`
+          : `Los bytes del mint dicen ${supplyEs} con ${decoded.decimals} decimales, y la lectura extra no coincide. Se muestra la cifra de los bytes. No se calculan porcentajes.`
+        : `Hay ${supplyEs} tokens, con ${decoded.decimals} decimales, leídos de los bytes del mint. ${SERVICE_ES} Eso no cambia esta cifra y no es una ausencia.`,
       supply.ok
         ? supplyMatches
-          ? `There are ${byteSupply} tokens, with ${decoded.decimals} decimals, read from the mint bytes. The extra read matches.`
-          : `The mint bytes say ${byteSupply} with ${decoded.decimals} decimals, and the extra read does not match. The figure shown is the one from the bytes. Percentages are not calculated.`
-        : `There are ${byteSupply} tokens, with ${decoded.decimals} decimals, read from the mint bytes. The extra supply query is a failed query: it did not respond. That does not change this figure and it is not an absence.`,
+          ? `There are ${supplyEn} tokens, with ${decoded.decimals} decimals, read from the mint bytes. The extra read matches.`
+          : `The mint bytes say ${supplyEn} with ${decoded.decimals} decimals, and the extra read does not match. The figure shown is the one from the bytes. Percentages are not calculated.`
+        : `There are ${supplyEn} tokens, with ${decoded.decimals} decimals, read from the mint bytes. ${SERVICE_EN} That does not change this figure and it is not an absence.`,
     ),
   });
   signals.push(authoritySignal("emision", decoded.mintAuthority, likeness.inRegistry));
@@ -580,8 +610,8 @@ async function readWith(
       level: "atencion",
       title: loc("Cuentas con tokens", "Token accounts"),
       explain: loc(
-        "La consulta de las cuentas con más tokens ha fallado. Es una consulta fallida, no una ausencia y no una concentración de cero.",
-        "The query for the largest token accounts failed. It is a failed query, not an absence and not zero concentration.",
+        `${SERVICE_ES} No es una ausencia ni una concentración de cero.`,
+        `${SERVICE_EN} It is not an absence and it is not zero concentration.`,
       ),
     });
   } else if (largest.value.length === 0) {
@@ -693,19 +723,9 @@ async function readWith(
       state: !curveInfo ? "ausente" : bonding ? "ok" : "fallo",
     },
   ];
-  const missingItems = facts.filter((item) => item.state !== "ok");
-  const word = (state: FactState, code: "es" | "en") =>
-    state === "ausente"
-      ? code === "en" ? "confirmed absent" : "ausente comprobado"
-      : state === "fallo"
-        ? code === "en" ? "failed query" : "consulta fallida"
-        : code === "en" ? "not queried" : "no consultado";
-  const missing = missingItems.length
-    ? loc(
-        `Faltan datos: ${missingItems.map((item) => `${item.label.es}: ${word(item.state, "es")}`).join("; ")}.`,
-        `Missing data: ${missingItems.map((item) => `${item.label.en}: ${word(item.state, "en")}`).join("; ")}.`,
-      )
-    : loc("No falta ningún dato pedido en esta lectura.", "No requested fact is missing in this reading.");
+  const grouped = groupFacts(facts);
+  const missing = grouped.missing;
+  const absent = grouped.absent;
   const identity = loc(
     likeness.inRegistry
       ? `Identidad del proyecto: esta dirección (${mint}) es la CA oficial de STUBX.`
@@ -723,8 +743,8 @@ async function readWith(
     .filter((item) => item.level === "atencion" || item.level === "riesgo")
     .map((item) => item.title.en);
   const report = loc(
-    `Qué se comprobó: ${checkedEs.length ? checkedEs.join(", ") : "ningún dato con valor leído"}. Qué pide atención: ${attentionEs.length ? attentionEs.join(", ") : "ninguna señal de atención"}. Qué falta: ${missing.es}`,
-    `What was checked: ${checkedEn.length ? checkedEn.join(", ") : "no fact with a read value"}. What needs attention: ${attentionEn.length ? attentionEn.join(", ") : "no attention signal"}. What is missing: ${missing.en}`,
+    `Qué se comprobó: ${checkedEs.length ? checkedEs.join(", ") : "ningún dato con valor leído"}. Qué pide atención: ${attentionEs.length ? attentionEs.join(", ") : "ninguna señal de atención"}. Qué falta: ${missing.es}${absent.es ? ` Qué no existe: ${absent.es}` : ""}`,
+    `What was checked: ${checkedEn.length ? checkedEn.join(", ") : "no fact with a read value"}. What needs attention: ${attentionEn.length ? attentionEn.join(", ") : "no attention signal"}. What is missing: ${missing.en}${absent.en ? ` What does not exist: ${absent.en}` : ""}`,
   );
   const metadataMutable = metadataState === "fallo"
     ? "fallo"
@@ -790,7 +810,7 @@ async function readWith(
       { label: loc("Programa", "Program"), value: loc(programName, programName) },
       {
         label: loc("Suministro", "Supply"),
-        value: loc(formatUnits(decoded.supplyRaw, decoded.decimals), formatUnits(decoded.supplyRaw, decoded.decimals)),
+        value: loc(supplyEs, supplyEn),
       },
       { label: loc("Decimales", "Decimals"), value: loc(String(decoded.decimals), String(decoded.decimals)) },
       ...sourceClock(packed.fetchedAt, slots.size === 1 ? ([...slots][0] ?? packed.slot) : null, rpc),
@@ -803,7 +823,8 @@ async function readWith(
     canSample: largestState === "fallo",
     facts,
     missing,
-    missingState: missingItems.length ? "falta" : "ok",
+    missingState: grouped.missingState,
+    absent,
     identity,
     report,
     shown,

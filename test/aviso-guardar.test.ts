@@ -45,7 +45,7 @@ describe("aviso de Guardar", () => {
     const save = actions.slice(actions.indexOf("function saveQuery"), actions.indexOf("async function comparePrevious"));
     assert.equal(save.includes("readMint"), false);
     assert.equal(save.includes("fetch("), false);
-    const click = actions.slice(actions.indexOf('closest("#entender-resultado")'));
+    const click = actions.slice(actions.indexOf('closest("#entender-resultado'));
     assert.equal(click.includes("GUIAS.has(href)"), true);
     assert.equal(click.includes('getAttribute("data-guia") ||'), false);
   });

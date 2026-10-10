@@ -2,6 +2,7 @@
  * Cuaderno local. Solo lectura, sin cartera y sin ejecutar el JSON importado.
  */
 import { formatAmount } from "../shared/amount.js";
+import { entenderNav } from "../shared/entender.js";
 import { factLine, factState, missingFacts } from "../shared/fact-state.js";
 import {
   PUBLICNODE_RPC,
@@ -15,6 +16,8 @@ import {
   MAX_NOTE,
   MAX_STORED,
   compareRecords,
+  pickPrevious,
+  readingOptionLabel,
   staleLine,
   toExport,
   validateCard,
@@ -34,8 +37,10 @@ const COPY = {
     rpc: "Ese lector no está en la lista. Solo se puede usar api.mainnet-beta.solana.com o solana-rpc.publicnode.com. No se ha llamado a la red.",
     full: `Este navegador ya tiene ${MAX_STORED} fichas. Borra alguna para guardar otra.`,
     partial: "La lectura está incompleta. Lo que falta no se ha puesto a cero.",
-    network: "No se pudo leer la red. Revisa la conexión e inténtalo otra vez. No se ha inventado un resultado.",
-    saved: "Consulta guardada en este navegador. No es una lectura en vivo.",
+    network: "El servicio público no respondió, prueba otra vez en un minuto.",
+    saved: "Guardada en el Cuaderno de este navegador · ",
+    open: "Abrir Cuaderno",
+    retry: "Reintentar",
     saveFail: "Esta lectura trae texto que el cuaderno no guarda. No se ha guardado.",
     db: "Este navegador no dejó guardar el cuaderno. Si está en modo privado, el almacenamiento puede estar cerrado.",
     noteFail: "La nota tiene que ser texto, de hasta 2000 caracteres, y no puede ser un script.",
@@ -50,7 +55,7 @@ const COPY = {
     fileRead: "No se pudo leer el archivo.",
     exportEmpty: "No hay consultas que exportar.",
     exportOk: "Copia descargada. Sigue en este navegador.",
-    sameMint: "Solo se comparan dos consultas de la misma dirección.",
+    sameMint: "Solo se comparan dos consultas de la misma red y dirección.",
     official: "Es la dirección oficial de STUBX.",
     notOfficial: "No es la dirección oficial de STUBX.",
     untrusted: "Nombre, símbolo y URI son texto de terceros. No son un enlace ni una imagen.",
@@ -103,8 +108,10 @@ const COPY = {
     rpc: "That reader is not on the list. Only api.mainnet-beta.solana.com or solana-rpc.publicnode.com can be used. The network was not called.",
     full: `This browser already has ${MAX_STORED} cards. Delete one to save another.`,
     partial: "The reading is incomplete. What is missing was not filled in with zero.",
-    network: "The network could not be read. Check the connection and try again. No result was invented.",
-    saved: "Query saved in this browser. It is not a live reading.",
+    network: "The public service did not respond, try again in a minute.",
+    saved: "Saved in this browser's Notebook · ",
+    open: "Open Notebook",
+    retry: "Try again",
     saveFail: "This reading contains text the notebook does not store. It was not saved.",
     db: "This browser did not allow the notebook to be saved. In private mode, storage may be closed.",
     noteFail: "The note must be text, at most 2000 characters, and it cannot be a script.",
@@ -119,7 +126,7 @@ const COPY = {
     fileRead: "The file could not be read.",
     exportEmpty: "There are no queries to export.",
     exportOk: "Copy downloaded. It also stays in this browser.",
-    sameMint: "Only two queries of the same address can be compared.",
+    sameMint: "Only two queries of the same network and address can be compared.",
     official: "This is the official STUBX address.",
     notOfficial: "This is not the official STUBX address.",
     untrusted: "Name, symbol, and URI are third-party text. They are not a link and not an image.",
@@ -204,8 +211,64 @@ function showMessage(message, kind) {
   const node = document.getElementById("consulta-error");
   if (!node) return;
   node.hidden = !message;
-  node.textContent = message || "";
+  node.replaceChildren();
+  if (message) node.append(document.createTextNode(message));
   node.dataset.kind = kind || "";
+  node.setAttribute("role", "status");
+  node.setAttribute("aria-live", "polite");
+}
+
+function showRetry(message, retryMint) {
+  const node = document.getElementById("consulta-error");
+  if (!node) return;
+  node.hidden = false;
+  node.replaceChildren();
+  node.dataset.kind = "error";
+  node.setAttribute("role", "status");
+  node.setAttribute("aria-live", "polite");
+  node.append(document.createTextNode(message));
+  if (retryMint) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.id = "reintentar";
+    button.textContent = t("retry");
+    button.addEventListener("click", () => consult(retryMint));
+    node.append(document.createTextNode(" "), button);
+  }
+}
+
+function announceSaved(extra, retryMint) {
+  const node = document.getElementById("consulta-error");
+  if (!node) return;
+  node.hidden = false;
+  node.replaceChildren();
+  node.dataset.kind = "ok";
+  node.setAttribute("role", "status");
+  node.setAttribute("aria-live", "polite");
+  node.append(document.createTextNode(t("saved")));
+  const link = document.createElement("a");
+  link.href = "#lista-consultas";
+  link.textContent = t("open");
+  node.append(link);
+  if (extra) node.append(document.createTextNode(` ${extra}`));
+  if (retryMint) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.id = "reintentar";
+    button.textContent = t("retry");
+    button.addEventListener("click", () => consult(retryMint));
+    node.append(document.createTextNode(" "), button);
+  }
+  revealAboveBar(node);
+}
+
+function revealAboveBar(node) {
+  node.scrollIntoView({ block: "center" });
+  const bar = document.querySelector(".consulta-barra") || document.querySelector("form.consulta");
+  if (!bar) return;
+  const box = node.getBoundingClientRect();
+  const form = bar.getBoundingClientRect();
+  if (box.bottom > form.top - 12) window.scrollBy(0, box.bottom - form.top + 28);
 }
 
 function openDb() {
@@ -268,6 +331,8 @@ async function browserTransport(endpoint, body, timeoutMs) {
       signal: controller.signal,
     });
     return { status: response.status, body: await response.text() };
+  } catch {
+    return { status: 0, body: "" };
   } finally {
     clearTimeout(timer);
   }
@@ -369,9 +434,15 @@ function renderCard(card) {
   facts.push(dataRow(list, t("curve"), curve.present === true ? curve.status : curve.status, curveValue));
   facts.push(dataRow(list, t("largest"), card.largestStatus || "no_consultado", null));
   const summary = missingFacts(facts, lang());
+  if (summary.absentText) {
+    const absentNode = text("p", summary.absentText, { class: "resumen-datos" });
+    absentNode.dataset.estado = "ausente";
+    article.append(absentNode);
+  }
   const summaryNode = text("p", summary.text, { class: "resumen-datos" });
   summaryNode.dataset.estado = summary.state;
   article.append(summaryNode, list);
+  article.append(entenderNav(lang()));
   article.append(text("p", t("untrusted"), { class: "muted" }));
   const details = el("details", { class: "tecnico" });
   const summaryTech = el("summary");
@@ -392,17 +463,48 @@ function renderCard(card) {
   return article;
 }
 
-function fillSelect(select, records, selected) {
+function sameReading(left, right) {
+  return Boolean(left && right && left.card.mint === right.card.mint && left.card.network === right.card.network);
+}
+
+function pairFor(list, leftId, rightId) {
+  const byId = new Map(list.map((item) => [item.id, item]));
+  let leftRec = byId.get(leftId) || null;
+  let rightRec = byId.get(rightId) || null;
+  if (!leftRec) leftRec = list[0] || null;
+  if (leftRec && (!rightRec || rightRec.id === leftRec.id || !sameReading(leftRec, rightRec))) {
+    rightRec = pickPrevious(list, leftRec.card, leftRec.id);
+  }
+  const rightChoices = leftRec
+    ? list.filter((item) => item.id !== leftRec.id && sameReading(leftRec, item))
+    : [];
+  return {
+    leftId: leftRec ? leftRec.id : "",
+    rightId: rightRec ? rightRec.id : "",
+    rightChoices,
+  };
+}
+
+function fillSelect(select, list, selected) {
   select.replaceChildren();
   const blank = el("option", { value: "" });
   blank.textContent = "—";
   select.append(blank);
-  for (const record of records) {
+  for (const record of list) {
     const option = el("option", { value: record.id });
-    option.textContent = `${record.card.consultedAt} · ${record.card.mint.slice(0, 8)}…`;
-    if (record.id === selected) option.selected = true;
+    option.textContent = readingOptionLabel(record.card, lang());
     select.append(option);
   }
+  select.value = selected && list.some((item) => item.id === selected) ? selected : "";
+}
+
+function paintSelects(list, leftId, rightId) {
+  const left = document.getElementById("comparar-izquierda");
+  const right = document.getElementById("comparar-derecha");
+  if (!left || !right) return;
+  const pair = pairFor(list, leftId, rightId);
+  fillSelect(left, list, pair.leftId);
+  fillSelect(right, pair.rightChoices, pair.rightId);
 }
 
 function renderRecords(records) {
@@ -435,8 +537,7 @@ function renderRecords(records) {
     block.append(note, again);
     list.append(block);
   }
-  fillSelect(left, records, leftId);
-  fillSelect(right, records, rightId);
+  paintSelects(records, leftId, rightId);
 }
 
 let records = [];
@@ -499,15 +600,14 @@ async function consult(mint) {
       box.focus();
       box.scrollIntoView({ block: "start" });
     }
-    if (result.error === "partial" || result.card.partial) showMessage(t("partial"), "error");
-    else if (!result.ok) showMessage(t("network"), "error");
     const record = { id: crypto.randomUUID(), note: "", card: result.card, source: "leida" };
     const saved = await persist(record);
     if (!saved) return;
-    showMessage(result.card.partial ? t("partial") : t("saved"), result.card.partial ? "error" : "ok");
+    const needsRetry = Boolean(result.card.partial || !result.ok);
+    announceSaved(needsRetry ? t("network") : "", needsRetry ? mint : "");
     await refresh();
-  } catch (error) {
-    showMessage(t("db"), "error");
+  } catch {
+    showRetry(t("network"), mint);
   } finally {
     if (button) button.disabled = false;
     if (input && mint) input.value = mint;
@@ -581,7 +681,8 @@ function renderComparison() {
   if (!compared.changes.length) out.append(text("p", t("noChange")));
   else out.append(text("h3", t("changesTitle")), gridFor(compared.changes, "cambio"));
   if (compared.unknown.length) {
-    const unknown = el("details", { class: "aviso-mas grupo-desconocido" });
+    out.append(text("p", t("unknownChange"), { class: "nota", "data-veredicto": "indeterminado" }));
+    const unknown = el("details", { class: "aviso-mas grupo-desconocido", open: "open" });
     const summary = el("summary");
     summary.textContent = t("unknownTitle");
     unknown.append(summary, gridFor(compared.unknown, "indeterminado"));
@@ -600,6 +701,7 @@ function renderComparison() {
     notes.append(text("p", `${t("right")}: ${compared.notes.right}`));
     out.append(notes);
   }
+  out.append(entenderNav(lang()));
 }
 
 async function exportCopy() {
@@ -698,6 +800,10 @@ function bind() {
   document.getElementById("borrar-confirmar")?.addEventListener("click", confirmDelete);
   document.getElementById("borrar-cancelar")?.addEventListener("click", cancelDelete);
   document.getElementById("comparar")?.addEventListener("click", renderComparison);
+  document.getElementById("comparar-izquierda")?.addEventListener("change", () => {
+    const left = document.getElementById("comparar-izquierda");
+    paintSelects(records, left ? left.value : "", "");
+  });
   document.addEventListener("stubx-lang", () => {
     renderRecords(records);
     const current = document.getElementById("resultado")?.querySelector(".ficha");

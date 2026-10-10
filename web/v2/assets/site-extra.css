@@ -787,6 +787,17 @@ body:has(a[href="/tablero/"][aria-current="page"]) .grupos { order: 5; }
 body:has(a[href="/aprender/"][aria-current="page"]) main > p:has(> a[href="/lab/"]) { order: 2; }
 body:has(a[href="/comparar/"][aria-current="page"]) main > dl { order: 5; }
 .aviso[data-disclaimer="si"] > p:first-child { margin: 0; color: var(--cream); font-weight: 650; }
+.entender-resultado {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.9rem;
+  margin: 0.8rem 0;
+}
+.entender-resultado p { flex-basis: 100%; margin: 0; font-weight: 700; }
+.entender-resultado a { text-decoration: underline; }
+.confirmacion-guardado { scroll-margin-top: 5rem; scroll-margin-bottom: 14rem; }
+.confirmacion-guardado a { text-decoration: underline; }
+#consulta-error[data-kind="ok"] a { text-decoration: underline; }
 .aviso-mas { margin: 0.6rem 0 0; padding: 0; border: 0; background: transparent; box-shadow: none; }
 .aviso-mas summary {
   display: inline-flex;

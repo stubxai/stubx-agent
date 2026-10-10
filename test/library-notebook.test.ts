@@ -58,6 +58,7 @@ interface ModelModule {
   compareRecords: (left: { card: Card }, right: { card: Card }) => { ok: boolean; rows?: Array<{ field: { es: string }; same: boolean; verdict?: string }> };
   pickPrevious: (records: Array<{ id: string; card: Card }>, card: Card, exceptId: string) => { id: string } | null;
   staleLine: (consultedAt: string, lang: string) => string;
+  readingOptionLabel: (card: Card, lang: string) => string;
 }
 
 async function modules(): Promise<{ read: ReadModule; model: ModelModule }> {
@@ -461,12 +462,27 @@ describe("lector y cuaderno", () => {
     assert.equal(model.pickPrevious([{ id: "1", card: { ...older, network: "otra" } }], newer, "3"), null);
     const other = model.compareRecords(left, { ...right, card: read.blankCard(OTHER, WHEN, []) });
     assert.equal(other.ok, false);
+    const otherNet = model.compareRecords(left, { ...right, card: { ...right.card, network: "devnet" } });
+    assert.equal(otherNet.ok, false);
+    const stamp = new Intl.DateTimeFormat("es-ES", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(WHEN)).replace(/[\u202f\u00a0]/g, " ");
+    assert.equal(
+      model.readingOptionLabel({ ...older, symbol: { text: "STUBX" }, name: { text: "STUBX" } }, "es"),
+      `STUBX · ${stamp}`,
+    );
     const amount = (await import(pathToFileURL(path.join(repoRoot(), "web/v2/shared/amount.js")).href)) as {
       formatAmount: (raw: string, decimals: number, lang: string) => string | null;
     };
     assert.equal(amount.formatAmount("1000000000000000", 6, "es"), "1.000.000.000 tokens");
     assert.equal(amount.formatAmount("1000000000000000", 6, "en"), "1,000,000,000 tokens");
     assert.equal(amount.formatAmount("1000000", 6, "es"), "1 tokens");
+    assert.equal(amount.formatAmount("7840780507370947", 6, "es"), "7.840.780.507,370947 tokens");
+    assert.equal(amount.formatAmount("7840780507370947", 6, "en"), "7,840,780,507.370947 tokens");
     assert.equal(amount.formatAmount(null as unknown as string, 6, "es"), null);
     const actions = readFileSync(path.join(repoRoot(), "web/v2/assets/verificar-acciones.mjs"), "utf8");
     assert.equal(actions.includes("localStorage"), false);
@@ -724,7 +740,7 @@ describe("lector y cuaderno", () => {
     const facts = (await import(pathToFileURL(path.join(repoRoot(), "web/v2/shared/fact-state.js")).href)) as {
       factLine: (status: string, value: unknown, lang: string) => string;
       factState: (status: string, value: unknown) => string;
-      missingFacts: (items: Array<{ label: string; state: string }>, lang: string) => { text: string };
+      missingFacts: (items: Array<{ label: string; state: string }>, lang: string) => { text: string; absentText: string };
     };
     assert.equal(facts.factState("verificado", ""), "ausente");
     assert.equal(facts.factLine("verificado", "", "es"), "ausente comprobado");
@@ -740,6 +756,9 @@ describe("lector y cuaderno", () => {
       ],
       "es",
     );
-    assert.match(summary.text, /Faltan datos: Enlace: ausente comprobado; Cuentas: consulta fallida/);
+    assert.match(summary.text, /Faltan datos: Cuentas/);
+    assert.match(summary.text, /El servicio público no respondió, prueba otra vez en un minuto/);
+    assert.equal(summary.text.includes("ausente comprobado"), false);
+    assert.match(summary.absentText, /Comprobado: no existe: Enlace: ausente comprobado/);
   });
 });

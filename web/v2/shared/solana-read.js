@@ -641,7 +641,7 @@ async function rpcCallOnce(state, method, params) {
       state.id += 1;
       const response = await state.transport(state.endpoint, body, state.timeoutMs);
       lastStatus = response.status;
-      if ((response.status === 429 || response.status >= 500) && attempt < state.maxRetries) {
+      if ((response.status === 0 || response.status === 408 || response.status === 429 || response.status >= 500) && attempt < state.maxRetries) {
         lastError = `HTTP ${response.status}`;
         await state.sleep(300 * (attempt + 1));
         continue;

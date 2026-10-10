@@ -329,8 +329,11 @@ function determined(state) {
 }
 
 export function compareRecords(left, right) {
-  if (!left || !right || left.card.mint !== right.card.mint) {
-    return fail("Solo se comparan dos consultas de la misma dirección.", "Only two queries of the same address can be compared.");
+  if (!left || !right || left.card.mint !== right.card.mint || left.card.network !== right.card.network) {
+    return fail(
+      "Solo se comparan dos consultas de la misma red y dirección.",
+      "Only two queries of the same network and address can be compared.",
+    );
   }
   const rows = COMPARE_FIELDS.map(([path, statusPath, es, en, amount]) => {
     const a = readPath(left.card, path);
@@ -380,6 +383,25 @@ export function staleLine(consultedAt, lang) {
   const local = formatLocal(consultedAt, lang);
   if (lang === "en") return `Checked on ${consultedAt} UTC · local ${local} · this may have changed`;
   return `Consultado el ${consultedAt} UTC · hora local ${local} · puede haber cambiado`;
+}
+
+export function formatReadingStamp(consultedAt, lang) {
+  const date = new Date(consultedAt);
+  if (Number.isNaN(date.getTime())) return formatLocal(consultedAt, lang);
+  return new Intl.DateTimeFormat(lang === "en" ? "en-GB" : "es-ES", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date).replace(/[\u202f\u00a0]/g, " ");
+}
+
+export function readingOptionLabel(card, lang) {
+  const symbol = card && card.symbol && typeof card.symbol.text === "string" ? card.symbol.text.trim() : "";
+  const name = card && card.name && typeof card.name.text === "string" ? card.name.text.trim() : "";
+  const title = (symbol || name || `${String(card && card.mint ? card.mint : "").slice(0, 4)}…`).slice(0, 24);
+  return `${title} · ${formatReadingStamp(card.consultedAt, lang)}`;
 }
 
 export function formatLocal(consultedAt, lang) {

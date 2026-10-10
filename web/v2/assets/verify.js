@@ -350,6 +350,31 @@ function formatUnits(amount, decimals) {
     const text = fracText.length > 0 ? `${whole.toString()}.${fracText}` : whole.toString();
     return negative ? `-${text}` : text;
 }
+/** Misma cifra que el Cuaderno: grupos de tres con BigInt, sin redondeo y sin el sufijo «tokens». */
+function formatUnitsLocale(amount, decimals, lang) {
+    if (!Number.isInteger(decimals) || decimals < 0 || decimals > 18) {
+        return amount.toString();
+    }
+    const negative = amount < 0n;
+    const value = negative ? -amount : amount;
+    const base = 10n ** BigInt(decimals);
+    const whole = value / base;
+    const fraction = decimals === 0 ? "" : (value % base).toString().padStart(decimals, "0").replace(/0+$/, "");
+    const grouped = groupThousands(whole, lang === "en" ? "," : ".");
+    const text = fraction ? `${grouped}${lang === "en" ? "." : ","}${fraction}` : grouped;
+    return negative ? `-${text}` : text;
+}
+function groupThousands(whole, separator) {
+    const digits = whole.toString();
+    let out = "";
+    for (let i = 0; i < digits.length; i += 1) {
+        if (i > 0 && (digits.length - i) % 3 === 0) {
+            out += separator;
+        }
+        out += digits[i] ?? "";
+    }
+    return out;
+}
 /** Truncado hacia cero, no redondeo. `decimals` son cifras tras la coma del porcentaje. */
 function percentTruncated(part, whole, decimals = 4) {
     if (whole <= 0n || part < 0n) {
@@ -1544,21 +1569,26 @@ async function httpTransport(endpoint, body, timeoutMs, signal) {
     if (typeof navigator === "undefined") {
         headers["user-agent"] = "stubx-verify/0.1";
     }
-    const response = await fetch(endpoint, {
-        method: "POST",
-        headers,
-        body,
-        signal: signal ? AbortSignal.any([AbortSignal.timeout(timeoutMs), signal]) : AbortSignal.timeout(timeoutMs),
-        cache: "no-store",
-        credentials: "omit",
-        referrerPolicy: "no-referrer",
-        redirect: "error",
-    });
-    const raw = new Uint8Array(await response.arrayBuffer());
-    if (raw.byteLength > 5_000_000) {
-        return { status: response.status, body: "" };
+    try {
+        const response = await fetch(endpoint, {
+            method: "POST",
+            headers,
+            body,
+            signal: signal ? AbortSignal.any([AbortSignal.timeout(timeoutMs), signal]) : AbortSignal.timeout(timeoutMs),
+            cache: "no-store",
+            credentials: "omit",
+            referrerPolicy: "no-referrer",
+            redirect: "error",
+        });
+        const raw = new Uint8Array(await response.arrayBuffer());
+        if (raw.byteLength > 5_000_000) {
+            return { status: response.status, body: "" };
+        }
+        return { status: response.status, body: new TextDecoder().decode(raw) };
     }
-    return { status: response.status, body: new TextDecoder().decode(raw) };
+    catch {
+        return { status: 0, body: "" };
+    }
 }
 class RpcClient {
     endpoint;
@@ -1706,7 +1736,7 @@ function isAllowedMethod(method) {
     return ALLOWED_RPC_METHODS.includes(method);
 }
 function isRetryableStatus(status) {
-    return status === 429 || status === 408 || status >= 500;
+    return status === 0 || status === 429 || status === 408 || status >= 500;
 }
 function isRetryableMessage(code, message) {
     if (code === 429) {
@@ -1838,20 +1868,22 @@ function readCache(cache, key, now, ttlMs = 60_000) {
     }
     return hit.value;
 }
+const SERVICE_ES = "El servicio público no respondió, prueba otra vez en un minuto.";
+const SERVICE_EN = "The public service did not respond, try again in a minute.";
 function failureReading(kind, mint, host, usedFallback) {
     const checked = loc("No se pudo comprobar", "Could not be checked");
     const copy = {
         limite: {
             title: checked,
-            support: loc("El servicio público de lectura ha llegado al límite de peticiones. Prueba otra vez dentro de un momento. No se ha inventado un resultado.", "The public read service has hit its request limit. Try again in a moment. No result was invented."),
+            support: loc(`El servicio público de lectura ha llegado al límite de peticiones. ${SERVICE_ES} No se ha inventado un resultado.`, `The public read service has hit its request limit. ${SERVICE_EN} No result was invented.`),
         },
         tiempo: {
             title: checked,
-            support: loc("Se agotó el tiempo de espera del servicio de lectura. No se ha inventado un resultado.", "The read service timed out. No result was invented."),
+            support: loc(`Se agotó el tiempo de espera del servicio de lectura. ${SERVICE_ES} No se ha inventado un resultado.`, `The read service timed out. ${SERVICE_EN} No result was invented.`),
         },
         red: {
             title: checked,
-            support: loc("No se pudo comprobar: el servicio no respondió o rechazó la petición. No se ha inventado un resultado.", "It could not be checked: the service did not respond or refused the request. No result was invented."),
+            support: loc(`No se pudo comprobar: el servicio no respondió o rechazó la petición. ${SERVICE_ES} No se ha inventado un resultado.`, `It could not be checked: the service did not respond or refused the request. ${SERVICE_EN} No result was invented.`),
         },
     }[kind];
     return {
@@ -1980,7 +2012,7 @@ async function readLargestAccounts(input) {
         endpoint,
         transport: input.transport,
         timeoutMs: input.timeoutMs ?? 6000,
-        maxRetries: 0,
+        maxRetries: input.maxRetries ?? 0,
         minIntervalMs: input.minIntervalMs ?? 200,
         now: input.now,
         sleep: input.sleep,
@@ -1992,9 +2024,9 @@ async function readLargestAccounts(input) {
     if (!largest.ok) {
         const kind = classifyRpcFailure(largest.error, largest.httpStatus);
         const text = {
-            limite: loc("No se pudo comprobar. El servicio llegó al límite al pedir las cuentas más grandes. No es una concentración de cero.", "It could not be checked. The service hit its limit while asking for the largest accounts. It is not zero concentration."),
-            tiempo: loc("No se pudo comprobar. Se agotó el tiempo de 6 segundos al pedir las cuentas más grandes. No es una concentración de cero.", "It could not be checked. The 6 second wait ran out while asking for the largest accounts. It is not zero concentration."),
-            red: loc("No se pudo comprobar. El servicio no devolvió las cuentas más grandes. No es una concentración de cero.", "It could not be checked. The service did not return the largest accounts. It is not zero concentration."),
+            limite: loc(`No se pudo comprobar. El servicio llegó al límite al pedir las cuentas más grandes. ${SERVICE_ES} No es una concentración de cero.`, `It could not be checked. The service hit its limit while asking for the largest accounts. ${SERVICE_EN} It is not zero concentration.`),
+            tiempo: loc(`No se pudo comprobar. Se agotó el tiempo de 6 segundos al pedir las cuentas más grandes. ${SERVICE_ES} No es una concentración de cero.`, `It could not be checked. The 6 second wait ran out while asking for the largest accounts. ${SERVICE_EN} It is not zero concentration.`),
+            red: loc(`No se pudo comprobar. El servicio no devolvió las cuentas más grandes. ${SERVICE_ES} No es una concentración de cero.`, `It could not be checked. The service did not return the largest accounts. ${SERVICE_EN} It is not zero concentration.`),
         }[kind];
         return { id: "cuentas", level: "atencion", title: loc("No se pudo comprobar", "Could not be checked"), explain: text };
     }
@@ -2003,13 +2035,16 @@ async function readLargestAccounts(input) {
     const sample = await accountSample(rpc, checked.mint, program, bondingCurvePda(checked.mint), largest, null);
     return sample.signal;
 }
+// Mint, metadatos y curva salen en un solo getMultipleAccounts.
+// El suministro y las cuentas grandes van después, de una en una: un 429
+// se reintenta una vez con espera; un 403 no se repite en el mismo nodo.
 const OPTIONAL_SUPPLY_URL = "https://api.mainnet-beta.solana.com";
 async function optionalMainnetSupply(mint, input) {
     const client = new RpcClient({
         endpoint: OPTIONAL_SUPPLY_URL,
         transport: input.transport,
         timeoutMs: input.timeoutMs ?? 8000,
-        maxRetries: 0,
+        maxRetries: input.maxRetries ?? 0,
         minIntervalMs: input.minIntervalMs ?? 200,
         now: input.now,
         sleep: input.sleep,
@@ -2017,6 +2052,17 @@ async function optionalMainnetSupply(mint, input) {
         signal: input.signal,
     });
     return client.getTokenSupply(mint);
+}
+function groupFacts(facts) {
+    const failed = facts.filter((item) => item.state === "fallo" || item.state === "no_consultado");
+    const gone = facts.filter((item) => item.state === "ausente");
+    const missing = failed.length
+        ? loc(`Faltan datos: ${failed.map((item) => item.label.es).join("; ")}. ${SERVICE_ES}`, `Missing data: ${failed.map((item) => item.label.en).join("; ")}. ${SERVICE_EN}`)
+        : loc("No falta ningún dato pedido en esta lectura.", "No requested fact is missing in this reading.");
+    const absent = gone.length
+        ? loc(`Comprobado: no existe: ${gone.map((item) => `${item.label.es}: ausente comprobado`).join("; ")}.`, `Confirmed: it does not exist: ${gone.map((item) => `${item.label.en}: confirmed absent`).join("; ")}.`)
+        : loc("", "");
+    return { missing, missingState: failed.length ? "falta" : "ok", absent };
 }
 async function readWith(mint, registry, rpc, input) {
     const meta = metadataPda(mint);
@@ -2055,8 +2101,9 @@ async function readWith(mint, registry, rpc, input) {
             sources: sourceRows(rpc),
             canSample: false,
             shown: { kind: "ausente", mint, consultedAt: packed.fetchedAt, slot: packed.slot },
-            missing: loc("Faltan datos: la cuenta: ausente comprobado.", "Missing data: the account: confirmed absent."),
-            missingState: "falta",
+            missing: loc("No falta ningún dato pedido en esta lectura.", "No requested fact is missing in this reading."),
+            missingState: "ok",
+            absent: loc("Comprobado: no existe: la cuenta.", "Confirmed: it does not exist: the account."),
             identity: loc(`Identidad del proyecto, aparte de este análisis: la CA oficial de STUBX es ${OFFICIAL_CA}.`, `Project identity, separate from this analysis: the official STUBX CA is ${OFFICIAL_CA}.`),
         };
     }
@@ -2129,7 +2176,8 @@ async function readWith(mint, registry, rpc, input) {
             ? "This is a Token-2022 mint. It can carry extensions. Each extension below is read on its own."
             : "This is an SPL Token mint. That program does not carry Token-2022 extensions."),
     });
-    const byteSupply = formatUnits(decoded.supplyRaw, decoded.decimals);
+    const supplyEs = formatUnitsLocale(decoded.supplyRaw, decoded.decimals, "es");
+    const supplyEn = formatUnitsLocale(decoded.supplyRaw, decoded.decimals, "en");
     const supplyMatches = supply.ok && supply.value.amount === decoded.supplyRaw.toString() && supply.value.decimals === decoded.decimals;
     signals.push({
         id: "suministro",
@@ -2137,13 +2185,13 @@ async function readWith(mint, registry, rpc, input) {
         title: loc("Suministro y decimales", "Supply and decimals"),
         explain: loc(supply.ok
             ? supplyMatches
-                ? `Hay ${byteSupply} tokens, con ${decoded.decimals} decimales, leídos de los bytes del mint. La lectura extra coincide.`
-                : `Los bytes del mint dicen ${byteSupply} con ${decoded.decimals} decimales, y la lectura extra no coincide. Se muestra la cifra de los bytes. No se calculan porcentajes.`
-            : `Hay ${byteSupply} tokens, con ${decoded.decimals} decimales, leídos de los bytes del mint. La consulta extra del suministro es una consulta fallida: no respondió. Eso no cambia esta cifra y no es una ausencia.`, supply.ok
+                ? `Hay ${supplyEs} tokens, con ${decoded.decimals} decimales, leídos de los bytes del mint. La lectura extra coincide.`
+                : `Los bytes del mint dicen ${supplyEs} con ${decoded.decimals} decimales, y la lectura extra no coincide. Se muestra la cifra de los bytes. No se calculan porcentajes.`
+            : `Hay ${supplyEs} tokens, con ${decoded.decimals} decimales, leídos de los bytes del mint. ${SERVICE_ES} Eso no cambia esta cifra y no es una ausencia.`, supply.ok
             ? supplyMatches
-                ? `There are ${byteSupply} tokens, with ${decoded.decimals} decimals, read from the mint bytes. The extra read matches.`
-                : `The mint bytes say ${byteSupply} with ${decoded.decimals} decimals, and the extra read does not match. The figure shown is the one from the bytes. Percentages are not calculated.`
-            : `There are ${byteSupply} tokens, with ${decoded.decimals} decimals, read from the mint bytes. The extra supply query is a failed query: it did not respond. That does not change this figure and it is not an absence.`),
+                ? `There are ${supplyEn} tokens, with ${decoded.decimals} decimals, read from the mint bytes. The extra read matches.`
+                : `The mint bytes say ${supplyEn} with ${decoded.decimals} decimals, and the extra read does not match. The figure shown is the one from the bytes. Percentages are not calculated.`
+            : `There are ${supplyEn} tokens, with ${decoded.decimals} decimals, read from the mint bytes. ${SERVICE_EN} That does not change this figure and it is not an absence.`),
     });
     signals.push(authoritySignal("emision", decoded.mintAuthority, likeness.inRegistry));
     signals.push(authoritySignal("congelacion", decoded.freezeAuthority, likeness.inRegistry));
@@ -2165,7 +2213,7 @@ async function readWith(mint, registry, rpc, input) {
             id: "cuentas",
             level: "atencion",
             title: loc("Cuentas con tokens", "Token accounts"),
-            explain: loc("La consulta de las cuentas con más tokens ha fallado. Es una consulta fallida, no una ausencia y no una concentración de cero.", "The query for the largest token accounts failed. It is a failed query, not an absence and not zero concentration."),
+            explain: loc(`${SERVICE_ES} No es una ausencia ni una concentración de cero.`, `${SERVICE_EN} It is not an absence and it is not zero concentration.`),
         });
     }
     else if (largest.value.length === 0) {
@@ -2256,15 +2304,9 @@ async function readWith(mint, registry, rpc, input) {
             state: !curveInfo ? "ausente" : bonding ? "ok" : "fallo",
         },
     ];
-    const missingItems = facts.filter((item) => item.state !== "ok");
-    const word = (state, code) => state === "ausente"
-        ? code === "en" ? "confirmed absent" : "ausente comprobado"
-        : state === "fallo"
-            ? code === "en" ? "failed query" : "consulta fallida"
-            : code === "en" ? "not queried" : "no consultado";
-    const missing = missingItems.length
-        ? loc(`Faltan datos: ${missingItems.map((item) => `${item.label.es}: ${word(item.state, "es")}`).join("; ")}.`, `Missing data: ${missingItems.map((item) => `${item.label.en}: ${word(item.state, "en")}`).join("; ")}.`)
-        : loc("No falta ningún dato pedido en esta lectura.", "No requested fact is missing in this reading.");
+    const grouped = groupFacts(facts);
+    const missing = grouped.missing;
+    const absent = grouped.absent;
     const identity = loc(likeness.inRegistry
         ? `Identidad del proyecto: esta dirección (${mint}) es la CA oficial de STUBX.`
         : `Identidad del proyecto, aparte de este análisis: la CA oficial de STUBX es ${OFFICIAL_CA}.`, likeness.inRegistry
@@ -2278,7 +2320,7 @@ async function readWith(mint, registry, rpc, input) {
     const attentionEn = signals
         .filter((item) => item.level === "atencion" || item.level === "riesgo")
         .map((item) => item.title.en);
-    const report = loc(`Qué se comprobó: ${checkedEs.length ? checkedEs.join(", ") : "ningún dato con valor leído"}. Qué pide atención: ${attentionEs.length ? attentionEs.join(", ") : "ninguna señal de atención"}. Qué falta: ${missing.es}`, `What was checked: ${checkedEn.length ? checkedEn.join(", ") : "no fact with a read value"}. What needs attention: ${attentionEn.length ? attentionEn.join(", ") : "no attention signal"}. What is missing: ${missing.en}`);
+    const report = loc(`Qué se comprobó: ${checkedEs.length ? checkedEs.join(", ") : "ningún dato con valor leído"}. Qué pide atención: ${attentionEs.length ? attentionEs.join(", ") : "ninguna señal de atención"}. Qué falta: ${missing.es}${absent.es ? ` Qué no existe: ${absent.es}` : ""}`, `What was checked: ${checkedEn.length ? checkedEn.join(", ") : "no fact with a read value"}. What needs attention: ${attentionEn.length ? attentionEn.join(", ") : "no attention signal"}. What is missing: ${missing.en}${absent.en ? ` What does not exist: ${absent.en}` : ""}`);
     const metadataMutable = metadataState === "fallo"
         ? "fallo"
         : metaplex?.mutable === true || decoded.tokenMetadata?.updateAuthority
@@ -2343,7 +2385,7 @@ async function readWith(mint, registry, rpc, input) {
             { label: loc("Programa", "Program"), value: loc(programName, programName) },
             {
                 label: loc("Suministro", "Supply"),
-                value: loc(formatUnits(decoded.supplyRaw, decoded.decimals), formatUnits(decoded.supplyRaw, decoded.decimals)),
+                value: loc(supplyEs, supplyEn),
             },
             { label: loc("Decimales", "Decimals"), value: loc(String(decoded.decimals), String(decoded.decimals)) },
             ...sourceClock(packed.fetchedAt, slots.size === 1 ? ([...slots][0] ?? packed.slot) : null, rpc),
@@ -2356,7 +2398,8 @@ async function readWith(mint, registry, rpc, input) {
         canSample: largestState === "fallo",
         facts,
         missing,
-        missingState: missingItems.length ? "falta" : "ok",
+        missingState: grouped.missingState,
+        absent,
         identity,
         report,
         shown,
@@ -2650,6 +2693,28 @@ function legendItem(light, text) {
   return item;
 }
 
+function entenderResultado(lang) {
+  var understand = verifyEl("nav", {
+    id: "entender-resultado",
+    class: "entender-resultado",
+    "aria-label": lang === "en" ? "Understand this result" : "Entender este resultado",
+  });
+  var understandTitle = verifyEl("p");
+  understandTitle.textContent = lang === "en" ? "Understand this result" : "Entender este resultado";
+  understand.append(understandTitle);
+  [
+    ["/aprender/#guia-permisos", "Permisos", "Permissions"],
+    ["/aprender/#autoridad-emision", "Suministro", "Supply"],
+    ["/aprender/#metadatos-mutables", "Metadatos", "Metadata"],
+    ["/aprender/#censo", "Distribución", "Distribution"],
+  ].forEach(function (item) {
+    var link = verifyEl("a", { href: item[0], "data-guia": item[0] });
+    link.textContent = lang === "en" ? item[2] : item[1];
+    understand.append(link);
+  });
+  return understand;
+}
+
 function paintVerify(out, view) {
   var lang = verifyLang();
   out.replaceChildren();
@@ -2708,7 +2773,12 @@ function paintVerify(out, view) {
     report.append(reportTitle, reportBody);
     out.append(report);
   }
-  if (view.missing) {
+  if (view.absent && view.absent[lang]) {
+    var absent = verifyEl("p", { class: "resumen-datos", "data-estado": "ausente" });
+    absent.textContent = view.absent[lang];
+    out.append(absent);
+  }
+  if (view.missing && view.missing[lang]) {
     var missing = verifyEl("p", { class: "resumen-datos", "data-estado": view.missingState || "falta" });
     missing.textContent = view.missing[lang];
     out.append(missing);
@@ -2736,24 +2806,25 @@ function paintVerify(out, view) {
     sampleBtn.textContent = lang === "en" ? "Try to read the largest accounts" : "Intentar leer las cuentas más grandes";
     out.append(sampleBtn);
   }
+  var failedRead = view.missingState === "falta" || view.kind === "red" || view.kind === "limite" || view.kind === "tiempo";
+  if (failedRead && view.light !== "espera") {
+    var retry = verifyEl("button", { type: "button", id: "reintentar" });
+    retry.textContent = lang === "en" ? "Try again" : "Reintentar";
+    out.append(retry);
+  }
   if (view.kind !== "vacio" && typeof AUDIT_NOTICE !== "undefined") {
     var audit = verifyEl("p", { class: "aviso-fijo" });
     audit.textContent = AUDIT_NOTICE[lang];
     out.append(audit);
   }
-  if (view.mint && view.kind === "lectura") {
+  if (view.mint && view.kind === "lectura" && view.light !== "espera") {
     var actions = verifyEl("div", { class: "acciones-consulta" });
-    var guide = "/aprender/#guia-identificar";
-    var signalIds = (view.signals || []).map(function (signal) { return signal.id; });
-    if (signalIds.indexOf("emision") >= 0 || signalIds.indexOf("congelacion") >= 0) guide = "/aprender/#guia-permisos";
-    else if (signalIds.indexOf("curva") >= 0) guide = "/aprender/#guia-liquidez";
     function actionButton(id, es, en) {
       var button = verifyEl("button", { type: "button", id: id, "data-mint": view.mint });
       button.textContent = lang === "en" ? en : es;
       return button;
     }
-    var understand = verifyEl("a", { id: "entender-resultado", href: guide, "data-guia": guide });
-    understand.textContent = lang === "en" ? "Understand this result" : "Entender este resultado";
+    var understand = entenderResultado(lang);
     var notice = document.getElementById("aviso-guardar");
     if (notice) {
       var copy = notice.cloneNode(true);
@@ -2784,6 +2855,9 @@ function paintVerify(out, view) {
     });
     details.append(summary, rows);
     out.append(details);
+  }
+  if (view.light !== "espera" && view.kind !== "vacio" && view.kind !== "lectura" && view.kind !== "invalida") {
+    out.append(entenderResultado(lang));
   }
 }
 
@@ -2885,6 +2959,8 @@ function bootVerify() {
     if (submit) submit.disabled = busy;
     var extra = out.querySelector("#leer-cuentas");
     if (extra) extra.disabled = busy;
+    var retry = out.querySelector("#reintentar");
+    if (retry) retry.disabled = busy;
   }
 
   function pauseView(mint) {
@@ -2923,7 +2999,7 @@ function bootVerify() {
     return view;
   }
 
-  function run() {
+  function run(force) {
     if (inFlight) return;
     if (input.value.trim() === "") {
       apply(emptyView(), false);
@@ -2950,7 +3026,7 @@ function bootVerify() {
       return;
     }
     var now = Date.now();
-    var cached = typeof readCache === "function" ? readCache(memory, normalized, now, 60000) : null;
+    var cached = !force && typeof readCache === "function" ? readCache(memory, normalized, now, 60000) : null;
     if (cached) {
       apply(cached, true);
       return;
@@ -2971,7 +3047,7 @@ function bootVerify() {
       mint: normalized,
       registry: STUBX_VERIFY.registry || [],
       endpoints: endpoints,
-      maxRetries: 0,
+      maxRetries: 1,
       minIntervalMs: 200,
       timeoutMs: 8000,
       signal: controller.signal,
@@ -3012,7 +3088,7 @@ function bootVerify() {
       mint: mint,
       registry: STUBX_VERIFY.registry || [],
       endpoints: endpointsOf(),
-      maxRetries: 0,
+      maxRetries: 1,
       minIntervalMs: 200,
       timeoutMs: 6000,
       signal: controller.signal,
@@ -3033,8 +3109,8 @@ function bootVerify() {
         level: "atencion",
         title: { es: "No se pudo comprobar", en: "Could not be checked" },
         explain: {
-          es: "No se pudo comprobar. El servicio no devolvió las cuentas más grandes. No es una concentración de cero.",
-          en: "It could not be checked. The service did not return the largest accounts. It is not zero concentration.",
+          es: "El servicio público no respondió, prueba otra vez en un minuto. No es una concentración de cero.",
+          en: "The public service did not respond, try again in a minute. It is not zero concentration.",
         },
       };
       view.signals = (view.signals || []).map(function (item) {
@@ -3050,6 +3126,10 @@ function bootVerify() {
   out.addEventListener("click", function (event) {
     var target = event.target;
     if (target && target.id === "leer-cuentas") readSample();
+    if (target && target.id === "reintentar") {
+      if (last && last.mint) memory.delete(last.mint);
+      run(true);
+    }
   });
 
   apply(emptyView(), false);

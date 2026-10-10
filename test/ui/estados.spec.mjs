@@ -33,7 +33,8 @@ function rpcResult(value, status = 200) {
   };
 }
 
-async function mockRpc(page, mode) {
+async function mockRpc(page) {
+  let mode = "ok";
   await page.route(/solana-rpc\.publicnode\.com|api\.mainnet-beta\.solana\.com/, async (route) => {
     const body = route.request().postDataJSON();
     const method = body?.method;
@@ -52,27 +53,43 @@ async function mockRpc(page, mode) {
     if (method === "getTokenLargestAccounts") return route.fulfill(rpcResult([]));
     return route.fulfill(rpcResult(1));
   });
+  return {
+    set(next) {
+      mode = next;
+    },
+  };
+}
+
+async function readMint(page, mint) {
+  await page.goto("/verify/");
+  await page.locator("#direccion-token").fill(mint);
+  await page.locator("#consulta button[type='submit']").click();
 }
 
 for (const mint of [STUBX, USDC]) {
   test(`verify ${mint} muestra ok, 403 y ausencia`, async ({ page }) => {
-    await mockRpc(page, "ok");
-    await page.goto("/verify/");
-    await page.locator("#direccion-token").fill(mint);
-    await page.locator("#consulta button[type='submit']").click();
+    const rpc = await mockRpc(page);
+    await readMint(page, mint);
     await expect(page.locator("#resultado")).toContainText(/Hay 1 tokens/);
-    await expect(page.locator(".resumen-datos")).toContainText(/ausente comprobado|No falta/);
+    await expect(page.locator("#resultado")).toContainText(/ausente comprobado|No falta/);
+    const okGroups = await page.locator(".resumen-datos").allTextContents();
+    const okMissing = okGroups.find((item) => item.startsWith("Faltan datos")) ?? "";
+    expect(okMissing).not.toMatch(/ausente comprobado/);
+    await expect(page.locator("#entender-resultado")).toContainText("Entender este resultado");
     await expect(page.locator("#resultado")).not.toContainText(/no disponible · verificado|verificado · no disponible/i);
 
-    await mockRpc(page, "403");
-    await page.locator("#direccion-token").fill(mint);
-    await page.locator("#consulta button[type='submit']").click();
-    await expect(page.locator("#resultado")).toContainText(/consulta fallida/);
+    rpc.set("403");
+    await readMint(page, mint);
+    await expect(page.locator("#resultado")).toContainText(/El servicio público no respondió, prueba otra vez en un minuto/);
+    await expect(page.locator("#reintentar")).toBeVisible();
+    const failedGroups = await page.locator(".resumen-datos").allTextContents();
+    const failedMissing = failedGroups.find((item) => item.startsWith("Faltan datos")) ?? "";
+    expect(failedMissing).not.toMatch(/ausente comprobado/);
+    await expect(page.locator("[data-estado='ausente']")).toContainText("Comprobado: no existe");
     await expect(page.locator("#resultado")).not.toContainText(/no disponible · verificado/i);
 
-    await mockRpc(page, "ausente");
-    await page.locator("#direccion-token").fill(mint);
-    await page.locator("#consulta button[type='submit']").click();
+    rpc.set("ausente");
+    await readMint(page, mint);
     await expect(page.locator("#resultado")).toContainText(/ausente comprobado|no existe/i);
     if (mint !== STUBX) await expect(page.locator(".franja-identidad")).toContainText(STUBX);
   });

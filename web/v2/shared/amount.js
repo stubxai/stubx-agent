@@ -18,11 +18,14 @@ export function formatAmount(raw, decimals, lang) {
   const whole = abs / scale;
   let fraction = (abs % scale).toString().padStart(decimals, "0");
   fraction = fraction.replace(/0+$/, "");
-  const locale = lang === "en" ? "en-GB" : "es-ES";
-  let text = whole.toLocaleString(locale);
-  if (fraction) {
-    text += `${locale === "es-ES" ? "," : "."}${fraction}`;
+  const digits = whole.toString();
+  const separator = lang === "en" ? "," : ".";
+  let text = "";
+  for (let i = 0; i < digits.length; i += 1) {
+    if (i > 0 && (digits.length - i) % 3 === 0) text += separator;
+    text += digits[i];
   }
+  if (fraction) text += `${lang === "en" ? "." : ","}${fraction}`;
   if (negative) text = `-${text}`;
   return `${text} tokens`;
 }

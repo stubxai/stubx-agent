@@ -3,6 +3,7 @@
  * La dirección no va en la consulta ni al servidor. Se guarda red y dirección en IndexedDB.
  */
 import { formatAmount } from "../shared/amount.js";
+import { ENTENDER, entenderNav } from "../shared/entender.js";
 import { compareRecords, pickPrevious, staleLine, validateCard, withinStoreLimit } from "../shared/notebook-model.js";
 import { cardFromShown } from "../shared/solana-read.js";
 
@@ -12,7 +13,8 @@ const STORE = "records";
 const COPY = {
   es: {
     saving: "Guardando esta dirección en este navegador…",
-    saved: "Consulta guardada en este navegador. La hora es la de este guardado.",
+    saved: "Guardada en el Cuaderno de este navegador · ",
+    open: "Abrir Cuaderno",
     none: "No hay una consulta anterior de esta dirección en esta red.",
     compare: "Comparar consultas",
     unknown: "no se puede determinar si cambió",
@@ -32,7 +34,8 @@ const COPY = {
   },
   en: {
     saving: "Saving this address in this browser…",
-    saved: "Query saved in this browser. The time is the time of this save. It is not a recommendation.",
+    saved: "Saved in this browser's Notebook · ",
+    open: "Open Notebook",
     none: "There is no earlier query of this address on this network.",
     compare: "Compare queries",
     unknown: "it cannot be determined whether it changed",
@@ -108,14 +111,15 @@ document.addEventListener("stubx-lectura", (event) => {
   shown = event && event.detail ? event.detail : null;
 });
 
-const GUIAS = new Set([
-  "/aprender/#guia-identificar",
-  "/aprender/#guia-permisos",
-  "/aprender/#guia-liquidez",
-]);
+const GUIAS = new Set(ENTENDER.map((item) => item.href));
 
 function box() {
-  return document.getElementById("comparacion-verify");
+  const node = document.getElementById("comparacion-verify");
+  if (node) {
+    node.setAttribute("role", "status");
+    node.setAttribute("aria-live", "polite");
+  }
+  return node;
 }
 
 function say(message) {
@@ -126,6 +130,34 @@ function say(message) {
   p.className = "nota";
   p.textContent = message;
   node.append(p);
+}
+
+function saySaved() {
+  const node = box();
+  if (!node) return;
+  node.replaceChildren();
+  const p = document.createElement("p");
+  p.className = "nota confirmacion-guardado";
+  p.setAttribute("role", "status");
+  p.setAttribute("aria-live", "polite");
+  p.append(document.createTextNode(t("saved")));
+  const link = document.createElement("a");
+  link.href = "/cuaderno/";
+  link.textContent = t("open");
+  p.append(link);
+  node.append(p);
+  revealAboveBar(p);
+}
+
+function revealAboveBar(node) {
+  node.scrollIntoView({ block: "center" });
+  const bar = document.querySelector(".consulta-barra") || document.querySelector("form.consulta");
+  if (!bar) return;
+  const box = node.getBoundingClientRect();
+  const form = bar.getBoundingClientRect();
+  if (box.bottom > form.top - 12) {
+    window.scrollBy(0, box.bottom - form.top + 28);
+  }
 }
 
 function sideText(row, side, card) {
@@ -183,13 +215,19 @@ function paintComparison(current, previous, compared) {
     node.append(heading, gridFor(compared.changes, "cambio", current, previous));
   }
   if (compared.unknown.length) {
+    const lead = document.createElement("p");
+    lead.className = "nota";
+    lead.dataset.veredicto = "indeterminado";
+    lead.textContent = t("unknown");
     const details = document.createElement("details");
+    details.open = true;
     details.className = "aviso-mas grupo-desconocido";
     const summary = document.createElement("summary");
     summary.textContent = t("unknownTitle");
     details.append(summary, gridFor(compared.unknown, "indeterminado", current, previous));
-    node.append(details);
+    node.append(lead, details);
   }
+  node.append(entenderNav(lang()));
   lastView = { current, previous };
   const changes = document.getElementById("que-cambio");
   if (changes) changes.scrollIntoView({ block: "nearest" });
@@ -218,7 +256,7 @@ async function saveQuery(mint) {
       return;
     }
     await dbPut(db, { id: record.id, note: "", card: record.card });
-    say(t("saved"));
+    saySaved();
   } catch {
     say(t("db"));
   }
@@ -257,10 +295,11 @@ async function comparePrevious(mint, focusChanges) {
 document.addEventListener("click", (event) => {
   const target = event.target instanceof Element ? event.target : null;
   if (!target) return;
-  const understand = target.closest("#entender-resultado");
+  const understand = target.closest("#entender-resultado, .entender-resultado");
   if (understand) {
     event.preventDefault();
-    const href = understand.getAttribute("data-guia");
+    const link = target.closest("a");
+    const href = link && understand.contains(link) ? link.getAttribute("data-guia") : null;
     if (href !== null && GUIAS.has(href)) location.assign(href);
     return;
   }

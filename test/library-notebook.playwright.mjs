@@ -244,7 +244,10 @@ try {
     await page.waitForFunction(() => (document.getElementById("resultado")?.textContent || "").includes("puede haber cambiado"), null, { timeout: 15000 });
     const text = await page.locator("#resultado").innerText();
     if (!text.includes("Es la dirección oficial de STUBX")) failures.push(`${profile.id}: no marca la dirección oficial`);
-    if (text.includes("evil.example") && (await page.locator("#resultado a").count()) > 0) {
+    const uriLinked = await page.locator("#resultado a").evaluateAll((nodes) =>
+      nodes.some((node) => `${node.textContent || ""} ${node.getAttribute("href") || ""}`.includes("evil.example")),
+    );
+    if (text.includes("evil.example") && uriLinked) {
       failures.push(`${profile.id}: la URI de metadatos se volvió un enlace`);
     }
     await shot(page, `cuaderno-${profile.id}-resultado.png`);
