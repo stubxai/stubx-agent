@@ -50,6 +50,8 @@ interface Card {
   decimals?: number | null;
   mintAuthority?: { state: string; address?: string | null; status: string };
   freezeAuthority?: { state: string; address?: string | null; status: string };
+  curve?: { present: boolean | null; status: string };
+  errors?: Array<{ message?: string }>;
 }
 
 interface ModelModule {
@@ -64,6 +66,7 @@ interface ModelModule {
   compareRecords: (left: { card: Card }, right: { card: Card }) => {
     ok: boolean;
     rows?: Array<{ field: { es: string }; same: boolean; verdict?: string; difference?: string | null }>;
+    unknown?: Array<{ field: { es: string } }>;
     unchanged?: Array<{ field: { es: string } }>;
     technical?: { slot: { left: number | null; right: number | null } };
   };
@@ -76,6 +79,8 @@ interface ModelModule {
   comparedValueText: (raw: string, lang: string) => string;
   supplyConfirmation: (card: Card) => { confirmed: boolean; reason: string };
   supplyNote: (card: Card, lang: string) => string | null;
+  CURVE_NOT_ON_PUMP: { es: string; en: string };
+  curveComparisonValue: (fieldEs: string, state: string, lang: string) => string | null;
 }
 
 async function modules(): Promise<{ read: ReadModule; model: ModelModule }> {
@@ -445,6 +450,119 @@ describe("lector y cuaderno", () => {
     assert.deepEqual(seen, ["solana-rpc.publicnode.com"]);
   });
 
+  test("una lista que no trae exactamente 3 cuentas no se pudo comprobar y prueba el otro nodo", async () => {
+    const { read } = await modules();
+    const USDC = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+    const full = [
+      account(read.TOKEN_PROGRAM, mintBytes()),
+      account(read.METADATA_PROGRAM, metadataBytes("USDC", "USDC", "https://example.invalid/meta")),
+      null,
+    ];
+    for (const count of [0, 2, 4]) {
+      for (const mint of [USDC, CA]) {
+        const hosts: string[] = [];
+        const extra: string[] = [];
+        const result = await read.readMint({
+          mint,
+          ...fastClock(),
+          endpoint: read.PUBLICNODE_RPC,
+          maxRetries: 0,
+          transport: async (endpoint: string, body: string) => {
+            const method = (JSON.parse(body) as { method: string }).method;
+            const host = new URL(endpoint).hostname;
+            if (method === "getMultipleAccounts") {
+              hosts.push(host);
+              return rpcOk(Array.from({ length: count }, () => null));
+            }
+            extra.push(`${host} ${method}`);
+            return rpcOk([]);
+          },
+        });
+        assert.equal(result.ok, false, `${count} ${mint}`);
+        assert.equal(result.card?.curve?.status, "fallo");
+        const messages = (result.card?.errors ?? []).map((item) => item.message ?? "").join(" ");
+        assert.match(messages, /No se pudo comprobar/);
+        assert.equal(messages.includes("No aplica"), false);
+        assert.equal(messages.includes("no existe"), false);
+        assert.deepEqual(hosts, ["solana-rpc.publicnode.com", "api.mainnet-beta.solana.com"]);
+        assert.deepEqual(extra, []);
+      }
+    }
+    const limited: string[] = [];
+    const capped = await read.readMint({
+      mint: CA,
+      ...fastClock(),
+      endpoint: read.PUBLICNODE_RPC,
+      maxRetries: 1,
+      transport: async (endpoint: string, body: string) => {
+        const method = (JSON.parse(body) as { method: string }).method;
+        if (method === "getMultipleAccounts") limited.push(new URL(endpoint).hostname);
+        return rpcOk([null, null, null, null]);
+      },
+    });
+    assert.equal(capped.ok, false);
+    assert.match((capped.card?.errors ?? []).map((item) => item.message ?? "").join(" "), /No se pudo comprobar/);
+    assert.deepEqual(limited, [
+      "solana-rpc.publicnode.com",
+      "solana-rpc.publicnode.com",
+      "api.mainnet-beta.solana.com",
+      "api.mainnet-beta.solana.com",
+    ]);
+    const seen: string[] = [];
+    const recovered = await read.readMint({
+      mint: USDC,
+      ...fastClock(),
+      endpoint: read.PUBLICNODE_RPC,
+      maxRetries: 0,
+      transport: async (endpoint: string, body: string) => {
+        const method = (JSON.parse(body) as { method: string }).method;
+        const host = new URL(endpoint).hostname;
+        seen.push(`${host} ${method}`);
+        if (method === "getMultipleAccounts" && host === "solana-rpc.publicnode.com") return rpcOk([null, null]);
+        if (method === "getMultipleAccounts") return rpcOk(full);
+        if (method === "getTokenSupply") return rpcOk({ amount: "1000", decimals: 6, uiAmountString: "skip" });
+        if (method === "getTokenLargestAccounts") return rpcOk([]);
+        throw new Error(method);
+      },
+    });
+    assert.equal(recovered.ok, true);
+    assert.equal(recovered.card?.curve?.status, "no_aplica");
+    assert.deepEqual(
+      seen.filter((item) => item.endsWith("getMultipleAccounts")),
+      ["solana-rpc.publicnode.com getMultipleAccounts", "api.mainnet-beta.solana.com getMultipleAccounts"],
+    );
+    assert.deepEqual(
+      seen.filter((item) => item.endsWith("getTokenSupply") || item.endsWith("getTokenLargestAccounts")),
+      ["api.mainnet-beta.solana.com getTokenSupply", "api.mainnet-beta.solana.com getTokenLargestAccounts"],
+    );
+    const pumpSeen: string[] = [];
+    const pumpRecovered = await read.readMint({
+      mint: CA,
+      ...fastClock(),
+      endpoint: read.PUBLICNODE_RPC,
+      maxRetries: 0,
+      transport: async (endpoint: string, body: string) => {
+        const method = (JSON.parse(body) as { method: string }).method;
+        const host = new URL(endpoint).hostname;
+        if (method === "getMultipleAccounts") pumpSeen.push(host);
+        if (method === "getMultipleAccounts" && host === "solana-rpc.publicnode.com") return rpcOk([]);
+        if (method === "getMultipleAccounts") {
+          return rpcOk([
+            account(read.TOKEN_PROGRAM, mintBytes()),
+            account(read.METADATA_PROGRAM, metadataBytes("STB", "STB", "https://example.invalid/meta")),
+            null,
+          ]);
+        }
+        if (method === "getTokenSupply") return rpcOk({ amount: "1000", decimals: 6, uiAmountString: "skip" });
+        if (method === "getTokenLargestAccounts") return rpcOk([]);
+        throw new Error(method);
+      },
+    });
+    assert.equal(pumpRecovered.ok, true);
+    assert.equal(pumpRecovered.card?.curve?.status, "ausente");
+    assert.deepEqual(pumpSeen, ["solana-rpc.publicnode.com", "api.mainnet-beta.solana.com"]);
+  });
+
   test("un corte de red en las cuentas prueba el segundo nodo y el suministro no sale de mainnet", async () => {
     const { read } = await modules();
     const hosts: Record<string, string[]> = { getMultipleAccounts: [], getTokenSupply: [], getTokenLargestAccounts: [] };
@@ -593,6 +711,80 @@ describe("lector y cuaderno", () => {
     assert.deepEqual(hosts.getTokenSupply, ["api.mainnet-beta.solana.com"]);
     assert.deepEqual(hosts.getTokenLargestAccounts, ["api.mainnet-beta.solana.com"]);
     assert.deepEqual(hosts.getMultipleAccounts, ["solana-rpc.publicnode.com"]);
+  });
+
+  test("en un token que no es de Pump.fun la curva no aplica y no entra en lo que falta", async () => {
+    const { read, model } = await modules();
+    const USDC = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+    const sentence = model.CURVE_NOT_ON_PUMP;
+    const transport = async (_endpoint: string, body: string) => {
+      const method = (JSON.parse(body) as { method: string }).method;
+      if (method === "getMultipleAccounts") {
+        return rpcOk([
+          account(read.TOKEN_PROGRAM, mintBytes()),
+          account(read.METADATA_PROGRAM, metadataBytes("USDC", "USDC", "https://example.invalid/meta")),
+          null,
+        ]);
+      }
+      if (method === "getTokenSupply") return rpcOk({ amount: "1000", decimals: 6, uiAmountString: "skip" });
+      if (method === "getTokenLargestAccounts") return rpcOk([]);
+      throw new Error(method);
+    };
+    const usdc = await read.readMint({ mint: USDC, ...fastClock(), endpoint: read.DEFAULT_RPC, maxRetries: 0, transport });
+    assert.equal(usdc.card?.curve?.status, "no_aplica");
+    assert.equal(usdc.card?.curve?.present, false);
+    const pump = await read.readMint({ mint: CA, ...fastClock(), endpoint: read.DEFAULT_RPC, maxRetries: 0, transport });
+    assert.equal(pump.card?.curve?.status, "ausente");
+    const foreign = await read.readMint({
+      mint: USDC,
+      ...fastClock(),
+      endpoint: read.DEFAULT_RPC,
+      maxRetries: 0,
+      transport: async (_endpoint: string, body: string) => {
+        const method = (JSON.parse(body) as { method: string }).method;
+        if (method === "getMultipleAccounts") {
+          return rpcOk([
+            account(read.TOKEN_PROGRAM, mintBytes()),
+            null,
+            account("11111111111111111111111111111111", Buffer.from([1, 2, 3])),
+          ]);
+        }
+        if (method === "getTokenSupply") return rpcOk({ amount: "1000", decimals: 6, uiAmountString: "skip" });
+        if (method === "getTokenLargestAccounts") return rpcOk([]);
+        throw new Error(method);
+      },
+    });
+    assert.equal(foreign.card?.curve?.status, "no_aplica");
+    const facts = (await import(pathToFileURL(path.join(repoRoot(), "web/v2/shared/fact-state.js")).href)) as {
+      missingFacts: (items: Array<{ label: string; state: string }>, lang: string) => { text: string; absentText: string };
+    };
+    const summary = facts.missingFacts(
+      [
+        { label: "Curva", state: "no_aplica" },
+        { label: "Cuentas", state: "fallo" },
+      ],
+      "es",
+    );
+    assert.equal(summary.text.includes("Curva"), false);
+    assert.equal(summary.absentText.includes("Curva"), false);
+    assert.match(summary.text, /Faltan datos: Cuentas/);
+    const leftCard = read.blankCard(USDC, WHEN, []);
+    const rightCard = read.blankCard(USDC, "2026-10-09T13:00:00.000Z", []);
+    for (const card of [leftCard, rightCard]) {
+      card.isMint = true;
+      card.curve = { present: false, status: "no_aplica" };
+    }
+    const compared = model.compareRecords({ card: leftCard }, { card: rightCard });
+    assert.equal(compared.ok, true);
+    const curveRows = (compared.rows ?? []).filter((row) => /curva/i.test(row.field.es));
+    assert.equal(curveRows.length, 4);
+    assert.equal(curveRows.every((row) => row.verdict === "igual"), true);
+    assert.equal((compared.unknown ?? []).some((row) => /curva/i.test(row.field.es)), false);
+    assert.equal(model.curveComparisonValue("Curva presente", "no_aplica", "es"), sentence.es);
+    assert.equal(model.curveComparisonValue("Cantidad real de tokens de la curva", "no_aplica", "en"), sentence.en);
+    assert.equal(model.curveComparisonValue("Nombre", "no_aplica", "es"), null);
+    assert.equal(sentence.es, "No aplica: este token no se creó en Pump.fun");
+    assert.equal(sentence.en, "Not applicable: this token was not created on Pump.fun");
   });
 
   test("solo se comparan dos fichas del mismo mint y la antigua no se presenta como actual", async () => {

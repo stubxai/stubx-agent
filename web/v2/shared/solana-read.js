@@ -418,6 +418,10 @@ function parseAccount(value) {
   };
 }
 
+function curveAbsent(mint) {
+  return { ...emptyCurve(), present: false, status: String(mint).endsWith("pump") ? "ausente" : "no_aplica" };
+}
+
 function emptyCurve() {
   return {
     present: null,
@@ -637,6 +641,8 @@ export function clearBlockedMethods() {
 }
 
 function retryableRpcFailure(result) {
+  // Una lista que no trae las cuentas pedidas es fallo del nodo, no una ausencia.
+  if (result?.error === "No se pudo comprobar") return true;
   const status = result?.httpStatus ?? null;
   if (status === 0 || status === 403 || status === 429 || status === 408 || (status !== null && status >= 500)) return true;
   return /429|403|too many|rate limit|timeout|timed out|tiempo de espera|failed to fetch|\bHTTP 0\b|error de red|network|fetch failed|ECONN|ENET|ENOTFOUND|socket|access forbidden|aborted|personal token|indexed request|request blocked/i.test(
@@ -703,6 +709,19 @@ async function rpcCallOnce(state, method, params) {
       if (parsed.error) {
         const message = typeof parsed.error.message === "string" ? parsed.error.message.slice(0, 300) : "error de lectura";
         return { ok: false, method, error: message, httpStatus: response.status, fetchedAt };
+      }
+      if (method === "getMultipleAccounts") {
+        const asked = Array.isArray(params[0]) ? params[0].length : null;
+        const list = parsed.result && typeof parsed.result === "object" ? parsed.result.value : undefined;
+        if (asked === null || !Array.isArray(list) || list.length !== asked) {
+          lastError = "No se pudo comprobar";
+          lastStatus = response.status;
+          if (attempt < state.maxRetries) {
+            await state.sleep(300 * (attempt + 1));
+            continue;
+          }
+          return { ok: false, method, error: lastError, httpStatus: lastStatus, fetchedAt };
+        }
       }
       const slot = parsed.result && parsed.result.context && Number.isInteger(parsed.result.context.slot)
         ? parsed.result.context.slot
@@ -796,8 +815,17 @@ export async function readMint(options) {
     card.slotStatus = "verificado";
   }
   const value = accounts.value && accounts.value.value;
-  if (!Array.isArray(value) || value.length < 3) {
-    errors.push({ method: "getMultipleAccounts", httpStatus: 200, message: "La respuesta no trae las tres cuentas.", at: accounts.fetchedAt });
+  if (!Array.isArray(value) || value.length !== 3) {
+    errors.push({ method: "getMultipleAccounts", httpStatus: 200, message: "No se pudo comprobar", at: accounts.fetchedAt });
+    card.programStatus = "fallo";
+    card.name.status = "fallo";
+    card.symbol.status = "fallo";
+    card.uri.status = "fallo";
+    card.metadataMutable = "fallo";
+    card.slotStatus = "fallo";
+    card.curve = { ...emptyCurve(), status: "fallo" };
+    card.supplyRpcStatus = "no_consultado";
+    card.largestStatus = "no_consultado";
     return { ok: false, error: "partial", card };
   }
   let mintAccount = null;
@@ -848,8 +876,8 @@ export async function readMint(options) {
     card.extensionsStatus = "no_aplica";
     card.curve = curveAccount
       ? { ...emptyCurve(), ...decodeCurveAccount(curveAccount.owner, curveAccount.data) }
-      : { ...emptyCurve(), present: false, status: "ausente" };
-    if (card.curve.present === false) card.curve.status = "ausente";
+      : curveAbsent(mint);
+    if (card.curve.present === false) card.curve = curveAbsent(mint);
     if (card.curve.status === "no_disponible") card.curve.status = "fallo";
     return { ok: true, error: null, card };
   }
@@ -909,10 +937,10 @@ export async function readMint(options) {
   if (curveAccount) {
     const curve = decodeCurveAccount(curveAccount.owner, curveAccount.data);
     card.curve = { ...emptyCurve(), ...curve };
-    if (curve.present === false) card.curve.status = "ausente";
+    if (curve.present === false) card.curve = curveAbsent(mint);
     if (curve.status === "no_disponible") card.curve.status = "fallo";
   } else {
-    card.curve = { ...emptyCurve(), present: false, status: "ausente" };
+    card.curve = curveAbsent(mint);
   }
   const supply = await rpcCall(state, "getTokenSupply", [mint, { commitment: "confirmed" }]);
   if (!supply.ok) {

@@ -679,6 +679,135 @@ describe("lectura universal con RPC simulado", () => {
     assert.equal(/reserva|\breserve\b|\bfondo\b/i.test(explain), false);
   });
 
+  test("una lista incompleta prueba el otro nodo y si los dos fallan no se pudo comprobar", async () => {
+    const sample = fixture("revoked-mint");
+    const pump = registry[0]?.mint ?? "";
+    assert.equal(pump.endsWith("pump"), true);
+    const shortBody = (count: number) => ({
+      status: 200,
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        result: { context: { slot: sample.slot }, value: Array.from({ length: count }, () => null) },
+      }),
+    });
+    for (const count of [0, 2, 4]) {
+      for (const mint of [sample.mint, pump]) {
+        const calls: string[] = [];
+        const reading = await readAnyMint({
+          mint,
+          registry,
+          endpoints: ["https://rpc-a.invalid", "https://rpc-b.invalid"],
+          transport: async (endpoint, body) => {
+            const method = (JSON.parse(body) as { method: string }).method;
+            calls.push(`${new URL(endpoint).host} ${method}`);
+            return shortBody(count);
+          },
+          maxRetries: 0,
+          minIntervalMs: 0,
+          sleep: async () => {},
+        });
+        assert.equal(reading.ok, false, `${count} ${mint}`);
+        assert.equal(reading.title.es, "No se pudo comprobar");
+        assert.equal(reading.title.en, "Could not be checked");
+        assert.equal(reading.signals.some((item) => item.id === "curva"), false);
+        assert.equal(`${reading.support.es} ${reading.support.en}`.includes("No aplica"), false);
+        assert.equal(`${reading.support.es} ${reading.support.en}`.includes("Not applicable"), false);
+        assert.equal(reading.support.es.includes("no existe"), false);
+        assert.equal(reading.usedFallback, true);
+        assert.deepEqual(calls, ["rpc-a.invalid getMultipleAccounts", "rpc-b.invalid getMultipleAccounts"]);
+      }
+    }
+    const limited: string[] = [];
+    const stayed = await readAnyMint({
+      mint: sample.mint,
+      registry,
+      endpoints: ["https://rpc-a.invalid", "https://rpc-b.invalid"],
+      transport: async (endpoint, body) => {
+        const method = (JSON.parse(body) as { method: string }).method;
+        if (method === "getMultipleAccounts") limited.push(new URL(endpoint).host);
+        return shortBody(2);
+      },
+      maxRetries: 1,
+      minIntervalMs: 0,
+      sleep: async () => {},
+    });
+    assert.equal(stayed.ok, false);
+    assert.equal(stayed.title.es, "No se pudo comprobar");
+    assert.equal(stayed.usedFallback, true);
+    assert.deepEqual(limited, ["rpc-a.invalid", "rpc-a.invalid", "rpc-b.invalid", "rpc-b.invalid"]);
+    const accounts = new Map<string, AccountFixture | { owner: string; data: Uint8Array } | null>([
+      [sample.mint, sample.mintAccount],
+      [metadataPda(sample.mint), null],
+      [bondingCurvePda(sample.mint), null],
+    ]);
+    const base = transportFor({
+      slot: sample.slot,
+      accounts,
+      supply: { amount: "1000000000000000", decimals: 6 },
+      largest: [],
+    });
+    const recoveredCalls: string[] = [];
+    const recovered = await readAnyMint({
+      mint: sample.mint,
+      registry,
+      endpoints: ["https://rpc-a.invalid", "https://rpc-b.invalid"],
+      transport: async (endpoint, body, timeoutMs) => {
+        const method = (JSON.parse(body) as { method: string }).method;
+        recoveredCalls.push(`${new URL(endpoint).host} ${method}`);
+        if (method === "getMultipleAccounts" && endpoint === "https://rpc-a.invalid") return shortBody(2);
+        return base(endpoint, body, timeoutMs);
+      },
+      maxRetries: 0,
+      minIntervalMs: 0,
+      sleep: async () => {},
+    });
+    assert.equal(recovered.ok, true);
+    assert.equal(recovered.usedFallback, true);
+    assert.equal(recovered.facts?.find((item) => item.id === "curva")?.state, "no_aplica");
+    assert.deepEqual(
+      recoveredCalls.filter((item) => item.endsWith("getMultipleAccounts")),
+      ["rpc-a.invalid getMultipleAccounts", "rpc-b.invalid getMultipleAccounts"],
+    );
+    assert.deepEqual(
+      recoveredCalls.filter((item) => item.endsWith("getTokenSupply") || item.endsWith("getTokenLargestAccounts")),
+      ["api.mainnet-beta.solana.com getTokenSupply", "api.mainnet-beta.solana.com getTokenLargestAccounts"],
+    );
+  });
+
+  test("un token que no es de Pump.fun deja la curva fuera de lo que falta", async () => {
+    const usdc = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+    const sample = fixture("revoked-mint");
+    const reading = await readAnyMint({
+      mint: usdc,
+      registry,
+      endpoints: ["https://rpc-a.invalid"],
+      transport: transportFor({
+        slot: sample.slot,
+        accounts: new Map([
+          [usdc, sample.mintAccount],
+          [metadataPda(usdc), null],
+          [bondingCurvePda(usdc), null],
+        ]),
+        supply: { amount: "1000", decimals: 6 },
+        largest: [],
+      }),
+      maxRetries: 0,
+      minIntervalMs: 0,
+      sleep: async () => {},
+    });
+    const curve = reading.signals.find((item) => item.id === "curva");
+    assert.equal(curve?.title.es, "Curva");
+    assert.equal(curve?.title.en, "Curve");
+    assert.equal(curve?.explain.es, "No aplica: este token no se creó en Pump.fun");
+    assert.equal(curve?.explain.en, "Not applicable: this token was not created on Pump.fun");
+    assert.equal(reading.facts?.find((item) => item.id === "curva")?.state, "no_aplica");
+    assert.equal((reading.missing?.es ?? "").includes("Curva"), false);
+    assert.equal((reading.missing?.en ?? "").includes("Curve"), false);
+    assert.equal((reading.absent?.es ?? "").includes("Curva"), false);
+    assert.equal((reading.absent?.en ?? "").includes("Curve"), false);
+    assert.equal((reading.shown as { curve?: { status?: string } } | null)?.curve?.status, "no_aplica");
+  });
+
   test("un 429 del suministro se reintenta una vez y un corte de red no se propaga", async () => {
     const sample = fixture("revoked-mint");
     const accounts = new Map<string, AccountFixture | null>([

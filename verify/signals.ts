@@ -46,7 +46,12 @@ export const PRIVACY_NOTICE: Localized = {
   en: "The read is live and read-only.",
 };
 
-export type FactState = "ok" | "ausente" | "fallo" | "no_consultado";
+export type FactState = "ok" | "ausente" | "fallo" | "no_consultado" | "no_aplica";
+
+const CURVE_NOT_ON_PUMP: Localized = {
+  es: "No aplica: este token no se creó en Pump.fun",
+  en: "Not applicable: this token was not created on Pump.fun",
+};
 
 export type ReadingFact = { id: string; label: Localized; state: FactState };
 
@@ -636,7 +641,8 @@ async function readWith(
     const sample = await accountSample(rpc, mint, mintInfo.owner, curve, largest, null);
     signals.push(sample.signal);
   }
-  signals.push(curveSignal(curveInfo, bonding));
+  const curveNotOnPump = !mint.endsWith("pump") && (!curveInfo || curveInfo.owner !== PUMP_PROGRAM);
+  signals.push(curveNotOnPump ? curveDoesNotApplySignal() : curveSignal(curveInfo, bonding));
   const copyByName = !likeness.inRegistry && likeness.signals.some((item) => /^nombre |^símbolo /.test(item));
   if (likeness.inRegistry) {
     signals.push({
@@ -726,7 +732,7 @@ async function readWith(
     {
       id: "curva",
       label: loc("Curva", "Curve"),
-      state: !curveInfo ? "ausente" : bonding ? "ok" : "fallo",
+      state: curveNotOnPump ? "no_aplica" : !curveInfo ? "ausente" : bonding ? "ok" : "fallo",
     },
   ];
   const grouped = groupFacts(facts);
@@ -787,7 +793,9 @@ async function readWith(
     })),
     extensionsStatus: decoded.standard === "spl-token" ? "no_aplica" : decoded.extensionsParsed ? "verificado" : "fallo",
     largestStatus: largestState === "ok" ? "ok" : largestState,
-    curve: !curveInfo
+    curve: curveNotOnPump
+      ? { present: false, status: "no_aplica", virtualToken: null, virtualQuote: null, realToken: null, realQuote: null, complete: null }
+      : !curveInfo
       ? { present: false, status: "ausente", virtualToken: null, virtualQuote: null, realToken: null, realQuote: null, complete: null }
       : !bonding
         ? { present: null, status: "fallo", virtualToken: null, virtualQuote: null, realToken: null, realQuote: null, complete: null }
@@ -1164,6 +1172,15 @@ function emptySample(): Signal {
       "No se pudo leer la muestra. No es una concentración de cero.",
       "The sample could not be read. It is not zero concentration.",
     ),
+  };
+}
+
+function curveDoesNotApplySignal(): Signal {
+  return {
+    id: "curva",
+    level: "neutro",
+    title: loc("Curva", "Curve"),
+    explain: CURVE_NOT_ON_PUMP,
   };
 }
 
