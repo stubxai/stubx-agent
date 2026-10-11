@@ -4,7 +4,7 @@
  */
 import { formatAmount } from "../shared/amount.js";
 import { ENTENDER, entenderNav } from "../shared/entender.js";
-import { compareRecords, comparedValueText, comparisonSummary, pickPrevious, staleLine, supplyDirection, validateCard, withinStoreLimit } from "../shared/notebook-model.js";
+import { compareRecords, comparedValueText, comparisonSummary, curveComparisonValue, pickPrevious, staleLine, supplyDirection, validateCard, withinStoreLimit } from "../shared/notebook-model.js";
 import { cardFromShown } from "../shared/solana-read.js";
 
 const DB_NAME = "stubx-cuaderno";
@@ -176,6 +176,9 @@ function revealAboveBar(node) {
 }
 
 function sideText(row, side, card) {
+  const state = side === "left" ? row.leftState : row.rightState;
+  const curveText = curveComparisonValue(row.field.es, state, lang());
+  if (curveText) return curveText;
   const raw = side === "left" ? row.left : row.right;
   if (row.amount && raw !== null) {
     const formatted = formatAmount(raw, card.decimals, lang());

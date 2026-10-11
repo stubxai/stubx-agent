@@ -22,7 +22,11 @@ export function isRetryableFailure(result: { ok: boolean; error?: string; httpSt
   // 403, 429 y el tiempo agotado los pone el servicio (cortafuegos, cupo o corte).
   // No dicen nada del mint ni de su autoridad, así que el RPC siguiente puede leer
   // la misma cuenta. Un error JSON-RPC de la cuenta no entra aquí.
+  // Una lista que no trae las cuentas pedidas tampoco: es el nodo, no la ausencia.
   if (status === 403 || status === 429 || status === 408 || (status !== null && status >= 500)) {
+    return true;
+  }
+  if (/no devolvió todas las cuentas pedidas/i.test(result.error ?? "")) {
     return true;
   }
   return /429|403|too many|rate limit|timeout|timed out|tiempo de espera|network|access forbidden|personal token|indexed request|request blocked/i.test(
@@ -40,7 +44,7 @@ export function classifyRpcFailure(error: string, httpStatus: number | null): "l
   return "red";
 }
 
-/** Prueba el lector siguiente solo si el anterior falla por límite, tiempo o red. */
+/** Prueba el lector siguiente si el anterior falla por límite, tiempo, red o una lista incompleta. */
 export class FallbackRpc implements ChainReader {
   lastEndpoint: string;
   usedFallback = false;

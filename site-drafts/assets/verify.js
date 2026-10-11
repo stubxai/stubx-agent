@@ -422,7 +422,11 @@ function isRetryableFailure(result) {
     // 403, 429 y el tiempo agotado los pone el servicio (cortafuegos, cupo o corte).
     // No dicen nada del mint ni de su autoridad, así que el RPC siguiente puede leer
     // la misma cuenta. Un error JSON-RPC de la cuenta no entra aquí.
+    // Una lista que no trae las cuentas pedidas tampoco: es el nodo, no la ausencia.
     if (status === 403 || status === 429 || status === 408 || (status !== null && status >= 500)) {
+        return true;
+    }
+    if (/no devolvió todas las cuentas pedidas/i.test(result.error ?? "")) {
         return true;
     }
     return /429|403|too many|rate limit|timeout|timed out|tiempo de espera|network|access forbidden|personal token|indexed request|request blocked/i.test(result.error ?? "");
@@ -436,7 +440,7 @@ function classifyRpcFailure(error, httpStatus) {
     }
     return "red";
 }
-/** Prueba el lector siguiente solo si el anterior falla por límite, tiempo o red. */
+/** Prueba el lector siguiente si el anterior falla por límite, tiempo, red o una lista incompleta. */
 class FallbackRpc {
     readers;
     endpoints;
@@ -1670,8 +1674,8 @@ class RpcClient {
     getMultipleAccounts(addresses) {
         return this.call("getMultipleAccounts", [addresses, { encoding: "base64", commitment: "confirmed" }], (result) => {
             const value = contextValue(result);
-            if (!Array.isArray(value)) {
-                throw new Error("getMultipleAccounts no devolvió una lista.");
+            if (!Array.isArray(value) || value.length !== addresses.length) {
+                throw new Error("getMultipleAccounts no devolvió todas las cuentas pedidas.");
             }
             return value.map((item) => parseAccount(item));
         });
@@ -1866,6 +1870,10 @@ const AUDIT_NOTICE = {
 const PRIVACY_NOTICE = {
     es: "La lectura es directa y solo en lectura.",
     en: "The read is live and read-only.",
+};
+const CURVE_NOT_ON_PUMP = {
+    es: "No aplica: este token no se creó en Pump.fun",
+    en: "Not applicable: this token was not created on Pump.fun",
 };
 function loadingView(mint) {
     return {
@@ -2289,7 +2297,8 @@ async function readWith(mint, registry, rpc, input) {
         const sample = await accountSample(rpc, mint, mintInfo.owner, curve, largest, null);
         signals.push(sample.signal);
     }
-    signals.push(curveSignal(curveInfo, bonding));
+    const curveNotOnPump = !mint.endsWith("pump") && (!curveInfo || curveInfo.owner !== PUMP_PROGRAM);
+    signals.push(curveNotOnPump ? curveDoesNotApplySignal() : curveSignal(curveInfo, bonding));
     const copyByName = !likeness.inRegistry && likeness.signals.some((item) => /^nombre |^símbolo /.test(item));
     if (likeness.inRegistry) {
         signals.push({
@@ -2360,7 +2369,7 @@ async function readWith(mint, registry, rpc, input) {
         {
             id: "curva",
             label: loc("Curva", "Curve"),
-            state: !curveInfo ? "ausente" : bonding ? "ok" : "fallo",
+            state: curveNotOnPump ? "no_aplica" : !curveInfo ? "ausente" : bonding ? "ok" : "fallo",
         },
     ];
     const grouped = groupFacts(facts);
@@ -2415,19 +2424,21 @@ async function readWith(mint, registry, rpc, input) {
         })),
         extensionsStatus: decoded.standard === "spl-token" ? "no_aplica" : decoded.extensionsParsed ? "verificado" : "fallo",
         largestStatus: largestState === "ok" ? "ok" : largestState,
-        curve: !curveInfo
-            ? { present: false, status: "ausente", virtualToken: null, virtualQuote: null, realToken: null, realQuote: null, complete: null }
-            : !bonding
-                ? { present: null, status: "fallo", virtualToken: null, virtualQuote: null, realToken: null, realQuote: null, complete: null }
-                : {
-                    present: true,
-                    status: "verificado",
-                    virtualToken: bonding.virtualTokenReserves.toString(),
-                    virtualQuote: bonding.virtualQuoteReserves.toString(),
-                    realToken: bonding.realTokenReserves.toString(),
-                    realQuote: bonding.realQuoteReserves.toString(),
-                    complete: bonding.complete,
-                },
+        curve: curveNotOnPump
+            ? { present: false, status: "no_aplica", virtualToken: null, virtualQuote: null, realToken: null, realQuote: null, complete: null }
+            : !curveInfo
+                ? { present: false, status: "ausente", virtualToken: null, virtualQuote: null, realToken: null, realQuote: null, complete: null }
+                : !bonding
+                    ? { present: null, status: "fallo", virtualToken: null, virtualQuote: null, realToken: null, realQuote: null, complete: null }
+                    : {
+                        present: true,
+                        status: "verificado",
+                        virtualToken: bonding.virtualTokenReserves.toString(),
+                        virtualQuote: bonding.virtualQuoteReserves.toString(),
+                        realToken: bonding.realTokenReserves.toString(),
+                        realQuote: bonding.realQuoteReserves.toString(),
+                        complete: bonding.complete,
+                    },
     };
     return {
         ok: true,
@@ -2696,6 +2707,14 @@ function emptySample() {
         level: "atencion",
         title: loc("Cuentas con tokens", "Token accounts"),
         explain: loc("No se pudo leer la muestra. No es una concentración de cero.", "The sample could not be read. It is not zero concentration."),
+    };
+}
+function curveDoesNotApplySignal() {
+    return {
+        id: "curva",
+        level: "neutro",
+        title: loc("Curva", "Curve"),
+        explain: CURVE_NOT_ON_PUMP,
     };
 }
 function curveSignal(account, curve) {
