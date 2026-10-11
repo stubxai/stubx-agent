@@ -200,9 +200,12 @@ function tokenName() {
 }
 
 const PREVIEW_CAP = 1600;
-const EXPORT_IDLE_MS = 400;
+const TYPE_IDLE_MS = 180;
 const carga = document.getElementById("vista-carga");
 const prepNotice = document.getElementById("aviso-preparando");
+const prepared = new Map();
+const previewCache = new Map();
+const exportJobs = new Map();
 let renderToken = 0;
 let raf = 0;
 let fontWarm = null;
@@ -256,6 +259,51 @@ function avatarKey(image) {
   return `${image.width}x${image.height}:${rgba.length}:${rgba[0]}:${rgba[last >> 1]}:${rgba[last]}`;
 }
 
+function contentKey(width, height) {
+  const bg = background();
+  const name = tokenName();
+  const logo = customLogo ? avatarKey(customLogo) : "";
+  const avatar = !customLogo && isStubxToken(name) ? (avatarId || "") : "";
+  return [
+    width,
+    height,
+    lang(),
+    titleInput.value,
+    bodyInput.value,
+    name,
+    bg?.id ?? "",
+    bg?.fill ?? "",
+    bg?.ink ?? "",
+    headlineById(headlineId).id,
+    avatar,
+    logo,
+  ].join("\u001f");
+}
+
+function exportStateKey() {
+  const size = format();
+  return contentKey(size.width, size.height);
+}
+
+function previewStateKey() {
+  const size = previewSize();
+  return contentKey(size.width, size.height);
+}
+
+function recall(map, key) {
+  if (!map.has(key)) return null;
+  const value = map.get(key);
+  map.delete(key);
+  map.set(key, value);
+  return value;
+}
+
+function remember(map, key, value, limit) {
+  map.delete(key);
+  map.set(key, value);
+  while (map.size > limit) map.delete(map.keys().next().value);
+}
+
 function workerOptions(size) {
   const options = cardOptions(size);
   const key = avatarKey(options.avatar);
@@ -293,6 +341,23 @@ function renderWorker() {
     avatarCacheKey = "";
     failed?.terminate();
     const wait = previewWait;
+    const failedExport = exportJobId ? exportCount : 0;
+    exportJobId = 0;
+    if (failedExport) {
+      exportedBlob(renderToken).then((blob) => {
+        if (failedExport !== drawCount || !blob) {
+          syncExportButtons();
+          return;
+        }
+        ready = blob;
+        readyFor = failedExport;
+        syncExportButtons();
+      }).catch((error) => {
+        if (error?.name === "AbortError") return;
+        loadNotice.hidden = false;
+        download.disabled = true;
+      });
+    }
     if (!wait) return;
     previewWait = null;
     previewJob = 0;
@@ -331,6 +396,12 @@ function showBitmap(bitmap, width, height) {
   const ctx = canvas.getContext("2d");
   ctx.drawImage(bitmap, 0, 0);
   bitmap.close?.();
+}
+
+function paintStoredPreview(entry) {
+  canvas.width = entry.width;
+  canvas.height = entry.height;
+  canvas.getContext("2d").putImageData(entry.data, 0, 0);
 }
 
 function paintCounters() {
@@ -410,8 +481,37 @@ function dropPreviewWait() {
   wait.resolve();
 }
 
+function storePreview(key, msg) {
+  if (!key) return;
+  const data = canvas.getContext("2d").getImageData(0, 0, msg.width, msg.height);
+  remember(previewCache, key, {
+    data,
+    fits: Boolean(msg.fits),
+    noticeText: msg.noticeText,
+    label: msg.label || "",
+    width: msg.width,
+    height: msg.height,
+  }, 6);
+}
+
+function storePrepared(key, msg) {
+  if (!key || !msg.blob) return;
+  remember(prepared, key, {
+    blob: msg.blob,
+    fits: msg.fits !== false,
+    noticeText: msg.noticeText,
+    label: msg.label || "",
+    width: msg.width,
+    height: msg.height,
+  }, 8);
+}
+
 function onWorkerMessage(msg) {
-  if (msg.kind === "preview" && previewWait && msg.id === previewWait.id) {
+  if (msg.kind === "preview") {
+    if (!previewWait || msg.id !== previewWait.id) {
+      msg.bitmap?.close?.();
+      return;
+    }
     const wait = previewWait;
     previewWait = null;
     previewJob = 0;
@@ -429,18 +529,21 @@ function onWorkerMessage(msg) {
       return;
     }
     showBitmap(msg.bitmap, msg.width, msg.height);
+    storePreview(wait.key, msg);
     applyPreviewMeta(msg);
     finishChrome(wait.token);
     persist();
     placePreview();
-    armExport(drawCount);
     wait.resolve();
     return;
   }
-  if (msg.kind !== "png" || msg.id !== exportJobId) return;
-  const count = exportCount;
-  exportJobId = 0;
-  if (count !== drawCount) return;
+  if (msg.kind !== "png") return;
+  const job = exportJobs.get(msg.id);
+  if (!job) return;
+  exportJobs.delete(msg.id);
+  if (msg.id === exportJobId) exportJobId = 0;
+  if (msg.blob) storePrepared(job.key, msg);
+  if (job.count !== drawCount) return;
   if (msg.fits === false || msg.error || !msg.blob) {
     if (msg.fits === false) {
       if (latest) latest.fits = false;
@@ -448,12 +551,13 @@ function onWorkerMessage(msg) {
       return;
     }
     exportedBlob(renderToken).then((blob) => {
-      if (count !== drawCount || !blob) {
+      if (job.count !== drawCount || !blob) {
         syncExportButtons();
         return;
       }
       ready = blob;
-      readyFor = count;
+      readyFor = job.count;
+      storePrepared(job.key, { blob, fits: true, noticeText: latest?.noticeText, label: latest?.label, width: format().width, height: format().height });
       syncExportButtons();
     }).catch((error) => {
       if (error?.name === "AbortError") return;
@@ -462,8 +566,9 @@ function onWorkerMessage(msg) {
     });
     return;
   }
+  if (latest) latest.fits = true;
   ready = msg.blob;
-  readyFor = count;
+  readyFor = job.count;
   syncExportButtons();
 }
 
@@ -499,7 +604,6 @@ async function renderLocal(size, token) {
   finishChrome(token);
   persist();
   placePreview();
-  armExport(drawCount);
 }
 
 async function beginPreview(token) {
@@ -512,8 +616,8 @@ async function beginPreview(token) {
     const id = ++jobId;
     previewJob = id;
     await new Promise((resolve, reject) => {
-      previewWait = { id, token, resolve, reject };
-      thread.postMessage({ id, kind: "preview", options: workerOptions(size) });
+    previewWait = { id, token, key: previewStateKey(), resolve, reject };
+    thread.postMessage({ id, kind: "preview", options: workerOptions(size) });
     });
     return;
   }
@@ -541,38 +645,67 @@ function placePreview() {
   document.documentElement.style.scrollPaddingTop = fits ? `${bar + 4 + preview + 12}px` : "0px";
 }
 
-// El PNG completo se prepara cuando la vista lleva un momento quieta.
-// Guardar y Compartir usan ese blob en el mismo toque: iOS pierde el gesto si se espera el render.
-function armExport(count) {
-  clearTimeout(exportTimer);
-  exportTimer = setTimeout(() => {
-    if (count !== drawCount) return;
-    const token = renderToken;
-    if (!exportAllowed(titleInput.value, bodyInput.value, undefined, tokenName()) || !latest?.fits) {
+function acceptPrepared(count, key) {
+  const hit = recall(prepared, key);
+  if (hit?.blob && hit.fits !== false) {
+    ready = hit.blob;
+    readyFor = count;
+    if (latest) latest.fits = true;
+    else latest = { fits: true, noticeText: hit.noticeText, label: hit.label || "", width: hit.width, height: hit.height };
+    return true;
+  }
+  ready = null;
+  readyFor = 0;
+  if (hit?.fits === false) {
+    if (latest) latest.fits = false;
+    return true;
+  }
+  if (latest) latest.fits = true;
+  return false;
+}
+
+// El blob se prepara en el worker y el toque solo lo usa si ya está listo.
+function startExport(count, token, key) {
+  if (count !== drawCount) return;
+  if (!exportAllowed(titleInput.value, bodyInput.value, undefined, tokenName())) {
+    syncExportButtons();
+    return;
+  }
+  const thread = renderWorker();
+  if (thread) {
+    const id = ++jobId;
+    exportJobId = id;
+    exportCount = count;
+    exportJobs.set(id, { count, key });
+    while (exportJobs.size > 20) exportJobs.delete(exportJobs.keys().next().value);
+    thread.postMessage({ id, kind: "png", options: workerOptions(format()) });
+    return;
+  }
+  exportedBlob(token).then((blob) => {
+    if (count !== drawCount || token !== renderToken || !blob) {
       syncExportButtons();
       return;
     }
-    const thread = renderWorker();
-    if (thread) {
-      exportJobId = ++jobId;
-      exportCount = count;
-      thread.postMessage({ id: exportJobId, kind: "png", options: workerOptions(format()) });
-      return;
-    }
-    exportedBlob(token).then((blob) => {
-      if (count !== drawCount || token !== renderToken || !blob) {
-        syncExportButtons();
-        return;
-      }
-      ready = blob;
-      readyFor = count;
-      syncExportButtons();
-    }).catch((error) => {
-      if (error?.name === "AbortError") return;
-      loadNotice.hidden = false;
-      download.disabled = true;
-    });
-  }, EXPORT_IDLE_MS);
+    ready = blob;
+    readyFor = count;
+    storePrepared(key, { blob, fits: true, noticeText: latest?.noticeText, label: latest?.label, width: format().width, height: format().height });
+    syncExportButtons();
+  }).catch((error) => {
+    if (error?.name === "AbortError") return;
+    loadNotice.hidden = false;
+    download.disabled = true;
+  });
+}
+
+function postCancel() {
+  const thread = worker;
+  if (!thread) return;
+  try {
+    thread.postMessage({ kind: "cancel" });
+  } catch {
+    workerBroken = true;
+    worker = null;
+  }
 }
 
 function readyBlob() {
@@ -618,42 +751,59 @@ function schedule(kind) {
   dropPreviewWait();
   const token = ++renderToken;
   drawCount += 1;
-  ready = null;
-  readyFor = 0;
-  syncExportButtons();
-  const thread = worker;
-  if (thread) {
-    try {
-      thread.postMessage({ id: ++jobId, kind: "cancel" });
-    } catch {
-      workerBroken = true;
-      worker = null;
-    }
-  }
+  const count = drawCount;
   const typing = kind === "input";
+  exportJobId = 0;
+  const key = exportStateKey();
+  const known = acceptPrepared(count, key);
+  syncExportButtons();
+  postCancel();
+  const previewHit = recall(previewCache, previewStateKey());
   if (!typing && carga) {
     canvas.setAttribute("aria-busy", "true");
     carga.hidden = false;
   }
-  timer = setTimeout(() => {
-    raf = requestAnimationFrame(() => {
-      const slow = setTimeout(() => {
-        if (token === renderToken && carga) {
-          canvas.setAttribute("aria-busy", "true");
-          carga.hidden = false;
-        }
-      }, 100);
-      draw(token).catch((error) => {
-        if (error?.name === "AbortError") return;
-        if (token !== renderToken) return;
-        loadNotice.hidden = false;
-        download.disabled = true;
-      }).finally(() => {
-        clearTimeout(slow);
-        finishChrome(token);
-      });
+  const runPreview = () => {
+    if (token !== renderToken) return;
+    const stored = previewHit || recall(previewCache, previewStateKey());
+    if (stored) {
+      paintStoredPreview(stored);
+      applyPreviewMeta(stored);
+      finishChrome(token);
+      persist();
+      placePreview();
+      return;
+    }
+    const slow = setTimeout(() => {
+      if (token === renderToken && carga) {
+        canvas.setAttribute("aria-busy", "true");
+        carga.hidden = false;
+      }
+    }, 100);
+    draw(token).catch((error) => {
+      if (error?.name === "AbortError") return;
+      if (token !== renderToken) return;
+      loadNotice.hidden = false;
+      download.disabled = true;
+    }).finally(() => {
+      clearTimeout(slow);
+      finishChrome(token);
     });
-  }, typing ? 160 : 0);
+  };
+  const runExport = () => {
+    if (known || count !== drawCount) return;
+    startExport(count, token, key);
+  };
+  if (typing) {
+    exportTimer = setTimeout(() => {
+      if (token !== renderToken) return;
+      runExport();
+      raf = requestAnimationFrame(runPreview);
+    }, TYPE_IDLE_MS);
+    return;
+  }
+  runExport();
+  raf = requestAnimationFrame(runPreview);
 }
 
 async function loadImages() {
@@ -671,7 +821,7 @@ async function blobFrom(canvas, rgba, width, height, alive) {
 }
 
 async function exportedBlob(token) {
-  if (!exportAllowed(titleInput.value, bodyInput.value, undefined, tokenName()) || !latest?.fits) return null;
+  if (!exportAllowed(titleInput.value, bodyInput.value, undefined, tokenName())) return null;
   const full = format();
   const card = await renderCard({
     ...cardOptions(full),

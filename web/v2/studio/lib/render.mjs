@@ -45,16 +45,28 @@ function hexColor(hex) {
 }
 
 const backdropCache = new Map();
+const fullBackdropCache = new Map();
+
+function backdropStore(width, height) {
+  if (width === 1080 && (height === 1080 || height === 1920)) return fullBackdropCache;
+  return backdropCache;
+}
 
 function backdropOf(width, height, fill, backgroundId) {
   const key = `${width}x${height}|${backgroundId || ""}|${fill[0]},${fill[1]},${fill[2]}`;
-  const cached = backdropCache.get(key);
-  if (cached) return new Uint8ClampedArray(cached);
+  const store = backdropStore(width, height);
+  const cached = store.get(key);
+  if (cached) {
+    store.delete(key);
+    store.set(key, cached);
+    return new Uint8ClampedArray(cached);
+  }
   const rgba = new Uint8ClampedArray(width * height * 4);
   fillRect(rgba, width, height, 0, 0, width, height, fill);
   if (backgroundId) paintBackground(rgba, width, height, backgroundId);
-  if (backdropCache.size >= 8) backdropCache.delete(backdropCache.keys().next().value);
-  backdropCache.set(key, new Uint8ClampedArray(rgba));
+  const limit = store === fullBackdropCache ? 32 : 8;
+  if (store.size >= limit) store.delete(store.keys().next().value);
+  store.set(key, new Uint8ClampedArray(rgba));
   return rgba;
 }
 

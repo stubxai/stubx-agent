@@ -187,19 +187,29 @@ function dilate(mask, width, height, radius, pace) {
   if (r <= 0) return mask;
   const out = new Uint8Array(mask.length);
   const r2 = radius * radius;
+  const halves = new Int16Array(r + 1);
+  for (let dy = 0; dy <= r; dy += 1) {
+    let dx = r;
+    while (dx >= 0 && dx * dx + dy * dy > r2) dx -= 1;
+    halves[dy] = dx;
+  }
   const done = sliceRows(height, pace, (y) => {
-    for (let x = 0; x < width; x += 1) {
-      if (mask[y * width + x] === 0) continue;
-      const y0 = Math.max(0, y - r);
-      const y1 = Math.min(height - 1, y + r);
-      const x0 = Math.max(0, x - r);
-      const x1 = Math.min(width - 1, x + r);
-      for (let yy = y0; yy <= y1; yy += 1) {
-        const dy = yy - y;
-        for (let xx = x0; xx <= x1; xx += 1) {
-          const dx = xx - x;
-          if (dx * dx + dy * dy <= r2) out[yy * width + xx] = 255;
-        }
+    const row = y * width;
+    let x = 0;
+    while (x < width) {
+      while (x < width && mask[row + x] === 0) x += 1;
+      if (x >= width) return;
+      const start = x;
+      while (x < width && mask[row + x] !== 0) x += 1;
+      const end = x;
+      for (let dy = -r; dy <= r; dy += 1) {
+        const yy = y + dy;
+        if (yy < 0 || yy >= height) continue;
+        const half = halves[Math.abs(dy)];
+        if (half < 0) continue;
+        const x0 = Math.max(0, start - half);
+        const x1 = Math.min(width, end + half);
+        out.fill(255, yy * width + x0, yy * width + x1);
       }
     }
   });
