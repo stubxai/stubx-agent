@@ -1206,6 +1206,15 @@ describe("studio", () => {
     assert.match(script, /injectComment/);
     assert.match(script, /navigator\.share/);
     assert.match(script, /exportAllowed/);
+    const release = script.slice(script.indexOf("function releaseBlob"), script.indexOf("function showSaveNotice"));
+    assert.match(release, /exportAllowed/);
+    assert.match(script.slice(script.indexOf("download.addEventListener"), script.indexOf("share.addEventListener")), /releaseBlob\(readyBlob\(\)\)/);
+    assert.match(script.slice(script.indexOf("share.addEventListener"), script.indexOf("clearButton.addEventListener")), /releaseBlob\(readyBlob\(\)\)/);
+    assert.equal(script.split("mayCacheCard(mascotMark())").length - 1, 2);
+    assert.match(script, /mascotCacheMark/);
+    assert.match(script, /stampImage\(/);
+    assert.equal(script.includes("rgba[last >> 1]"), false);
+    assert.match(script, /willReadFrequently: true/);
     assert.match(script, /setTimeout\(\(\) => URL\.revokeObjectURL\(url\), REVOKE_MS\)/);
     assert.equal(/link\.click\(\);\s*URL\.revokeObjectURL\(url\)/.test(script), false);
     assert.match(editor, /El borrador de Studio se guarda en este dispositivo/);
@@ -1270,6 +1279,61 @@ describe("studio", () => {
       assert.equal(/\breserves?\b/i.test(text), false, rel);
       assert.equal(/\breserva\b/i.test(text), false, rel);
     }
+  });
+
+  test("dos logos distintos con el mismo tamaño y los mismos tres bytes no comparten clave", async () => {
+    const { avatarKey, stampImage } = await load<{
+      avatarKey: (image: { width: number; height: number; rgba: Uint8ClampedArray; stamp?: number }) => string;
+      stampImage: <T extends { rgba?: Uint8ClampedArray; stamp?: number }>(image: T) => T;
+    }>("lib/logo.mjs");
+    const width = 4;
+    const height = 4;
+    const leftPixels = new Uint8ClampedArray(width * height * 4);
+    const rightPixels = new Uint8ClampedArray(width * height * 4);
+    const last = leftPixels.length - 1;
+    const mid = last >> 1;
+    for (const pixels of [leftPixels, rightPixels]) {
+      pixels[0] = 9;
+      pixels[mid] = 40;
+      pixels[last] = 200;
+    }
+    rightPixels[4] = 255;
+    const weak = (pixels: Uint8ClampedArray) => `${width}x${height}:${pixels.length}:${pixels[0]}:${pixels[mid]}:${pixels[last]}`;
+    assert.equal(weak(leftPixels), weak(rightPixels));
+    const left = stampImage({ width, height, rgba: leftPixels });
+    const right = stampImage({ width, height, rgba: rightPixels });
+    assert.notEqual(avatarKey(left), avatarKey(right));
+    assert.equal(avatarKey(stampImage(left)), avatarKey(left));
+    const worker = new Map<string, typeof left>();
+    worker.set(avatarKey(left), left);
+    worker.set(avatarKey(right), right);
+    assert.equal(worker.get(avatarKey(left)), left);
+    assert.equal(worker.get(avatarKey(right)), right);
+  });
+
+  test("una carta dibujada antes de cargar la mascota no se guarda", async () => {
+    const { mascotCacheMark, mayCacheCard } = await load<{
+      mascotCacheMark: (state: { customLogo: boolean; stubx: boolean; avatarId: string; loaded: boolean }) => string;
+      mayCacheCard: (mark: string) => boolean;
+    }>("lib/logo.mjs");
+    const pending = mascotCacheMark({ customLogo: false, stubx: true, avatarId: "talon-avatar-512", loaded: false });
+    const ready = mascotCacheMark({ customLogo: false, stubx: true, avatarId: "talon-avatar-512", loaded: true });
+    assert.equal(pending, "wait");
+    assert.equal(ready, "ready");
+    assert.notEqual(pending, ready);
+    assert.equal(mayCacheCard(pending), false);
+    assert.equal(mayCacheCard(ready), true);
+    assert.equal(mayCacheCard(mascotCacheMark({ customLogo: false, stubx: false, avatarId: "", loaded: false })), true);
+    const cache = new Map<string, string>();
+    const base = "1080x1080\u001fel nombre";
+    const store = (mark: string, value: string) => {
+      if (!mayCacheCard(mark)) return;
+      cache.set(`${base}\u001f${mark}`, value);
+    };
+    store(pending, "sin-mascota");
+    store(ready, "con-mascota");
+    assert.equal(cache.has(`${base}\u001f${pending}`), false);
+    assert.equal(cache.get(`${base}\u001f${ready}`), "con-mascota");
   });
 
   test("el nombre del token se dibuja y el logo se queda en un PNG local", async () => {

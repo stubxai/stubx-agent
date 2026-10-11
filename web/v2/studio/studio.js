@@ -4,7 +4,7 @@ import { PNG_COMMENT } from "./lib/copy.mjs";
 import { HEADLINES, headlineById } from "./lib/headlines.mjs";
 import { clearDraft, clipDraftText, loadDraft, saveDraft } from "./lib/draft.mjs";
 import { analyze, exportAllowed } from "./lib/filter.mjs";
-import { DEFAULT_TOKEN, LOGO_MAX_BYTES, TOKEN_MAX, clipToken, createLogoGate, isStubxToken, readLogoPng } from "./lib/logo.mjs";
+import { DEFAULT_TOKEN, LOGO_MAX_BYTES, TOKEN_MAX, avatarKey, clipToken, createLogoGate, isStubxToken, mascotCacheMark, mayCacheCard, readLogoPng, stampImage } from "./lib/logo.mjs";
 import { decodePng, injectComment } from "./lib/png.mjs";
 import { renderCard } from "./lib/render.mjs";
 import { FILE_NAME, REVOKE_MS, canShareFiles, isIOS, saveMode } from "./lib/save.mjs";
@@ -252,11 +252,15 @@ function previewSize() {
   return { width, height };
 }
 
-function avatarKey(image) {
-  if (!image?.rgba) return "";
-  const rgba = image.rgba;
-  const last = rgba.length - 1;
-  return `${image.width}x${image.height}:${rgba.length}:${rgba[0]}:${rgba[last >> 1]}:${rgba[last]}`;
+function mascotMark() {
+  const stubx = isStubxToken(tokenName());
+  const id = customLogo || !stubx ? "" : (avatarId || "");
+  return mascotCacheMark({
+    customLogo: Boolean(customLogo),
+    stubx,
+    avatarId: id,
+    loaded: Boolean(id && images.has(id)),
+  });
 }
 
 function contentKey(width, height) {
@@ -276,6 +280,7 @@ function contentKey(width, height) {
     bg?.ink ?? "",
     headlineById(headlineId).id,
     avatar,
+    mascotMark(),
     logo,
   ].join("\u001f");
 }
@@ -390,10 +395,14 @@ function cardOptions(size) {
   };
 }
 
+function viewContext() {
+  return canvas.getContext("2d", { willReadFrequently: true });
+}
+
 function showBitmap(bitmap, width, height) {
   canvas.width = width;
   canvas.height = height;
-  const ctx = canvas.getContext("2d");
+  const ctx = viewContext();
   ctx.drawImage(bitmap, 0, 0);
   bitmap.close?.();
 }
@@ -401,7 +410,7 @@ function showBitmap(bitmap, width, height) {
 function paintStoredPreview(entry) {
   canvas.width = entry.width;
   canvas.height = entry.height;
-  canvas.getContext("2d").putImageData(entry.data, 0, 0);
+  viewContext().putImageData(entry.data, 0, 0);
 }
 
 function paintCounters() {
@@ -482,8 +491,8 @@ function dropPreviewWait() {
 }
 
 function storePreview(key, msg) {
-  if (!key) return;
-  const data = canvas.getContext("2d").getImageData(0, 0, msg.width, msg.height);
+  if (!key || !mayCacheCard(mascotMark())) return;
+  const data = viewContext().getImageData(0, 0, msg.width, msg.height);
   remember(previewCache, key, {
     data,
     fits: Boolean(msg.fits),
@@ -495,7 +504,7 @@ function storePreview(key, msg) {
 }
 
 function storePrepared(key, msg) {
-  if (!key || !msg.blob) return;
+  if (!key || !msg.blob || !mayCacheCard(mascotMark())) return;
   remember(prepared, key, {
     blob: msg.blob,
     fits: msg.fits !== false,
@@ -713,6 +722,17 @@ function readyBlob() {
   return null;
 }
 
+function releaseBlob(blob) {
+  if (!blob) return null;
+  if (!exportAllowed(titleInput.value, bodyInput.value, undefined, tokenName())) {
+    ready = null;
+    readyFor = 0;
+    syncExportButtons();
+    return null;
+  }
+  return blob;
+}
+
 function showSaveNotice() {
   saveNotice.hidden = false;
 }
@@ -810,7 +830,7 @@ async function loadImages() {
   await Promise.all(avatars.map(async (item) => {
     const response = await fetch(item.archivo);
     if (!response.ok) throw new Error(item.id);
-    images.set(item.id, await decodePng(new Uint8Array(await response.arrayBuffer())));
+    images.set(item.id, stampImage(await decodePng(new Uint8Array(await response.arrayBuffer()))));
   }));
 }
 
@@ -934,7 +954,7 @@ logoInput.addEventListener("change", () => {
   const load = logoGate.begin();
   readBlob(file, load.signal).then((buffer) => readLogoPng(new Uint8Array(buffer))).then((image) => {
     if (!load.stillCurrent()) return;
-    customLogo = image;
+    customLogo = stampImage(image);
     hideLogoErrors();
     paintChoices();
     schedule();
@@ -956,7 +976,7 @@ logoClear.addEventListener("click", () => {
   schedule();
 });
 download.addEventListener("click", () => {
-  const blob = readyBlob();
+  const blob = releaseBlob(readyBlob());
   if (!blob) return;
   const mode = saveMode({ ios, share: shareFiles });
   if (mode === "share") {
@@ -970,7 +990,7 @@ download.addEventListener("click", () => {
   downloadFile(blob);
 });
 share.addEventListener("click", () => {
-  const blob = readyBlob();
+  const blob = releaseBlob(readyBlob());
   if (!blob || !shareFiles) return;
   shareNow(blob);
 });
